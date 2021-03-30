@@ -14,7 +14,7 @@ uses
 
   const paramSliderWidth= 150;  // Param Sliders WebPanel width
 type
-  speciesAr = array of String;
+  TspeciesAr = array of String;
   TmainForm = class(TWebForm)
     TopWPanel: TWebPanel;
     LeftWPanel: TWebPanel;
@@ -155,7 +155,7 @@ type
     maxYValueAr: array of integer; // max Y for each plot
     currentGeneration: integer;
     plotSpeciesForm: TSpeciesSWForm;
-    plotSpecies: array of speciesAr; // species to graph for each plot
+    plotSpecies: array of TspeciesAr; // species to graph for each plot
     plotsPBAr: array of TWebPaintbox;  // Plot paint boxes
     plotsG_Ar: array of TPlotGraph;     // Plotting class for each plot
     sliderParamForm: TParamSliderSForm;
