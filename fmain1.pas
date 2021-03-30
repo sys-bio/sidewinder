@@ -155,8 +155,9 @@ type
     maxYValueAr: array of integer; // max Y for each plot
     currentGeneration: integer;
     plotSpeciesForm: TSpeciesSWForm;
-    plotSpecies: array of speciesAr;
+    plotSpecies: array of speciesAr; // species to graph for each plot
     plotsPBAr: array of TWebPaintbox;  // Plot paint boxes
+    plotsG_Ar: array of TPlotGraph;     // Plotting class for each plot
     sliderParamForm: TParamSliderSForm;
     xscaleHeight: integer; { This is the space reserved for the x axis labelling, remove }
     xscaleHeightAr: array of integer;  //This is the space reserved for the x axis labelling of each plot
@@ -376,8 +377,9 @@ if online = false then
 
  for i := 0 to length(graphBitmapAr)-1 do      // <-- for dynamically created plots
   begin
-    initGraph (0, 200, 0, maxYValueAr[i], 0, graphBitmapAr[i].width, 0, graphBitmapAr[i].height,
+   plotsG_Ar[i].initGraph(0, 200, 0, maxYValueAr[i], 0, graphBitmapAr[i].width, 0, graphBitmapAr[i].height,
                  xscaleHeightAr[i], runTime, stepSize);
+
   //total steps: runTime/stepSize
   //  Max viewable steps is PlotWebPB.width (1 pixel per step).
     pixelStepAr[i]:=0;
@@ -635,7 +637,6 @@ procedure TmainForm.GetSBMLInfo();
    paramSliderBtn.visible:= true;
    // rxnsArray:= Copy(sbmlmodel.getReactions(),0,numbRxns);
    self.fillSpeciesArray();
-
  end;
 
 
@@ -699,11 +700,9 @@ procedure TmainForm.GetSBMLInfo();
       runSim.eval2(currTime, s_Vals)
    else runSim.eval(currTime, s_Vals);
    ODEready:= TRUE;
-
-   // Debug:
+  // Debug:
   // printSpeciesParamsArr(odeFormat.get_sVals(), odeFormat.get_speciesStrAr());
   // printSpeciesParamsArr(runSim.p, odeFormat.get_paramsStr());
-
  end;
 
 
@@ -824,9 +823,8 @@ begin
      if plotSpecies[j][i] = '' then  plot_y[i]:= false
       else plot_y[i]:= true;
     end;
-
     // Dynamically draw plots:
-  addPoint (graphBitmapAr[j].canvas, currentGeneration, y_new, plot_y, True, currTime);
+  plotsG_Ar[j].addPoint (graphBitmapAr[j].canvas, currentGeneration, y_new, plot_y, True, currTime);
   self.plotsPBAr[j].canvas.draw (0, 0, graphBitmapAr[j])
 
   end;
@@ -892,12 +890,13 @@ procedure TmainForm.addPlot(); // Add a plot
 
 begin
  SetLength(graphBitmapAr,length(graphBitmapAr)+1); // want chk bitmaps = # plots?
- graphBitmapAr[self.numbPlots-1] := TBitmap.Create;
- // Add a PaintBox for plot:    plotsPBAr
+ self.graphBitmapAr[self.numbPlots-1] := TBitmap.Create;
  SetLength(self.xscaleHeightAr,Length(self.xscaleHeightAr)+1);
  SetLength(self.plotsPBAr,Length(self.plotsPBAr)+1);
  SetLength(self.maxYValueAr,Length(self.maxYValueAr)+1);
  SetLength(pixelStepAr,Length(pixelStepAr)+1);
+ SetLength(self.plotsG_Ar,Length(plotsG_Ar)+1);  // ***
+ self.plotsG_Ar[self.numbPlots-1]:= TPlotGraph.create;
  self.plotsPBAr[self.numbPlots-1]:= TWebPaintBox.Create(self.RightWPanel);
  self.plotsPBAr[self.numbPlots-1].parent:=self.RightWPanel;
  self.plotsPBAr[self.numbPlots-1].OnPaint:= plotsPBArPaint;
@@ -911,17 +910,17 @@ begin
  self.graphBitmapAr[self.numbPlots-1].canvas.brush.color := clWhite;
  self.graphBitmapAr[self.numbPlots-1].canvas.FillRect (rect (0, 0, self.plotsPBAr[self.numbPlots-1].width-1, self.plotsPBAr[self.numbPlots-1].height-1));
  self.plotsPBAr[self.numbPlots-1].invalidate;
-
 end;
 
 
 // TODO still more cleanup .. reorder plots if middle one deleted ?
-// Look at plotsPBAr[].Top value to determine order ?
+// Look at plotsPBAr[].Top value to determine order ? Still look at 'Tag' value for ordering?
 procedure TmainForm.deletePlot(plotn: integer);
 begin
  self.plotsPBAr[plotn-1].free;
  delete(self.plotsPBAr,(plotn-1),1);
  delete(self.graphBitmapAr,(plotn-1),1);
+ delete(self.plotsG_Ar,(plotn-1),1);
  delete(self.maxYValueAr,(plotn-1),1);
  delete(self.plotSPecies,(plotn-1),1);
  delete(pixelStepAr,(plotn-1),1);

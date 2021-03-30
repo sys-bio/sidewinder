@@ -648,7 +648,7 @@ object mainForm: TmainForm
       end
       object p1LowLabel: TWebLabel
         Left = 8
-        Top = 44
+        Top = 39
         Width = 6
         Height = 13
         ParentCustomHint = False
@@ -720,7 +720,7 @@ object mainForm: TmainForm
     Caption = 'CenterWPanel'
     ChildOrder = 3
     object networkPB1: TWebPaintBox
-      Left = 0
+      Left = -4
       Top = 0
       Width = 1010
       Height = 700
@@ -794,7 +794,7 @@ object mainForm: TmainForm
       Left = 994
       Top = 0
       Width = 18
-      Height = 683
+      Height = 680
       ParentDoubleBuffered = False
       Color = 15592941
       DoubleBuffered = True
@@ -835,8 +835,8 @@ object mainForm: TmainForm
   end
   object bottomWPanel: TWebPanel
     Left = 0
-    Top = 755
-    Width = 1592
+    Top = 757
+    Width = 1792
     Height = 85
     ElementClassName = 'card'
     HeightPercent = 100.000000000000000000
