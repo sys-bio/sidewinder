@@ -10,9 +10,9 @@ uses
   VCL.TMSFNCGraphicsTypes, VCL.TMSFNCCustomControl, VCL.TMSFNCScrollBar, VCL.TMSFNCButton, VCL.TMSFNCToolBar,
   uNetworkTypes, Vcl.Imaging.pngimage, WEBLib.Lists, Vcl.Forms, SBML.helper, Simulation,
   ODE_FormatUtility, GraphP, Vcl.Menus, WEBLib.Menus, paramSelectForm,speciesSelectForm, plotLayout,
-  paramSlider;
+  paramSlider, paramSliderLayout;
 
-  const paramSliderWidth= 150;  // Param Sliders WebPanel width
+  const SLIDERPWIDTH= 195; SLIDERPHEIGHT= 50;  // Param Sliders WebPanel width/height
 type
   TspeciesAr = array of String;
   TmainForm = class(TWebForm)
@@ -64,18 +64,12 @@ type
     simResultsMemo: TWebMemo;
     addPlotButton: TWebButton;
     paramSliderBtn: TWebButton;
-    p1TBar: TWebTrackBar;
-    paramLabel1: TWebLabel;
-    p1HighLabel: TWebLabel;
-    p1LowLabel: TWebLabel;
     NetworkJSONOpenDialog: TWebOpenDialog;
     loadNetworkButton: TWebButton;
     SBMLOpenDialog: TWebOpenDialog;
     SBMLloadButton: TWebButton;
-    paramPanel1: TWebPanel;
     plotEditLB: TWebListBox;
 
-  //  paramSliders: array of TsliderForm1;
     procedure btnUniUniClick(Sender: TObject);
     procedure btnBiBiClick(Sender: TObject);
     procedure btnBiUniClick(Sender: TObject);
@@ -113,7 +107,7 @@ type
     procedure plotsPBArPaint(Sender: TObject);
     procedure WebTimer1Timer(Sender: TObject);
     procedure addPlotButtonClick(Sender: TObject);
-    procedure paramSliderBtnClick(Sender: TObject);
+    procedure ParamSliderBtnClick(Sender: TObject);
     procedure loadNetworkButtonClick(Sender: TObject);
     procedure NetworkJSONOpenDialogChange(Sender: TObject);
     procedure NetworkJSONOpenDialogGetFileAsText(Sender: TObject;
@@ -125,7 +119,8 @@ type
     procedure btnClearClick(Sender: TObject);
     procedure mnuSaveClick(Sender: TObject);
     procedure mnuUndoClick(Sender: TObject);
-    procedure p1TBarChange(Sender: TObject);
+    //procedure p1TBarChange(Sender: TObject);
+    procedure ParamSliderOnChange(Sender: TObject);
     procedure plotEditLBClick(Sender: TObject);
 
 
@@ -134,15 +129,15 @@ type
     numbSliders: integer;  // Number of parameter sliders
     procedure GetSBMLInfo();  // Grab sbml model info.
     function setupSimulation():String; // returns eq list as String.
-    procedure startSimulation(odeEqs: String;odeFormat: FormatODEs);
+    procedure startSimulation(odeEqs: String;odeFormat: TFormatODEs);
     procedure updateSimulation();
     procedure addPlot(); // Add a plot
     procedure selectPlotSpecies(plotnumb: integer);
     procedure addParamSlider();
     procedure selectParameter(); // Get parameter for slider
     procedure LoadJSONFile();
-    procedure deletePlot(plotn: integer);
-    procedure editPlot(plotn: integer); // delete, change plot species, other added as needed.
+    procedure DeletePlot(plotn: integer);
+    procedure EditPlot(plotn: integer); // delete, change plot species, other added as needed.
 
   public
     network : TNetwork;
@@ -158,18 +153,22 @@ type
     plotSpecies: array of TspeciesAr; // species to graph for each plot
     plotsPBAr: array of TWebPaintbox;  // Plot paint boxes
     plotsG_Ar: array of TPlotGraph;     // Plotting class for each plot
-    sliderParamForm: TParamSliderSForm;
     xscaleHeight: integer; { This is the space reserved for the x axis labelling, remove }
     xscaleHeightAr: array of integer;  //This is the space reserved for the x axis labelling of each plot
-    sliderParamAr: array of integer;  // holds parameter array index of parameter for each slider
+    sliderParamForm: TParamSliderSForm; // Pop up form to choose parameter for slider.
+    sliderParamAr: array of integer;  // holds parameter array index of parameter (p_vals) for each slider
     sliderPanelAr: array of TWebPanel; // Holds parameter sliders
     sliderPHighAr: array of double;  // High value for parameter slider
     sliderPLowAr: array of double;  // Low value for parameter slider
+    sliderPTBarAr: array of TWebTrackBar;
+    sliderPHLabelAr: array of TWebLabel;  // Displays sliderPHighAr
+    sliderPLLabelAr: array of TWebLabel;  // Displays sliderPLowAr
+    sliderPTBLabelAr: array of TWebLabel; // Displays slider param name and current value
     paramUpdated: boolean;  // true if a parameter has been updated.
 
     function ScreenToWorld (x, y : double) : TPointF;   // Network drawing panel
     function WorldToScreen (wx : integer) : integer;    // Network drawing panel
-    procedure Ping(); // Notify when done loading libSBML
+    procedure PingSBMLLoaded(); // Notify when done loading libSBML
     procedure getVals(newTime:double; newVals: array of double); //Get new values (species amt) from simulation run
     procedure processScan(t_new:double; y_new: array of double);
 
@@ -183,7 +182,7 @@ var
   sbmlModelLoaded: Boolean;
   solverUsed: ODEsolver;
   runTime: double;      // Total runtime of simulation (sec)
-  runSim: SimulationJS;
+  runSim: TSimulationJS;
   stepSize: double;     //(msec) (integration step)
   pixelStep: integer;   // get rid of...
   pixelStepAr: array of integer;   // pixel equiv of time (integration) step
@@ -350,7 +349,7 @@ begin
   sbml_Text:= AText;     // store the sbml model as text.
    // Check if sbmlmodel already created, if so, destroy before creating ?
   sbmlmodel:= SBMLhelpClass.create();
-  sbmlmodel.OnPing := Ping;  // *** Register the callback function
+  sbmlmodel.OnPing := PingSBMLLoaded;  // *** Register the callback function
   sbmlmodel.readSBML(AText); // Process text with libsbml.js
 end;
 
@@ -398,7 +397,7 @@ if online = false then
 end;
 
 // Grab SBML model information when notified:
-procedure TmainForm.Ping();
+procedure TmainForm.PingSBMLLoaded();
  begin
   sbmlModelLoaded:= true;
   GetSBMLInfo();
@@ -412,7 +411,7 @@ begin
   end;
   if self.plotEditLB.ItemIndex = 1 then  // delete plot
   begin
-    self.deletePlot(self.plotEditLB.tag);
+    self.DeletePlot(self.plotEditLB.tag);
   end ;
   //else ShowMessage('Cancel');
   self.plotEditLB.tag:= 0;
@@ -506,14 +505,16 @@ begin
   networkPB1.canvas.draw (0, 0, networkCanvas.bitmap);
 end;
 
-procedure TmainForm.paramSliderBtnClick(Sender: TObject);
+procedure TmainForm.ParamSliderBtnClick(Sender: TObject);
 var i:integer;
-   odeFormat: FormatODEs;
+   odeFormat: TFormatODEs;
 begin
+// Check if already 10 sliders, if so then showmessage( 'Only 10 parameter sliders allowed, edit existing one');
+
   // Fill out parameter list for model, if not done already:
   if Length(p_Vals)<1 then
    begin
-    odeFormat:= FormatODEs.create(sbmlmodel);
+    odeFormat:= TFormatODEs.create(sbmlmodel);
     SetLength(p_Vals,Length(odeFormat.get_pVals()));  // Keep params for later
     SetLength(p_names,Length(p_vals));
     for i := 0 to Length(odeFormat.get_pVals())-1 do
@@ -527,15 +528,19 @@ begin
 end;
 
 
-procedure TmainForm.p1TBarChange(Sender: TObject);   // Remove/change once have dynamic param TBars working
+procedure TmainForm.ParamSliderOnChange(Sender: TObject);
 var i,p: integer;
 begin
-  self.paramUpdated:= true;
-  i:= p1TBar.Tag;
-  p:= self.sliderParamAr[i]; // get slider parameter position in p_vals array
-  p_vals[p]:= p1TBar.position*0.01*(sliderPHighAr[0]-sliderPLowAr[0]); // FIX
-  self.paramLabel1.caption:= p_names[self.sliderParamAr[0]]+ ': '+floattostr(p_vals[self.sliderParamAr[0]]);
-  console.log(' Updated param val: ',p_names[p],': ',p_vals[p]);
+  if sender is TWebTrackBar then
+  begin
+    i:= TWebTrackBar(Sender).Tag;
+    self.paramUpdated:= true;
+    p:= self.sliderParamAr[i]; // get slider parameter position in p_vals array
+    p_vals[p]:= self.sliderPTBarAr[i].Position*0.01*(sliderPHighAr[i]-sliderPLowAr[i]); // Fix ?
+    self.sliderPTBLabelAr[i].Caption:= p_names[self.sliderParamAr[i]]+ ': '+floattostr(p_vals[self.sliderParamAr[i]]);
+  //  console.log(' Updated param val: ',p_names[p],': ',p_vals[p]);
+  end;
+
 end;
 
 
@@ -644,7 +649,7 @@ procedure TmainForm.GetSBMLInfo();
  var simRTStr: String;   // Output string for TWebMemo
      i: Integer;
      odeEqs: String;
-     odeFormat: FormatODEs;
+     odeFormat: TFormatODEs;
  begin
    ODEready:= false;
 
@@ -660,7 +665,7 @@ procedure TmainForm.GetSBMLInfo();
    stepSize:= self.WebTimer1.Interval*0.001;  // 1 sec = 1000 msec
    simResultsMemo.Lines.Clear();
 
-   odeFormat:= FormatODEs.create(sbmlmodel);
+   odeFormat:= TFormatODEs.create(sbmlmodel);
    if Length(p_Vals)<1 then
    begin
     SetLength(p_Vals,Length(odeFormat.get_pVals()));  // Keep params for later
@@ -688,10 +693,10 @@ procedure TmainForm.GetSBMLInfo();
  end;
 
 
- procedure TmainForm.startSimulation(odeEqs: String; odeFormat: FormatODEs);
+ procedure TmainForm.startSimulation(odeEqs: String; odeFormat: TFormatODEs);
  var i: Integer;
  begin
-   runSim:= SimulationJS.create(runTime, stepSize, Length(s_Vals),
+   runSim:= TSimulationJS.create(runTime, stepSize, Length(s_Vals),
                             Length(odeFormat.get_pVals()), odeEqs,solverUsed);
    runSim.OnUpdate:= getVals;  // register callback function.
    runSim.p:= odeFormat.get_pVals();
@@ -883,7 +888,7 @@ procedure TmainForm.addPlot(); // Add a plot
       begin
        i:= TWebPaintBox(sender).tag;  // assume only plot paintboxes in right panel.
       // ShowMessage('Paint box sent mouse msg:  '+ inttostr(i));
-       self.editPlot(i);
+       self.EditPlot(i);
       end;
     end;
   end;
@@ -902,7 +907,7 @@ begin
  self.plotsPBAr[self.numbPlots-1].OnPaint:= plotsPBArPaint;
  self.plotsPBAr[self.numbPlots-1].OnMouseDown:= plotOnMouseDown;
 
- configPbPlot(self.numbPlots,(self.RightWPanel.Width - paramSliderWidth),self.RightWPanel.Height, self.plotsPBAr);
+ configPbPlot(self.numbPlots,(self.RightWPanel.Width - SLIDERPWIDTH),self.RightWPanel.Height, self.plotsPBAr);
  self.xscaleHeightAr[self.numbPlots-1]:= round(0.15* self.plotsPBAr[self.numbPlots-1].Height);   // make %15 of total height
  self.maxYValueAr[self.numbPlots-1] := plotsPBAr[self.numbPlots-1].Height;  //  Adjust this..
  self.graphBitmapAr[self.numbPlots-1].width := self.plotsPBAr[self.numbPlots-1].Width;
@@ -915,7 +920,7 @@ end;
 
 // TODO still more cleanup .. reorder plots if middle one deleted ?
 // Look at plotsPBAr[].Top value to determine order ? Still look at 'Tag' value for ordering?
-procedure TmainForm.deletePlot(plotn: integer);
+procedure TmainForm.DeletePlot(plotn: integer);
 begin
  self.plotsPBAr[plotn-1].free;
  delete(self.plotsPBAr,(plotn-1),1);
@@ -930,7 +935,7 @@ begin
 end;
 
 
-procedure TmainForm.editPlot(plotn: integer);
+procedure TmainForm.EditPlot(plotn: integer);
 var plotXposition, plotYposition: integer;
     editList: TStringList;
  begin
@@ -1017,43 +1022,70 @@ procedure TmainForm.setODEsolver();
   end;
 
 
-  procedure TmainForm.addParamSlider(); //sliderPanelAr: array of TWebPanel;
+  procedure TmainForm.addParamSlider();
   // default TBar range: 0 to initVal*10
-  var i, rangeMult: integer;
-  begin
-  console.log('Adding paramSlider ...',p_names[self.sliderParamAr[0]]);
-    SetLength(self.sliderPHighAr,Length(self.sliderPHighAr)+1);
-    SetLength(self.sliderPLowAr,Length(self.sliderPLowAr)+1);
-    rangeMult:= 10;
-    paramPanel1.visible:= true;
-    p1TBar.visible:=true;
-    self.paramLabel1.caption:= p_names[self.sliderParamAr[0]]+ ': '+floattostr(p_vals[self.sliderParamAr[0]]);  // Assume one slider exists.
-    self.p1TBar.Tag:= 0;  // keep track of slider number.
-    self.p1LowLabel.caption:= floattostr(0);
-    self.sliderPLowAr[0]:=0;
-    self.p1TBar.Min:= 0;
-    self.p1TBar.Position:= trunc((1/rangeMult)*100);
-    if p_vals[self.sliderParamAr[0]] > 0 then
+    procedure SliderOnMouseDown(sender: TObject;  Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+    var i:integer;   // grab plot which received event
     begin
-        self.p1HighLabel.caption:= floattostr(p_vals[self.sliderParamAr[0]]*rangeMult);
-        self.sliderPHighAr[0]:= p_vals[self.sliderParamAr[0]]*rangeMult;
-        self.p1TBar.Max:= 100;
+      if (Button = mbRight) or (Button = mbLeft) then   // Both for now.
+      begin
+        if sender is TWebPanel then
+        begin
+        i:= TWebPanel(sender).tag;  // assume only slider TWebpanel in right panel.
+        // ShowMessage('WebPanel sent mouse msg:  '+ inttostr(i));
+        //self.EditSlider(i);
+        end;
+      end;
+    end;
+  var i, rangeMult, sliderTBarWidth, sliderPanelLeft: integer;
+  begin
+    rangeMult:= 10;
+    sliderPanelLeft:= 410;
+    sliderTBarWidth:= 92;
+    i:= Length(self.sliderPanelAr);  // array index for current slider to be added.
+    SetLength(self.sliderPanelAr, i+1);
+    SetLength(self.sliderPHighAr, i+1);
+    SetLength(self.sliderPLowAr, i+1);
+    SetLength(self.sliderPTBarAr, i+1);
+    SetLength(self.sliderPHLabelAr, i+1);
+    SetLength(self.sliderPLLabelAr, i+1);
+    SetLength(self.sliderPTBLabelAr, i+1);
+    self.sliderPanelAr[i]:= TWebPanel.Create(self.RightWPanel);
+    self.sliderPanelAr[i].Parent:= self.RightWPanel;
+    self.sliderPanelAr[i].OnMouseDown:= SliderOnMouseDown;
+    configPSliderPanel(i, sliderPanelLeft, SLIDERPWIDTH, SLIDERPHEIGHT, self.sliderPanelAr);
+
+    self.sliderPanelAr[i].Tag:= i;  // keep track of slider index number.
+    self.sliderPTBarAr[i]:= TWebTrackBar.Create(self.sliderPanelAr[i]);
+    self.sliderPTBarAr[i].Parent:= self.sliderPanelAr[i];
+    self.sliderPTBarAr[i].OnChange:= self.ParamSliderOnChange;
+    self.sliderPHLabelAr[i]:= TWebLabel.Create(self.sliderPanelAr[i]);
+    self.sliderPHLabelAr[i].Parent:= self.sliderPanelAr[i];
+    self.sliderPLLabelAr[i]:= TWebLabel.Create(self.sliderPanelAr[i]);
+    self.sliderPLLabelAr[i].Parent:= self.sliderPanelAr[i];
+    self.sliderPTBLabelAr[i]:= TWebLabel.Create(self.sliderPanelAr[i]);
+    self.sliderPTBLabelAr[i].Parent:= self.sliderPanelAr[i];
+    configPSliderTBar(i,sliderTBarWidth, self.sliderPTBarAr,
+               self.sliderPHLabelAr,self.sliderPLLabelAr,self.sliderPTBLabelAr);
+    self.sliderPTBLabelAr[i].caption:= p_names[self.sliderParamAr[i]]+ ': '+floattostr(p_vals[self.sliderParamAr[i]]);
+    self.sliderPLowAr[i]:=0;
+    self.sliderPLLabelAr[i].caption:= floattostr(self.sliderPLowAr[i]);
+  //console.log('Adding paramSlider ...',p_names[self.sliderParamAr[i]]);
+
+    self.sliderPTBarAr[i].Min:= 0;
+    self.sliderPTBarAr[i].Position:= trunc((1/rangeMult)*100);
+    self.sliderPTBarAr[i].Max:= 100;
+    if p_vals[self.sliderParamAr[i]] > 0 then
+    begin
+        self.sliderPHLabelAr[i].caption:= floattostr(p_vals[self.sliderParamAr[i]]*rangeMult);
+        self.sliderPHighAr[i]:= p_vals[self.sliderParamAr[i]]*rangeMult;
     end
     else begin
-      self.p1HighLabel.caption:= floattostr(100);
-      self.sliderPHighAr[0]:= 100;
-      self.p1TBar.Max:= 100;
+      self.sliderPHLabelAr[i].caption:= floattostr(100);
+      self.sliderPHighAr[i]:= 100;   // default if init param val <= 0.
     end;
-    self.p1HighLabel.visible:= true;
-    self.p1LowLabel.visible:= true;
-    self.paramLabel1.visible:= true;
+   
 
-  // ****************************
-  //  i:= Length(self.sliderPanelAr);
-  //  SetLength(self.sliderPanelAr, i+1);
-  //  self.sliderPanelAr[i]:= TWebPanel.Create(self.RightWPanel);
-  //  self.sliderPanelAr[i].parent:= self.RightWPanel;
-   // configParamSlider(i,(self.RightWPanel.Width - paramSliderWidth),self.RightWPanel.Height, self.sliderPanelAr);
   end;
 
 

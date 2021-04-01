@@ -9,7 +9,7 @@ interface
 type
   TUpdateValEvent = procedure(time:double; updatedVals: array of double) of object;
   ODESolver = (EULER, RK4, LSODAS);
- SimulationJS = class (TObject)
+ TSimulationJS = class (TObject)
    private
     np, ny: Integer;  // Number of parameters, species (ny).
     dydt: TDoubleDynArray;
@@ -38,7 +38,7 @@ type
 
 implementation
 
-constructor SimulationJS.Create ( runTime, nStepSize:double; ny, np : Integer; newList: String; solver:ODESolver ); Overload ;
+constructor TSimulationJS.Create ( runTime, nStepSize:double; ny, np : Integer; newList: String; solver:ODESolver ); Overload ;
 var lsodaStr: String;  // LSODA test string. can remove.
   i:integer;
 begin
@@ -83,8 +83,7 @@ begin
   end;
 end;
                              // want to use updated time
-function  SimulationJS.eval ( newTime: double; s : array of double ) : double;
-//function  SimulationJS.eval ( s,par : array of double ) : double;
+function  TSimulationJS.eval ( newTime: double; s : array of double ) : double;
  var i,j: Integer;
  var numSteps: Integer;
  var dydt_s: array of double;
@@ -178,7 +177,7 @@ begin
 
 end;
 
-function  SimulationJS.eval2 ( time:double; s: array of double) : double;
+function  TSimulationJS.eval2 ( time:double; s: array of double) : double;
  var i,j: Integer;
  var numSteps: Integer;
  var dydt_s: array of double;
@@ -218,29 +217,29 @@ begin
 
   end;
 // return current time of run and variable values to listener:
-procedure SimulationJS.UpdateVals( time: double; updatedVals: array of double);
+procedure TSimulationJS.UpdateVals( time: double; updatedVals: array of double);
  begin
    if Assigned(FUpdate) then
      FUpdate(time, updatedVals);
  end;
 
-procedure SimulationJS.setODEsolver(solverToUse: ODESolver);
+procedure TSimulationJS.setODEsolver(solverToUse: ODESolver);
  begin
    self.solverUsed:= solverToUse;
  end;
 
 
-procedure SimulationJS.setStepSize(newStep: double);
+procedure TSimulationJS.setStepSize(newStep: double);
  begin
     self.step:= newStep;
  end;
 
-function SimulationJS.getStepSize(): double;
+function TSimulationJS.getStepSize(): double;
  begin
   Result:= self.step;
  end;
 
-procedure SimulationJS.testLSODA();
+procedure TSimulationJS.testLSODA();
 
  begin
    // LSODA.test.test(); // Use with all Pascal code.

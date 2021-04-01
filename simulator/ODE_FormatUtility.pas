@@ -9,11 +9,10 @@ interface
 uses System.SysUtils, System.StrUtils, web, SBML.model, SBML.helper;
 
 type
-FormatODEs = class
+TFormatODEs = class
   private
-  const odeStart: String='dydt_s[';  // Used for building up ODE eqs.
-  const odeLSODAstart: String = 'dydt_s.setval('; // Used for LSODA ODE eqs.
-  //const odeStart2: String='Result['; // Used for building up ODE eqs for LSODA
+  const ODESTART: String='dydt_s[';  // Used for building up ODE eqs.
+  //const ODE_LSODASTART: String = 'dydt_s.setval('; // Used for LSODA ODE eqs.
   var odeEqs: array of String; // list of ODE eqs using std notation
     odeEqs2: array of String; // LSODA list of eqs.
     odeEqSet:String;  // Contains all eqs as one String
@@ -35,7 +34,7 @@ FormatODEs = class
   function StrInArray(const Value : String;const ArrayOfString : Array of String) : Integer;
   function testStrReplace( ): String;  // testing....
   function getODEs(): array of String;
-  function getODEs2(): array of String;
+  function getODEs2(): array of String; // LSODA eqs
   function getODEeqSet(): String;
   function getODEeqSet2(): String; // LSODA eq set.
   function get_sVals(): array of double; // get init vals for species used in eqs.
@@ -52,7 +51,7 @@ function JSMathConvert(eqStr: String): String;
 
 implementation
 
-constructor FormatODEs.create( model: SBMLhelpClass);
+constructor TFormatODEs.create( model: SBMLhelpClass);
 var i, j,k, paramLen, count: Integer;
     curODE: String;
     odeStrs: array of String;
@@ -68,7 +67,6 @@ begin
   for i := 0 to Length(speciesStrAr)-1 do
   begin
     speciesStrAr[i]:= model.getSBMLspecies(i).getId();
-    console.log('---> Species: ', speciesStrAr[i]);
    // Get initial conc/amounts for each one:
     if model.getSBMLspecies(i).isSetInitialAmount() then
       sVals[i]:= model.getSBMLspecies(i).getInitialAmount()
@@ -85,7 +83,6 @@ begin
     begin
      //  paramsStr[i]:= params[i].getId() ;
       paramsStr[i]:= model.getSBMLparameter(i).getId();
-       console.log('---> Param: ', paramsStr[i]);
       // Get initial value for each param:
       if model.getSBMLparameter(i).isSetValue() then
        pVals[i]:= model.getSBMLparameter(i).getValue()
@@ -95,7 +92,7 @@ begin
       paramsStr[i]:= '';
       pVals[i]:= 0;
     end;
-    console.log('Param Val: ',pVals[i],' for: ',paramsStr[i]);
+   // console.log('Param Val: ',pVals[i],' for: ',paramsStr[i]);
   end;
     // Get compartments:
   paramLen:=Length(paramsStr);
@@ -107,7 +104,7 @@ begin
       if model.getSBMLcompartment(i).isSetIdAttribute() then
       begin
         paramsStr[paramLen+i]:= model.getSBMLcompartment(i).getID();
-        console.log('Adding compartment id');
+ //       console.log('Adding compartment id');
       end
       else paramsStr[paramLen+i]:= model.getSBMLcompartment(i).getName();
       console.log('Adding compartment id: ', paramsStr[paramLen+i]);
@@ -141,7 +138,7 @@ begin
       if found_dydt <0 then // not found
       begin
         self.odeEqs[count]:= lhsSymbols[k] + odeStrs[j] + ')';  // rhs inclosed in perenthesis.
-        console.log('... New Eq with params: ',odeEqs[count]);
+      //  console.log('... New Eq with params: ',odeEqs[count]);
         count:= count+1;  // count: Total number of eqs: Sum(prod+reactants per rxn)
       end
       else begin
@@ -150,9 +147,7 @@ begin
         else self.odeEqs[found_dydt]:= self.odeEqs[found_dydt] + '+ ' + '('+ odeStrs[j] + ')';
 
       end ;
-
-      console.log('... New Eq with MathOps: ',odeEqs[count]);
-      //count:= count+1;  // count: Total number of eqs: Sum(prod+reactants per rxn)
+  //    console.log('... New Eq with MathOps: ',odeEqs[count]);
     end;
 
   end;
@@ -168,7 +163,7 @@ end;
 
 // ************************************************************
 // Replace names in string with array names ('species1' -> 's[0]')
- function FormatODEs.replaceStrNames(names: array of String; stringtoedit: String; prefixStr: String):String;
+ function TFormatODEs.replaceStrNames(names: array of String; stringtoedit: String; prefixStr: String):String;
  var tmpStoE,tmpCatStr, currEqStr: String; // temp holder for string
  //var tmpCatStr2: String; // test...
  var i,j,k: integer;
@@ -178,7 +173,7 @@ end;
 
  begin
    currEqStr:= Copy(stringtoedit,1,MaxInt);  // use instead of stringtoedit
-    console.log('Value of currEqStr:', currEqStr);
+  //  console.log('Value of currEqStr:', currEqStr);
    tmpStoE:= '';
    tmpCatStr:= '';
    for i := 0 to Length(names)-1 do
@@ -194,17 +189,17 @@ end;
              k:= PosEx(names[i],currEqStr,j);  // returns 1 if name found at currEqStr[0]
               if ( k>0) then    // found name
                 begin
-                  console.log('Found match: ',names[i]);  // Found at correct position, k
+     //             console.log('Found match: ',names[i]);  // Found at correct position, k
                   if k =1 then beginC:= ' ' // First char of formula string is in names[i]
                   else beginC:= Copy(currEqStr,(k-1),1);
-                  console.log('Char before match ...:',beginC,':...');
+      //            console.log('Char before match ...:',beginC,':...');
                     endC:= Copy(currEqStr,(k+length(names[i])),1);
                   if StrInArray(beginC,eqdelims) > -1  then
                   begin
                     tmpCatStr:= Copy(currEqStr,j,(k-j));
                     if (StrInArray(endC,eqdelims) > -1) or (endC= '') then   // end of string chk
                     begin
-                      console.log('A second delimeter found! j:',j,', k: ',k);
+      //                console.log('A second delimeter found! j:',j,', k: ',k);
                    // Put new eq str together. Append prefix[i] to it.
                    // if end of eq str need to put endC at end ?? (NO), missing ')' sometimes.
                      // tmpStoE:= tmpStoE + tmpCatStr + PrefixStr+ '['+inttostr(i)+']';
@@ -221,11 +216,11 @@ end;
                   else
                   begin
                         tmpCatStr:= Copy(currEqStr,j,(k-j));
-                        console.log('Check first part of string: ',tmpCatStr);
+        //                console.log('Check first part of string: ',tmpCatStr);
                        tmpStoE:= tmpStoE + tmpCatStr + names[i];
-                       console.log('No match a part of another name, string: ',tmpStoE);
+       //                console.log('No match a part of another name, string: ',tmpStoE);
                   end;    // end new
-                  console.log('Char after match: ',endC);  // Issue here ?? (ending parenthesis)
+        //          console.log('Char after match: ',endC);  // Issue here ?? (ending parenthesis)
                   if (length(names[i])<1) then j:= j+1
                   else
                     begin
@@ -249,7 +244,7 @@ end;
  end;
 
 // ****************************************************************
- function FormatODEs.StrInArray(const Value : String; const ArrayOfString : Array of String) : Integer;
+ function TFormatODEs.StrInArray(const Value : String; const ArrayOfString : Array of String) : Integer;
 var
  Loop : String;
  i: Integer;
@@ -269,7 +264,7 @@ begin
 end;
 
 // ********************************************************
-function FormatODEs.testStrReplace( ): String;
+function TFormatODEs.testStrReplace( ): String;
 var testEq, spList, parList: array of String;
     finalEq: String;
     i: integer;
@@ -290,57 +285,57 @@ begin
 end;
 
 // **********************************************
-function FormatODEs.getODEs(): array of String;
+function TFormatODEs.getODEs(): array of String;
 begin
   result:= self.odeEqs;
 end;
 
-function FormatODEs.getODEs2(): array of String;
+function TFormatODEs.getODEs2(): array of String;
 begin
   Result:= self.odeEqs2;
 end;
 
 // **********************************************
-function FormatODEs.getODEeqSet(): String;
+function TFormatODEs.getODEeqSet(): String;
 begin
   Result:= self.odeEqSet;
 end;
 
 // **********************************************
-function FormatODEs.getODEeqSet2(): String;
+function TFormatODEs.getODEeqSet2(): String;
 begin
   Result:= self.odeEqSet2;
 end;
 
 // **********************************************
 // get init vals for species used in eqs.
-function FormatODEs.get_sVals(): array of double;
+function TFormatODEs.get_sVals(): array of double;
 begin
   result:= sVals;
 end;
 
 // **********************************************
 // get init vals for params, including comp vols used in eqs.
-function FormatODEs.get_pVals(): array of double;
+function TFormatODEs.get_pVals(): array of double;
 begin
   result:= pVals;
 end;
 
 // *************************************************
-function FormatODEs.get_speciesStrAr(): array of String;
+function TFormatODEs.get_speciesStrAr(): array of String;
 begin
   result:= self.speciesStrAr;
 end;
 
 // **************************************************
-function FormatODEs.get_paramsStr(): array of String;
+function TFormatODEs.get_paramsStr(): array of String;
 begin
   result:= self.paramsStr;
 end;
 
 // ***********************************************
 // build the 'dydt_s[]=' or 'dydt_s[]= (-1)*', store in lhsSymbols[]
-function FormatODEs.buildODE_LHS(rxn: SBMLreaction):array of String;
+function TFormatODEs.buildODE_LHS(rxn: SBMLreaction):array of String;
 var i, nr, np: Integer;
 var lhs: array of String;
 begin
@@ -359,9 +354,9 @@ begin
      begin
       for i := 0 to np-1 do
        if prods[i].isSetSpecies() then
-         lhs[i]:= odeStart + IntToStr(strInArray(self.prods[0].getSpecies(),speciesStrAr))+']'+'= (';    // dydt_name
+         lhs[i]:= ODESTART + IntToStr(strInArray(self.prods[0].getSpecies(),speciesStrAr))+']'+'= (';    // dydt_name
 
-     console.log('prods lhs: ', lhs[i]);
+  //   console.log('prods lhs: ', lhs[i]);
      end;
   end;
 
@@ -374,20 +369,20 @@ begin
      begin
       for i := 0 to nr-1 do
        if self.reactants[i].isSetSpecies() then
-         lhs[np+i]:= odeStart + IntToStr(strInArray(reactants[0].getSpecies(),speciesStrAr))+']'+'= (-1)* (';    // dydt_name
+         lhs[np+i]:= ODESTART + IntToStr(strInArray(reactants[0].getSpecies(),speciesStrAr))+']'+'= (-1)* (';    // dydt_name
 
-       console.log('reactants lhs: ', lhs[np+i]);
+   //    console.log('reactants lhs: ', lhs[np+i]);
      end;
    end;
   Result:= lhs;
 end;
     // Speciesdydt: dydt_s[n]
-function FormatODEs.getODEeqLoc(Speciesdydt : String): Integer; // return index of Species in odeEqs.
+function TFormatODEs.getODEeqLoc(Speciesdydt : String): Integer; // return index of Species in odeEqs.
 var i,found: Integer;
   spStr, b_str: String;
 
 begin
-console.log( ' --> Looking for Speciesdydt: ', Speciesdydt );
+//console.log( ' --> Looking for Speciesdydt: ', Speciesdydt );
   spStr:= '';
   b_str:= '';
   found:= -1;
@@ -396,8 +391,8 @@ console.log( ' --> Looking for Speciesdydt: ', Speciesdydt );
       b_str:= '['+IntToStr(i)+']';
       if ContainsText(Speciesdydt,b_str) then
       begin
-        spStr:= odeStart + IntToStr(i)+ ']'; // 'dydt_s[i]'
-        console.log('Found Speciesdydt: ', Speciesdydt, ', spStr: ', spStr);
+        spStr:= ODESTART + IntToStr(i)+ ']'; // 'dydt_s[i]'
+   //     console.log('Found Speciesdydt: ', Speciesdydt, ', spStr: ', spStr);
       end;
 
     end;
@@ -407,9 +402,9 @@ console.log( ' --> Looking for Speciesdydt: ', Speciesdydt );
     begin
       if ContainsText(odeEqs[i], spStr) then
       begin
-      console.log('odeEq: ',odeEqs[i], 'spStr: ',spStr);
+   //   console.log('odeEq: ',odeEqs[i], 'spStr: ',spStr);
       found:= i;
-      console.log('**** Found existing ODE eq!');
+  //    console.log('**** Found existing ODE eq!');
       end;
     end;
 
@@ -420,7 +415,7 @@ console.log( ' --> Looking for Speciesdydt: ', Speciesdydt );
 
 end;
 
- procedure FormatODEs.buildLSODAeqs();
+ procedure TFormatODEs.buildLSODAeqs();
  var i,j:integer;
     replStr:String;
     editStr: String;
@@ -438,26 +433,20 @@ end;
          end;
 
        end;
-     console.log(' -> ODE eq: ',self.odeEqs[i]);
-     console.log(' --> LSODA eq: ',self.odeEqs2[i]);
+    // console.log(' -> ODE eq: ',self.odeEqs[i]);
+    // console.log(' --> LSODA eq: ',self.odeEqs2[i]);
      end;
 
    end;
 
    // Build up final ODE eqs list as one string for use by solver
- procedure FormatODEs.buildFinalEqSet();
+ procedure TFormatODEs.buildFinalEqSet();
  var i:Integer;
  begin
   self.odeEqSet:= '';
   self.odeEqSet2:= 'let dydt_s = pas.uVector.TVector.$create("create$1",[s.length]); ';  // Eq set for LSODA
 
-
-  //SetLength(odeStrs,Length(rxnsArray));
-   // Generate array of SBML params plus volumes and their inital values.
-   //odeStrs:= odeFormat.getODEs();
-   //odeStrs2:= odeFormat.getODEs2();
-   //editStr:= '';
-   for i := 0 to Length(self.ODEeqs)-1 do
+  for i := 0 to Length(self.ODEeqs)-1 do
     begin
       if Length(self.ODEeqs[i])>1 then  // Do not add empty statements
       begin
@@ -507,7 +496,7 @@ begin
       currStr:= StringReplace(currStr, sbmlStr, jsStr, [rfReplaceAll, rfIgnoreCase]);
 
     end;
-  console.log( 'JS Math string Replace:', currStr );
+  //console.log( 'JS Math string Replace:', currStr );
   result:= currStr;
 end;
 

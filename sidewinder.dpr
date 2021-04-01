@@ -31,7 +31,8 @@ uses
   GraphP in 'plot\GraphP.pas',
   speciesSelectForm in 'speciesSelectForm.pas' {SpeciesSWForm: TWebForm} {*.html},
   plotLayout in 'plot\plotLayout.pas',
-  paramSelectForm in 'paramSelectForm.pas' {Form1: TWebForm} {*.html};
+  paramSelectForm in 'paramSelectForm.pas' {Form1: TWebForm} {*.html},
+  paramSliderLayout in 'paramSliderLayout.pas';
 
 {$R *.res}
 

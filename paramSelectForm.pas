@@ -35,7 +35,6 @@ implementation
 
 procedure TParamSliderSForm.paramRGChange(Sender: TObject);
 begin
-  console.log('RadioGroup changed: ',paramRG.ItemIndex);
   chosenParam:=  paramRG.ItemIndex;
 end;
 

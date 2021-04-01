@@ -6,12 +6,10 @@ uses System.SysUtils, System.Classes, JS, Web, Vcl.Controls, WEBLib.ExtCtrls,WEB
 const defaultNumbPlots = 3;
 var panelW, panelH, currPlot: integer;
 
-//procedure configPbPlot(plotNumb: integer; plotPanel: TWebPanel; newPBplotAr: array of TWebPaintBox);
 procedure configPbPlot(plotNumb: integer; plotPanelWidth, plotPanelHeight: integer;
   newPBplotAr: array of TWebPaintBox);
 procedure adjustPlotHeights(totalPlots: integer; pbPlotAr: array of TWebPaintBox);
-//procedure plotOnMouseDown(Sender: TObject; Button: TMouseButton;
- // Shift: TShiftState; X, Y: Integer);
+
 implementation
 
 procedure configPbPlot(plotNumb: integer; plotPanelWidth, plotPanelHeight: integer; newPBplotAr: array of TWebPaintBox);
@@ -47,15 +45,7 @@ for i := 0 to totalPlots-1 do
 
 end;
 
-//procedure plotOnMouseDown(sender: TObject;  Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
-//begin
-//   if Button = mbLeft then
- //   ShowMessage('LEFT button')
-//  else if Button = mbRight then
-//    ShowMessage('RIGHT button')
-//  else
-//    ShowMessage('MIDDLE button');
-//end;
+
 
 
 end.
