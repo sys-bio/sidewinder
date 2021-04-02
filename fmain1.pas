@@ -69,6 +69,7 @@ type
     SBMLOpenDialog: TWebOpenDialog;
     SBMLloadButton: TWebButton;
     plotEditLB: TWebListBox;
+    SliderEditLB: TWebListBox;
 
     procedure btnUniUniClick(Sender: TObject);
     procedure btnBiBiClick(Sender: TObject);
@@ -119,9 +120,9 @@ type
     procedure btnClearClick(Sender: TObject);
     procedure mnuSaveClick(Sender: TObject);
     procedure mnuUndoClick(Sender: TObject);
-    //procedure p1TBarChange(Sender: TObject);
-    procedure ParamSliderOnChange(Sender: TObject);
+    procedure ParamSliderOnChange(Sender: TObject);  // User changes value of parameter
     procedure plotEditLBClick(Sender: TObject);
+    procedure SliderEditLBClick(Sender: TObject);  // User clicks choice from plot edit list
 
 
   private
@@ -134,10 +135,13 @@ type
     procedure addPlot(); // Add a plot
     procedure selectPlotSpecies(plotnumb: integer);
     procedure addParamSlider();
-    procedure selectParameter(); // Get parameter for slider
+    procedure SetSliderParamValues(sn, paramForSlider: integer);
+    procedure selectParameter(sNumb: integer); // Get parameter for slider
     procedure LoadJSONFile();
     procedure DeletePlot(plotn: integer);
-    procedure EditPlot(plotn: integer); // delete, change plot species, other added as needed.
+    procedure EditPlotList(plotn: integer); // delete, change plot species, other added as needed using TWebListBox.
+    procedure EditSliderList(sn: integer);  // delete, change param slider as needed using TWebListBox.
+    procedure DeleteSlider(sn: integer);
 
   public
     network : TNetwork;
@@ -509,8 +513,7 @@ procedure TmainForm.ParamSliderBtnClick(Sender: TObject);
 var i:integer;
    odeFormat: TFormatODEs;
 begin
-// Check if already 10 sliders, if so then showmessage( 'Only 10 parameter sliders allowed, edit existing one');
-
+// TODO: Check if already 10 sliders, if so then showmessage( 'Only 10 parameter sliders allowed, edit existing one');
   // Fill out parameter list for model, if not done already:
   if Length(p_Vals)<1 then
    begin
@@ -523,7 +526,7 @@ begin
        p_names[i]:= odeFormat.get_paramsStr[i];
     end;
    end;
-  self.selectParameter();
+  self.selectParameter(Length(sliderParamAr));
 
 end;
 
@@ -693,7 +696,24 @@ procedure TmainForm.GetSBMLInfo();
  end;
 
 
- procedure TmainForm.startSimulation(odeEqs: String; odeFormat: TFormatODEs);
+ procedure TmainForm.SliderEditLBClick(Sender: TObject);
+ begin
+  if self.SliderEditLB.ItemIndex = 0 then  // change param for slider
+  begin
+    self.selectParameter(self.SliderEditLB.tag);
+  end;
+  if self.SliderEditLB.ItemIndex = 1 then  // delete slider
+  begin
+    self.DeleteSlider(self.SliderEditLB.tag);
+  end ;
+  //else ShowMessage('Cancel');
+  self.SliderEditLB.tag:= 0;
+  self.SliderEditLB.visible:= false;
+  self.SliderEditLB.Top:= 40; // default
+end;
+
+
+procedure TmainForm.startSimulation(odeEqs: String; odeFormat: TFormatODEs);
  var i: Integer;
  begin
    runSim:= TSimulationJS.create(runTime, stepSize, Length(s_Vals),
@@ -732,7 +752,6 @@ procedure TmainForm.GetSBMLInfo();
     end
     // else error msg needed?
   else self.setupSimulation();
-
  end;
 
 
@@ -831,7 +850,6 @@ begin
     // Dynamically draw plots:
   plotsG_Ar[j].addPoint (graphBitmapAr[j].canvas, currentGeneration, y_new, plot_y, True, currTime);
   self.plotsPBAr[j].canvas.draw (0, 0, graphBitmapAr[j])
-
   end;
 end;
 
@@ -888,7 +906,7 @@ procedure TmainForm.addPlot(); // Add a plot
       begin
        i:= TWebPaintBox(sender).tag;  // assume only plot paintboxes in right panel.
       // ShowMessage('Paint box sent mouse msg:  '+ inttostr(i));
-       self.EditPlot(i);
+       self.EditPlotList(i);
       end;
     end;
   end;
@@ -935,7 +953,7 @@ begin
 end;
 
 
-procedure TmainForm.EditPlot(plotn: integer);
+procedure TmainForm.EditPlotList(plotn: integer);
 var plotXposition, plotYposition: integer;
     editList: TStringList;
  begin
@@ -954,6 +972,40 @@ var plotXposition, plotYposition: integer;
 
  end;
 
+procedure TmainForm.EditSliderList(sn: integer);  // delete, change param slider as needed.
+var sliderXposition, sliderYposition: integer;
+    editList: TStringList;
+ begin
+ //console.log('Edit Slider: slider #: ',sn);
+  sliderXposition:= 424;
+  sliderYposition:= self.sliderPanelAr[sn].Top + 10;
+  editList:= TStringList.create();
+  editList.Add('Change slider parameter.');
+  editList.Add('Delete slider.');
+  editList.Add('Cancel');
+  self.SliderEditLB.Items:= editList;
+  self.SliderEditLB.Top:= sliderYposition;
+  self.SliderEditLB.Left:= sliderXposition;
+  self.SliderEditLB.Tag:= sn;
+  self.SliderEditLB.bringToFront;
+  self.SliderEditLB.visible:= true;
+
+ end;
+
+ // TODO still more cleanup .. reorder sliders if middle one deleted ?
+procedure TmainForm.DeleteSlider(sn: integer);
+begin
+//console.log('Delete Slider: slider #: ',sn);
+ self.sliderPanelAr[sn].free;
+ delete(self.sliderPanelAr,(sn),1);
+ delete(self.sliderPHLabelAr,(sn),1);
+ delete(self.sliderPLLabelAr,(sn),1);
+ delete(self.sliderPTBLabelAr,(sn),1);
+ delete(self.sliderPTBarAr,(sn),1);
+ delete(self.sliderPHighAr,(sn),1);
+ delete(self.sliderPLowAr,(sn),1);
+ self.RightWPanel.invalidate;
+end;
 
 procedure TmainForm.setODEsolver();
   begin
@@ -977,32 +1029,37 @@ procedure TmainForm.setODEsolver();
     begin
       setLength(s_Vals,sbmlmodel.getSpeciesNumb());
       setLength(s_names,length(s_Vals));
-
       for i:= 0 to sbmlmodel.getSpeciesNumb()-1 do
       begin
        if sbmlmodel.getSBMLspecies(i).isSetInitialAmount() then
             s_Vals[i]:= sbmlmodel.getSBMLspecies(i).getInitialAmount()
         else if sbmlmodel.getSBMLspecies(i).isSetInitialConcentration() then
             s_Vals[i]:= sbmlmodel.getSBMLspecies(i).getInitialConcentration();
-
         s_names[i]:=sbmlmodel.getSBMLspecies(i).getID();  // Use species ID as name
       end;
     end;
   end;
 
-
-  procedure TmainForm.SelectParameter();
+  // Select parameter to use for slider
+  procedure TmainForm.SelectParameter(sNumb: integer);
   var paramIndex: integer; // param chosen in radiogroup
     // Pass back to caller after closing popup:
    procedure AfterShowModal(AValue: TModalResult);
     var i, pSliderNumb:integer;
+      addingSlider: boolean;
     begin
-      pSliderNumb:= Length(self.sliderParamAr);  // same as self.numbParams
-    // Add a slider
-      setLength(self.sliderParamAr,pSliderNumb+1);
-      //console.log('Param index picked (chosenParam): ',sliderParamForm.chosenParam);
-      self.sliderParamAr[pSliderNumb]:= sliderParamForm.chosenParam;
-      self.addParamSlider();  // <-- Add dynamically created slider
+      if Length(self.sliderParamAr)< (sNumb + 1) then
+        begin
+          pSliderNumb:= Length(self.sliderParamAr);  // same as self.numbParams
+          // Add a slider
+          addingSlider:= true;
+          setLength(self.sliderParamAr,pSliderNumb+1);
+        end
+      else addingSlider:= false;
+      console.log('Param index picked (chosenParam): ',sliderParamForm.chosenParam);
+      self.sliderParamAr[sNumb]:= sliderParamForm.chosenParam;
+      if addingSlider then self.addParamSlider()  // <-- Add dynamically created slider
+      else self.SetSliderParamValues(sNumb, self.sliderParamAr[sNumb]);// update slider with new parameter:
     end;
 
 // async called OnCreate for TParamSliderSForm
@@ -1017,7 +1074,6 @@ procedure TmainForm.setODEsolver();
     sliderParamForm.PopupOpacity:= 0.3;
     sliderParamForm.Border:= fbDialogSizeable;
     sliderParamForm.Caption:= 'Parameter for slider:';
-
     sliderParamForm.ShowModal(@AfterShowModal);
   end;
 
@@ -1033,13 +1089,12 @@ procedure TmainForm.setODEsolver();
         begin
         i:= TWebPanel(sender).tag;  // assume only slider TWebpanel in right panel.
         // ShowMessage('WebPanel sent mouse msg:  '+ inttostr(i));
-        //self.EditSlider(i);
+        self.EditSliderList(i);
         end;
       end;
     end;
-  var i, rangeMult, sliderTBarWidth, sliderPanelLeft: integer;
+  var i, sliderTBarWidth, sliderPanelLeft: integer;
   begin
-    rangeMult:= 10;
     sliderPanelLeft:= 410;
     sliderTBarWidth:= 92;
     i:= Length(self.sliderPanelAr);  // array index for current slider to be added.
@@ -1065,28 +1120,35 @@ procedure TmainForm.setODEsolver();
     self.sliderPLLabelAr[i].Parent:= self.sliderPanelAr[i];
     self.sliderPTBLabelAr[i]:= TWebLabel.Create(self.sliderPanelAr[i]);
     self.sliderPTBLabelAr[i].Parent:= self.sliderPanelAr[i];
+    self.SetSliderParamValues(i, self.sliderParamAr[i]);
     configPSliderTBar(i,sliderTBarWidth, self.sliderPTBarAr,
                self.sliderPHLabelAr,self.sliderPLLabelAr,self.sliderPTBLabelAr);
-    self.sliderPTBLabelAr[i].caption:= p_names[self.sliderParamAr[i]]+ ': '+floattostr(p_vals[self.sliderParamAr[i]]);
-    self.sliderPLowAr[i]:=0;
-    self.sliderPLLabelAr[i].caption:= floattostr(self.sliderPLowAr[i]);
-  //console.log('Adding paramSlider ...',p_names[self.sliderParamAr[i]]);
-
-    self.sliderPTBarAr[i].Min:= 0;
-    self.sliderPTBarAr[i].Position:= trunc((1/rangeMult)*100);
-    self.sliderPTBarAr[i].Max:= 100;
-    if p_vals[self.sliderParamAr[i]] > 0 then
-    begin
-        self.sliderPHLabelAr[i].caption:= floattostr(p_vals[self.sliderParamAr[i]]*rangeMult);
-        self.sliderPHighAr[i]:= p_vals[self.sliderParamAr[i]]*rangeMult;
-    end
-    else begin
-      self.sliderPHLabelAr[i].caption:= floattostr(100);
-      self.sliderPHighAr[i]:= 100;   // default if init param val <= 0.
-    end;
-   
 
   end;
 
+  // Called when adding or updating a param slider. sn = slider number
+  procedure TMainForm.SetSliderParamValues(sn, paramForSlider: integer);
+  var rangeMult: integer;
+  begin
+    rangeMult:= 10; // default.
+    self.sliderPTBLabelAr[sn].caption:= p_names[self.sliderParamAr[sn]]+ ': '+floattostr(p_vals[self.sliderParamAr[sn]]);
+    self.sliderPLowAr[sn]:=0;
+    self.sliderPLLabelAr[sn].caption:= floattostr(self.sliderPLowAr[sn]);
+    //console.log('SetSliderParamValues sn...',sn,' : ',p_names[self.sliderParamAr[sn]]);
+
+    self.sliderPTBarAr[sn].Min:= 0;
+    self.sliderPTBarAr[sn].Position:= trunc((1/rangeMult)*100);
+    self.sliderPTBarAr[sn].Max:= 100;
+    if p_vals[self.sliderParamAr[sn]] > 0 then
+    begin
+        self.sliderPHLabelAr[sn].caption:= floattostr(p_vals[self.sliderParamAr[sn]]*rangeMult);
+        self.sliderPHighAr[sn]:= p_vals[self.sliderParamAr[sn]]*rangeMult;
+    end
+    else begin
+      self.sliderPHLabelAr[sn].caption:= floattostr(100);
+      self.sliderPHighAr[sn]:= 100;   // default if init param val <= 0.
+    end;
+
+  end;
 
 end.

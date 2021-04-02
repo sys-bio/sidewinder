@@ -99,12 +99,18 @@ object mainForm: TmainForm
     object paramSliderBtn: TWebButton
       Left = 1352
       Top = 15
-      Width = 96
+      Width = 113
       Height = 25
       Hint = 'Add parameter slider'
-      Caption = 'Parameter slider'
+      Caption = 'Add Parameter Slider'
       ChildOrder = 6
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -11
+      Font.Name = 'Tahoma'
+      Font.Style = []
       HeightPercent = 100.000000000000000000
+      ParentFont = False
       ShowHint = True
       Visible = False
       WidthPercent = 100.000000000000000000
@@ -629,6 +635,18 @@ object mainForm: TmainForm
       Visible = False
       WidthPercent = 100.000000000000000000
       OnClick = plotEditLBClick
+    end
+    object SliderEditLB: TWebListBox
+      Left = 416
+      Top = 216
+      Width = 121
+      Height = 60
+      HeightPercent = 100.000000000000000000
+      ItemHeight = 13
+      ItemIndex = -1
+      Visible = False
+      WidthPercent = 100.000000000000000000
+      OnClick = SliderEditLBClick
     end
   end
   object CenterWPanel: TWebPanel

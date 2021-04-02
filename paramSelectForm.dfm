@@ -7,7 +7,7 @@ object ParamSliderSForm: TParamSliderSForm
     Left = 112
     Top = 0
     Width = 64
-    Height = 24
+    Height = 22
     Caption = 'OK'
     ChildOrder = 1
     HeightPercent = 100.000000000000000000

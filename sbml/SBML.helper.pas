@@ -73,22 +73,13 @@ end;
 
 procedure SBMLhelpClass.readSBML(textSBML:string);
  var numb:integer;
- //currReactants: array of SBMLspeciesreference;
- //currProducts: array of SBMLspeciesreference;
- //curReactant: SBMLspeciesreference;
- //curProduct: SBMLspeciesreference;
- //jsReacts: TJSArray;   // array of reactants for one rxn
- //jsProds: TJSArray;     // needed ???
- //jsReactant: TJSObject; // needed ???
- //jsProduct: TJSObject;  // needed ???
+
  nSpecies: SBMLspecies;
  jsSpecies: TJSObject;
  newComp: SBMLcompartment;
  jsComp: TJSObject;
  newParam: SBMLparameter;
  jsParam: TJSObject;
-// nKineticLaw: SBMLkineticlaw;
- //jsKineticLaw: TJSObject;
 
 begin
  nSpecies:= SBMLspecies.create(); // a new species

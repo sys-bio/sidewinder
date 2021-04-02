@@ -25,7 +25,8 @@ type
     y_Mult: array of double; // array of y axis multipliers, default is 1. NOT used currently.
     step: double;     // step size
     simLength: double; // simulation length
-    yscaleHeight: integer;
+    yScaleHeight: integer;
+    yScaleWidth: integer; // new
     procedure draw_Graph (canvas : TCanvas; x, y : DataType; Size, startp, endp : integer);
     procedure change_xorigin (wxmin, wxmax : integer);
     procedure draw_x_axis (const x : DataType; canvas : TCanvas; currTime: double);
@@ -60,6 +61,7 @@ begin
   symax := symax - xscaleHeight;  // max pixel height
   // Now adjust for y axis label:
   yScaleHeight:= xscaleHeight;
+  yScaleWidth:=60;
   CanvasWidth:= (sxmax - sxmin);
 //  sxmin:= sxmin + yScaleHeight;  // adjust width with pixel width of y axis label.
 
@@ -79,8 +81,6 @@ end;
 
 function TPlotGraph.world_to_screen (wx, wy : integer ):array of integer;
 begin
- // sx := trunc (wx*a + a1);
- // sy := trunc (wy*b + b1);
   Result[0] := trunc (wx*a + a1);
   Result[1] := trunc (wy*b + b1);
 end;
@@ -131,7 +131,7 @@ begin
   divMk:= 20;
   divMinor:= 5;
   xstart:= -1;
-  xstart:= integer(x[startp]); // ?? undefined ??
+  xstart:= integer(x[startp]);
   { now draw x scale }
   canvas.pen.color := clBlack;
   xyAr:= world_to_screen (xstart, 0);  xi:= xyAr[0]; yi:= xyAr[1];   canvas.moveto (xi, yi);
@@ -177,6 +177,7 @@ begin
   xyAr:= world_to_screen (xstart, ystart); xi:= xyAr[0]; yi:= xyAr[1];
   canvas.moveto (xi, yi+1);
   xyAr:= world_to_screen (xstart, yScaleHeight-scale); xi:= xyAr[0]; yi:= xyAr[1];
+
   canvas.lineto (xi, yi+1);
   { major division inter val = 20, minor division interval = 5 }
   yend  := ystart + yaxisHt;
@@ -232,9 +233,7 @@ begin
      begin
        inc (endp); inc (Size);
      end;
-
   x1[endp]  := time;
-
 
   for i := 0 to Length(y_curr)-1 do
   begin
@@ -251,6 +250,7 @@ begin
           if j<Length(COLORS) then canvas.pen.color := COLORS[j]  // assume plots <10
           else canvas.pen.color := COLORS[1];
           draw_graph (canvas, x1, y_vals[j], Size, startp, endp);
+
         end;
       end;
 

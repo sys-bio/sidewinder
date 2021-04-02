@@ -12,7 +12,6 @@ type
 TFormatODEs = class
   private
   const ODESTART: String='dydt_s[';  // Used for building up ODE eqs.
-  //const ODE_LSODASTART: String = 'dydt_s.setval('; // Used for LSODA ODE eqs.
   var odeEqs: array of String; // list of ODE eqs using std notation
     odeEqs2: array of String; // LSODA list of eqs.
     odeEqSet:String;  // Contains all eqs as one String
@@ -477,8 +476,8 @@ end;
 // Assumes left parenthesis follows operator: 'pow(a,b)', not 'pow (a,b)' or 'pow a,b'
 function JSMathConvert(eqStr: String): String;
 const
-  sbmlOp: array[0..3] of String = ('pow', 'ln','log', 'exp');
-  jsMathOp: array[0..3] of String = ('Math.pow', 'Math.log', 'Math.log10', 'Math.exp');
+  sbmlOp: array[0..4] of String = ('pow', 'ln','log', 'exp', 'abs');
+  jsMathOp: array[0..4] of String = ('Math.pow', 'Math.log', 'Math.log10', 'Math.exp', 'Math.abs');
 var
  i: Integer;
  sbmlStr: String;
