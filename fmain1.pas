@@ -207,6 +207,7 @@ Uses uGraphUtils, uCreateNetworks, uLayout;
 procedure TmainForm.addPlotButtonClick(Sender: TObject);
 begin
 // Make runtime, stepsize, simulation buttons visible
+// TODO: need to check if model ready for simulation first.
   self.numbPlots:= self.numbPlots+1;
   rtLabel1.visible:= true;
   rtLengthEdit1.visible:= true;
