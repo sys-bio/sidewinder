@@ -54,7 +54,8 @@ object mainForm: TmainForm
       Width = 96
       Height = 25
       Caption = 'New'
-      ElementClassName = 'card btn-dark'
+      ElementClassName = 'btn btn-primary btn-sm'
+      ElementFont = efCSS
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWhite
       Font.Height = -11
@@ -72,15 +73,16 @@ object mainForm: TmainForm
       Height = 25
       Caption = 'Save'
       ChildOrder = 1
-      ElementClassName = 'card btn-dark'
+      ElementClassName = 'btn btn-primary btn-sm'
+      ElementFont = efCSS
       HeightPercent = 100.000000000000000000
       WidthPercent = 100.000000000000000000
       OnClick = mnuSaveClick
     end
     object onLineSimButton: TWebButton
-      Left = 976
+      Left = 970
       Top = 15
-      Width = 101
+      Width = 115
       Height = 25
       Caption = 'Simulation: Offline'
       ChildOrder = 5
@@ -88,7 +90,7 @@ object mainForm: TmainForm
       Font.Color = clRed
       Font.Height = -11
       Font.Name = 'Tahoma'
-      Font.Style = []
+      Font.Style = [fsBold]
       HeightPercent = 100.000000000000000000
       ParentFont = False
       WidthPercent = 100.000000000000000000
@@ -101,6 +103,8 @@ object mainForm: TmainForm
       Height = 25
       Caption = 'Add Plot'
       ChildOrder = 5
+      ElementClassName = 'btn btn-primary btn-sm'
+      ElementFont = efCSS
       HeightPercent = 100.000000000000000000
       WidthPercent = 100.000000000000000000
       OnClick = addPlotButtonClick
@@ -108,11 +112,13 @@ object mainForm: TmainForm
     object paramSliderBtn: TWebButton
       Left = 1352
       Top = 15
-      Width = 113
+      Width = 135
       Height = 25
       Hint = 'Add parameter slider'
       Caption = 'Add Parameter Slider'
       ChildOrder = 6
+      ElementClassName = 'btn btn-primary btn-sm'
+      ElementFont = efCSS
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -11
@@ -155,6 +161,8 @@ object mainForm: TmainForm
       Hint = 'Load JSON file (network model)'
       Caption = 'Load Network'
       ChildOrder = 11
+      ElementClassName = 'btn btn-primary btn-sm'
+      ElementFont = efCSS
       HeightPercent = 100.000000000000000000
       ShowHint = True
       WidthPercent = 100.000000000000000000
@@ -167,6 +175,8 @@ object mainForm: TmainForm
       Height = 25
       Caption = 'Load SBML'
       ChildOrder = 11
+      ElementClassName = 'btn btn-primary btn-sm'
+      ElementFont = efCSS
       HeightPercent = 100.000000000000000000
       WidthPercent = 100.000000000000000000
       OnClick = SBMLloadButtonClick
@@ -420,7 +430,7 @@ object mainForm: TmainForm
       Left = 30
       Top = 26
       Width = 64
-      Height = 24
+      Height = 30
       Hint = 'Select Mode'
       ElementClassName = 'card-body btn-dark'
       Glyph.Data = {
@@ -469,7 +479,7 @@ object mainForm: TmainForm
       OnClick = btnIdleClick
     end
     object btnAddNode: TWebSpeedButton
-      Left = 27
+      Left = 24
       Top = 65
       Width = 85
       Height = 36
@@ -802,22 +812,25 @@ object mainForm: TmainForm
     ChildOrder = 4
     ElementBodyClassName = 'card-body-10  bg-dark text-white'
     object btnRandomNetwork: TWebButton
-      Left = 504
+      Left = 500
       Top = 3
-      Width = 96
+      Width = 116
       Height = 25
       Caption = 'Random Network'
+      ElementClassName = 'btn btn-primary btn-sm'
       HeightPercent = 100.000000000000000000
       WidthPercent = 100.000000000000000000
       OnClick = btnRandomNetworkClick
     end
     object btnAutoLayout: TWebButton
-      Left = 504
+      Left = 500
       Top = 49
-      Width = 96
+      Width = 116
       Height = 25
       Caption = 'Auto Layout'
       ChildOrder = 1
+      ElementClassName = 'btn btn-primary btn-sm'
+      ElementFont = efCSS
       HeightPercent = 100.000000000000000000
       WidthPercent = 100.000000000000000000
       OnClick = btnAutoLayoutClick
@@ -825,10 +838,12 @@ object mainForm: TmainForm
     object btnSampleLayout: TWebButton
       Left = 632
       Top = 24
-      Width = 120
+      Width = 145
       Height = 25
       Caption = 'Draw Sample Network'
       ChildOrder = 2
+      ElementClassName = 'btn btn-primary btn-sm'
+      ElementFont = efCSS
       HeightPercent = 100.000000000000000000
       WidthPercent = 100.000000000000000000
       OnClick = btnDrawClick
@@ -840,6 +855,8 @@ object mainForm: TmainForm
       Height = 25
       Caption = 'About'
       ChildOrder = 3
+      ElementClassName = 'btn btn-primary btn-sm'
+      ElementFont = efCSS
       HeightPercent = 100.000000000000000000
       WidthPercent = 100.000000000000000000
       OnClick = btnAboutClick
@@ -851,6 +868,7 @@ object mainForm: TmainForm
       Height = 25
       Caption = 'Center'
       ChildOrder = 4
+      ElementClassName = 'btn btn-primary btn-sm'
       HeightPercent = 100.000000000000000000
       WidthPercent = 100.000000000000000000
       OnClick = btnCenterClick
