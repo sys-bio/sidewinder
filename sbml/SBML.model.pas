@@ -24,7 +24,7 @@ type
    function getInitialConcentration(): double;
    procedure setInitialConcentration(amt:double);
    function isSetInitialConcentration():boolean;
-   function getCompartment(): String;
+   function getCompartment(): String;  // get compartment species is in, if set
    procedure setCompartment(sid:String);// sid identifier of a Compartment object defined elsewhere in this Model
    function isSetCompartment():boolean;
    function getBoundaryCondition():boolean; // true if this Species' "boundaryCondition" attribute value is true, false otherwise

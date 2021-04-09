@@ -19,11 +19,11 @@ TFormatODEs = class
     assignParamEqs: array of String; // List of SBML param assignment formulas, to be added to final odeEqSet.
     assignSpeciesEqs: array of String; // List of SBML spec assignment formulas, to be added to final odeEqSet.
     rxns: array of SBMLreaction;
-    prods: array of SBMLspeciesreference;
-    reactants: array of SBMLspeciesreference;
+    prods: array of SBMLspeciesreference; // TODO: move to buildODE_LHS()
+    reactants: array of SBMLspeciesreference; // TODO: move to buildODE_LHS()
     speciesStrAr: array of String;   // keep to convert short name to long name.
     speciesAr: array of SBMLspecies;
-    spBoundaryCondAr: array of boolean; // Keep track of boundary condition species which do not have ODEs.
+    spBoundaryCondAr: array of boolean; // Keep track of boundary condition species which do not have ODEs. get rid of, redundant?
     paramsStr: array of String;    // keep to convert short name to long name.
     sVals: array of double;   // init val of species, same size as speciesStrAr
     pVals: array of double;   // init val of parameters, same size as paramsStr.
@@ -342,6 +342,7 @@ function TFormatODEs.buildODE_LHS(rxn: SBMLreaction):array of String;
 var i, nr, np: Integer;
     tmpSpId: String;
     lhs: array of String;
+ // TODO move self.products and self.reactants to here
 begin
   nr:= rxn.getNumReactants();
   np:= rxn.getNumProducts();
