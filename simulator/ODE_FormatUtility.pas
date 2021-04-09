@@ -6,7 +6,7 @@ unit ODE_FormatUtility;
 // Convert basic math functions to javascript notation (ie pow() -> Math.pow() )
 
 interface
-uses System.SysUtils, System.StrUtils, web, SBML.model, SBML.helper;
+uses System.SysUtils, System.StrUtils, web, SBML.model, SBML.helper, SBML.model.rule;
 
 type
 TFormatODEs = class
@@ -16,16 +16,22 @@ TFormatODEs = class
     odeEqs2: array of String; // LSODA list of eqs.
     odeEqSet:String;  // Contains all eqs as one String
     odeEqSet2:String; // LSODA specific
+    assignParamEqs: array of String; // List of SBML param assignment formulas, to be added to final odeEqSet.
+    assignSpeciesEqs: array of String; // List of SBML spec assignment formulas, to be added to final odeEqSet.
     rxns: array of SBMLreaction;
     prods: array of SBMLspeciesreference;
     reactants: array of SBMLspeciesreference;
     speciesStrAr: array of String;   // keep to convert short name to long name.
+    speciesAr: array of SBMLspecies;
+    spBoundaryCondAr: array of boolean; // Keep track of boundary condition species which do not have ODEs.
     paramsStr: array of String;    // keep to convert short name to long name.
     sVals: array of double;   // init val of species, same size as speciesStrAr
     pVals: array of double;   // init val of parameters, same size as paramsStr.
 
   function buildODE_LHS( rxn: SBMLreaction ): array of String; // build the 'dydt_s[]=' or '-dydt_s[]=', store in rhsSymbols
   function getODEeqLoc(Speciesdydt : String): Integer; // return index of Species in odeEqs.
+  procedure BuildAssignmentEqs(model: SBMLhelpClass);
+  function spBoundaryCondition(speciesId: String): boolean;
 
   public
   constructor create( model: SBMLhelpClass);
@@ -40,7 +46,7 @@ TFormatODEs = class
   function get_pVals(): array of double; // get init vals for params, including comp vols used in eqs.
   function get_speciesStrAr(): array of String;  // SBML Species id
   function get_paramsStr(): array of String;   // SBML parameter and compartment ids.
-  procedure buildLSODAeqs();  // build LSODA eqs (odeEqs2)
+  procedure buildLSODAeqs();   // build LSODA eqs (odeEqs2)
   procedure buildFinalEqSet(); // Build up final ODE eqs list as one string for use by solver.
 
 end;
@@ -58,7 +64,12 @@ var i, j,k, paramLen, count: Integer;
     found_dydt: Integer;
 
 begin
-  setLength(speciesStrAr,Length(model.getSBMLspeciesArr()));
+  self.assignParamEqs:= nil;
+  self.assignSpeciesEqs:= nil;
+  setLength(self.speciesStrAr,Length(model.getSBMLspeciesArr()));
+  setLength(self.speciesAr,Length(model.getSBMLspeciesArr()));
+  self.speciesAr:= model.getSBMLspeciesArr();
+  setLength(self.spBoundaryCondAr,Length(speciesStrAr));  // not needed anymore.
   setLength(paramsStr, Length(model.getSBMLparameterArr()));
   setLength(odeStrs,model.getrxnsnumb());
   setLength(sVals,model.getSpeciesNumb());
@@ -66,6 +77,10 @@ begin
   for i := 0 to Length(speciesStrAr)-1 do
   begin
     speciesStrAr[i]:= model.getSBMLspecies(i).getId();
+    // chk if boundary condition:
+    spBoundaryCondAr[i]:= model.getSBMLspecies(i).getBoundaryCondition();
+    self.speciesAr[i]:= model.getSBMLspecies(i);
+    console.log('Boundary condition for ',speciesStrAr[i],' is: ',spBoundaryCondAr[i]);
    // Get initial conc/amounts for each one:
     if model.getSBMLspecies(i).isSetInitialAmount() then
       sVals[i]:= model.getSBMLspecies(i).getInitialAmount()
@@ -80,7 +95,6 @@ begin
   begin
    if model.getSBMLparameter(i).isSetIDAttribute() then
     begin
-     //  paramsStr[i]:= params[i].getId() ;
       paramsStr[i]:= model.getSBMLparameter(i).getId();
       // Get initial value for each param:
       if model.getSBMLparameter(i).isSetValue() then
@@ -91,7 +105,6 @@ begin
       paramsStr[i]:= '';
       pVals[i]:= 0;
     end;
-   // console.log('Param Val: ',pVals[i],' for: ',paramsStr[i]);
   end;
     // Get compartments:
   paramLen:=Length(paramsStr);
@@ -103,7 +116,6 @@ begin
       if model.getSBMLcompartment(i).isSetIdAttribute() then
       begin
         paramsStr[paramLen+i]:= model.getSBMLcompartment(i).getID();
- //       console.log('Adding compartment id');
       end
       else paramsStr[paramLen+i]:= model.getSBMLcompartment(i).getName();
       console.log('Adding compartment id: ', paramsStr[paramLen+i]);
@@ -114,6 +126,10 @@ begin
           pVals[paramLen+i]:= model.getSBMLcompartment(i).getVolume()
           else pVals[paramLen+i]:= 1; // default
     end;
+
+ // Go through each rule and replace all species and params in array of formulas:
+  BuildAssignmentEqs(model);
+
   // *******************************************************************
   // go through each reaction eq and replace all species and params in arrays:
    rxns:= Copy(model.getReactions(),0,model.getrxnsnumb());
@@ -122,12 +138,11 @@ begin
     if rxns[j].isSetKineticLaw() then
     begin
       lhsSymbols:= buildODE_LHS(rxns[j]);   // check if existing LHS, then just
-                  // add eq to it.
+                                            // add eq to it.
       curODE:= rxns[j].getKineticLaw().getFormula()
     end
     else odeStrs[j]:= '';
     odeStrs[j]:= replaceStrNames(speciesStrAr, curODE,'s');
-    //console.log('j = ',j,'Species. --> New Eq: ',odeStrs[j]);
     odeStrs[j]:= replaceStrNames(paramsStr, odeStrs[j],'p');
     setLength(odeEqs,length(lhsSymbols)+count);
     for k := 0 to length(lhsSymbols)-1 do
@@ -136,8 +151,8 @@ begin
       console.log(' found_dydt: ', found_dydt);
       if found_dydt <0 then // not found
       begin
-        self.odeEqs[count]:= lhsSymbols[k] + odeStrs[j] + ')';  // rhs inclosed in perenthesis.
-      //  console.log('... New Eq with params: ',odeEqs[count]);
+        if lhsSymbols[k] = '' then self.odeEqs[count]:= ''   // Do not add ODE eq for this species
+        else self.odeEqs[count]:= lhsSymbols[k] + odeStrs[j] + ')';  // rhs inclosed in perenthesis.
         count:= count+1;  // count: Total number of eqs: Sum(prod+reactants per rxn)
       end
       else begin
@@ -146,7 +161,6 @@ begin
         else self.odeEqs[found_dydt]:= self.odeEqs[found_dydt] + '+ ' + '('+ odeStrs[j] + ')';
 
       end ;
-  //    console.log('... New Eq with MathOps: ',odeEqs[count]);
     end;
 
   end;
@@ -155,7 +169,6 @@ begin
     begin
        odeEqs[i]:= JSMathConvert(odeEqs[i]);
     end;
-
   buildLSODAeqs();
 
 end;
@@ -164,15 +177,12 @@ end;
 // Replace names in string with array names ('species1' -> 's[0]')
  function TFormatODEs.replaceStrNames(names: array of String; stringtoedit: String; prefixStr: String):String;
  var tmpStoE,tmpCatStr, currEqStr: String; // temp holder for string
- //var tmpCatStr2: String; // test...
  var i,j,k: integer;
-// var strR: String;  // Replacement prefix
  var beginC, endC: String;
  const eqdelims: array of String = [' ', '(', ')', '+', '-', '*', '/', ','];
 
  begin
    currEqStr:= Copy(stringtoedit,1,MaxInt);  // use instead of stringtoedit
-  //  console.log('Value of currEqStr:', currEqStr);
    tmpStoE:= '';
    tmpCatStr:= '';
    for i := 0 to Length(names)-1 do
@@ -181,7 +191,6 @@ end;
            tmpCatStr:= '';
            j:=1; // Position to check in string where name may be.    was 0.
            while j < length(currEqStr) do
-       //   while j < length(currEqStr)+1 do
              begin
              k:= 0; // position in string where name found.
              beginC:= ''; endC:= '';
@@ -200,9 +209,7 @@ end;
                     begin
       //                console.log('A second delimeter found! j:',j,', k: ',k);
                    // Put new eq str together. Append prefix[i] to it.
-                   // if end of eq str need to put endC at end ?? (NO), missing ')' sometimes.
-                     // tmpStoE:= tmpStoE + tmpCatStr + PrefixStr+ '['+inttostr(i)+']';
-                     tmpStoE:= tmpStoE + tmpCatStr + PrefixStr+ '['+inttostr(i)+']';
+                      tmpStoE:= tmpStoE + tmpCatStr + PrefixStr+ '['+inttostr(i)+']';
                     end
                     else
                     begin
@@ -214,12 +221,10 @@ end;
                   end
                   else
                   begin
-                        tmpCatStr:= Copy(currEqStr,j,(k-j));
-        //                console.log('Check first part of string: ',tmpCatStr);
+                       tmpCatStr:= Copy(currEqStr,j,(k-j));
                        tmpStoE:= tmpStoE + tmpCatStr + names[i];
        //                console.log('No match a part of another name, string: ',tmpStoE);
                   end;    // end new
-        //          console.log('Char after match: ',endC);  // Issue here ?? (ending parenthesis)
                   if (length(names[i])<1) then j:= j+1
                   else
                     begin
@@ -336,7 +341,8 @@ end;
 // build the 'dydt_s[]=' or 'dydt_s[]= (-1)*', store in lhsSymbols[]
 function TFormatODEs.buildODE_LHS(rxn: SBMLreaction):array of String;
 var i, nr, np: Integer;
-var lhs: array of String;
+    tmpSpId: String;
+    lhs: array of String;
 begin
   nr:= rxn.getNumReactants();
   np:= rxn.getNumProducts();
@@ -351,11 +357,17 @@ begin
     // Need one ODE for product (+);
   if length(self.prods)>0 then
      begin
-      for i := 0 to np-1 do
-       if prods[i].isSetSpecies() then
-         lhs[i]:= ODESTART + IntToStr(strInArray(self.prods[0].getSpecies(),speciesStrAr))+']'+'= (';    // dydt_name
-
-  //   console.log('prods lhs: ', lhs[i]);
+       for i := 0 to np-1 do
+       begin
+         if self.prods[i].isSetSpecies() then
+         begin
+           tmpSpId:= self.prods[i].getSpecies();
+           if self.spBoundaryCondition(tmpSpId) = false then  // <-- need actual species in array of species.
+             lhs[i]:= ODESTART + IntToStr(strInArray(self.prods[0].getSpecies(),speciesStrAr))+']'+'= ('    // dydt_name
+           else lhs[i]:= '';  // No ODE for boundary condition.
+           console.log('... Products lhs: ', lhs[np+i]);
+         end;
+       end;
      end;
   end;
 
@@ -367,10 +379,24 @@ begin
   if length(self.reactants)>0 then
      begin
       for i := 0 to nr-1 do
-       if self.reactants[i].isSetSpecies() then
-         lhs[np+i]:= ODESTART + IntToStr(strInArray(reactants[0].getSpecies(),speciesStrAr))+']'+'= (-1)* (';    // dydt_name
-
-   //    console.log('reactants lhs: ', lhs[np+i]);
+      begin
+        tmpSpId:= '';
+        if self.reactants[i].isSetSpecies() then
+        begin
+          tmpSpId:= self.reactants[i].getSpecies;
+          if self.spBoundaryCondition(tmpSpId) = false then    // <-- need actual species in array of species.
+          begin
+          console.log('Boundary condition not set');
+            lhs[np+i]:= ODESTART + IntToStr(strInArray(reactants[0].getSpecies(),speciesStrAr))+']'+'= (-1)* ('    // dydt_name
+          end
+          else
+          begin
+            console.log('Boundary condition SET!!!');
+            lhs[np+i]:= '';
+          end;
+          console.log('. Reactants lhs: ', lhs[np+i]);
+        end;
+      end;
      end;
    end;
   Result:= lhs;
@@ -403,7 +429,6 @@ begin
       begin
    //   console.log('odeEq: ',odeEqs[i], 'spStr: ',spStr);
       found:= i;
-  //    console.log('**** Found existing ODE eq!');
       end;
     end;
 
@@ -424,7 +449,7 @@ end;
      for j := 0 to Length(self.svals)-1 do
        begin
        editStr:= 'dydt_s['+intToStr(j)+']=';
-       replStr:= 'dydt_s.setVal('+intToStr(j+1)+',';   // Uses TVector which start at 1, not 0.
+       replStr:= 'dydt_s.setVal('+intToStr(j+1)+','; // LSODA Uses TVector which start at 1, not 0.
        if ContainsText(self.odeEqs[i],editStr) then
          begin
          self.odeEqs2[i]:= StringReplace(self.odeEqs[i],editStr,replStr,[])+')';
@@ -438,12 +463,66 @@ end;
 
    end;
 
+ procedure TFormatODEs.BuildAssignmentEqs(model: SBMLhelpClass);
+ var i : integer;
+     currString: String;
+     rules: array of TSBMLrule;
+ begin
+   rules:= model.getSBMLmodelRules();
+   if Length(rules) >0 then
+   begin
+     for i := 0 to Length(rules) - 1 do
+       begin
+         currString:= '';
+         if rules[i].isAssignment then
+         begin
+
+           if rules[i].isSetVariable then
+           begin
+             currString:= rules[i].getVariable() + ' = '; // Start building assignment
+             if rules[i].isSetFormula then
+               currString:= currString + rules[i].getFormula()
+             else currString:= currString + '0';
+             currString:= replaceStrNames(self.speciesStrAr, currString,'s');
+             currString:= replaceStrNames(self.paramsStr, currString,'p');
+             currString:= JSMathConvert(currString);
+           end;
+           if rules[i].isParameter then
+           begin
+             SetLength(self.assignParamEqs, Length(self.assignParamEqs)+1);
+             self.assignParamEqs[Length(assignParamEqs)-1]:= currString;
+             console.log(' param Assign eq: ',self.assignParamEqs[Length(assignParamEqs)-1]);
+           end
+           else if rules[i].isSpeciesConcentration then
+                begin
+                  SetLength(self.assignSpeciesEqs, Length(self.assignSpeciesEqs)+1);
+                  self.assignSpeciesEqs[Length(self.assignSpeciesEqs)-1]:= currString;
+                  console.log(' Species Assign eq: ',self.assignSpeciesEqs[Length(self.assignSpeciesEqs)-1]);
+                end;
+
+         end;
+       end;
+
+   end;
+
+ end;
+
    // Build up final ODE eqs list as one string for use by solver
  procedure TFormatODEs.buildFinalEqSet();
  var i:Integer;
  begin
   self.odeEqSet:= '';
-  self.odeEqSet2:= 'let dydt_s = pas.uVector.TVector.$create("create$1",[s.length]); ';  // Eq set for LSODA
+  self.odeEqSet2:= self.odeEqSet2 + 'let dydt_s = pas.uVector.TVector.$create("create$1",[s.length]); ';  // Eq set for LSODA
+
+  if Length(self.assignParamEqs)>0 then
+  begin
+    for i := 0 to Length(self.assignParamEqs)-1 do
+    begin
+      self.odeEqSet:= self.odeEqSet + self.assignParamEqs[i] + ';' ;
+      self.odeEqSet2:= self.odeEqSet2 + self.assignParamEqs[i] + ';' ;
+    end;
+
+  end;
 
   for i := 0 to Length(self.ODEeqs)-1 do
     begin
@@ -454,7 +533,6 @@ end;
       end;
     end;
 
-
     // Run Simulation using info from odeFormat:
    odeEqSet:= odeEqSet + ' return dydt_s ;' ;
    odeEqSet2:= odeEqSet2 + ' return dydt_s;';  // Add eqs LSODA list.
@@ -462,7 +540,22 @@ end;
    console.log(odeEqSet);
    console.log(' ** LSODA eqs: **');
    console.log(odeEqSet2);
+ end;
 
+ function TFormatODEs.spBoundaryCondition(speciesId: String): boolean;
+var
+  i: Integer;
+ begin
+   Result:= false; // default
+   for i := 0 to Length(self.speciesAr)-1 do
+     begin
+     if self.speciesAr[i].getId = speciesId then
+       begin
+       Result:= self.speciesAr[i].getBoundaryCondition();
+       console.log(' Found the boundary condition');
+
+       end;
+     end;
 
  end;
 

@@ -1,7 +1,7 @@
 unit SBML.helper;
 
 interface
-uses Web, JS, SBML.model;
+uses Web, JS, SBML.model, SBML.model.rule;
 
 type
 
@@ -21,6 +21,7 @@ type
     modelSpecies: array of SBMLspecies;
     modelComps: array of SBMLcompartment;
     modelParams: array of SBMLparameter;
+    modelRules: array of TSBMLrule;
 
     FPing: TPingEvent; // Used to send sbml info listener once asynchronous read done.
 
@@ -39,10 +40,13 @@ type
    function getSBMLparameter(i:integer): SBMLparameter;
    function getSBMLparameterArr(): array of SBMLparameter;
    procedure addSBMLparameter(newParam: SBMLparameter);
+   function getSBMLmodelRules():array of TSBMLrule;
 
    procedure addSBMLspecies(newSpecies: SBMLspecies);
+   procedure addSBMLrule( newR: TSBMLrule);
    function getSpeciesNumb(): integer;
-   function getSBMLspecies(i:integer): SBMLspecies;
+   function getSBMLspecies(i:integer): SBMLspecies; overload;
+   function getSBMLspecies(spId:string): SBMLspecies; overload;
    function getSBMLspeciesArr(): array of SBMLspecies;
 
    function getCompNumb(): integer;
@@ -63,11 +67,11 @@ implementation
 
 constructor SBMLhelpClass.create();
 begin
-    //console.log('In constructor');
     errors:=0;
     numbRxns:= -1;
     numSpecies:= 0; numParams:= 0; numCompartments:= 0;
     numEvents:= 0; numRules:= 0; numFuncDefs:=0;
+    modelRules:= nil;
 end;
 
 
@@ -80,6 +84,8 @@ procedure SBMLhelpClass.readSBML(textSBML:string);
  jsComp: TJSObject;
  newParam: SBMLparameter;
  jsParam: TJSObject;
+ newRule: TSBMLrule;
+ jsRule: TJSObject;
 
 begin
  nSpecies:= SBMLspecies.create(); // a new species
@@ -88,6 +94,8 @@ begin
  jsComp:= JS.ToObject(newComp);
  newParam:= SBMLparameter.create(); // a new parameter
  jsParam:= JS.ToObject(newParam);
+ newRule:= TSBMLrule.create;
+ jsRule:= JS.ToObject(newRule);
 
  // TODO: need to check if libsbml already loaded ??
  asm;   // javascript
@@ -107,15 +115,42 @@ begin
   this.numEvents = model.getNumEvents();
   this.numRules = model.getNumRules();
   this.numbPlugins = model.getNumPlugins();
-  console.log('Number of plugins: ', this.NumbPlugins);
   //this.numFuncDefs = model.numFunctionDefinitions(); call wrong?? need to chk if exists first?
   this.annotationStr = model.getNotesString();
-    console.log('Number of Rules: ', this.Rules);
   var i;
 
   if(this.numRules>0) {
     for(i=0;i<this.numRules; i++) {
-       console.log('Rule: ', model.getRule(i).getFormula());
+       //console.log('Rule: ', model.getRule(i).getFormula());
+       var rule = model.getRule(i);
+       jsRule.setScaler(false);
+       // process rule here....
+       jsRule.setAssignment(rule.isAssignment());
+       jsRule.setAlgebraic(rule.isAlgebraic());
+       //jsRule.setScaler(rule.isScaler());
+       jsRule.setRate(rule.isRate());
+       if(rule.isSetFormula()) {
+         jsRule.setFormula(rule.getFormula());
+      //   console.log('Formula for Rule: ', jsRule.getFormula());
+       }
+       if (rule.isParameter()) {
+         jsRule.setParameter(true);
+       }
+       else {jsRule.setParameter(false); }
+       if(rule.isSpeciesConcentration()) {
+         jsRule.setSpeciesConcentration(true);
+       }
+       else {jsRule.setSpeciesConcentration(false);}
+
+       if (rule.isSetVariable) {
+      //   console.log('Parameter variable for rule: ',rule.getVariable());
+         jsRule.setVariable(rule.getVariable());
+       }
+       if (rule.isSetId) {
+       //  console.log('Parameter id for rule: ',rule.getId() );
+         jsRule.setId(rule.getId());
+         }
+       this.addSBMLrule(jsRule);
     }
   }
 
@@ -131,7 +166,8 @@ begin
    if(newSpecies.isSetCompartment()) {
       jsSpecies.setCompartment(newSpecies.getCompartment()); }
    if(newSpecies.isSetBoundaryCondition()) {
-      jsSpecies.setBoundaryCondition(newSpecies.getBoundaryCondition()); }
+      jsSpecies.setBoundaryCondition(newSpecies.getBoundaryCondition());
+     // console.log( ' Setting boundary condition to true') }
    if (newSpecies.isSetName()) {
       jsSpecies.setName(newSpecies.getName()); }
    this.addSBMLspecies(jsSpecies); // Add new species to array of all species used in model.
@@ -140,7 +176,7 @@ begin
   for(i=0;i<this.numCompartments;i++) {
     const newComp = model.getCompartment(i);
     jsComp.setID(newComp.getId());
-    console.log('SBMLcompartment ID: ', jsComp.getID());
+  //  console.log('SBMLcompartment ID: ', jsComp.getID());
     if(newComp.isSetSize()) {
       jsComp.setSize(newComp.getSize()); }
     else if(newComp.isSetVolume()) {
@@ -153,11 +189,12 @@ begin
   }
 
    for(i=0;i<this.numParams;i++) {
+    jsParam.unSetValueFlag();
+    jsParam.setValue(0);
     const newParam = model.getParameter(i);
     jsParam.setId(newParam.getId());
    // console.log('SBMLparameter ID: ', jsParam.getId());
     if(newParam.isSetValue()) {
-    //console.log('*** SBMLparameter value: ', jsParam.getValue());
       jsParam.setValue(newParam.getValue());}
     if(newParam.isSetName()) {
       jsParam.setName(newParam.getName()); }
@@ -196,14 +233,13 @@ begin
     var kineticForm = model.getReaction(i).getKineticLaw().getFormula();
     const newKineticL = model.getReaction(i).getKineticLaw();
     //jsKineticLaw.setNumParameters(newKineticL.getNumParameters());
-    // kinetic params not working....  ??
-    console.log('model.getReaction... numb of params: ',model.getReaction(i).getKineticLaw().getNumParameters());
-    //console.log('jsKineticLaw numb of params: ',jsKineticLaw.getNumParameters());
+
+  //  console.log('model.getReaction... numb of params: ',model.getReaction(i).getKineticLaw().getNumParameters());
     for(k=0;k < model.getReaction(i).getKineticLaw().getNumParameters(); k++) {
       //jsKineticLaw.addParameter(model.getReaction(i).getKineticLaw().getParameter(k).getId());
     }
-   // jsKineticLaw.setFormula(model.getReaction(i).getKineticLaw().getFormula());
-    console.log('--> kinetic law: ',model.getReaction(i).getKineticLaw().getFormula());
+
+  //  console.log('--> kinetic law: ',model.getReaction(i).getKineticLaw().getFormula());
     this.addSBMLReaction(model.getReaction(i).getId(),products,prodStoich, reactants,reactStoich,kineticForm);
 
   }
@@ -295,7 +331,6 @@ procedure SBMLhelpClass.TriggerEvent();
   len:= Length(modelSpecies);
   SetLength(modelSpecies,len+1);  // add new species to array
   modelSpecies[len]:= SBMLspecies.create(newSpecies);
-  //console.log('addSBMLspecies modelSpecise[len]: ',modelSpecies[len].getID());
  end;
 
  function SBMLhelpClass.getSBMLspeciesArr(): array of SBMLspecies;
@@ -303,10 +338,22 @@ procedure SBMLhelpClass.TriggerEvent();
    Result:= modelSpecies;
  end;
 
- function SBMLhelpClass.getSBMLspecies(i:integer): SBMLspecies;
+ function SBMLhelpClass.getSBMLspecies(i:integer): SBMLspecies; overload;
  begin
   //console.log('get name of species:',modelSpecies[i].getID() );
    Result:= modelSpecies[i];
+ end;
+
+ function SBMLhelpClass.getSBMLspecies(spId:string): SBMLspecies; overload;
+ var i: integer;
+ begin
+   for i := 0 to Length(self.modelSpecies)-1 do
+     begin
+       if self.modelSpecies[i].getId = spId then
+         Result:= self.modelSpecies[i]
+       else Result:= nil;
+
+     end;
  end;
 
  function SBMLhelpClass.getSBMLcompartmentsArr(): array of SBMLcompartment;
@@ -326,10 +373,8 @@ procedure SBMLhelpClass.TriggerEvent();
  procedure SBMLhelpClass.addSBMLcompartment(newComp: SBMLcompartment);
  var len:integer;
  begin
-    len:= Length(modelComps);
-  modelComps[len]:= SBMLcompartment.create(newComp);
-   //if newComp.isSetName() then console.log('addSBMLcompartment: ',newComp.getname());
-
+   len:= Length(modelComps);
+   modelComps[len]:= SBMLcompartment.create(newComp);
  end;
 
  function SBMLhelpClass.getParamNumb(): integer;
@@ -356,5 +401,15 @@ procedure SBMLhelpClass.TriggerEvent();
 
  end;
 
+ procedure SBMLhelpClass.addSBMLrule( newR: TSBMLrule);
+ var len:integer;
+ begin
+   len:= Length(self.modelRules);
+   self.modelRules[len]:= TSBMLrule.create(newR);
+ end;
 
+ function SBMLhelpClass.getSBMLmodelRules():array of TSBMLrule;
+ begin
+   Result:= self.modelRules;
+ end;
 end.   // unit

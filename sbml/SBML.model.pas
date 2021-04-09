@@ -84,6 +84,7 @@ type
     constructor create(copyParam:SBMLparameter); Overload;
     function getValue():double;
     procedure setValue(val: double);
+    procedure unSetValueFlag();
     function isSetValue(): boolean;
     function getConstant(): boolean; // true if param constant.
     procedure setConstant(val: boolean);
@@ -131,96 +132,7 @@ type
  //   function isSetName(): boolean;
 
  end;
- {
- // abstract class for all the rules
- SBMLrule = class
- private
-   formula:String;
-   SBMLvar: String;
-   id, name: String;
 
- public
-   function isRate(): boolean; virtual; abstract; // rate rule
-   function isAssignment(): boolean; virtual; abstract; // assignment rule
-   function isAlgebraic(): boolean;virtual; abstract; // algebraic rule
-   function isScaler(): boolean; virtual; abstract; // true if this Rule is an AssignmentRule (Level 2) or has type "scalar" (Level 1), false otherwise.
-   function isSpeciesConcentration(): boolean; virtual; abstract; //returning true if this Rule is a SpeciesConcentrationRule or equivalent
-   function isParameter(): boolean; virtual; abstract;// parameter rule
-   function getFormula(): String;
-   procedure setFormula(eq: String);
-   function isSetFormula(): boolean;
-   function getVariable(): String;
-   procedure setVariable(sid: String);// sid the identifier of a Compartment, Species or Parameter.
-   function isSetVariable():boolean;
-   procedure unsetVariable();  // Unsets the variable .. set to nil
-   function getId(): String;
-   procedure setId(id: String);
-   function isSetIdAttribute(): boolean;
-   function getName(): String;
-   procedure setName( name: String);
-   function isSetName(): boolean;
-
- end;
-
- SBMLalgebraicrule = class(SBMLrule)
- private
-
- public
-   function isRate(): boolean; override; // rate rule
-   function isAssignment(): boolean; override; // assignment rule
-   function isAlgebraic(): boolean;override; // algebraic rule
-   function isScaler(): boolean; override; // true if this Rule is an AssignmentRule (Level 2) or has type "scalar" (Level 1), false otherwise.
-   function isSpeciesConcentration(): boolean; override; //returning true if this Rule is a SpeciesConcentrationRule or equivalent
-   function isParameter(): boolean; override;// parameter rule
- end;
-
- SBMLassignmentrule = class(SBMLrule)
- private
-
- public
-   function isRate(): boolean; override; // rate rule
-   function isAssignment(): boolean; override; // assignment rule
-   function isAlgebraic(): boolean;override; // algebraic rule
-   function isScaler(): boolean; override; // true if this Rule is an AssignmentRule (Level 2) or has type "scalar" (Level 1), false otherwise.
-   function isSpeciesConcentration(): boolean; override; //returning true if this Rule is a SpeciesConcentrationRule or equivalent
-   function isParameter(): boolean; override;// parameter rule
- end;
-
- SBMLraterule = class(SBMLrule)
- private
-
- public
-   function isRate(): boolean; override; // rate rule
-   function isAssignment(): boolean; override; // assignment rule
-   function isAlgebraic(): boolean;override; // algebraic rule
-   function isScaler(): boolean; override; // true if this Rule is an AssignmentRule (Level 2) or has type "scalar" (Level 1), false otherwise.
-   function isSpeciesConcentration(): boolean;override; //returning true if this Rule is a SpeciesConcentrationRule or equivalent
-   function isParameter(): boolean; override;// parameter rule
- end;
-
- SBMLkineticlaw = class
- // Note: no localParameters looked for/used.
- private
-    parameters: array of SBMLparameter;
-    formula: String;
-    id, name: String;
-
- public
-    function getNumParameters(): integer;
-    function createParameter(): SBMLparameter;
-    function getParameter(n: integer): SBMLparameter;
-    function removeParameter(n: integer): SBMLparameter;
-    function getFormula(): String;
-    procedure setFormula(formula: String);// the mathematical expression to use, represented in text-string form
-    function getId(): String;
-    procedure setID(id: String);
-    function isSetIdAttribute(): boolean;
-    function getName(): String;
-    procedure setName(name: String);
-    function isSetName(): boolean;
-
- end;
-   }
 
    // Local Parameters not implimented...
  SBMLkineticlaw = class
@@ -549,54 +461,58 @@ implementation
   end;
   function SBMLparameter.getValue():double;
   begin
-    Result:= value;
+    Result:= self.value;
   end;
   procedure SBMLparameter.setValue(val: double);
   begin
-    value:= val;
-    valSetFlag:= true;
+    self.value:= val;
+    self.valSetFlag:= true;
   end;
   function SBMLparameter.isSetValue(): boolean;
   begin
-    Result:= valSetFlag;
+    Result:= self.valSetFlag;
+  end;
+  procedure SBMLparameter.unSetValueFlag();
+  begin
+    self.valSetFlag:= false;
   end;
   function SBMLparameter.getConstant(): boolean; // true if param constant.
   begin
-    Result:= constSetFlag;
+    Result:= self.constSetFlag;
   end;
   procedure SBMLparameter.setConstant(val: boolean);
   begin
-    constSetFlag:= val;
+    self.constSetFlag:= val;
   end;
   function SBMLparameter.isSetConstant(): boolean;
   begin
-    Result:= constSetFlag;
+    Result:= self.constSetFlag;
   end;
   function SBMLparameter.getId(): String;
   begin
-    Result:= id;
+    Result:= self.id;
   end;
   procedure SBMLparameter.setId(val: String);
   begin
-    id:= val;
-    idSetFlag:= true;
+    self.id:= val;
+    self.idSetFlag:= true;
   end;
   function SBMLparameter.isSetIDAttribute(): boolean;
   begin
-    Result:= idSetFlag;
+    Result:= self.idSetFlag;
   end;
   function SBMLparameter.getName(): String;
   begin
-    Result:= name;
+    Result:= self.name;
   end;
   procedure SBMLparameter.setName(val: String);
   begin
-    name:= val;
-    nameSetFlag:= true;
+    self.name:= val;
+    self.nameSetFlag:= true;
   end;
   function SBMLparameter.isSetName(): boolean;
   begin
-    Result:= nameSetFlag;
+    Result:= self.nameSetFlag;
   end;
 
   // ****************************************
