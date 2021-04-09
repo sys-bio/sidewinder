@@ -32,7 +32,8 @@ model *Alexander2010_Tcell_Regulation_Sys1()
   R = 0;
   E = 0;
   G = 100000000/body;
-  A_im = 0;
+ // A_im = 0;
+ A_im = 1;
 
   // Compartment initializations:
   body = 1;
@@ -124,6 +125,7 @@ Alexander2010_Tcell_Regulation_Sys1 hypernym "http://identifiers.org/go/GO:00026
 Alexander2010_Tcell_Regulation_Sys1 taxon "http://identifiers.org/taxonomy/33208"
 Alexander2010_Tcell_Regulation_Sys1 property "http://identifiers.org/mamo/MAMO_0000046"
 ''')
-results = r.simulate(0, 2.5,251)
+
+results = r.simulate(0, 10,100)
 r.plot()
 print(results)

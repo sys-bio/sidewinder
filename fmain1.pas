@@ -18,7 +18,6 @@ type
   TmainForm = class(TWebForm)
     TopWPanel: TWebPanel;
     LeftWPanel: TWebPanel;
-
     RightWPanel: TWebPanel;
     CenterWPanel: TWebPanel;
     networkPB1: TWebPaintBox;

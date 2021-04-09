@@ -187,62 +187,62 @@ end;
    tmpCatStr:= '';
    for i := 0 to Length(names)-1 do
      begin
-           tmpStoE:= '';
-           tmpCatStr:= '';
-           j:=1; // Position to check in string where name may be.    was 0.
-           while j < length(currEqStr) do
+       tmpStoE:= '';
+       tmpCatStr:= '';
+       j:=1; // Position to check in string where name may be.    was 0.
+       while j < length(currEqStr) do
+         begin
+           k:= 0; // position in string where name found.
+           beginC:= ''; endC:= '';
+           k:= PosEx(names[i],currEqStr,j);  // returns 1 if name found at currEqStr[0]
+           if ( k>0) then    // found name
              begin
-             k:= 0; // position in string where name found.
-             beginC:= ''; endC:= '';
-             k:= PosEx(names[i],currEqStr,j);  // returns 1 if name found at currEqStr[0]
-              if ( k>0) then    // found name
-                begin
-     //             console.log('Found match: ',names[i]);  // Found at correct position, k
-                  if k =1 then beginC:= ' ' // First char of formula string is in names[i]
-                  else beginC:= Copy(currEqStr,(k-1),1);
-      //            console.log('Char before match ...:',beginC,':...');
-                    endC:= Copy(currEqStr,(k+length(names[i])),1);
-                  if StrInArray(beginC,eqdelims) > -1  then
-                  begin
-                    tmpCatStr:= Copy(currEqStr,j,(k-j));
-                    if (StrInArray(endC,eqdelims) > -1) or (endC= '') then   // end of string chk
-                    begin
+     //         console.log('Found match: ',names[i]);  // Found at correct position, k
+               if k =1 then beginC:= ' ' // First char of formula string is in names[i]
+               else beginC:= Copy(currEqStr,(k-1),1);
+      //          console.log('Char before match ...:',beginC,':...');
+               endC:= Copy(currEqStr,(k+length(names[i])),1);
+               if StrInArray(beginC,eqdelims) > -1  then
+                 begin
+                   tmpCatStr:= Copy(currEqStr,j,(k-j));
+                   if (StrInArray(endC,eqdelims) > -1) or (endC= '') then   // end of string chk
+                   begin
       //                console.log('A second delimeter found! j:',j,', k: ',k);
                    // Put new eq str together. Append prefix[i] to it.
-                      tmpStoE:= tmpStoE + tmpCatStr + PrefixStr+ '['+inttostr(i)+']';
-                    end
-                    else
-                    begin
+                     tmpStoE:= tmpStoE + tmpCatStr + PrefixStr+ '['+inttostr(i)+']';
+                   end
+                   else
+                   begin
                     // leave str alone:
-                      tmpStoE:= tmpStoE + tmpCatStr + names[i];
-                      console.log('No match, string: ',tmpStoE);
-                    end;
+                     tmpStoE:= tmpStoE + tmpCatStr + names[i];
+                     console.log('No match, string: ',tmpStoE);
+                   end;
 
-                  end
-                  else
-                  begin
-                       tmpCatStr:= Copy(currEqStr,j,(k-j));
-                       tmpStoE:= tmpStoE + tmpCatStr + names[i];
-       //                console.log('No match a part of another name, string: ',tmpStoE);
-                  end;    // end new
-                  if (length(names[i])<1) then j:= j+1
-                  else
-                    begin
+                end
+                else
+                begin
+                  tmpCatStr:= Copy(currEqStr,j,(k-j));
+                  tmpStoE:= tmpStoE + tmpCatStr + names[i];
+      //                console.log('No match a part of another name, string: ',tmpStoE);
+                end;    // end new
+                if (length(names[i])<1) then j:= j+1
+                else
+                   begin
                      j:= k+ length(names[i]);
                      if j=length(currEqStr) then tmpStoE:= tmpStoE + endC; // added
 
-                    end;
-                end
+                   end;
+              end
               else
               begin
                 tmpCatStr:= Copy(currEqStr,j,(Length(currEqStr)-(j-1)));
                 tmpStoE:= tmpStoE + tmpCatStr;
                 j:= length(currEqStr);  // name Not found.
               end;
-             end;
+         end;
              // Now copy tmpStoE to stringtoedit and start over for next name.
-             currEqStr:= Copy(tmpStoE,1,Length(tmpStoE));
-             console.log('.. Current value currEqStr: ', currEqStr);
+         currEqStr:= Copy(tmpStoE,1,Length(tmpStoE));
+         //console.log('.. Current value currEqStr: ', currEqStr);
      end;
      Result:= currEqStr;
  end;
@@ -273,7 +273,6 @@ var testEq, spList, parList: array of String;
     finalEq: String;
     i: integer;
 begin
-//
   SetLength(testEq,2);
   testEq[0]:= 'store * (Vm3 * pow(Y, m) * pow(Z, p) / ((pow(Kr, m) + pow(Y, m)) * (pow(Ka, p) + pow(Z, p))))';
   testEq[1]:= 'v1 * ((1 -m) / m * Z - Y)';
@@ -281,10 +280,10 @@ begin
   parList:= ['v1','Vm3','m', 'n', 'Kr','Ka','p'];
   for i := 0 to Length(testEq)-1 do
     begin
-    console.log('TEST - Init Eq: ', testEq[i]);
+    //console.log('TEST - Init Eq: ', testEq[i]);
     finalEq:= replaceStrNames(spList, testEq[i],'s');
     finalEq:= replaceStrNames(parList, finalEq,'p');
-    console.log('TEST -> Final Eq: ', finalEq);
+    //console.log('TEST -> Final Eq: ', finalEq);
     end;
 end;
 
@@ -352,23 +351,21 @@ begin
   SetLength(lhs,nr+np);
   if np>0 then
   begin
-      self.prods:= rxn.getRxnProducts();
-    // Works with only one product/reactant, need to generalize for many products.
-    // Need one ODE for product (+);
-  if length(self.prods)>0 then
-     begin
-       for i := 0 to np-1 do
-       begin
-         if self.prods[i].isSetSpecies() then
-         begin
-           tmpSpId:= self.prods[i].getSpecies();
-           if self.spBoundaryCondition(tmpSpId) = false then  // <-- need actual species in array of species.
-             lhs[i]:= ODESTART + IntToStr(strInArray(self.prods[0].getSpecies(),speciesStrAr))+']'+'= ('    // dydt_name
-           else lhs[i]:= '';  // No ODE for boundary condition.
-           console.log('... Products lhs: ', lhs[np+i]);
-         end;
-       end;
-     end;
+    self.prods:= rxn.getRxnProducts();
+    if length(self.prods)>0 then
+      begin
+        for i := 0 to np-1 do
+        begin
+          if self.prods[i].isSetSpecies() then
+          begin
+            tmpSpId:= self.prods[i].getSpecies();
+            if self.spBoundaryCondition(tmpSpId) = false then  // <-- need actual species in array of species.
+              lhs[i]:= ODESTART + IntToStr(strInArray(self.prods[0].getSpecies(),speciesStrAr))+']'+'= ('    // dydt_name
+            else lhs[i]:= '';  // No ODE for boundary condition.
+           // console.log('... Products lhs: ', lhs[np+i]);
+          end;
+        end;
+      end;
   end;
 
   if nr>0 then
@@ -386,15 +383,15 @@ begin
           tmpSpId:= self.reactants[i].getSpecies;
           if self.spBoundaryCondition(tmpSpId) = false then    // <-- need actual species in array of species.
           begin
-          console.log('Boundary condition not set');
+          //console.log('Boundary condition not set');
             lhs[np+i]:= ODESTART + IntToStr(strInArray(reactants[0].getSpecies(),speciesStrAr))+']'+'= (-1)* ('    // dydt_name
           end
           else
           begin
-            console.log('Boundary condition SET!!!');
+           // console.log('Boundary condition SET!!!');
             lhs[np+i]:= '';
           end;
-          console.log('. Reactants lhs: ', lhs[np+i]);
+         // console.log('. Reactants lhs: ', lhs[np+i]);
         end;
       end;
      end;
@@ -407,7 +404,6 @@ var i,found: Integer;
   spStr, b_str: String;
 
 begin
-//console.log( ' --> Looking for Speciesdydt: ', Speciesdydt );
   spStr:= '';
   b_str:= '';
   found:= -1;
@@ -427,8 +423,7 @@ begin
     begin
       if ContainsText(odeEqs[i], spStr) then
       begin
-   //   console.log('odeEq: ',odeEqs[i], 'spStr: ',spStr);
-      found:= i;
+        found:= i;
       end;
     end;
 
@@ -457,10 +452,7 @@ end;
          end;
 
        end;
-    // console.log(' -> ODE eq: ',self.odeEqs[i]);
-    // console.log(' --> LSODA eq: ',self.odeEqs2[i]);
      end;
-
    end;
 
  procedure TFormatODEs.BuildAssignmentEqs(model: SBMLhelpClass);
@@ -491,20 +483,18 @@ end;
            begin
              SetLength(self.assignParamEqs, Length(self.assignParamEqs)+1);
              self.assignParamEqs[Length(assignParamEqs)-1]:= currString;
-             console.log(' param Assign eq: ',self.assignParamEqs[Length(assignParamEqs)-1]);
+            // console.log(' param Assign eq: ',self.assignParamEqs[Length(assignParamEqs)-1]);
            end
            else if rules[i].isSpeciesConcentration then
                 begin
                   SetLength(self.assignSpeciesEqs, Length(self.assignSpeciesEqs)+1);
                   self.assignSpeciesEqs[Length(self.assignSpeciesEqs)-1]:= currString;
-                  console.log(' Species Assign eq: ',self.assignSpeciesEqs[Length(self.assignSpeciesEqs)-1]);
+                  //console.log(' Species Assign eq: ',self.assignSpeciesEqs[Length(self.assignSpeciesEqs)-1]);
                 end;
 
          end;
        end;
-
    end;
-
  end;
 
    // Build up final ODE eqs list as one string for use by solver

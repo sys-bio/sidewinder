@@ -166,7 +166,7 @@ begin
    if(newSpecies.isSetCompartment()) {
       jsSpecies.setCompartment(newSpecies.getCompartment()); }
    if(newSpecies.isSetBoundaryCondition()) {
-      jsSpecies.setBoundaryCondition(newSpecies.getBoundaryCondition());
+      jsSpecies.setBoundaryCondition(newSpecies.getBoundaryCondition());  }
      // console.log( ' Setting boundary condition to true') }
    if (newSpecies.isSetName()) {
       jsSpecies.setName(newSpecies.getName()); }

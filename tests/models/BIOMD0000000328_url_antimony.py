@@ -274,6 +274,7 @@ Atorvastatin_Metabolism taxon "http://identifiers.org/taxonomy/9606"
 Atorvastatin_Metabolism property "http://identifiers.org/doid/DOID:114",
                                  "http://identifiers.org/doid/DOID:1461"
 ''')
-results = r.simulate(0, 2.5,251)
+
+results = r.simulate(0, 10,100)
 r.plot()
 print(results)
