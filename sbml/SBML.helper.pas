@@ -13,15 +13,15 @@ type
  SBMLhelpClass = class
    private
     errors, numbRxns: integer;  // SBML reading errors, number of rxns in model.
-    numbPlugins: integer;
+    numbPlugins: integer; // Not used
     numSpecies, numParams, numCompartments: integer; // number of species,params,comps in model
-    numEvents, numRules, numFuncDefs: integer;
-    annotationStr: String;
+    numEvents, numRules, numFuncDefs: integer;  // Currently not used.
+    annotationStr: String;    // optional
     sbmlreactions: array of SBMLReaction; // list of reactions
     modelSpecies: array of SBMLspecies;
     modelComps: array of SBMLcompartment;
     modelParams: array of SBMLparameter;
-    modelRules: array of TSBMLrule;
+    modelRules: array of TSBMLrule;  // optional
 
     FPing: TPingEvent; // Used to send sbml info listener once asynchronous read done.
 
@@ -31,7 +31,7 @@ type
 
    procedure setAnnotationStr(annotate:String);
    function getAnnotationStr():String;
-   procedure setRxnNumb(rnxNumb:integer);
+   procedure setRxnNumb(rnxNumb:integer); // TODO, remove, just increment as rxn added.
    procedure addSBMLReaction(rxnid:String; prods: array of String; prodStoich: array of double;
         reactants: array of String; reactantsStoich: array of double; kinetic: String);
    function getRxnsNumb():integer;

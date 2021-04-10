@@ -82,10 +82,11 @@ object mainForm: TmainForm
     object onLineSimButton: TWebButton
       Left = 970
       Top = 15
-      Width = 115
+      Width = 120
       Height = 25
       Caption = 'Simulation: Offline'
       ChildOrder = 5
+      ElementClassName = 'btn btn-danger btn-sm'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clRed
       Font.Height = -11
@@ -202,9 +203,9 @@ object mainForm: TmainForm
     ParentFont = False
     object btnUniUni: TWebSpeedButton
       Left = 24
-      Top = 107
-      Width = 85
-      Height = 30
+      Top = 103
+      Width = 90
+      Height = 36
       Hint = 'Add Uni-Uni reaction'
       ElementClassName = 'card btn-dark'
       Glyph.Data = {
@@ -251,14 +252,15 @@ object mainForm: TmainForm
         FBEE17204B5E146635E37F363D30FBC90B7437FFBDFF11CC60360453CF9F8242
         434C969181E1E36D741708BE87B10494810ABEDC80460A1FEBC73F78638397FD
         E36F726290368A01495E41017B4F3D070000000049454E44AE426082}
+      MaterialGlyphSize = 16
       ShowHint = True
       OnClick = btnUniUniClick
     end
     object btnUniBi: TWebSpeedButton
       Left = 24
       Top = 143
-      Width = 85
-      Height = 30
+      Width = 90
+      Height = 36
       Hint = 'Add Uni-Bi reaction'
       ElementClassName = 'card'
       Glyph.Data = {
@@ -311,9 +313,9 @@ object mainForm: TmainForm
     end
     object btnBiUni: TWebSpeedButton
       Left = 24
-      Top = 179
-      Width = 85
-      Height = 30
+      Top = 183
+      Width = 90
+      Height = 36
       Hint = 'Add Bi-Uni reaction'
       ElementClassName = 'card'
       Glyph.Data = {
@@ -368,9 +370,9 @@ object mainForm: TmainForm
     end
     object btnBiBi: TWebSpeedButton
       Left = 24
-      Top = 215
-      Width = 85
-      Height = 30
+      Top = 223
+      Width = 90
+      Height = 36
       Hint = 'Add Bi-Bi reaction'
       Caption = 'btnBiBi'
       ElementClassName = 'card'
@@ -427,12 +429,12 @@ object mainForm: TmainForm
       OnClick = btnBiBiClick
     end
     object btnIdle: TWebSpeedButton
-      Left = 30
-      Top = 26
-      Width = 64
-      Height = 30
+      Left = 24
+      Top = 23
+      Width = 90
+      Height = 36
       Hint = 'Select Mode'
-      ElementClassName = 'card-body btn-dark'
+      ElementClassName = 'btn btn-primary'
       Glyph.Data = {
         0954506E67496D61676589504E470D0A1A0A0000000D49484452000000140000
         00140803000000BA57ED3F000000017352474200AECE1CE90000000467414D41
@@ -480,11 +482,11 @@ object mainForm: TmainForm
     end
     object btnAddNode: TWebSpeedButton
       Left = 24
-      Top = 65
-      Width = 85
+      Top = 63
+      Width = 90
       Height = 36
       Hint = 'Add Node'
-      ElementClassName = 'card btn-dark'
+      ElementClassName = 'btn btn-primary'
       Glyph.Data = {
         0954506E67496D61676589504E470D0A1A0A0000000D494844520000001A0000
         001E08030000000505FEEA000000017352474200AECE1CE90000000467414D41

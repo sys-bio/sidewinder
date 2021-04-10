@@ -8,7 +8,7 @@ uses
   Vcl.StdCtrls, WEBLib.StdCtrls, WEBLib.Buttons, Vcl.Imaging.pngimage,Vcl.Graphics,
   uController, uNetworkCanvas, uNetwork, VCL.TMSFNCTypes, VCL.TMSFNCUtils, VCL.TMSFNCGraphics,
   VCL.TMSFNCGraphicsTypes, VCL.TMSFNCCustomControl, VCL.TMSFNCScrollBar, VCL.TMSFNCButton, VCL.TMSFNCToolBar,
-  uNetworkTypes, Vcl.Imaging.pngimage, WEBLib.Lists, Vcl.Forms, SBML.helper, Simulation,
+  uNetworkTypes, Vcl.Imaging.pngimage, WEBLib.Lists, Vcl.Forms, SBML.helper, SBML.model, Simulation,
   ODE_FormatUtility, GraphP, Vcl.Menus, WEBLib.Menus, paramSelectForm,speciesSelectForm, plotLayout,
   paramSlider, paramSliderLayout;
 
@@ -141,6 +141,7 @@ type
     procedure EditPlotList(plotn: integer); // delete, change plot species, other added as needed using TWebListBox.
     procedure EditSliderList(sn: integer);  // delete, change param slider as needed using TWebListBox.
     procedure DeleteSlider(sn: integer);
+    procedure testAddingModel();   // just a test for generating a model for the simulator, remove
 
   public
     network : TNetwork;
@@ -260,6 +261,8 @@ procedure TmainForm.btnClearClick(Sender: TObject);
 begin
   network.Clear;
   networkPB1.Invalidate;
+ // self.testAddingModel();
+ // self.GetSBMLInfo();
 end;
 
 procedure TmainForm.btnDrawClick(Sender: TObject);
@@ -364,6 +367,7 @@ if online = false then
  begin
  online:= true;
  onLineSimButton.font.Color:= clgreen;
+ onLineSimButton.ElementClassName:= 'btn btn-success btn-sm';
  onLineSimButton.caption:= 'Simulation: Online';
  simResultsMemo.visible:= true;
 
@@ -396,6 +400,7 @@ if online = false then
    online:= false;
    WebTimer1.enabled:=false;
    onLineSimButton.font.Color:= clred;
+   onLineSimButton.ElementClassName:= 'btn btn-danger btn-sm';
    onLineSimButton.caption:= 'Simulation: Offline';
  end;
 end;
@@ -1148,6 +1153,62 @@ procedure TmainForm.setODEsolver();
       self.sliderPHLabelAr[sn].caption:= floattostr(100);
       self.sliderPHighAr[sn]:= 100;   // default if init param val <= 0.
     end;
+
+  end;
+
+  procedure TMainForm.testAddingModel();  // Test remove when needed.
+  var speciesAr: array of SBMLspecies;
+    paramAr: array of SBMLparameter;
+    comp: SBMLcompartment;
+    rxnProdStoicAr: array of double;
+    rxnProdsAr: array of String;
+    rxnReactsAr: array of String;
+    rxnReactsStoicAr: array of double;
+  begin
+  sbmlmodel:= SBMLhelpClass.create();
+
+  SetLength(speciesAr,3);
+  speciesAr[0]:= SBMLspecies.create('S1');
+  speciesAr[0].setInitialConcentration(10);
+  speciesAr[0].setCompartment('cell');
+  speciesAr[1]:= SBMLspecies.create('S2');
+  speciesAr[1].setInitialConcentration(2);
+  speciesAr[1].setCompartment('cell');
+  speciesAr[2]:= SBMLspecies.create('S3');
+  speciesAr[2].setInitialConcentration(1);
+  speciesAr[2].setCompartment('cell');
+  sbmlmodel.addSBMLspecies(speciesAr[0]);
+  sbmlmodel.addSBMLspecies(speciesAr[1]);
+  sbmlmodel.addSBMLspecies(speciesAr[2]);
+
+  comp:= SBMLcompartment.create('cell');
+  comp.setVolume(2);
+  comp.setConstant(true);
+  sbmlmodel.addSBMLcompartment(comp);
+
+  SetLength(paramAr,2);
+  paramAr[0]:= SBMLparameter.create('k1');
+  paramAr[0].setValue(0.1);
+  paramAr[1]:= SBMLparameter.create('k2');
+  paramAr[1].setValue(0.05);
+  sbmlmodel.addSBMLParameter(paramAr[0]);
+  sbmlmodel.addSBMLParameter(paramAr[1]);
+
+// Set up reactions:
+  rxnProdsAr[0]:= speciesAr[1].getId();
+  rxnProdStoicAr[0]:=1;
+  rxnReactsAr[0]:= speciesAr[0].getId();
+  rxnReactsStoicAr[0]:=1;
+  sbmlmodel.addSBMLReaction('S1toS2',rxnProdsAr,rxnProdStoicAr, rxnReactsAr,rxnReactsStoicAr, 'k1*S1');
+
+  rxnProdsAr[0]:= speciesAr[2].getId();
+  rxnProdStoicAr[0]:=1;
+  rxnReactsAr[0]:= speciesAr[1].getId();
+  rxnReactsStoicAr[0]:=1;
+  sbmlmodel.addSBMLReaction('S2toS3',rxnProdsAr,rxnProdStoicAr, rxnReactsAr,rxnReactsStoicAr, 'k2*S2');
+  numbRxns:= 2;
+  sbmlModelLoaded:= true;
+//addSBMLReaction(rxn name,products,prodStoich, reactants,reactStoich,kineticFormulaStr);
 
   end;
 
