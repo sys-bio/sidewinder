@@ -313,7 +313,7 @@ object mainForm: TmainForm
     end
     object btnBiUni: TWebSpeedButton
       Left = 24
-      Top = 183
+      Top = 181
       Width = 90
       Height = 36
       Hint = 'Add Bi-Uni reaction'
@@ -374,7 +374,6 @@ object mainForm: TmainForm
       Width = 90
       Height = 36
       Hint = 'Add Bi-Bi reaction'
-      Caption = 'btnBiBi'
       ElementClassName = 'card'
       Glyph.Data = {
         0954506E67496D61676589504E470D0A1A0A0000000D49484452000000500000
