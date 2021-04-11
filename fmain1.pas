@@ -15,20 +15,11 @@ uses
   const SLIDERPWIDTH= 195; SLIDERPHEIGHT= 50;  // Param Sliders WebPanel width/height
 type
   TspeciesAr = array of String;
-  TmainForm = class(TWebForm)
+  TMainForm = class(TWebForm)
     TopWPanel: TWebPanel;
-    LeftWPanel: TWebPanel;
-    RightWPanel: TWebPanel;
-    CenterWPanel: TWebPanel;
-    networkPB1: TWebPaintBox;
     newNetworkBtn: TWebButton;
     networkSaveBtn: TWebButton;
-    btnUniUni: TWebSpeedButton;
-    btnUniBi: TWebSpeedButton;
-    btnBiUni: TWebSpeedButton;
-    btnBiBi: TWebSpeedButton;
     bottomWPanel: TWebPanel;
-    btnIdle: TWebSpeedButton;
     btnRandomNetwork: TWebButton;
     btnAutoLayout: TWebButton;
     btnSampleLayout: TWebButton;
@@ -39,36 +30,43 @@ type
     xLbl: TWebLabel;
     yLbl: TWebLabel;
     zoomLbl: TWebLabel;
-    zoomFactorLbl1: TWebLabel;
-    lb: TWebMemo;
-    btnNodeFillColor: TWebColorPicker;
-    btnAddNode: TWebSpeedButton;
-    netDrawScrollBarHoriz: TTMSFNCScrollBar;
-    netDrawScrollBarVert: TTMSFNCScrollBar;        // Displays simulation results
+    zoomFactorLbl1: TWebLabel;        // Displays simulation results
     SBMLmodelMemo: TWebMemo;
     WebTimer1: TWebTimer;
     rtLengthEdit1: TWebEdit;
     rtLabel1: TWebLabel;
     stepSizeLabel1: TWebLabel;
     stepSizeEdit1: TWebEdit;
-    pnlNodePanel: TWebPanel;
-    nodeOutlineLabel: TWebLabel;
-    nodeFillLabel: TWebLabel;
-    editNodeLabel: TWebLabel;
-    btnNodeOutlineColor: TWebColorPicker;
-    editNodeId: TWebEdit;
     ZoomCntrlPanel: TWebPanel;
     zoomCtlLabel: TWebLabel;
     zoomTrackBar: TWebTrackBar;
-    simResultsMemo: TWebMemo;
     addPlotButton: TWebButton;
     paramSliderBtn: TWebButton;
     NetworkJSONOpenDialog: TWebOpenDialog;
     loadNetworkButton: TWebButton;
     SBMLOpenDialog: TWebOpenDialog;
     SBMLloadButton: TWebButton;
+    WebPanel2: TWebPanel;
+    LeftWPanel: TWebPanel;
+    btnUniUni: TWebSpeedButton;
+    btnUniBi: TWebSpeedButton;
+    btnBiUni: TWebSpeedButton;
+    btnBiBi: TWebSpeedButton;
+    btnIdle: TWebSpeedButton;
+    btnAddNode: TWebSpeedButton;
+    pnlNodePanel: TWebPanel;
+    nodeOutlineLabel: TWebLabel;
+    nodeFillLabel: TWebLabel;
+    editNodeLabel: TWebLabel;
+    btnNodeOutlineColor: TWebColorPicker;
+    editNodeId: TWebEdit;
+    btnNodeFillColor: TWebColorPicker;
+    RightWPanel: TWebPanel;
+    simResultsMemo: TWebMemo;
     plotEditLB: TWebListBox;
     SliderEditLB: TWebListBox;
+    pnlCenter: TWebPanel;
+    networkPB1: TWebPaintBox;
 
     procedure btnUniUniClick(Sender: TObject);
     procedure btnBiBiClick(Sender: TObject);
@@ -249,10 +247,10 @@ procedure TmainForm.btnCenterClick(Sender: TObject);
 var i : integer;
 begin
   network.centerNetwork (networkPB1.Width, networkPB1.height);
-  lb.Clear;
+  //lb.Clear;
   for i := 0 to length (network.nodes) - 1 do
       begin
-       lb.Lines.Add (inttostr (trunc (network.nodes[i].state.x)) + ', ' + inttostr (trunc (network.nodes[i].state.x)));
+       //lb.Lines.Add (inttostr (trunc (network.nodes[i].state.x)) + ', ' + inttostr (trunc (network.nodes[i].state.x)));
       end;
   networkPB1.Invalidate;
 end;
@@ -585,7 +583,7 @@ end;
 
 procedure TmainForm.WebFormCreate(Sender: TObject);
 begin
-  lb.clear;
+  //lb.clear;
   self.numbPlots:= 0;
   self.numbSliders:= 0;
   self.zoomTrackBar.left := 20;
@@ -662,7 +660,7 @@ procedure TmainForm.GetSBMLInfo();
    ODEready:= false;
 
    try
-    self.WebTimer1.Interval:= strtoint(stepSizeEdit1.Text); // Trailing blanks are not supported
+    self.WebTimer1.Interval := strtoint(stepSizeEdit1.Text); // Trailing blanks are not supported
    except
       on Exception : EConvertError do
       begin
@@ -670,10 +668,12 @@ procedure TmainForm.GetSBMLInfo();
         self.stepSizeEdit1.Text:= IntToStr( self.WebTimer1.Interval );
       end;
    end;
+
    stepSize:= self.WebTimer1.Interval*0.001;  // 1 sec = 1000 msec
    simResultsMemo.Lines.Clear();
-
    odeFormat:= TFormatODEs.create(sbmlmodel);
+
+
    if Length(p_Vals)<1 then
    begin
     SetLength(p_Vals,Length(odeFormat.get_pVals()));  // Keep params for later
