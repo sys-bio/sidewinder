@@ -17,7 +17,7 @@ type
 
 implementation
 
-Uses sysutils, math, fMain1;
+Uses sysutils, math, ufMain;
 
 const
   enumber = 2.7182818284590452353;

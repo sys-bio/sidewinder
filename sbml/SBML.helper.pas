@@ -12,7 +12,7 @@ type
  // Reads SBML model parsed by libsbml.js module
  SBMLhelpClass = class
    private
-    errors, numbRxns: integer;  // SBML reading errors, number of rxns in model.
+    errors, numReactions: integer;  // SBML reading errors, number of rxns in model.
     numbPlugins: integer; // Not used
     numSpecies, numParams, numCompartments: integer; // number of species,params,comps in model
     numEvents, numRules, numFuncDefs: integer;  // Currently not used.
@@ -30,28 +30,28 @@ type
    procedure readSBML(textSBML: string);
 
    procedure setAnnotationStr(annotate:String);
-   function getAnnotationStr():String;
-   procedure setRxnNumb(rnxNumb:integer); // TODO, remove, just increment as rxn added.
+   function  getAnnotationStr():String;
+   procedure setNumReactions (rnxNumb : integer); // TODO, remove, just increment as rxn added.
    procedure addSBMLReaction(rxnid:String; prods: array of String; prodStoich: array of double;
         reactants: array of String; reactantsStoich: array of double; kinetic: String);
    function getRxnsNumb():integer;
 
-   function getParamNumb(): integer;
-   function getSBMLparameter(i:integer): SBMLparameter;
-   function getSBMLparameterArr(): array of SBMLparameter;
+   function  getParamNumb(): integer;
+   function  getSBMLparameter(i:integer): SBMLparameter;
+   function  getSBMLparameterArr(): array of SBMLparameter;
    procedure addSBMLparameter(newParam: SBMLparameter);
-   function getSBMLmodelRules():array of TSBMLrule;
+   function  getSBMLmodelRules():array of TSBMLrule;
 
    procedure addSBMLspecies(newSpecies: SBMLspecies);
    procedure addSBMLrule( newR: TSBMLrule);
-   function getSpeciesNumb(): integer;
-   function getSBMLspecies(i:integer): SBMLspecies; overload;
-   function getSBMLspecies(spId:string): SBMLspecies; overload;
-   function getSBMLspeciesArr(): array of SBMLspecies;
+   function  getSpeciesNumb(): integer;
+   function  getSBMLspecies(i:integer): SBMLspecies; overload;
+   function  getSBMLspecies(spId:string): SBMLspecies; overload;
+   function  getSBMLspeciesArr(): array of SBMLspecies;
 
-   function getCompNumb(): integer;
-   function getSBMLcompartmentsArr(): array of SBMLcompartment;
-   function getSBMLcompartment(i:integer): SBMLcompartment;
+   function  getCompNumb(): integer;
+   function  getSBMLcompartmentsArr(): array of SBMLcompartment;
+   function  getSBMLcompartment(i:integer): SBMLcompartment;
    procedure addSBMLcompartment(newComp: SBMLcompartment);
 
    function getReactions(): array of SBMLReaction;
@@ -68,7 +68,7 @@ implementation
 constructor SBMLhelpClass.create();
 begin
     errors:=0;
-    numbRxns:= -1;
+    numReactions:= -1;
     numSpecies:= 0; numParams:= 0; numCompartments:= 0;
     numEvents:= 0; numRules:= 0; numFuncDefs:=0;
     modelRules:= nil;
@@ -252,16 +252,15 @@ begin
 end;
 
 
-procedure SBMLhelpClass.setRxnNumb(rnxNumb:integer);
-var numbRxns: integer;
+procedure SBMLhelpClass.setNumReactions (rnxNumb : integer);
 begin
-  numbRxns:= rnxNumb;
+  numReactions:= rnxNumb;
 end;
 
 
-function SBMLhelpClass.getRxnsNumb():integer;
+function SBMLhelpClass.getNumReactions () : integer;
 begin
-   Result:= numbRxns;
+   result:= numReactions;
 end;
 
 
