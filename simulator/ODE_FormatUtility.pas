@@ -71,10 +71,7 @@ begin
   self.speciesAr:= model.getSBMLspeciesArr();
   setLength(self.spBoundaryCondAr,Length(speciesStrAr));  // not needed anymore.
   setLength(paramsStr, Length(model.getSBMLparameterArr()));
-
-  setLength(odeStrs,model.getrxnsnumb());
-exit;
-
+  setLength(odeStrs, model.getrxnsnumb());
   setLength(sVals,model.getSpeciesNumb());
   count:=0;
 

@@ -100,7 +100,12 @@ begin
  // TODO: need to check if libsbml already loaded ??
  asm;   // javascript
 
+   alert("Before loading libsbml!")
+
    libsbml().then((libsbml) => {
+
+   alert("This is alert box!")
+
   // now it is safe to use the module
   const reader = new libsbml.SBMLReader();
   const doc = reader.readSBMLFromString(textSBML);
