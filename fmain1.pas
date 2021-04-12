@@ -350,8 +350,8 @@ procedure TmainForm.SBMLOpenDialogGetFileAsText(Sender: TObject;
   AFileIndex: Integer; AText: string);
 begin
   SBMLmodelMemo.Lines.Text := AText;
-  //SBMLmodelMemo.visible:= true;
-  //sbml_Text:= AText;     // store the sbml model as text.
+  SBMLmodelMemo.visible:= true;
+  sbml_Text:= AText;     // store the sbml model as text.
   // Check if sbmlmodel already created, if so, destroy before creating ?
   sbmlmodel:= SBMLhelpClass.create();
   sbmlmodel.OnPing := PingSBMLLoaded;  // *** Register the callback function

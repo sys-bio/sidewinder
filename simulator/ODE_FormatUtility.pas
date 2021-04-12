@@ -56,7 +56,7 @@ function JSMathConvert(eqStr: String): String;
 
 implementation
 
-constructor TFormatODEs.create( model: SBMLhelpClass);
+constructor TFormatODEs.create (model: SBMLhelpClass);
 var i, j,k, paramLen, count: Integer;
     curODE: String;
     odeStrs: array of String;
@@ -76,102 +76,108 @@ begin
   count:=0;
 
   for i := 0 to Length(speciesStrAr)-1 do
-  begin
-    speciesStrAr[i]:= model.getSBMLspecies(i).getId();
-    // chk if boundary condition:
-    spBoundaryCondAr[i]:= model.getSBMLspecies(i).getBoundaryCondition();
-    self.speciesAr[i]:= model.getSBMLspecies(i);
-    console.log('Boundary condition for ',speciesStrAr[i],' is: ',spBoundaryCondAr[i]);
-   // Get initial conc/amounts for each one:
-    if model.getSBMLspecies(i).isSetInitialAmount() then
-      sVals[i]:= model.getSBMLspecies(i).getInitialAmount()
+      begin
+      speciesStrAr[i]:= model.getSBMLspecies(i).getId();
+      // chk if boundary condition:
+      spBoundaryCondAr[i] := model.getSBMLspecies(i).getBoundaryCondition();
+      self.speciesAr[i] := model.getSBMLspecies(i);
+      console.log('Boundary condition for ',speciesStrAr[i],' is: ',spBoundaryCondAr[i]);
+      // Get initial conc/amounts for each one:
+      if model.getSBMLspecies(i).isSetInitialAmount() then
+        sVals[i] := model.getSBMLspecies(i).getInitialAmount()
       else if model.getSBMLspecies(i).isSetInitialConcentration() then
-        sVals[i]:= model.getSBMLspecies(i).getInitialConcentration()
-        else sVals[i]:=0;
+        sVals[i] := model.getSBMLspecies(i).getInitialConcentration()
+        else sVals[i] :=0;
+      end;
 
-  end;
   // Get parameter and compartment names and combine into one array, pVals[]:
   SetLength(pVals,Length(paramsStr));
   for i := 0 to Length(paramsStr)-1 do
-  begin
-   if model.getSBMLparameter(i).isSetIDAttribute() then
-    begin
-      paramsStr[i]:= model.getSBMLparameter(i).getId();
-      // Get initial value for each param:
-      if model.getSBMLparameter(i).isSetValue() then
-       pVals[i]:= model.getSBMLparameter(i).getValue()
-       else pVals[i]:= 0;
-    end
-    else begin
-      paramsStr[i]:= '';
-      pVals[i]:= 0;
-    end;
-  end;
+      begin
+      if model.getSBMLparameter(i).isSetIDAttribute() then
+         begin
+         paramsStr[i] := model.getSBMLparameter(i).getId();
+         // Get initial value for each param:
+         if model.getSBMLparameter(i).isSetValue() then
+           pVals[i] := model.getSBMLparameter(i).getValue()
+         else pVals[i] := 0;
+         end
+      else
+         begin
+         paramsStr[i] := '';
+         pVals[i]:= 0;
+         end;
+      end;
     // Get compartments:
-  paramLen:=Length(paramsStr);
+  paramLen := Length(paramsStr);
   SetLength(paramsStr, paramLen+model.getCompNumb());
   SetLength(pVals, paramLen + model.getCompNumb());
   for i := 0 to model.getCompNumb()-1 do
-    begin
+       begin
+       if model.getSBMLcompartment(i).isSetIdAttribute() then
+          begin
+          paramsStr[paramLen+i]:= model.getSBMLcompartment(i).getID();
+          end
+       else
+          paramsStr[paramLen+i] := model.getSBMLcompartment(i).getName();
+       console.log('Adding compartment id: ', paramsStr[paramLen+i]);
 
-      if model.getSBMLcompartment(i).isSetIdAttribute() then
-      begin
-        paramsStr[paramLen+i]:= model.getSBMLcompartment(i).getID();
-      end
-      else paramsStr[paramLen+i]:= model.getSBMLcompartment(i).getName();
-      console.log('Adding compartment id: ', paramsStr[paramLen+i]);
-      // Get Size/Vols of compartments:
-      if model.getSBMLcompartment(i).isSetSize() then
-        pVals[paramLen+i]:= model.getSBMLcompartment(i).getSize()
-        else if model.getSBMLcompartment(i).isSetVolume() then
-          pVals[paramLen+i]:= model.getSBMLcompartment(i).getVolume()
-          else pVals[paramLen+i]:= 1; // default
-    end;
+       // Get Size/Vols of compartments:
+       if model.getSBMLcompartment(i).isSetSize() then
+          pVals[paramLen+i] := model.getSBMLcompartment(i).getSize()
+       else if model.getSBMLcompartment(i).isSetVolume() then
+          pVals[paramLen+i] := model.getSBMLcompartment(i).getVolume()
+          else pVals[paramLen+i] := 1; // default
+       end;
 
  // Go through each rule and replace all species and params in array of formulas:
   BuildAssignmentEqs(model);
 
   // *******************************************************************
   // go through each reaction eq and replace all species and params in arrays:
-   rxns:= Copy(model.getReactions(),0,model.getrxnsnumb());
+  rxns:= Copy(model.getReactions(), 0, model.getrxnsnumb());
   for j := 0 to Length(rxns)-1 do
-  begin
-    if rxns[j].isSetKineticLaw() then
-    begin
-      lhsSymbols:= buildODE_LHS(rxns[j]);   // check if existing LHS, then just
-                                            // add eq to it.
-      curODE:= rxns[j].getKineticLaw().getFormula()
-    end
-    else odeStrs[j]:= '';
-    odeStrs[j]:= replaceStrNames(speciesStrAr, curODE,'s');
-    odeStrs[j]:= replaceStrNames(paramsStr, odeStrs[j],'p');
-    setLength(odeEqs,length(lhsSymbols)+count);
-    for k := 0 to length(lhsSymbols)-1 do
-    begin
-      found_dydt:=  getODEeqLoc(lhsSymbols[k] );
-      console.log(' found_dydt: ', found_dydt);
-      if found_dydt <0 then // not found
       begin
-        if lhsSymbols[k] = '' then self.odeEqs[count]:= ''   // Do not add ODE eq for this species
-        else self.odeEqs[count]:= lhsSymbols[k] + odeStrs[j] + ')';  // rhs inclosed in perenthesis.
-        count:= count+1;  // count: Total number of eqs: Sum(prod+reactants per rxn)
-      end
-      else begin
+      if rxns[j].isSetKineticLaw() then
+         begin
+         lhsSymbols := buildODE_LHS(rxns[j]);  // check if existing LHS, then just // add eq to it.
+         curODE := rxns[j].getKineticLaw().getFormula()
+         end
+      else
+         odeStrs[j] := '';
+
+      odeStrs[j] := replaceStrNames(speciesStrAr, curODE,'s');
+      odeStrs[j] := replaceStrNames(paramsStr, odeStrs[j],'p');
+      setLength (odeEqs,length(lhsSymbols) + count);
+
+      for k := 0 to length(lhsSymbols)-1 do
+          begin
+          found_dydt :=  getODEeqLoc(lhsSymbols[k] );
+          console.log(' found_dydt: ', found_dydt);
+          if found_dydt < 0 then // not found
+             begin
+             if lhsSymbols[k] = '' then
+                self.odeEqs[count] := ''   // Do not add ODE eq for this species
+             else
+                self.odeEqs[count] := lhsSymbols[k] + odeStrs[j] + ')';  // rhs inclosed in perenthesis.
+             count := count + 1;  // count: Total number of eqs: Sum(prod+reactants per rxn)
+             end
+      else
+        begin
         if ContainsText(lhsSymbols[k],'(-1)*') then
-          self.odeEqs[found_dydt]:= self.odeEqs[found_dydt] + '+ ' + '(-1)*('+ odeStrs[j] + ')'
-        else self.odeEqs[found_dydt]:= self.odeEqs[found_dydt] + '+ ' + '('+ odeStrs[j] + ')';
+          self.odeEqs[found_dydt] := self.odeEqs[found_dydt] + '+ ' + '(-1)*('+ odeStrs[j] + ')'
+        else
+          self.odeEqs[found_dydt] := self.odeEqs[found_dydt] + '+ ' + '('+ odeStrs[j] + ')';
+        end;
+      end;
+      end;
 
-      end ;
-    end;
-
-  end;
-   // Now replace math operators:
+  // Now replace math operators:
   for i := 0 to Length(odeEqs)-1 do
-    begin
-       odeEqs[i]:= JSMathConvert(odeEqs[i]);
-    end;
+      begin
+      odeEqs[i] := JSMathConvert(odeEqs[i]);
+      end;
   buildLSODAeqs();
-
 end;
 
 // ************************************************************
