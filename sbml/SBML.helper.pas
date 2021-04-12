@@ -32,9 +32,9 @@ type
    procedure setAnnotationStr(annotate:String);
    function  getAnnotationStr():String;
    procedure setNumReactions (rnxNumb : integer); // TODO, remove, just increment as rxn added.
+   function  getNumReactions : integer;
    procedure addSBMLReaction(rxnid:String; prods: array of String; prodStoich: array of double;
         reactants: array of String; reactantsStoich: array of double; kinetic: String);
-   function getRxnsNumb():integer;
 
    function  getParamNumb(): integer;
    function  getSBMLparameter(i:integer): SBMLparameter;
@@ -54,7 +54,7 @@ type
    function  getSBMLcompartment(i:integer): SBMLcompartment;
    procedure addSBMLcompartment(newComp: SBMLcompartment);
 
-   function getReactions(): array of SBMLReaction;
+   function  getReactions(): array of SBMLReaction;
 
 
    property OnPing: TPingEvent read FPing write FPing;

@@ -9,6 +9,7 @@ const   MAXSIZE = 100;   // Used to set plot window width (if 1 msec step then 1
                                         clAqua, clGray,clPurple, clYellow,clFuchsia  );
 type
   DataType = array[1..MAXSIZE] of integer;
+  TIntegerArray = array of integer;
 
   TPlotGraph = class
   private
@@ -30,9 +31,9 @@ type
     procedure draw_Graph (canvas : TCanvas; x, y : DataType; Size, startp, endp : integer);
     procedure change_xorigin (wxmin, wxmax : integer);
     procedure draw_x_axis (const x : DataType; canvas : TCanvas; currTime: double);
-    procedure draw_y_axis ( const x : DataType; canvas : TCanvas);
-    function world_to_screen (wx, wy : integer ):array of integer;
-    function normalizeY(y_new, y_max: double):double;
+    procedure draw_y_axis (const x : DataType; canvas : TCanvas);
+    function  world_to_screen (wx, wy : integer): TIntegerArray;
+    function  normalizeY(y_new, y_max: double):double;
   public
     constructor create();
     procedure initGraph (wxmin, wxmax, wymin, wymax : integer; sxmin, sxmax,
@@ -79,10 +80,11 @@ begin
 
 end;
 
-function TPlotGraph.world_to_screen (wx, wy : integer ):array of integer;
+function TPlotGraph.world_to_screen (wx, wy : integer) : TIntegerArray;
 begin
-  Result[0] := trunc (wx*a + a1);
-  Result[1] := trunc (wy*b + b1);
+  setLength (result, 2);
+  result[0] := trunc (wx*a + a1);
+  result[1] := trunc (wy*b + b1);
 end;
 
 

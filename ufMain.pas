@@ -12,7 +12,9 @@ uses
   ODE_FormatUtility, GraphP, Vcl.Menus, WEBLib.Menus, paramSelectForm,speciesSelectForm, plotLayout,
   paramSlider, paramSliderLayout;
 
-  const SLIDERPWIDTH= 195; SLIDERPHEIGHT= 50;  // Param Sliders WebPanel width/height
+  const SLIDERPHEIGHT= 50;  // Param Sliders WebPanel width/height
+  const PLOT_WIDTH_PERCENTAGE = 0.6; // This means a plot extends to 60% of the right panel width
+
 type
   TspeciesAr = array of String;
   TMainForm = class(TWebForm)
@@ -158,7 +160,7 @@ type
     plotSpeciesForm: TSpeciesSWForm;
     plotSpecies: array of TspeciesAr; // species to graph for each plot
     plotsPBAr: array of TWebPaintbox;  // Plot paint boxes
-    plotsG_Ar: array of TPlotGraph;     // Plotting class for each plot
+    listOfPlots : array of TPlotGraph;     // Plotting class for each plot
     xscaleHeight: integer; { This is the space reserved for the x axis labelling, remove }
     xscaleHeightAr: array of integer;  //This is the space reserved for the x axis labelling of each plot
     sliderParamForm: TParamSliderSForm; // Pop up form to choose parameter for slider.
@@ -207,7 +209,7 @@ implementation
 {$R *.dfm}
 Uses uGraphUtils, uCreateNetworks, uLayout;
 
-procedure TmainForm.addPlotButtonClick(Sender: TObject);
+procedure TMainForm.addPlotButtonClick(Sender: TObject);
 begin
 // Make runtime, stepsize, simulation buttons visible
 // TODO: need to check if model ready for simulation first.
@@ -219,12 +221,12 @@ begin
   self.selectPlotSpecies(self.numbPlots);
 end;
 
-procedure TmainForm.btnAboutClick(Sender: TObject);
+procedure TMainForm.btnAboutClick(Sender: TObject);
 begin
   Showmessage ('Version 0.1');
 end;
 
-procedure TmainForm.btnAddNodeClick(Sender: TObject);
+procedure TMainForm.btnAddNodeClick(Sender: TObject);
 begin
   controller.setAddNodeStatus;
 end;
@@ -237,17 +239,17 @@ begin
   networkPB1.Invalidate;
 end;
 
-procedure TmainForm.btnBiBiClick(Sender: TObject);
+procedure TMainForm.btnBiBiClick(Sender: TObject);
 begin
   controller.setAddBiBiReaction;
 end;
 
-procedure TmainForm.btnBiUniClick(Sender: TObject);
+procedure TMainForm.btnBiUniClick(Sender: TObject);
 begin
   controller.setAddBiUniReaction;
 end;
 
-procedure TmainForm.btnCenterClick(Sender: TObject);
+procedure TMainForm.btnCenterClick(Sender: TObject);
 var i : integer;
 begin
   network.centerNetwork (networkPB1.Width, networkPB1.height);
@@ -259,7 +261,7 @@ begin
   networkPB1.Invalidate;
 end;
 
-procedure TmainForm.btnClearClick(Sender: TObject);
+procedure TMainForm.btnClearClick(Sender: TObject);
 begin
   network.Clear;
   networkPB1.Invalidate;
@@ -267,7 +269,7 @@ begin
  // self.GetSBMLInfo();
 end;
 
-procedure TmainForm.btnDrawClick(Sender: TObject);
+procedure TMainForm.btnDrawClick(Sender: TObject);
 var n1, n2, n3, n4 : TNode;
 begin
   n1 := controller.addNode ('node1', 60, 200);
@@ -386,7 +388,7 @@ if online = false then
 
  for i := 0 to length(graphBitmapAr)-1 do      // <-- for dynamically created plots
   begin
-   plotsG_Ar[i].initGraph(0, 200, 0, maxYValueAr[i], 0, graphBitmapAr[i].width, 0, graphBitmapAr[i].height,
+   listOfPlots[i].initGraph(0, 200, 0, maxYValueAr[i], 0, graphBitmapAr[i].width, 0, graphBitmapAr[i].height,
                  xscaleHeightAr[i], runTime, stepSize);
 
   //total steps: runTime/stepSize
@@ -430,10 +432,10 @@ begin
   self.plotEditLB.Top:= 40; // default
 end;
 
-procedure TmainForm.plotsPBArPaint(Sender: TObject);
+procedure TMainForm.plotsPBArPaint(Sender: TObject);
 var plot_i: integer;
 begin
-  plot_i:= (Sender as TWebPaintBox).Tag;
+  plot_i := (Sender as TWebPaintBox).Tag;
   plotsPBAr[plot_i-1].canvas.draw (0, 0, graphBitmapAr[plot_i-1]);
 end;
 
@@ -534,7 +536,6 @@ begin
     end;
    end;
   self.selectParameter(Length(sliderParamAr));
-
 end;
 
 
@@ -648,7 +649,7 @@ procedure TmainForm.GetSBMLInfo();
      varInitval: array of double; // init values for ODE solver
      outputList: TStringList;
  begin
-   numbRxns:= sbmlmodel.getrxnsnumb();
+   numbRxns:= sbmlmodel.getNumReactions();
    paramSliderBtn.visible:= true;
    // rxnsArray:= Copy(sbmlmodel.getReactions(),0,numbRxns);
    self.fillSpeciesArray();
@@ -864,13 +865,14 @@ begin
       else plot_y[i]:= true;
     end;
     // Dynamically draw plots:
-  plotsG_Ar[j].addPoint (graphBitmapAr[j].canvas, currentGeneration, y_new, plot_y, True, currTime);
+  listOfPlots[j].addPoint (graphBitmapAr[j].canvas, currentGeneration, y_new, plot_y, True, currTime);
   self.plotsPBAr[j].canvas.draw (0, 0, graphBitmapAr[j])
   end;
 end;
 
 
 procedure TmainForm.selectPlotSpecies(plotnumb: integer);  // plot number to be added or modified
+
 // Pass back to caller after closing popup:
   procedure AfterShowModal(AValue: TModalResult);
   var i:integer;
@@ -895,6 +897,7 @@ procedure TmainForm.selectPlotSpecies(plotnumb: integer);  // plot number to be 
       end;
       if addingPlot then self.addPlot();   // <-- Add dynamically created plot at this point
   end;
+
 // async called OnCreate for TSpeciesSWForm
   procedure AfterCreate(AForm: TObject);
   begin
@@ -912,7 +915,8 @@ begin
 end;
 
 
-procedure TmainForm.addPlot(); // Add a plot
+procedure TMainForm.addPlot(); // Add a plot
+
   procedure plotOnMouseDown(sender: TObject;  Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
   var i:integer;   // grab plot which received event
   begin
@@ -920,7 +924,7 @@ procedure TmainForm.addPlot(); // Add a plot
     begin
       if sender is TWebPaintBox then
       begin
-       i:= TWebPaintBox(sender).tag;  // assume only plot paintboxes in right panel.
+       i := TWebPaintBox(sender).tag;  // assume only plot paintboxes in right panel.
       // ShowMessage('Paint box sent mouse msg:  '+ inttostr(i));
        self.EditPlotList(i);
       end;
@@ -934,14 +938,16 @@ begin
  setLength (self.plotsPBAr, Length(self.plotsPBAr)+1);
  setLength (self.maxYValueAr, Length(self.maxYValueAr)+1);
  setLength (pixelStepAr, Length(pixelStepAr)+1);
- setLength (self.plotsG_Ar, Length(plotsG_Ar)+1);  // ***
- self.plotsG_Ar[self.numbPlots-1] := TPlotGraph.create;
+ setLength (self.listOfPlots, Length(listOfPlots)+1);  // ***
+
+ self.listOfPlots[self.numbPlots-1] := TPlotGraph.create;
  self.plotsPBAr[self.numbPlots-1] := TWebPaintBox.Create(self.RightWPanel);
  self.plotsPBAr[self.numbPlots-1].parent := self.RightWPanel;
  self.plotsPBAr[self.numbPlots-1].OnPaint := plotsPBArPaint;
  self.plotsPBAr[self.numbPlots-1].OnMouseDown := plotOnMouseDown;
 
- configPbPlot(self.numbPlots,(self.RightWPanel.Width - SLIDERPWIDTH),self.RightWPanel.Height, self.plotsPBAr);
+ configPbPlot(self.numbPlots,trunc (self.RightWPanel.Width*PLOT_WIDTH_PERCENTAGE),self.RightWPanel.Height, self.plotsPBAr);
+
  self.xscaleHeightAr[self.numbPlots-1] := round(0.15* self.plotsPBAr[self.numbPlots-1].Height);   // make %15 of total height
  self.maxYValueAr[self.numbPlots-1] := plotsPBAr[self.numbPlots-1].Height;  //  Adjust this..
  self.graphBitmapAr[self.numbPlots-1].width := self.plotsPBAr[self.numbPlots-1].Width;
@@ -959,7 +965,7 @@ begin
  self.plotsPBAr[plotn-1].free;
  delete(self.plotsPBAr,(plotn-1),1);
  delete(self.graphBitmapAr,(plotn-1),1);
- delete(self.plotsG_Ar,(plotn-1),1);
+ delete(self.listOfPlots,(plotn-1),1);
  delete(self.maxYValueAr,(plotn-1),1);
  delete(self.plotSPecies,(plotn-1),1);
  delete(pixelStepAr,(plotn-1),1);
@@ -1057,7 +1063,7 @@ procedure TmainForm.setODEsolver();
   end;
 
   // Select parameter to use for slider
-  procedure TmainForm.SelectParameter(sNumb: integer);
+  procedure TMainForm.SelectParameter(sNumb: integer);
   var paramIndex: integer; // param chosen in radiogroup
     // Pass back to caller after closing popup:
    procedure AfterShowModal(AValue: TModalResult);
@@ -1074,8 +1080,10 @@ procedure TmainForm.setODEsolver();
       else addingSlider:= false;
       console.log('Param index picked (chosenParam): ',sliderParamForm.chosenParam);
       self.sliderParamAr[sNumb]:= sliderParamForm.chosenParam;
-      if addingSlider then self.addParamSlider()  // <-- Add dynamically created slider
-      else self.SetSliderParamValues(sNumb, self.sliderParamAr[sNumb]);// update slider with new parameter:
+      if addingSlider then
+         self.addParamSlider()  // <-- Add dynamically created slider
+      else
+         self.SetSliderParamValues(sNumb, self.sliderParamAr[sNumb]);// update slider with new parameter:
     end;
 
 // async called OnCreate for TParamSliderSForm
@@ -1109,11 +1117,17 @@ procedure TmainForm.setODEsolver();
         end;
       end;
     end;
-  var i, sliderTBarWidth, sliderPanelLeft: integer;
+
+    // ###
+  var i, sliderTBarWidth, sliderPanelLeft, sliderPanelWidth : integer;
   begin
-    sliderPanelLeft:= 410;
-    sliderTBarWidth:= 92;
-    i:= Length(self.sliderPanelAr);  // array index for current slider to be added.
+    // Left most position of the panel that holds the slider
+    sliderPanelWidth := trunc ((1 - PLOT_WIDTH_PERCENTAGE)*RightWPanel.Width);
+    sliderPanelLeft := (RightWPanel.Width - sliderPanelWidth) - 6;
+    // Width of the slider inside the panel
+    //sliderTBarWidth:= trunc (0.8*sliderPanelWidth); // 90% of the panel
+
+    i := length(self.sliderPanelAr);  // array index for current slider to be added.
     SetLength(self.sliderPanelAr, i+1);
     SetLength(self.sliderPHighAr, i+1);
     SetLength(self.sliderPLowAr, i+1);
@@ -1121,25 +1135,26 @@ procedure TmainForm.setODEsolver();
     SetLength(self.sliderPHLabelAr, i+1);
     SetLength(self.sliderPLLabelAr, i+1);
     SetLength(self.sliderPTBLabelAr, i+1);
-    self.sliderPanelAr[i]:= TWebPanel.Create(self.RightWPanel);
-    self.sliderPanelAr[i].Parent:= self.RightWPanel;
-    self.sliderPanelAr[i].OnMouseDown:= SliderOnMouseDown;
-    configPSliderPanel(i, sliderPanelLeft, SLIDERPWIDTH, SLIDERPHEIGHT, self.sliderPanelAr);
 
-    self.sliderPanelAr[i].Tag:= i;  // keep track of slider index number.
-    self.sliderPTBarAr[i]:= TWebTrackBar.Create(self.sliderPanelAr[i]);
-    self.sliderPTBarAr[i].Parent:= self.sliderPanelAr[i];
-    self.sliderPTBarAr[i].OnChange:= self.ParamSliderOnChange;
-    self.sliderPHLabelAr[i]:= TWebLabel.Create(self.sliderPanelAr[i]);
-    self.sliderPHLabelAr[i].Parent:= self.sliderPanelAr[i];
-    self.sliderPLLabelAr[i]:= TWebLabel.Create(self.sliderPanelAr[i]);
-    self.sliderPLLabelAr[i].Parent:= self.sliderPanelAr[i];
-    self.sliderPTBLabelAr[i]:= TWebLabel.Create(self.sliderPanelAr[i]);
-    self.sliderPTBLabelAr[i].Parent:= self.sliderPanelAr[i];
+    self.sliderPanelAr[i] := TWebPanel.Create(self.RightWPanel);
+    self.sliderPanelAr[i].Parent := self.RightWPanel;
+    self.sliderPanelAr[i].OnMouseDown := SliderOnMouseDown;
+
+    configPSliderPanel(i, sliderPanelLeft, sliderPanelWidth, SLIDERPHEIGHT, self.sliderPanelAr);
+
+    self.sliderPanelAr[i].Tag := i;  // keep track of slider index number.
+    self.sliderPTBarAr[i] := TWebTrackBar.Create(self.sliderPanelAr[i]);
+    self.sliderPTBarAr[i].Parent := self.sliderPanelAr[i];
+    self.sliderPTBarAr[i].OnChange := self.ParamSliderOnChange;
+    self.sliderPHLabelAr[i] := TWebLabel.Create(self.sliderPanelAr[i]);
+    self.sliderPHLabelAr[i].Parent := self.sliderPanelAr[i];
+    self.sliderPLLabelAr[i] := TWebLabel.Create(self.sliderPanelAr[i]);
+    self.sliderPLLabelAr[i].Parent := self.sliderPanelAr[i];
+    self.sliderPTBLabelAr[i] := TWebLabel.Create(self.sliderPanelAr[i]);
+    self.sliderPTBLabelAr[i].Parent := self.sliderPanelAr[i];
     self.SetSliderParamValues(i, self.sliderParamAr[i]);
-    configPSliderTBar(i,sliderTBarWidth, self.sliderPTBarAr,
-               self.sliderPHLabelAr,self.sliderPLLabelAr,self.sliderPTBLabelAr);
 
+    configPSliderTBar(i, sliderPanelWidth, self.sliderPTBarAr, self.sliderPHLabelAr, self.sliderPLLabelAr, self.sliderPTBLabelAr);
   end;
 
   // Called when adding or updating a param slider. sn = slider number

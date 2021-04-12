@@ -71,7 +71,7 @@ begin
   self.speciesAr:= model.getSBMLspeciesArr();
   setLength(self.spBoundaryCondAr,Length(speciesStrAr));  // not needed anymore.
   setLength(paramsStr, Length(model.getSBMLparameterArr()));
-  setLength(odeStrs, model.getrxnsnumb());
+  setLength(odeStrs, model.getNumReactions());
   setLength(sVals,model.getSpeciesNumb());
   count:=0;
 
@@ -135,7 +135,7 @@ begin
 
   // *******************************************************************
   // go through each reaction eq and replace all species and params in arrays:
-  rxns:= Copy(model.getReactions(), 0, model.getrxnsnumb());
+  rxns:= Copy(model.getReactions(), 0, model.getNumReactions());
   for j := 0 to Length(rxns)-1 do
       begin
       if rxns[j].isSetKineticLaw() then
