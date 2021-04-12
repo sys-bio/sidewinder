@@ -21,11 +21,11 @@ type
     modelSpecies: array of SBMLspecies;
     modelComps: array of SBMLcompartment;
     modelParams: array of SBMLparameter;
-    modelRules: array of TSBMLrule;  // optional
+    modelRules: array of TSBMLRule;  // optional
 
     FPing: TPingEvent; // Used to send sbml info listener once asynchronous read done.
 
-   public
+  public
    constructor create();
    procedure readSBML(textSBML: string);
 
@@ -76,9 +76,8 @@ end;
 
 
 procedure SBMLhelpClass.readSBML(textSBML:string);
- var numb:integer;
-
- nSpecies: SBMLspecies;
+var
+ newSpecies: SBMLspecies;
  jsSpecies: TJSObject;
  newComp: SBMLcompartment;
  jsComp: TJSObject;
@@ -88,8 +87,8 @@ procedure SBMLhelpClass.readSBML(textSBML:string);
  jsRule: TJSObject;
 
 begin
- nSpecies:= SBMLspecies.create(); // a new species
- jsSpecies:= JS.ToObject(nSpecies);
+ newSpecies:= SBMLspecies.create(); // a new species
+ jsSpecies:= JS.ToObject(newSpecies);
  newComp:= SBMLcompartment.create(); // a new compartment
  jsComp:= JS.ToObject(newComp);
  newParam:= SBMLparameter.create(); // a new parameter
@@ -108,8 +107,7 @@ begin
   // read with no errors .. TODO: Chk for errors
 
   const model = doc.getModel();
-  numb = model.getNumReactions();
-  this.numbRxns = numb;
+  this.numReactions = model.getNumReactions();
   this.numSpecies = model.getNumSpecies();
   this.numParams = model.getNumParameters();
   this.numCompartments = model.getNumCompartments();
@@ -120,8 +118,8 @@ begin
   this.annotationStr = model.getNotesString();
   var i;
 
-  if(this.numRules>0) {
-    for(i=0;i<this.numRules; i++) {
+  if (this.numRules > 0) {
+    for (i=0; i < this.numRules; i++) {
        //console.log('Rule: ', model.getRule(i).getFormula());
        var rule = model.getRule(i);
        jsRule.setScaler(false);
@@ -155,41 +153,41 @@ begin
     }
   }
 
-  for(i=0;i<this.numSpecies; i++) {
+  for (i=0; i < this.numSpecies; i++) {
    // generate array of SBMLspecies for model:
    const newSpecies = model.getSpecies(i);
    jsSpecies.setID(newSpecies.getId());
-   if(newSpecies.isSetInitialAmount())
+   if (newSpecies.isSetInitialAmount())
         { jsSpecies.setInitialAmount(newSpecies.getInitialAmount());}
-   else if(newSpecies.isSetInitialConcentration())
+   else if (newSpecies.isSetInitialConcentration())
         { jsSpecies.setInitialConcentration(newSpecies.getInitialConcentration());}
         else {jsSpecies.setInitialConcentration(0);} // default is 0.
-   if(newSpecies.isSetCompartment()) {
+   if (newSpecies.isSetCompartment()) {
       jsSpecies.setCompartment(newSpecies.getCompartment()); }
-   if(newSpecies.isSetBoundaryCondition()) {
+   if (newSpecies.isSetBoundaryCondition()) {
       jsSpecies.setBoundaryCondition(newSpecies.getBoundaryCondition());  }
-     // console.log( ' Setting boundary condition to true') }
+      // console.log( ' Setting boundary condition to true') }
    if (newSpecies.isSetName()) {
       jsSpecies.setName(newSpecies.getName()); }
    this.addSBMLspecies(jsSpecies); // Add new species to array of all species used in model.
   // console.log('SBMLSpecies ID: ', jsSpecies.getID());
   }
-  for(i=0;i<this.numCompartments;i++) {
+  for (i=0; i < this.numCompartments; i++) {
     const newComp = model.getCompartment(i);
     jsComp.setID(newComp.getId());
-  //  console.log('SBMLcompartment ID: ', jsComp.getID());
-    if(newComp.isSetSize()) {
+    //  console.log('SBMLcompartment ID: ', jsComp.getID());
+    if (newComp.isSetSize()) {
       jsComp.setSize(newComp.getSize()); }
     else if(newComp.isSetVolume()) {
       jsComp.setSize(newComp.getSize()); } // Save as size
-    if(newComp.isSetName()) {
+    if (newComp.isSetName()) {
       jsComp.setName(newComp.getName()); }
-    if(newComp.isSetConstant()) {
+    if (newComp.isSetConstant()) {
       jsComp.setConstant(newComp.getConstant()); }
     this.addSBMLcompartment(jsComp);
   }
 
-   for(i=0;i<this.numParams;i++) {
+   for(i=0; i < this.numParams; i++) {
     jsParam.unSetValueFlag();
     jsParam.setValue(0);
     const newParam = model.getParameter(i);
@@ -206,17 +204,17 @@ begin
   }
 
 
-  for(i=0; i< numb; i++) {
-    var numbTot;
+  for( i=0; i< this.numReactions; i++) {
+    var numTotalSpecies;
     var j;
     var k;
     var reactants = [];  // an array of strings for each rxn
     var reactStoich = []; // number for each reactant per rxn
     var products = [];   // an array of strings
     var prodStoich = [];
-    numbTot = model.getReaction(i).getNumReactants();
+    numTotalSpecies = model.getReaction(i).getNumReactants();
 
-    for(j=0; j<numbTot; j++) {
+    for (j=0; j < numTotalSpecies; j++) {
     // Get info for SpeciesReference object:
      reactants[j] = model.getReaction(i).getReactant(j).getSpecies();
      if( model.getReaction(i).getReactant(j).isSetStoichiometry() ) {
@@ -225,23 +223,23 @@ begin
      else { reactStoich[j] =1; }  // default
     }
 
-    numbTot=0;
-    numbTot = model.getReaction(i).getNumProducts();
-    for(j=0; j<numbTot; j++) {
+    numTotalSpecies = 0;
+    numTotalSpecies = model.getReaction(i).getNumProducts();
+    for (j=0; j < numTotalSpecies; j++) {
      products[j] = model.getReaction(i).getProduct(j).getSpecies();
      prodStoich[j] = model.getReaction(i).getProduct(j).getStoichiometry();
     }
     var kineticForm = model.getReaction(i).getKineticLaw().getFormula();
-    const newKineticL = model.getReaction(i).getKineticLaw();
-    //jsKineticLaw.setNumParameters(newKineticL.getNumParameters());
+    const newKineticLaw = model.getReaction(i).getKineticLaw();
+    //jsKineticLaw.setNumParameters(newKineticLaw.getNumParameters());
 
   //  console.log('model.getReaction... numb of params: ',model.getReaction(i).getKineticLaw().getNumParameters());
-    for(k=0;k < model.getReaction(i).getKineticLaw().getNumParameters(); k++) {
+    for (k=0; k < model.getReaction(i).getKineticLaw().getNumParameters(); k++) {
       //jsKineticLaw.addParameter(model.getReaction(i).getKineticLaw().getParameter(k).getId());
     }
 
   //  console.log('--> kinetic law: ',model.getReaction(i).getKineticLaw().getFormula());
-    this.addSBMLReaction(model.getReaction(i).getId(),products,prodStoich, reactants,reactStoich,kineticForm);
+    this.addSBMLReaction(model.getReaction(i).getId(), products, prodStoich, reactants, reactStoich, kineticForm);
 
   }
   this.TriggerEvent();  // libsbml loaded and model processed.
@@ -260,10 +258,12 @@ begin
   numbRxns:= rnxNumb;
 end;
 
+
 function SBMLhelpClass.getRxnsNumb():integer;
 begin
    Result:= numbRxns;
 end;
+
 
 procedure SBMLhelpClass.TriggerEvent();
  begin

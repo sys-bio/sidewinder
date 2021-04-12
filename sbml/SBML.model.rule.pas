@@ -4,7 +4,7 @@ interface
 uses Web, JS;
 type
  //  SBML Rule
- TSBMLrule = class
+ TSBMLRule = class
  private
    formula:String;
    SBMLvar: String;
@@ -83,7 +83,7 @@ type
 
 implementation
 
-constructor TSBMLrule.Create(); overload;
+constructor TSBMLRule.Create(); overload;
 begin
   self.formula:= '';
   self.SBMLvar:= '';
@@ -92,7 +92,7 @@ begin
   self.isSpeciesConc:= false; self.isParam:= false;
 end;
 
-constructor TSBMLrule.Create(cpyRule: TSBMLrule); overload;
+constructor TSBMLRule.Create(cpyRule: TSBMLrule); overload;
 begin
    self.formula:= cpyRule.getFormula;
    self.SBMLvar:= cpyRule.getVariable;
@@ -114,56 +114,71 @@ begin
    self.isParam:= cpyRule.isParameter;
 end;
 
-function TSBMLrule.isRate(): boolean; //virtual; abstract; // rate rule
+function TSBMLRule.isRate(): boolean; //virtual; abstract; // rate rule
 begin
   Result:= self.RateR;
 end;
-function TSBMLrule.isAssignment(): boolean; //virtual; abstract; // assignment rule
+
+
+function TSBMLRule.isAssignment(): boolean; //virtual; abstract; // assignment rule
 begin
   Result:= self.AssignmentR;
 end;
-function TSBMLrule.isAlgebraic(): boolean;//virtual; abstract; // algebraic rule
+
+
+function TSBMLRule.isAlgebraic(): boolean;//virtual; abstract; // algebraic rule
 begin
   Result:= self.AlgebraicR;
 end;
-function TSBMLrule.isScaler(): boolean; //virtual; abstract;
+
+
+function TSBMLRule.isScaler(): boolean; //virtual; abstract;
 begin
   Result:= self.ScalerR;
 end;
 
-procedure TSBMLrule.setRate(isR: boolean);
+procedure TSBMLRule.setRate(isR: boolean);
 begin
   self.RateR:= isR;
 end;
-procedure TSBMLrule.setAssignment(isAssign: boolean);
+
+
+procedure TSBMLRule.setAssignment(isAssign: boolean);
 begin
   self.AssignmentR:= isAssign;
 end;
 
-procedure TSBMLrule.setAlgebraic(isAlg: boolean);
+
+procedure TSBMLRule.setAlgebraic(isAlg: boolean);
 begin
   self.AlgebraicR:= isAlg;
 end;
 
-procedure TSBMLrule.setScaler(isS: boolean);
+
+procedure TSBMLRule.setScaler(isS: boolean);
 begin
   self.ScalerR:= isS;
 end;
 
-function TSBMLrule.isSpeciesConcentration(): boolean; //virtual; abstract;
+
+function TSBMLRule.isSpeciesConcentration(): boolean; //virtual; abstract;
 begin
   Result:= self.isSpeciesConc;
 end;
-procedure TSBMLrule.setSpeciesConcentration(isSp: boolean);
+
+
+procedure TSBMLRule.setSpeciesConcentration(isSp: boolean);
 begin
   self.isSpeciesConc:= isSp;
 end;
 
-function TSBMLrule.isParameter(): boolean; //virtual; abstract;// parameter rule
+function TSBMLRule.isParameter(): boolean; //virtual; abstract;// parameter rule
 begin
   Result:= self.isParam;
 end;
-procedure TSBMLrule.setParameter(isP: boolean);
+
+
+procedure TSBMLRule.setParameter(isP: boolean);
 begin
   self.isParam:= isP;
   self.isParam:= true;
@@ -174,60 +189,82 @@ end;
 //end;
 
 
-function TSBMLrule.getFormula(): String;
+function TSBMLRule.getFormula(): String;
 begin
   Result:= self.formula;
 end;
-procedure TSBMLrule.setFormula(eq: String);
+
+
+procedure TSBMLRule.setFormula(eq: String);
 begin
   self.formula:= eq;
 end;
-function TSBMLrule.isSetFormula(): boolean;
+
+
+function TSBMLRule.isSetFormula(): boolean;
 begin
   if self.formula= '' then Result:= false
   else Result:= true;
 end;
 
-function TSBMLrule.getVariable(): String;
+
+function TSBMLRule.getVariable(): String;
 begin
   Result:= self.SBMLvar;
 end;
-procedure TSBMLrule.setVariable(sid: String);// sid the identifier of a Compartment, Species or Parameter.
+
+
+procedure TSBMLRule.setVariable(sid: String);// sid the identifier of a Compartment, Species or Parameter.
 begin
   self.SBMLvar:= sid;
 end;
-function TSBMLrule.isSetVariable():boolean;
+
+
+function TSBMLRule.isSetVariable():boolean;
 begin
   if self.SBMLvar = '' then Result:= false
   else Result:= true;
 end;
-procedure TSBMLrule.unsetVariable();  // Unsets the variable .. set to nil
+
+
+procedure TSBMLRule.unsetVariable();  // Unsets the variable .. set to nil
 begin
   self.SBMLvar:= '';
 end;
 
-function TSBMLrule.getId(): String;
+
+function TSBMLRule.getId(): String;
 begin
   Result:= self.id;
 end;
-procedure TSBMLrule.setId(id: String);
+
+
+procedure TSBMLRule.setId(id: String);
 begin
   self.id:= id;
 end;
-function TSBMLrule.isSetIdAttribute(): boolean;
+
+
+function TSBMLRule.isSetIdAttribute(): boolean;
 begin
   if self.id = '' then Result:= false
   else Result:= true;
 end;
-function TSBMLrule.getName(): String;
+
+
+function TSBMLRule.getName(): String;
 begin
   Result:= self.name;
 end;
-procedure TSBMLrule.setName( name: String);
+
+
+procedure TSBMLRule.setName( name: String);
 begin
   self.name:= name;
 end;
-function TSBMLrule.isSetName(): boolean;
+
+
+function TSBMLRule.isSetName(): boolean;
 begin
   if self.name = '' then Result:= false
   else Result:= true;

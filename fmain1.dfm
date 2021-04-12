@@ -857,9 +857,9 @@ object mainForm: TmainForm
       end
     end
     object RightWPanel: TWebPanel
-      Left = 1479
+      Left = 1278
       Top = 0
-      Width = 321
+      Width = 522
       Height = 715
       ElementClassName = 'card rounded-0'
       HeightPercent = 100.000000000000000000
@@ -872,9 +872,9 @@ object mainForm: TmainForm
       ElementFont = efCSS
       object simResultsMemo: TWebMemo
         Left = 6
-        Top = 535
-        Width = 312
-        Height = 174
+        Top = 544
+        Width = 513
+        Height = 165
         AutoSize = False
         ElementClassName = 'form-control'
         ElementFont = efCSS
@@ -918,7 +918,7 @@ object mainForm: TmainForm
     object pnlCenter: TWebPanel
       Left = 137
       Top = 0
-      Width = 1342
+      Width = 1141
       Height = 715
       ElementClassName = 'card rounded-0'
       HeightPercent = 100.000000000000000000
@@ -929,14 +929,11 @@ object mainForm: TmainForm
       ChildOrder = 2
       ElementBodyClassName = 'card-body'
       ElementFont = efCSS
-      ExplicitLeft = 276
-      ExplicitTop = 34
-      ExplicitWidth = 610
-      ExplicitHeight = 441
+      ExplicitWidth = 1342
       object networkPB1: TWebPaintBox
         Left = 0
         Top = 0
-        Width = 1342
+        Width = 1141
         Height = 715
         HeightPercent = 100.000000000000000000
         WidthPercent = 100.000000000000000000
@@ -949,8 +946,9 @@ object mainForm: TmainForm
         OnMouseMove = networkPB1MouseMove
         OnMouseUp = networkPB1MouseUp
         OnMouseWheel = networkPB1MouseWheel
-        ExplicitWidth = 610
-        ExplicitHeight = 441
+        ExplicitLeft = 136
+        ExplicitTop = 96
+        ExplicitWidth = 1184
       end
     end
   end
