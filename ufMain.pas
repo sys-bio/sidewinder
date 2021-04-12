@@ -1,4 +1,4 @@
-unit fmain1;
+unit ufMain;
 
 interface
 
@@ -67,6 +67,9 @@ type
     SliderEditLB: TWebListBox;
     pnlCenter: TWebPanel;
     networkPB1: TWebPaintBox;
+    netDrawScrollBarVert: TTMSFNCScrollBar;
+    netDrawScrollBarHoriz: TTMSFNCScrollBar;
+    splitter: TWebSplitter;
 
     procedure btnUniUniClick(Sender: TObject);
     procedure btnBiBiClick(Sender: TObject);
@@ -119,7 +122,8 @@ type
     procedure mnuUndoClick(Sender: TObject);
     procedure ParamSliderOnChange(Sender: TObject);  // User changes value of parameter
     procedure plotEditLBClick(Sender: TObject);
-    procedure SliderEditLBClick(Sender: TObject);  // User clicks choice from plot edit list
+    procedure SliderEditLBClick(Sender: TObject);
+    procedure splitterMoved(Sender: TObject);  // User clicks choice from plot edit list
 
 
   private
@@ -610,12 +614,12 @@ end;
 
 procedure TmainForm.WebFormResize(Sender: TObject);
 begin
-if networkCanvas = nil then  // Resize may be called before Create
-begin
-  network := TNetwork.Create ('testNetwork');
-  controller := TController.Create (network);
-  networkCanvas := TNetworkCanvas.Create (network);
-end;
+  if networkCanvas = nil then  // Resize may be called before Create
+     begin
+     network := TNetwork.Create ('testNetwork');
+     controller := TController.Create (network);
+     networkCanvas := TNetworkCanvas.Create (network);
+     end;
   networkCanvas.bitmap.Height := networkPB1.height;
   networkCanvas.bitmap.Width := networkPB1.width;
   networkPB1.invalidate;
@@ -717,6 +721,13 @@ procedure TmainForm.GetSBMLInfo();
   self.SliderEditLB.Top:= 40; // default
 end;
 
+
+procedure TMainForm.splitterMoved(Sender: TObject);
+begin
+  networkCanvas.bitmap.Height := networkPB1.height;
+  networkCanvas.bitmap.Width := networkPB1.width;
+  networkPB1.invalidate;
+end;
 
 procedure TmainForm.startSimulation(odeEqs: String; odeFormat: TFormatODEs);
  var i: Integer;
@@ -917,21 +928,21 @@ procedure TmainForm.addPlot(); // Add a plot
   end;
 
 begin
- SetLength(graphBitmapAr,length(graphBitmapAr)+1); // want chk bitmaps = # plots?
+ setLength (graphBitmapAr,length(graphBitmapAr)+1); // want chk bitmaps = # plots?
  self.graphBitmapAr[self.numbPlots-1] := TBitmap.Create;
- SetLength(self.xscaleHeightAr,Length(self.xscaleHeightAr)+1);
- SetLength(self.plotsPBAr,Length(self.plotsPBAr)+1);
- SetLength(self.maxYValueAr,Length(self.maxYValueAr)+1);
- SetLength(pixelStepAr,Length(pixelStepAr)+1);
- SetLength(self.plotsG_Ar,Length(plotsG_Ar)+1);  // ***
- self.plotsG_Ar[self.numbPlots-1]:= TPlotGraph.create;
- self.plotsPBAr[self.numbPlots-1]:= TWebPaintBox.Create(self.RightWPanel);
- self.plotsPBAr[self.numbPlots-1].parent:=self.RightWPanel;
- self.plotsPBAr[self.numbPlots-1].OnPaint:= plotsPBArPaint;
- self.plotsPBAr[self.numbPlots-1].OnMouseDown:= plotOnMouseDown;
+ setLength (self.xscaleHeightAr, Length(self.xscaleHeightAr)+1);
+ setLength (self.plotsPBAr, Length(self.plotsPBAr)+1);
+ setLength (self.maxYValueAr, Length(self.maxYValueAr)+1);
+ setLength (pixelStepAr, Length(pixelStepAr)+1);
+ setLength (self.plotsG_Ar, Length(plotsG_Ar)+1);  // ***
+ self.plotsG_Ar[self.numbPlots-1] := TPlotGraph.create;
+ self.plotsPBAr[self.numbPlots-1] := TWebPaintBox.Create(self.RightWPanel);
+ self.plotsPBAr[self.numbPlots-1].parent := self.RightWPanel;
+ self.plotsPBAr[self.numbPlots-1].OnPaint := plotsPBArPaint;
+ self.plotsPBAr[self.numbPlots-1].OnMouseDown := plotOnMouseDown;
 
  configPbPlot(self.numbPlots,(self.RightWPanel.Width - SLIDERPWIDTH),self.RightWPanel.Height, self.plotsPBAr);
- self.xscaleHeightAr[self.numbPlots-1]:= round(0.15* self.plotsPBAr[self.numbPlots-1].Height);   // make %15 of total height
+ self.xscaleHeightAr[self.numbPlots-1] := round(0.15* self.plotsPBAr[self.numbPlots-1].Height);   // make %15 of total height
  self.maxYValueAr[self.numbPlots-1] := plotsPBAr[self.numbPlots-1].Height;  //  Adjust this..
  self.graphBitmapAr[self.numbPlots-1].width := self.plotsPBAr[self.numbPlots-1].Width;
  self.graphBitmapAr[self.numbPlots-1].height := self.plotsPBAr[self.numbPlots-1].Height;

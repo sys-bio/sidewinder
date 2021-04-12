@@ -409,7 +409,6 @@ object mainForm: TmainForm
     Color = clWhite
     ElementBodyClassName = 'card-body'
     ElementFont = efCSS
-    ExplicitTop = 62
     object LeftWPanel: TWebPanel
       Left = 0
       Top = 0
@@ -429,7 +428,6 @@ object mainForm: TmainForm
       Font.Name = 'Tahoma'
       Font.Style = []
       ParentFont = False
-      ExplicitTop = -6
       object btnUniUni: TWebSpeedButton
         Left = 6
         Top = 96
@@ -918,7 +916,7 @@ object mainForm: TmainForm
     object pnlCenter: TWebPanel
       Left = 137
       Top = 0
-      Width = 1141
+      Width = 1136
       Height = 715
       ElementClassName = 'card rounded-0'
       HeightPercent = 100.000000000000000000
@@ -929,12 +927,15 @@ object mainForm: TmainForm
       ChildOrder = 2
       ElementBodyClassName = 'card-body'
       ElementFont = efCSS
-      ExplicitWidth = 1342
+      ExplicitLeft = 343
+      ExplicitTop = 188
+      ExplicitWidth = 894
+      ExplicitHeight = 515
       object networkPB1: TWebPaintBox
         Left = 0
         Top = 0
-        Width = 1141
-        Height = 715
+        Width = 1118
+        Height = 697
         HeightPercent = 100.000000000000000000
         WidthPercent = 100.000000000000000000
         Align = alClient
@@ -946,10 +947,115 @@ object mainForm: TmainForm
         OnMouseMove = networkPB1MouseMove
         OnMouseUp = networkPB1MouseUp
         OnMouseWheel = networkPB1MouseWheel
-        ExplicitLeft = 136
-        ExplicitTop = 96
-        ExplicitWidth = 1184
+        ExplicitWidth = 1141
+        ExplicitHeight = 715
       end
+      object netDrawScrollBarVert: TTMSFNCScrollBar
+        Left = 1118
+        Top = 0
+        Width = 18
+        Height = 697
+        Align = alRight
+        ParentDoubleBuffered = False
+        Color = 15592941
+        DoubleBuffered = True
+        TabOrder = 1
+        Fill.Color = 15592941
+        Stroke.Color = 8882055
+        Appearance.ThumbFill.Color = 14803425
+        Appearance.ScrollButtonLeftFill.Color = 14803425
+        Appearance.ScrollButtonRightFill.Color = 14803425
+        Appearance.ScrollButtonLeftHoverFill.Color = 16511461
+        Appearance.ScrollButtonRightHoverFill.Color = 16511461
+        Appearance.ScrollButtonLeftDownFill.Color = 16378843
+        Appearance.ScrollButtonRightDownFill.Color = 16378843
+        Appearance.ThumbButtonLeftFill.Color = 14803425
+        Appearance.ThumbButtonRightFill.Color = 14803425
+        Appearance.ThumbButtonLeftHoverFill.Color = 16511461
+        Appearance.ThumbButtonRightHoverFill.Color = 16511461
+        Appearance.ThumbButtonLeftDownFill.Color = 16378843
+        Appearance.ThumbButtonRightDownFill.Color = 16378843
+        Appearance.ThumbStroke.Color = 8882055
+        Appearance.ScrollButtonLeftStroke.Color = 8882055
+        Appearance.ScrollButtonRightStroke.Color = 8882055
+        Appearance.ScrollButtonLeftHoverStroke.Color = 11632444
+        Appearance.ScrollButtonRightHoverStroke.Color = 11632444
+        Appearance.ScrollButtonLeftDownStroke.Color = 11632444
+        Appearance.ScrollButtonRightDownStroke.Color = 11632444
+        Appearance.ThumbButtonLeftStroke.Color = 8882055
+        Appearance.ThumbButtonRightStroke.Color = 8882055
+        Appearance.ThumbButtonLeftHoverStroke.Color = 11632444
+        Appearance.ThumbButtonRightHoverStroke.Color = 11632444
+        Appearance.ThumbButtonLeftDownStroke.Color = 11632444
+        Appearance.ThumbButtonRightDownStroke.Color = 11632444
+        Appearance.FixedThumb = True
+        Max = 1000.000000000000000000
+        PageSize = 10.000000000000000000
+        OnValueChanged = netDrawScrollBarVertValueChanged
+        ExplicitLeft = 744
+        ExplicitTop = 192
+        ExplicitHeight = 121
+      end
+      object netDrawScrollBarHoriz: TTMSFNCScrollBar
+        Left = 0
+        Top = 697
+        Width = 1136
+        Height = 18
+        Align = alBottom
+        ParentDoubleBuffered = False
+        Color = 15592941
+        DoubleBuffered = True
+        TabOrder = 2
+        Fill.Color = 15592941
+        Stroke.Color = 8882055
+        Appearance.ThumbFill.Color = 14803425
+        Appearance.ScrollButtonLeftFill.Color = 14803425
+        Appearance.ScrollButtonRightFill.Color = 14803425
+        Appearance.ScrollButtonLeftHoverFill.Color = 16511461
+        Appearance.ScrollButtonRightHoverFill.Color = 16511461
+        Appearance.ScrollButtonLeftDownFill.Color = 16378843
+        Appearance.ScrollButtonRightDownFill.Color = 16378843
+        Appearance.ThumbButtonLeftFill.Color = 14803425
+        Appearance.ThumbButtonRightFill.Color = 14803425
+        Appearance.ThumbButtonLeftHoverFill.Color = 16511461
+        Appearance.ThumbButtonRightHoverFill.Color = 16511461
+        Appearance.ThumbButtonLeftDownFill.Color = 16378843
+        Appearance.ThumbButtonRightDownFill.Color = 16378843
+        Appearance.ThumbStroke.Color = 8882055
+        Appearance.ScrollButtonLeftStroke.Color = 8882055
+        Appearance.ScrollButtonRightStroke.Color = 8882055
+        Appearance.ScrollButtonLeftHoverStroke.Color = 11632444
+        Appearance.ScrollButtonRightHoverStroke.Color = 11632444
+        Appearance.ScrollButtonLeftDownStroke.Color = 11632444
+        Appearance.ScrollButtonRightDownStroke.Color = 11632444
+        Appearance.ThumbButtonLeftStroke.Color = 8882055
+        Appearance.ThumbButtonRightStroke.Color = 8882055
+        Appearance.ThumbButtonLeftHoverStroke.Color = 11632444
+        Appearance.ThumbButtonRightHoverStroke.Color = 11632444
+        Appearance.ThumbButtonLeftDownStroke.Color = 11632444
+        Appearance.ThumbButtonRightDownStroke.Color = 11632444
+        Appearance.FixedThumb = True
+        Kind = sbkHorizontal
+        Max = 1000.000000000000000000
+        PageSize = 10.000000000000000000
+        OnValueChanged = netDrawScrollBarHorizValueChanged
+        ExplicitLeft = 320
+        ExplicitTop = 288
+        ExplicitWidth = 121
+      end
+    end
+    object splitter: TWebSplitter
+      Left = 1273
+      Top = 0
+      Width = 5
+      Height = 715
+      HeightPercent = 100.000000000000000000
+      WidthPercent = 100.000000000000000000
+      Align = alRight
+      ChildOrder = 3
+      Color = clBtnFace
+      OnMoved = splitterMoved
+      ExplicitLeft = 1272
     end
   end
   object WebTimer1: TWebTimer

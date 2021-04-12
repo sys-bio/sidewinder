@@ -107,7 +107,7 @@
         <DelphiCompile Include="$(MainSource)">
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
-        <DCCReference Include="fmain1.pas">
+        <DCCReference Include="ufMain.pas">
             <Form>mainForm</Form>
             <FormType>dfm</FormType>
             <DesignClass>TWebForm</DesignClass>

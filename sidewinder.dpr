@@ -5,7 +5,7 @@ program sidewinder;
 uses
   Vcl.Forms,
   WEBLib.Forms,
-  fmain1 in 'fmain1.pas' {mainForm: TWebForm} {*.html},
+  ufMain in 'ufMain.pas' {mainForm: TWebForm} {*.html},
   SBML.helper in 'sbml\SBML.helper.pas',
   SBML.model in 'sbml\SBML.model.pas',
   uMath in 'math\uMath.pas',
