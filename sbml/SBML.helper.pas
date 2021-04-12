@@ -83,7 +83,7 @@ var
  jsComp: TJSObject;
  newParam: SBMLparameter;
  jsParam: TJSObject;
- newRule: TSBMLrule;
+ newRule: TSBMLRule;
  jsRule: TJSObject;
 
 begin
@@ -93,7 +93,7 @@ begin
  jsComp:= JS.ToObject(newComp);
  newParam:= SBMLparameter.create(); // a new parameter
  jsParam:= JS.ToObject(newParam);
- newRule:= TSBMLrule.create;
+ newRule:= TSBMLRule.create;
  jsRule:= JS.ToObject(newRule);
 
  // TODO: need to check if libsbml already loaded ??
