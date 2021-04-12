@@ -871,10 +871,10 @@ object mainForm: TmainForm
       ElementBodyClassName = 'card-body-shadow'
       ElementFont = efCSS
       object simResultsMemo: TWebMemo
-        Left = 24
-        Top = 540
-        Width = 313
-        Height = 109
+        Left = 6
+        Top = 535
+        Width = 312
+        Height = 174
         AutoSize = False
         ElementClassName = 'form-control'
         ElementFont = efCSS
