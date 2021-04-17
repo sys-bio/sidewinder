@@ -182,6 +182,20 @@ object mainForm: TmainForm
       WidthPercent = 100.000000000000000000
       OnClick = SBMLloadButtonClick
     end
+    object btnSimple: TWebButton
+      Left = 424
+      Top = 10
+      Width = 96
+      Height = 32
+      Caption = 'Load Simple'
+      ChildOrder = 11
+      ElementClassName = 'btn btn-primary btn-sm'
+      ElementFont = efCSS
+      HeightStyle = ssAuto
+      HeightPercent = 100.000000000000000000
+      WidthPercent = 100.000000000000000000
+      OnClick = btnSimpleClick
+    end
   end
   object bottomWPanel: TWebPanel
     Left = 0
@@ -927,10 +941,6 @@ object mainForm: TmainForm
       ChildOrder = 2
       ElementBodyClassName = 'card-body'
       ElementFont = efCSS
-      ExplicitLeft = 343
-      ExplicitTop = 188
-      ExplicitWidth = 894
-      ExplicitHeight = 515
       object networkPB1: TWebPaintBox
         Left = 0
         Top = 0
@@ -947,8 +957,6 @@ object mainForm: TmainForm
         OnMouseMove = networkPB1MouseMove
         OnMouseUp = networkPB1MouseUp
         OnMouseWheel = networkPB1MouseWheel
-        ExplicitWidth = 1141
-        ExplicitHeight = 715
       end
       object netDrawScrollBarVert: TTMSFNCScrollBar
         Left = 1118
@@ -992,9 +1000,6 @@ object mainForm: TmainForm
         Max = 1000.000000000000000000
         PageSize = 10.000000000000000000
         OnValueChanged = netDrawScrollBarVertValueChanged
-        ExplicitLeft = 744
-        ExplicitTop = 192
-        ExplicitHeight = 121
       end
       object netDrawScrollBarHoriz: TTMSFNCScrollBar
         Left = 0
@@ -1039,9 +1044,6 @@ object mainForm: TmainForm
         Max = 1000.000000000000000000
         PageSize = 10.000000000000000000
         OnValueChanged = netDrawScrollBarHorizValueChanged
-        ExplicitLeft = 320
-        ExplicitTop = 288
-        ExplicitWidth = 121
       end
     end
     object splitter: TWebSplitter
@@ -1055,7 +1057,6 @@ object mainForm: TmainForm
       ChildOrder = 3
       Color = clBtnFace
       OnMoved = splitterMoved
-      ExplicitLeft = 1272
     end
   end
   object WebTimer1: TWebTimer

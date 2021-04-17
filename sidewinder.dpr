@@ -32,7 +32,9 @@ uses
   speciesSelectForm in 'speciesSelectForm.pas' {SpeciesSWForm: TWebForm} {*.html},
   plotLayout in 'plot\plotLayout.pas',
   paramSelectForm in 'paramSelectForm.pas' {Form1: TWebForm} {*.html},
-  paramSliderLayout in 'paramSliderLayout.pas';
+  paramSliderLayout in 'paramSliderLayout.pas',
+  uSidewinderTypes in 'uSidewinderTypes.pas',
+  uTestModel in 'uTestModel.pas';
 
 {$R *.res}
 

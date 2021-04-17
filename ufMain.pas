@@ -84,6 +84,7 @@ type
     netDrawScrollBarVert: TTMSFNCScrollBar;
     netDrawScrollBarHoriz: TTMSFNCScrollBar;
     splitter: TWebSplitter;
+    btnSimple: TWebButton;
 
     procedure btnUniUniClick(Sender: TObject);
     procedure btnBiBiClick(Sender: TObject);
@@ -139,6 +140,7 @@ type
     procedure plotEditLBClick(Sender: TObject);
     procedure SliderEditLBClick(Sender: TObject);
     procedure splitterMoved(Sender: TObject);
+    procedure btnSimpleClick(Sender: TObject);
     // User clicks choice from plot edit list
 
   private
@@ -170,7 +172,6 @@ type
     origin: TPointF;
     fileName: string;
     graphBitmap1: TBitmap; // get rid of
-    graphBitmapAr: array of TBitmap; // bitmap for each plot
     maxYValueAr: array of Integer; // max Y screen dimension for each plot
     currentGeneration: Integer;
     plotSpeciesForm: TSpeciesSWForm;
@@ -217,7 +218,7 @@ var
   pixelStep: Integer; // get rid of...
   pixelStepAr: array of Integer; // pixel equiv of time (integration) step
   currTime: Double;
-  s_Vals: array of Double; // one to one correlation: s_Vals[n] = s_names[n]
+  s_Vals: array of Double; // one to one correlation: s_Vals[n] = s_name's[n]
   s_names: array of String; // Use species ID as name
   p_Vals: array of Double; // Includes compartments
   p_names: array of String;
@@ -230,7 +231,7 @@ implementation
 
 {$R *.dfm}
 
-Uses uGraphUtils, uCreateNetworks, uLayout;
+Uses uGraphUtils, uCreateNetworks, uLayout, uTestModel;
 
 procedure TMainForm.addPlotButtonClick(Sender: TObject);
 begin
@@ -353,6 +354,19 @@ begin
   networkPB1.Invalidate;
 end;
 
+procedure TMainForm.btnSimpleClick(Sender: TObject);
+var s : string;
+begin
+  s := getTestModel;
+  SBMLmodelMemo.Lines.Text := s;
+  SBMLmodelMemo.visible := true;
+  sbml_Text := s; // store the sbml model as text.
+  // Check if sbmlmodel already created, if so, destroy before creating ?
+  sbmlmodel := SBMLhelpClass.create();
+  sbmlmodel.OnPing := PingSBMLLoaded; // *** Register the callback function
+  sbmlmodel.readSBML(s); // Process text with libsbml.js
+end;
+
 procedure TMainForm.btnUniBiClick(Sender: TObject);
 begin
   controller.setAddUniBiReaction;
@@ -395,6 +409,7 @@ end;
 procedure TMainForm.onLineSimButtonClick(Sender: TObject);
 var
   i: Integer;
+  yScaleWidth : integer;
 begin
   if online = false then
     begin
@@ -416,22 +431,26 @@ begin
       if stepSize = 0 then
         stepSize := 0.1;
 
-      for i := 0 to length(graphBitmapAr) - 1 do
-      // <-- for dynamically created plots
-        begin
-          listOfPlots[i].initGraph(0, 200, 0, maxYValueAr[i], 0,
-            graphBitmapAr[i].width, 0, graphBitmapAr[i].Height,
-            xscaleHeightAr[i], runTime, stepSize);
+      for i := 0 to length (listOfPlots) - 1 do
+          begin
+          //listOfPlots[i].initGraph(0, 200, 0, maxYValueAr[i], 0,
+          //  graphBitmapAr[i].width, 0, graphBitmapAr[i].Height,
+          //  xscaleHeightAr[i], runTime, stepSize);
+
+          yScaleWidth := 16; // Gap between the left edge and y axis
+
+          listOfPlots[i].initGraph(0, 200, 0, 10, // The 10 is the max Y value in world coords
+            0, self.plotsPBAr[i].width, 0, self.plotsPBAr[i].height,
+            xscaleHeightAr[i], yscaleWidth, runTime, stepSize);
 
           // total steps: runTime/stepSize
           // Max viewable steps is PlotWebPB.width (1 pixel per step).
           pixelStepAr[i] := 0;
           if runTime / stepSize < self.plotsPBAr[i].width then
-            pixelStepAr[i] := round(self.plotsPBAr[i].width * stepSize
-              / runTime)
+             pixelStepAr[i] := round(self.plotsPBAr[i].width * stepSize / runTime)
           else
-            pixelStepAr[i] := 1;
-        end;
+             pixelStepAr[i] := 1;
+          end;
       WebTimer1.enabled := true;
       self.updateSimulation();
     end
@@ -473,7 +492,7 @@ var
   plot_i: Integer;
 begin
   plot_i := (Sender as TWebPaintBox).tag;
-  plotsPBAr[plot_i - 1].canvas.draw(0, 0, graphBitmapAr[plot_i - 1]);
+  plotsPBAr[plot_i - 1].canvas.draw(0, 0, listOfPlots[plot_i - 1].bitmap);
 end;
 
 procedure TMainForm.networkPB1KeyDown(Sender: TObject; var Key: Word;
@@ -906,8 +925,8 @@ begin
             plot_y[i] := true;
         end;
       // Dynamically draw plots:
-      listOfPlots[j].addPoint(graphBitmapAr[j].canvas, currentGeneration, y_new,  plot_y, true, currTime);
-      self.plotsPBAr[j].canvas.draw(0, 0, graphBitmapAr[j])
+      listOfPlots[j].addPoint(currentGeneration, y_new,  plot_y, true, currTime);
+      self.plotsPBAr[j].Canvas.draw (0, 0, listOfPlots[j].bitmap);
     end;
 end;
 
@@ -980,14 +999,11 @@ procedure TMainForm.addPlot(); // Add a plot
   end;
 
 begin
-  SetLength(graphBitmapAr, length(graphBitmapAr) + 1);
-  // want chk bitmaps = # plots?
-  self.graphBitmapAr[self.numbPlots - 1] := TBitmap.create;
-  SetLength(self.xscaleHeightAr, length(self.xscaleHeightAr) + 1);
-  SetLength(self.plotsPBAr, length(self.plotsPBAr) + 1);
-  SetLength(self.maxYValueAr, length(self.maxYValueAr) + 1); // Screen Y height
-  SetLength(pixelStepAr, length(pixelStepAr) + 1);
-  SetLength(self.listOfPlots, length(listOfPlots) + 1); // ***
+  setLength(self.xscaleHeightAr, length(self.xscaleHeightAr) + 1);
+  setLength(self.plotsPBAr, length(self.plotsPBAr) + 1);
+  setLength(self.maxYValueAr, length(self.maxYValueAr) + 1); // Screen Y height
+  setLength(pixelStepAr, length(pixelStepAr) + 1);
+  setLength(self.listOfPlots, length(listOfPlots) + 1); // ***
 
   self.listOfPlots[self.numbPlots - 1] := TPlotGraph.create;
   self.plotsPBAr[self.numbPlots - 1] := TWebPaintBox.create(self.RightWPanel);
@@ -996,22 +1012,11 @@ begin
   self.plotsPBAr[self.numbPlots - 1].OnMouseDown := plotOnMouseDown;
 
   configPbPlot(self.numbPlots,
-    trunc(self.RightWPanel.width * PLOT_WIDTH_PERCENTAGE),
-    self.RightWPanel.Height, self.plotsPBAr);
+    trunc(self.RightWPanel.width * PLOT_WIDTH_PERCENTAGE), self.RightWPanel.Height, self.plotsPBAr);
 
-  self.xscaleHeightAr[self.numbPlots - 1] :=
-    round(0.15 * self.plotsPBAr[self.numbPlots - 1].Height);
+  self.xscaleHeightAr[self.numbPlots - 1] := round(0.15 * self.plotsPBAr[self.numbPlots - 1].Height);
   // make %15 of total height
-  self.maxYValueAr[self.numbPlots - 1] := self.plotsPBAr[self.numbPlots - 1]
-    .Height; // // PaintBox dimension
-  self.graphBitmapAr[self.numbPlots - 1].width :=
-    self.plotsPBAr[self.numbPlots - 1].width; // PaintBox dimension
-  self.graphBitmapAr[self.numbPlots - 1].Height :=
-    self.plotsPBAr[self.numbPlots - 1].Height; // PaintBox dimension
-  self.graphBitmapAr[self.numbPlots - 1].canvas.brush.color := clWhite;
-  self.graphBitmapAr[self.numbPlots - 1].canvas.FillRect
-    (rect(0, 0, self.plotsPBAr[self.numbPlots - 1].width - 1,
-    self.plotsPBAr[self.numbPlots - 1].Height - 1));
+  self.maxYValueAr[self.numbPlots - 1] := self.plotsPBAr[self.numbPlots - 1].Height; // // PaintBox dimension
   self.plotsPBAr[self.numbPlots - 1].Invalidate;
 end;
 
@@ -1021,7 +1026,6 @@ procedure TMainForm.DeletePlot(plotn: Integer);
 begin
   self.plotsPBAr[plotn - 1].free;
   delete(self.plotsPBAr, (plotn - 1), 1);
-  delete(self.graphBitmapAr, (plotn - 1), 1);
   delete(self.listOfPlots, (plotn - 1), 1);
   delete(self.maxYValueAr, (plotn - 1), 1);
   delete(self.plotSpecies, (plotn - 1), 1);

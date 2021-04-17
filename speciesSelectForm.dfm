@@ -1,11 +1,12 @@
 object SpeciesSWForm: TSpeciesSWForm
-  Width = 202
-  Height = 123
+  Width = 204
+  Height = 230
+  CSSLibrary = cssBootstrap
   OnCreate = plotFormCreate
   OnShow = WebFormShow
   object okButton1: TWebButton
-    Left = 115
-    Top = 0
+    Left = 8
+    Top = 180
     Width = 70
     Height = 22
     Caption = 'OK'
@@ -24,7 +25,7 @@ object SpeciesSWForm: TSpeciesSWForm
     Left = 8
     Top = 30
     Width = 129
-    Height = 60
+    Height = 91
     HeightPercent = 100.000000000000000000
     WidthPercent = 100.000000000000000000
     Caption = ''

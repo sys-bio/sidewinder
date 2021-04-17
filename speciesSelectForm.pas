@@ -7,7 +7,8 @@ interface
 uses
   System.SysUtils, System.Classes, JS, Web, WEBLib.Graphics, WEBLib.Controls,
   WEBLib.Forms, WEBLib.Dialogs, Vcl.Controls, WEBLib.ExtCtrls, Vcl.StdCtrls,
-  WEBLib.StdCtrls, Types;
+  WEBLib.StdCtrls, Types, VCL.TMSFNCTypes, VCL.TMSFNCUtils, VCL.TMSFNCGraphics, VCL.TMSFNCGraphicsTypes, VCL.TMSFNCCustomControl, VCL.TMSFNCHTMLImageContainer,
+  VCL.TMSFNCCheckBox;
 
 type
   TSpeciesSWForm = class(TWebForm)
@@ -23,15 +24,15 @@ type
     { Private declarations }
   public
     { Public declarations }
-    var speciesList: array of String;
+     speciesList: array of String;
      PlotWForm: TSpeciesSWForm;
      procedure fillSpeciesCG();
   end;
-// var  speciesList: array of String;
 
 implementation
 
 {$R *.dfm}
+
 
 // Close Plot:
 procedure TSpeciesSWForm.okButton1Click(Sender: TObject);
@@ -45,11 +46,7 @@ end;
 procedure TSpeciesSWForm.plotFormCreate(Sender: TObject);
 begin
   //console.log('Species select form created');
-
-
 end;
-
-
 
 
 
@@ -59,19 +56,22 @@ begin
 end;
 
 procedure TSpeciesSWForm.WebFormShow(Sender: TObject);
+var i : integer;
 begin
-   // console.log('Species Select show() action');
+  for i := 0 to length(speciesList)-1 do
+      SpPlotCG.Checked[i] := True;
+  //console.log ('Setting check box');
 end;
 
+
 procedure TSpeciesSWForm.fillSpeciesCG();
-var i:integer; spList: TStringList;
+var i : integer;
 begin
-spList:= TStringList.Create();
-// Adjust checkgroup height as List may not fit with default height
- SpPlotCG.Height:= 30*length(speciesList);
-for i := 0 to length(speciesList)-1 do
-    spList.Add('&nbsp; '+speciesList[i]);
- SpPlotCG.Items:= spList;
+  // Adjust checkgroup height as List may not fit with default height
+  SpPlotCG.Height := 30*length(speciesList);
+  for i := 0 to length(speciesList)-1 do
+      SpPlotCG.Items.Add ('&nbsp; ' + speciesList[i]);// items:= spList;
 end;
+
 
 end.

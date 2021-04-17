@@ -22,16 +22,17 @@ begin
    if plotNumber > defaultNumbPlots then
       adjustPlotHeights(plotNumber, newPBplotAr)
    else
-      newPBplotAr[plotNumber-1].Height := round(panelH/3);
+      newPBplotAr[plotNumber-1].Height := 200;//round(panelH/3);
 
-   newPBplotAr[plotNumber-1].Width := panelW - 20;
-   newPBplotAr[plotNumber-1].Left := 10;
+   newPBplotAr[plotNumber-1].Width := panelW - 20; // This must be a bg, without it the slider panel overlaps plot
+   newPBplotAr[plotNumber-1].Left := 10; // gap between the network canvas and plot
    newPBplotAr[plotNumber-1].Top := 3 + newPBPlotAr[plotNumber-1].Height*(plotNumber-1); // change to variable value based on number of existing plots.
    newPBplotAr[plotNumber-1].visible := true;
    newPBplotAr[plotNumber-1].invalidate;
 end;
 
- // adjust Plot Heights and abs vertical coord of existing plots to accomadate new plot.
+ // adjust Plot Heights and abs vertical coord of existing plots to accomodate new plot.
+ // --> there is a problem here, once the plots start to reduce in side the scaling of the y axis I think goes wrong.
 procedure adjustPlotHeights(totalPlots: integer; pbPlotAr: array of TWebPaintBox);
 var i, newHeight: integer;
 begin
@@ -39,7 +40,7 @@ begin
   for i := 0 to totalPlots-1 do
       begin
       pbPlotAr[i].Height:= newHeight;
-      pbPlotAr[i].Top:= 5+ pbPlotAr[i].Height*(i);
+      pbPlotAr[i].Top:= 5 + pbPlotAr[i].Height*(i);
       pbPlotAr[i].invalidate;
       end;
 end;
