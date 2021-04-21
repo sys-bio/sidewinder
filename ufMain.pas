@@ -752,10 +752,9 @@ begin
   // Run Simulation using info from odeFormat:
   odeFormat.buildFinalEqSet();
   simRTStr := ' Time (s) '; // generate coloumn headers:
-  SetLength(s_names, length(odeFormat.get_speciesStrAr()));
-  for i := 0 to length(odeFormat.get_speciesStrAr()) - 1 do
+
+  for i := 0 to length(s_names) - 1 do
     begin
-      s_names[i] := odeFormat.get_speciesStrAr()[i]; // grab species names
       simRTStr := simRTStr + ', ' + s_names[i];
     end;
   simResultsMemo.Lines.Add(simRTStr);
@@ -1105,7 +1104,7 @@ begin
 end;
 
 // Get initial vals for Species from SBML model
-// TODO: add code for nonSBML models.
+// TODO: add code for nonSBML models?
 procedure TMainForm.fillSpeciesArray();
 var
   i: Integer;
