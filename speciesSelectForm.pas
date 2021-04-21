@@ -46,8 +46,8 @@ end;
 procedure TSpeciesSWForm.plotFormCreate(Sender: TObject);
 begin
   //console.log('Species select form created');
-end;
 
+end;
 
 
 procedure TSpeciesSWForm.SpPlotCGCheckClick(Sender: TObject; AIndex: Integer);
@@ -69,8 +69,9 @@ var i : integer;
 begin
   // Adjust checkgroup height as List may not fit with default height
   SpPlotCG.Height := 30*length(speciesList);
+  // okButton1.Top := SpPlotCG.Height + 30;
   for i := 0 to length(speciesList)-1 do
-      SpPlotCG.Items.Add ('&nbsp; ' + speciesList[i]);// items:= spList;
+      SpPlotCG.Items.Add ('&nbsp; ' + speciesList[i]);
 end;
 
 

@@ -6,9 +6,10 @@ object SpeciesSWForm: TSpeciesSWForm
   OnShow = WebFormShow
   object okButton1: TWebButton
     Left = 8
-    Top = 180
+    Top = 177
     Width = 70
     Height = 22
+    Anchors = [akLeft, akBottom]
     Caption = 'OK'
     ChildOrder = 2
     Font.Charset = DEFAULT_CHARSET
@@ -20,6 +21,7 @@ object SpeciesSWForm: TSpeciesSWForm
     ParentFont = False
     WidthPercent = 100.000000000000000000
     OnClick = okButton1Click
+    ExplicitTop = 180
   end
   object SpPlotCG: TWebCheckGroup
     Left = 8

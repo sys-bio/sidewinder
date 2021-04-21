@@ -6,8 +6,8 @@ uses
   Vcl.Forms,
   WEBLib.Forms,
   ufMain in 'ufMain.pas' {mainForm: TWebForm} {*.html},
-  SBML.helper in 'sbml\SBML.helper.pas',
-  SBML.model in 'sbml\SBML.model.pas',
+  uSBML.helper in 'sbml\uSBML.helper.pas',
+  uSBML.model in 'sbml\uSBML.model.pas',
   uMath in 'math\uMath.pas',
   Adamsbdf in 'math\lsoda\Adamsbdf.pas',
   LSODA.test in 'math\lsoda\LSODA.test.pas',
@@ -34,7 +34,8 @@ uses
   paramSelectForm in 'paramSelectForm.pas' {Form1: TWebForm} {*.html},
   paramSliderLayout in 'paramSliderLayout.pas',
   uSidewinderTypes in 'uSidewinderTypes.pas',
-  uTestModel in 'uTestModel.pas';
+  uTestModel in 'uTestModel.pas',
+  uSBML.model.rule in 'sbml\uSBML.model.rule.pas';
 
 {$R *.res}
 

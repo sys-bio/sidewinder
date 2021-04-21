@@ -6,7 +6,7 @@ unit ODE_FormatUtility;
 // Convert basic math functions to javascript notation (ie pow() -> Math.pow() )
 
 interface
-uses System.SysUtils, System.StrUtils, web, SBML.model, SBML.helper, SBML.model.rule;
+uses System.SysUtils, System.StrUtils, web, uSBML.model, uSBML.helper, uSBML.model.rule;
 
 type
 TFormatODEs = class
@@ -23,7 +23,6 @@ TFormatODEs = class
     reactants: array of SBMLspeciesreference; // TODO: move to buildODE_LHS()
     speciesStrAr: array of String;   // keep to convert short name to long name.
     speciesAr: array of SBMLspecies;
-    spBoundaryCondAr: array of boolean; // Keep track of boundary condition species which do not have ODEs. get rid of, redundant?
     paramsStr: array of String;    // keep to convert short name to long name.
     sVals: array of double;   // init val of species, same size as speciesStrAr
     pVals: array of double;   // init val of parameters, same size as paramsStr.
@@ -64,31 +63,13 @@ var i, j,k, paramLen, count: Integer;
     found_dydt: Integer;
 
 begin
-  self.assignParamEqs:= nil;
-  self.assignSpeciesEqs:= nil;
-  setLength(self.speciesStrAr,Length(model.getSBMLspeciesArr()));
-  setLength(self.speciesAr,Length(model.getSBMLspeciesArr()));
-  self.speciesAr:= model.getSBMLspeciesArr();
-  setLength(self.spBoundaryCondAr,Length(speciesStrAr));  // not needed anymore.
-  setLength(paramsStr, Length(model.getSBMLparameterArr()));
+  self.assignParamEqs := nil;
+  self.assignSpeciesEqs := nil;
+  setLength(self.speciesAr,Length(model.getSBMLspeciesAr()));
+  self.speciesAr := model.getSBMLspeciesAr();
+  setLength(paramsStr, Length(model.getSBMLparameterAr()));
   setLength(odeStrs, model.getNumReactions());
-  setLength(sVals,model.getSpeciesNumb());
-  count:=0;
-
-  for i := 0 to Length(speciesStrAr)-1 do
-      begin
-      speciesStrAr[i]:= model.getSBMLspecies(i).getId();
-      // chk if boundary condition:
-      spBoundaryCondAr[i] := model.getSBMLspecies(i).getBoundaryCondition();
-      self.speciesAr[i] := model.getSBMLspecies(i);
-      console.log('Boundary condition for ',speciesStrAr[i],' is: ',spBoundaryCondAr[i]);
-      // Get initial conc/amounts for each one:
-      if model.getSBMLspecies(i).isSetInitialAmount() then
-        sVals[i] := model.getSBMLspecies(i).getInitialAmount()
-      else if model.getSBMLspecies(i).isSetInitialConcentration() then
-        sVals[i] := model.getSBMLspecies(i).getInitialConcentration()
-        else sVals[i] :=0;
-      end;
+  count := 0;
 
   // Get parameter and compartment names and combine into one array, pVals[]:
   SetLength(pVals,Length(paramsStr));
@@ -116,12 +97,11 @@ begin
        begin
        if model.getSBMLcompartment(i).isSetIdAttribute() then
           begin
-          paramsStr[paramLen+i]:= model.getSBMLcompartment(i).getID();
+          paramsStr[paramLen+i] := model.getSBMLcompartment(i).getID();
           end
        else
           paramsStr[paramLen+i] := model.getSBMLcompartment(i).getName();
-       console.log('Adding compartment id: ', paramsStr[paramLen+i]);
-
+      // console.log('Adding compartment id: ', paramsStr[paramLen+i]);
        // Get Size/Vols of compartments:
        if model.getSBMLcompartment(i).isSetSize() then
           pVals[paramLen+i] := model.getSBMLcompartment(i).getSize()
@@ -129,6 +109,35 @@ begin
           pVals[paramLen+i] := model.getSBMLcompartment(i).getVolume()
           else pVals[paramLen+i] := 1; // default
        end;
+
+     // now look at species, put species boundary conditions and species constants in parameter list.
+  for i := 0 to Length(self.speciesAr)-1 do
+      begin
+      if self.speciesAr[i].getBoundaryCondition or self.speciesAr[i].getConstant then
+        begin
+          paramLen := Length(paramsStr);
+          setLength(paramsStr, paramLen + 1);
+          setLength(pVals, paramLen + 1);
+          paramsStr[paramLen] := self.speciesAr[i].getId();
+          if self.speciesAr[i].isSetInitialAmount() then
+            pVals[paramLen] := self.speciesAr[i].getInitialAmount()
+          else if self.speciesAr[i].isSetInitialConcentration() then
+            pVals[paramLen] := self.speciesAr[i].getInitialConcentration()
+            else pVals[paramLen] := 0;
+        end
+       else  // species has an ode associated with it.
+        begin
+          SetLength(self.speciesStrAr,Length(speciesStrAr)+1);
+          SetLength(self.sVals,Length(self.sVals)+1);
+          self.speciesStrAr[Length(self.speciesStrAr)-1] := self.speciesAr[i].getId();
+    //   Get initial conc/amounts for each one:
+          if self.speciesAr[i].isSetInitialAmount() then
+            self.sVals[Length(sVals)-1] := self.speciesAr[i].getInitialAmount()
+          else if self.speciesAr[i].isSetInitialConcentration() then
+            self.sVals[Length(sVals)-1] := self.speciesAr[i].getInitialConcentration()
+            else self.sVals[Length(sVals)-1] := 0;
+        end;
+      end;
 
  // Go through each rule and replace all species and params in array of formulas:
   BuildAssignmentEqs(model);

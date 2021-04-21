@@ -13,8 +13,8 @@ uses
   Vcl.TMSFNCGraphics,
   Vcl.TMSFNCGraphicsTypes, Vcl.TMSFNCCustomControl, Vcl.TMSFNCScrollBar,
   Vcl.TMSFNCButton, Vcl.TMSFNCToolBar,
-  uNetworkTypes, Vcl.Imaging.pngimage, WEBLib.Lists, Vcl.Forms, SBML.helper,
-  SBML.model, Simulation,
+  uNetworkTypes, Vcl.Imaging.pngimage, WEBLib.Lists, Vcl.Forms, uSBML.helper,
+  uSBML.model, Simulation,
   ODE_FormatUtility, GraphP, Vcl.Menus, WEBLib.Menus, paramSelectForm,
   speciesSelectForm, plotLayout,
   paramSlider, paramSliderLayout;
@@ -1016,7 +1016,7 @@ begin
 
   self.xscaleHeightAr[self.numbPlots - 1] := round(0.15 * self.plotsPBAr[self.numbPlots - 1].Height);
   // make %15 of total height
-  self.maxYValueAr[self.numbPlots - 1] := self.plotsPBAr[self.numbPlots - 1].Height; // // PaintBox dimension
+  self.maxYValueAr[self.numbPlots - 1] := self.plotsPBAr[self.numbPlots - 1].Height; // PaintBox dimension
   self.plotsPBAr[self.numbPlots - 1].Invalidate;
 end;
 
@@ -1109,18 +1109,20 @@ end;
 procedure TMainForm.fillSpeciesArray();
 var
   i: Integer;
+  spAr: array of SBMLspecies;
 begin
   if sbmlmodel.getSpeciesNumb() > 0 then // TODO: chk if sbml model first
     begin
-      SetLength(s_Vals, sbmlmodel.getSpeciesNumb());
+      spAr := sbmlmodel.getSBMLdynamicSpeciesAr;
+      SetLength(s_Vals, Length(spAr));
       SetLength(s_names, length(s_Vals));
-      for i := 0 to sbmlmodel.getSpeciesNumb() - 1 do
+      for i := 0 to Length(spAr) - 1 do
         begin
-          if sbmlmodel.getSBMLspecies(i).isSetInitialAmount() then
-            s_Vals[i] := sbmlmodel.getSBMLspecies(i).getInitialAmount()
-          else if sbmlmodel.getSBMLspecies(i).isSetInitialConcentration() then
-            s_Vals[i] := sbmlmodel.getSBMLspecies(i).getInitialConcentration();
-          s_names[i] := sbmlmodel.getSBMLspecies(i).getID();
+          if spAr[i].isSetInitialAmount() then
+            s_Vals[i] := spAr[i].getInitialAmount()
+          else if spAr[i].isSetInitialConcentration() then
+            s_Vals[i] := spAr[i].getInitialConcentration();
+          s_names[i] := spAr[i].getID();
           // Use species ID as name
         end;
     end;

@@ -1,4 +1,4 @@
-unit SBML.model.rule;
+unit uSBML.model.rule;
 
 interface
 uses Web, JS;

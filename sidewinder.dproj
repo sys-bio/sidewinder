@@ -112,8 +112,8 @@
             <FormType>dfm</FormType>
             <DesignClass>TWebForm</DesignClass>
         </DCCReference>
-        <DCCReference Include="sbml\SBML.helper.pas"/>
-        <DCCReference Include="sbml\SBML.model.pas"/>
+        <DCCReference Include="sbml\uSBML.helper.pas"/>
+        <DCCReference Include="sbml\uSBML.model.pas"/>
         <DCCReference Include="math\uMath.pas"/>
         <DCCReference Include="math\lsoda\Adamsbdf.pas"/>
         <DCCReference Include="math\lsoda\LSODA.test.pas"/>
@@ -153,6 +153,7 @@
         <DCCReference Include="paramSliderLayout.pas"/>
         <DCCReference Include="uSidewinderTypes.pas"/>
         <DCCReference Include="uTestModel.pas"/>
+        <DCCReference Include="sbml\uSBML.model.rule.pas"/>
         <None Include="index.html"/>
         <None Include="sbml\libsbml.js"/>
         <None Include="sbml\libsbml.wasm"/>

@@ -1,4 +1,4 @@
-unit SBML.model;
+unit uSBML.model;
 interface
  uses Web, JS;
 type

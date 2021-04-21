@@ -1,7 +1,7 @@
-unit SBML.helper;
+unit uSBML.helper;
 
 interface
-uses Web, JS, SBML.model, SBML.model.rule;
+uses Web, JS, uSBML.model, uSBML.model.rule;
 
 type
 
@@ -38,7 +38,7 @@ type
 
    function  getParamNumb(): integer;
    function  getSBMLparameter(i:integer): SBMLparameter;
-   function  getSBMLparameterArr(): array of SBMLparameter;
+   function  getSBMLparameterAr(): array of SBMLparameter;
    procedure addSBMLparameter(newParam: SBMLparameter);
    function  getSBMLmodelRules():array of TSBMLrule;
 
@@ -47,7 +47,9 @@ type
    function  getSpeciesNumb(): integer;
    function  getSBMLspecies(i:integer): SBMLspecies; overload;
    function  getSBMLspecies(spId:string): SBMLspecies; overload;
-   function  getSBMLspeciesArr(): array of SBMLspecies;
+   function  getSBMLspeciesAr(): array of SBMLspecies;  // All species
+   function  getSBML_BC_SpeciesAr(): array of SBMLspecies; // Just species listed as boundary condition for a species
+   function  getSBMLdynamicSpeciesAr(): array of SBMLspecies;  // return species that are not a bc or amt (not conc) is constant.
 
    function  getCompNumb(): integer;
    function  getSBMLcompartmentsArr(): array of SBMLcompartment;
@@ -333,7 +335,7 @@ procedure SBMLhelpClass.TriggerEvent();
   modelSpecies[len]:= SBMLspecies.create(newSpecies);
  end;
 
- function SBMLhelpClass.getSBMLspeciesArr(): array of SBMLspecies;
+ function SBMLhelpClass.getSBMLspeciesAr(): array of SBMLspecies;
  begin
    Result:= modelSpecies;
  end;
@@ -350,15 +352,48 @@ procedure SBMLhelpClass.TriggerEvent();
    for i := 0 to Length(self.modelSpecies)-1 do
      begin
        if self.modelSpecies[i].getId = spId then
-         Result:= self.modelSpecies[i]
+         Result := self.modelSpecies[i]
        else Result:= nil;
 
      end;
  end;
 
+ // Just species listed as boundary condition for a species
+ function SBMLhelpClass.getSBML_BC_SpeciesAr(): array of SBMLspecies;
+ var i, j: integer;
+ begin
+  j := 0;
+  for i := 0 to Length(self.modelSpecies)-1 do
+     begin
+       if self.modelSpecies[i].getBoundaryCondition() then
+       begin
+         Result[j] := SBMLspecies.create(self.modelSpecies[i]);
+         inc(j);
+       end;
+
+     end;
+ end;
+
+ // return species that are not a bc or amt (not conc) is constant.
+ function SBMLhelpClass.getSBMLdynamicSpeciesAr(): array of SBMLspecies;
+ var i, j: integer;
+ begin
+  j := 0;
+  for i := 0 to Length(self.modelSpecies)-1 do
+     begin
+       if Not(self.modelSpecies[i].getBoundaryCondition) and Not( self.modelSpecies[i].getConstant) then
+       begin
+         Result[j] := SBMLspecies.create(self.modelSpecies[i]);
+         inc(j);
+       end;
+
+     end;
+ end;
+
+
  function SBMLhelpClass.getSBMLcompartmentsArr(): array of SBMLcompartment;
  begin
-   Result:= modelComps;
+   Result := self.modelComps;
  end;
  function SBMLhelpClass.getSBMLcompartment(i:integer): SBMLcompartment;
  begin
@@ -386,7 +421,7 @@ procedure SBMLhelpClass.TriggerEvent();
     Result:= modelParams[i];
  end;
 
- function SBMLhelpClass.getSBMLparameterArr(): array of SBMLparameter;
+ function SBMLhelpClass.getSBMLparameterAr(): array of SBMLparameter;
  begin
    Result:= modelParams;
  end;
