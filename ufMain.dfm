@@ -139,12 +139,12 @@ object mainForm: TmainForm
       Height = 22
       ChildOrder = 2
       HeightPercent = 100.000000000000000000
-      Text = '100'
+      Text = '200'
       Visible = False
       WidthPercent = 100.000000000000000000
     end
     object stepSizeEdit1: TWebEdit
-      Left = 1278
+      Left = 1279
       Top = 34
       Width = 33
       Height = 22
@@ -153,6 +153,7 @@ object mainForm: TmainForm
       Text = '100'
       Visible = False
       WidthPercent = 100.000000000000000000
+      OnChange = stepSizeEdit1Change
     end
     object loadNetworkButton: TWebButton
       Left = 220
@@ -1058,13 +1059,6 @@ object mainForm: TmainForm
       Color = clBtnFace
       OnMoved = splitterMoved
     end
-  end
-  object WebTimer1: TWebTimer
-    Enabled = False
-    Interval = 100
-    OnTimer = WebTimer1Timer
-    Left = 1192
-    Top = 784
   end
   object NetworkJSONOpenDialog: TWebOpenDialog
     OnChange = NetworkJSONOpenDialogChange

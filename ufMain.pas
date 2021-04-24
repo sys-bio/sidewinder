@@ -13,11 +13,11 @@ uses
   Vcl.TMSFNCGraphics,
   Vcl.TMSFNCGraphicsTypes, Vcl.TMSFNCCustomControl, Vcl.TMSFNCScrollBar,
   Vcl.TMSFNCButton, Vcl.TMSFNCToolBar,
-  uNetworkTypes, Vcl.Imaging.pngimage, WEBLib.Lists, Vcl.Forms, uSBML.helper,
-  uSBML.model, Simulation,
-  ODE_FormatUtility, GraphP, Vcl.Menus, WEBLib.Menus, paramSelectForm,
-  speciesSelectForm, plotLayout,
-  paramSlider, paramSliderLayout;
+  uNetworkTypes, Vcl.Imaging.pngimage, WEBLib.Lists, Vcl.Forms, uModel,
+  uSBMLClasses, uSimulation, uControllerMain,
+  uODE_FormatUtility, uGraphP, Vcl.Menus, WEBLib.Menus, ufParamSelect,
+  ufSpeciesSelect, uPlotLayout,
+  paramSlider, uParamSliderLayout;
 
 const
   SLIDERPHEIGHT = 50; // Param Sliders WebPanel width/height
@@ -46,7 +46,7 @@ type
     zoomLbl: TWebLabel;
     zoomFactorLbl1: TWebLabel; // Displays simulation results
     SBMLmodelMemo: TWebMemo;
-    WebTimer1: TWebTimer;
+   // WebTimer1: TWebTimer;
     rtLengthEdit1: TWebEdit;
     rtLabel1: TWebLabel;
     stepSizeLabel1: TWebLabel;
@@ -118,10 +118,10 @@ type
     procedure netDrawScrollBarHorizValueChanged(Sender: TObject; Value: Double);
 
     procedure onLineSimButtonClick(Sender: TObject);
-    procedure fillSpeciesArray();
-    procedure setODEsolver();
+   // procedure fillSpeciesArray(); //move
+   // procedure setODEsolver();     //move
     procedure plotsPBArPaint(Sender: TObject);
-    procedure WebTimer1Timer(Sender: TObject);
+   // procedure WebTimer1Timer(Sender: TObject);
     procedure addPlotButtonClick(Sender: TObject);
     procedure ParamSliderBtnClick(Sender: TObject);
     procedure loadNetworkButtonClick(Sender: TObject);
@@ -141,15 +141,14 @@ type
     procedure SliderEditLBClick(Sender: TObject);
     procedure splitterMoved(Sender: TObject);
     procedure btnSimpleClick(Sender: TObject);
+    procedure stepSizeEdit1Change(Sender: TObject);
     // User clicks choice from plot edit list
 
   private
     numbPlots: Integer; // Number of plots displayed
     numbSliders: Integer; // Number of parameter sliders
     procedure GetSBMLInfo(); // Grab sbml model info.
-    function setupSimulation(): String; // returns eq list as String.
-    procedure startSimulation(odeEqs: String; odeFormat: TFormatODEs);
-    procedure updateSimulation();
+    procedure InitSimResultsTable(); // Init simResultsMemo.
     procedure addPlot(); // Add a plot
     procedure selectPlotSpecies(plotnumb: Integer);
     procedure addParamSlider();
@@ -162,6 +161,7 @@ type
     procedure EditSliderList(sn: Integer);
     // delete, change param slider as needed using TWebListBox.
     procedure DeleteSlider(sn: Integer);
+
     procedure testAddingModel();
     // just a test for generating a model for the simulator, remove
 
@@ -196,9 +196,11 @@ type
     // Displays slider param name and current value
     paramUpdated: Boolean; // true if a parameter has been updated.
 
+    mainController: TControllerMain;
+
     function ScreenToWorld(X, Y: Double): TPointF; // Network drawing panel
     function WorldToScreen(wx: Integer): Integer; // Network drawing panel
-    procedure PingSBMLLoaded(); // Notify when done loading libSBML
+    procedure PingSBMLLoaded(); // Notify when done loading or changeing model
     procedure getVals(newTime: Double; newVals: array of Double);
     // Get new values (species amt) from simulation run
     procedure processScan(t_new: Double; y_new: array of Double);
@@ -207,24 +209,8 @@ type
 
 var
   mainForm: TMainForm;
-  sbml_Text: String;
-  sbmlmodel: SBMLhelpClass;
-  numbRxns: Integer;
-  sbmlModelLoaded: Boolean;
-  solverUsed: ODEsolver;
-  runTime: Double; // Total runtime of simulation (sec)
-  runSim: TSimulationJS;
-  stepSize: Double; // (msec) (integration step)
-  pixelStep: Integer; // get rid of...
-  pixelStepAr: array of Integer; // pixel equiv of time (integration) step
-  currTime: Double;
-  s_Vals: array of Double; // one to one correlation: s_Vals[n] = s_name's[n]
-  s_names: array of String; // Use species ID as name
-  p_Vals: array of Double; // Includes compartments
-  p_names: array of String;
-  online: Boolean; // Simulation running
-  ODEready: Boolean; // TRUE: ODE solver is setup.
 
+  pixelStepAr: array of Integer; // pixel equiv of time (integration) step
   spSelectform: TSpeciesSWForm; // display speciecs select to plot radio group
 
 implementation
@@ -291,7 +277,7 @@ begin
   network.Clear;
   networkPB1.Invalidate;
   // self.testAddingModel();
-  // self.GetSBMLInfo();
+  // self.MainController.LoadSBML;
 end;
 
 procedure TMainForm.btnDrawClick(Sender: TObject);
@@ -360,11 +346,8 @@ begin
   s := getTestModel;
   SBMLmodelMemo.Lines.Text := s;
   SBMLmodelMemo.visible := true;
-  sbml_Text := s; // store the sbml model as text.
-  // Check if sbmlmodel already created, if so, destroy before creating ?
-  sbmlmodel := SBMLhelpClass.create();
-  sbmlmodel.OnPing := PingSBMLLoaded; // *** Register the callback function
-  sbmlmodel.readSBML(s); // Process text with libsbml.js
+  self.MainController.LoadSBML(s);
+
 end;
 
 procedure TMainForm.btnUniBiClick(Sender: TObject);
@@ -399,11 +382,8 @@ procedure TMainForm.SBMLOpenDialogGetFileAsText(Sender: TObject;
 begin
   SBMLmodelMemo.Lines.Text := AText;
   SBMLmodelMemo.visible := true;
-  sbml_Text := AText; // store the sbml model as text.
   // Check if sbmlmodel already created, if so, destroy before creating ?
-  sbmlmodel := SBMLhelpClass.create();
-  sbmlmodel.OnPing := PingSBMLLoaded; // *** Register the callback function
-  sbmlmodel.readSBML(AText); // Process text with libsbml.js
+  self.MainController.LoadSBML(AText);
 end;
 
 procedure TMainForm.onLineSimButtonClick(Sender: TObject);
@@ -411,25 +391,23 @@ var
   i: Integer;
   yScaleWidth : integer;
 begin
-  if online = false then
+  if MainController.isOnline = false then
     begin
-      online := true;
+      MainController.setOnline(true);
       onLineSimButton.font.color := clgreen;
       onLineSimButton.ElementClassName := 'btn btn-success btn-sm';
       onLineSimButton.caption := 'Simulation: Online';
       simResultsMemo.visible := true;
 
       try
-        runTime := strToFloat(rtLengthEdit1.Text);
+        MainController.SetRunTime( strToFloat(rtLengthEdit1.Text));
       except
         on Exception: EConvertError do
           begin
-            runTime := 10;
-            self.rtLengthEdit1.Text := FloatToStr(runTime);
+            MainController.SetRunTime(200);
+            self.rtLengthEdit1.Text := FloatToStr(MainController.getRunTime);
           end;
       end;
-      if stepSize = 0 then
-        stepSize := 0.1;
 
       for i := 0 to length (listOfPlots) - 1 do
           begin
@@ -438,26 +416,26 @@ begin
           //  xscaleHeightAr[i], runTime, stepSize);
 
           yScaleWidth := 16; // Gap between the left edge and y axis
-
           listOfPlots[i].initGraph(0, 200, 0, 10, // The 10 is the max Y value in world coords
             0, self.plotsPBAr[i].width, 0, self.plotsPBAr[i].height,
-            xscaleHeightAr[i], yscaleWidth, runTime, stepSize);
+            xscaleHeightAr[i], yscaleWidth, MainController.getRunTime, MainController.getStepSize);
 
           // total steps: runTime/stepSize
           // Max viewable steps is PlotWebPB.width (1 pixel per step).
           pixelStepAr[i] := 0;
-          if runTime / stepSize < self.plotsPBAr[i].width then
-             pixelStepAr[i] := round(self.plotsPBAr[i].width * stepSize / runTime)
+          if MainController.getRunTime / MainController.getStepSize < self.plotsPBAr[i].width then
+             pixelStepAr[i] := round(self.plotsPBAr[i].width * MainController.getStepSize / MainController.getRunTime)
           else
              pixelStepAr[i] := 1;
           end;
-      WebTimer1.enabled := true;
-      self.updateSimulation();
+      self.InitSimResultsTable();  // Set table of Sim results.
+      MainController.SetTimerEnabled(true); // Turn on web timer (Start simulation)
+      MainController.updateSimulation();
     end
   else
     begin
-      online := false;
-      WebTimer1.enabled := false;
+      MainController.setOnline(false);
+      MainController.SetTimerEnabled(false); // Turn off web timer (Stop simulation)
       onLineSimButton.font.color := clred;
       onLineSimButton.ElementClassName := 'btn btn-danger btn-sm';
       onLineSimButton.caption := 'Simulation: Offline';
@@ -467,7 +445,7 @@ end;
 // Grab SBML model information when notified:
 procedure TMainForm.PingSBMLLoaded();
 begin
-  sbmlModelLoaded := true;
+  //sbmlModelLoaded := true;
   GetSBMLInfo();
 end;
 
@@ -581,21 +559,8 @@ end;
 procedure TMainForm.ParamSliderBtnClick(Sender: TObject);
 var
   i: Integer;
-  odeFormat: TFormatODEs;
 begin
   // TODO: Check if already 10 sliders, if so then showmessage( 'Only 10 parameter sliders allowed, edit existing one');
-  // Fill out parameter list for model, if not done already:
-  if length(p_Vals) < 1 then
-    begin
-      odeFormat := TFormatODEs.create(sbmlmodel);
-      SetLength(p_Vals, length(odeFormat.get_pVals())); // Keep params for later
-      SetLength(p_names, length(p_Vals));
-      for i := 0 to length(odeFormat.get_pVals()) - 1 do
-        begin
-          p_Vals[i] := odeFormat.get_pVals[i];
-          p_names[i] := odeFormat.get_paramsStr[i];
-        end;
-    end;
   self.selectParameter(length(sliderParamAr));
 end;
 
@@ -606,14 +571,17 @@ begin
   if Sender is TWebTrackBar then
     begin
       i := TWebTrackBar(Sender).tag;
-      self.paramUpdated := true;
+      self.MainController.paramUpdated := true;
       p := self.sliderParamAr[i];
+      console.log('Current p value: ',self.MainController.getP_Val(p));
       // get slider parameter position in p_vals array
-      p_Vals[p] := self.sliderPTBarAr[i].Position * 0.01 *
-        (sliderPHighAr[i] - sliderPLowAr[i]); // Fix ?
-      self.sliderPTBLabelAr[i].caption := p_names[self.sliderParamAr[i]] + ': '
-        + FloatToStr(p_Vals[self.sliderParamAr[i]]);
-      // console.log(' Updated param val: ',p_names[p],': ',p_vals[p]);
+      self.MainController.setP_Val(p, self.sliderPTBarAr[i].Position * 0.01 *
+        (sliderPHighAr[i] - sliderPLowAr[i]) ); // Fix ?
+        console.log(' new p value: ', self.sliderPTBarAr[i].Position * 0.01 *
+        (sliderPHighAr[i] - sliderPLowAr[i]));
+      self.sliderPTBLabelAr[i].caption := self.MainController.getP_Names[self.sliderParamAr[i]] + ': '
+        + FloatToStr(self.MainController.getP_Vals[self.sliderParamAr[i]]);
+
     end;
 
 end;
@@ -649,19 +617,19 @@ end;
 
 procedure TMainForm.WebFormCreate(Sender: TObject);
 begin
-  // lb.clear;
   self.numbPlots := 0;
   self.numbSliders := 0;
   self.zoomTrackBar.left := 20;
   self.zoomTrackBar.Position := 10;
   origin.X := 0.0;
   origin.Y := 0.0;
-  sbmlModelLoaded := false;
-  online := false;
+  self.mainController := TControllerMain.Create(self);
+  self.mainController.setOnline(false);
+  self.mainController.OnUpdate := self.getVals; // notify when new results
+  self.mainController.OnModelUpdate := self.PingSBMLLoaded;
   onLineSimButton.font.color := clred;
   onLineSimButton.caption := 'Simulation: Offline';
-  self.setODEsolver;
-  stepSize := 0.1; // 100 msec
+  self.mainController.setODEsolver;
   // xscaleHeight  := round(0.15* plotPB1.Height);   // make %15 of total height  get rid of
   currentGeneration := 0;
   network := TNetwork.create('testNetwork');
@@ -687,12 +655,6 @@ begin
   networkPB1.Invalidate;
 end;
 
-procedure TMainForm.WebTimer1Timer(Sender: TObject);
-begin
-  self.updateSimulation();
-  if currTime > runTime then
-    WebTimer1.enabled := false;
-end;
 
 function TMainForm.WorldToScreen(wx: Integer): Integer;
 begin
@@ -702,68 +664,27 @@ end;
 
 // Add more model info as needed here:
 procedure TMainForm.GetSBMLInfo();
-var
-  i: Integer;
-  parInitval: array of Double; // param vals for ODE solver.
-  varInitval: array of Double; // init values for ODE solver
-  outputList: TStringList;
 begin
-  numbRxns := sbmlmodel.getNumReactions();
   paramSliderBtn.visible := true;
-  // rxnsArray:= Copy(sbmlmodel.getReactions(),0,numbRxns);
-  self.fillSpeciesArray();
+  self.MainController.fillSpeciesArray();
+  self.MainController.fillParameterArray();
 end;
 
-function TMainForm.setupSimulation(): String;
+// set up Results table (simResultsMemo, WebMemo)  optional ?
+procedure TMainForm.InitSimResultsTable();
 var
   simRTStr: String; // Output string for TWebMemo
   i: Integer;
-  odeEqs: String;
-  odeFormat: TFormatODEs;
+
 begin
-  ODEready := false;
-
-  try
-    self.WebTimer1.Interval := strtoint(stepSizeEdit1.Text);
-    // Trailing blanks are not supported
-  except
-    on Exception: EConvertError do
-      begin
-        self.WebTimer1.Interval := 100; // default
-        self.stepSizeEdit1.Text := inttostr(self.WebTimer1.Interval);
-      end;
-  end;
-
-  stepSize := self.WebTimer1.Interval * 0.001; // 1 sec = 1000 msec
   simResultsMemo.Lines.Clear();
-  odeFormat := TFormatODEs.create(sbmlmodel);
-
-  if length(p_Vals) < 1 then
-    begin
-      SetLength(p_Vals, length(odeFormat.get_pVals())); // Keep params for later
-      SetLength(p_names, length(p_Vals));
-      for i := 0 to length(odeFormat.get_pVals()) - 1 do
-        begin
-          p_Vals[i] := odeFormat.get_pVals[i];
-          p_names[i] := odeFormat.get_paramsStr[i];
-        end;
-    end;
-
-  // Run Simulation using info from odeFormat:
-  odeFormat.buildFinalEqSet();
   simRTStr := ' Time (s) '; // generate coloumn headers:
 
-  for i := 0 to length(s_names) - 1 do
+  for i := 0 to length(self.MainController.getS_Names) - 1 do
     begin
-      simRTStr := simRTStr + ', ' + s_names[i];
+      simRTStr := simRTStr + ', ' + self.MainController.getS_Names()[i];
     end;
   simResultsMemo.Lines.Add(simRTStr);
-
-  if solverUsed = LSODAS then
-    self.startSimulation(odeFormat.getODEeqSet2(), odeFormat)
-  else
-    self.startSimulation(odeFormat.getODEeqSet(), odeFormat);
-  // Result:= odeFormat.getODEeqSet();
 end;
 
 procedure TMainForm.SliderEditLBClick(Sender: TObject);
@@ -789,45 +710,10 @@ begin
   networkPB1.Invalidate;
 end;
 
-procedure TMainForm.startSimulation(odeEqs: String; odeFormat: TFormatODEs);
-begin
-  runSim := TSimulationJS.create(runTime, stepSize, length(s_Vals), length(odeFormat.get_pVals()), odeEqs, solverUsed);
-  runSim.OnUpdate := getVals; // register callback function.
-  runSim.p := odeFormat.get_pVals();
-  currTime := 0;
-  if solverUsed = LSODAS then
-    runSim.eval2(currTime, s_Vals)
-  else
-    runSim.eval(currTime, s_Vals);
-  ODEready := true;
-  // Debug:
-  // printSpeciesParamsArr(odeFormat.get_sVals(), odeFormat.get_speciesStrAr());
-  // printSpeciesParamsArr(runSim.p, odeFormat.get_paramsStr());
-end;
 
-procedure TMainForm.updateSimulation();
+procedure TMainForm.stepSizeEdit1Change(Sender: TObject);
 begin
-  stepSize := self.WebTimer1.Interval * 0.001; // 1 sec = 1000 msec
-  if ODEready = true then
-    begin
-      runSim.setStepSize(stepSize);
-      if self.paramUpdated then
-        begin
-          runSim.p := p_Vals; // Update parameters ...
-          self.paramUpdated := false;
-        end;
-      // Get last time and s values and pass into eval2:
-      if length(s_Vals) > 0 then
-        begin
-          if solverUsed = LSODAS then
-            runSim.eval2(currTime, s_Vals)
-          else
-            runSim.eval(currTime, s_Vals);
-        end;
-    end
-    // else error msg needed?
-  else
-    self.setupSimulation();
+  MainController.SetTimerInterval(strToInt(stepSizeEdit1.Text));
 end;
 
 // Get new values (species amt) from simulation run (ODE integrator)
@@ -839,16 +725,13 @@ begin
   // Update table of data;
   dataStr := '';
   dataStr := floatToStrf(newTime, ffFixed, 4, 4) + ', ';
-  SetLength(s_Vals, length(newVals));
-  // TODO: should just be a check. s_Vals length set earlier?
   for i := 0 to length(newVals) - 1 do
     begin
       dataStr := dataStr + floatToStrf(newVals[i], ffExponent, 6, 2) + ', ';
-      s_Vals[i] := newVals[i];
     end;
   simResultsMemo.Lines.Add(dataStr);
-  processScan(newTime, s_Vals); // <------------
-  currTime := newTime;
+  processScan(newTime, newVals); // <------------
+
 end;
 
 procedure TMainForm.loadNetworkButtonClick(Sender: TObject);
@@ -924,7 +807,7 @@ begin
             plot_y[i] := true;
         end;
       // Dynamically draw plots:
-      listOfPlots[j].addPoint(currentGeneration, y_new,  plot_y, true, currTime);
+      listOfPlots[j].addPoint(currentGeneration, y_new,  plot_y, true, self.MainController.getCurrTime);
       self.plotsPBAr[j].Canvas.draw (0, 0, listOfPlots[j].bitmap);
     end;
 end;
@@ -932,7 +815,7 @@ end;
 procedure TMainForm.selectPlotSpecies(plotnumb: Integer);
 // plot number to be added or modified
 
-// Pass back to caller after closing popup:
+  // Pass back to caller after closing popup:
   procedure AfterShowModal(AValue: TModalResult);
   var
     i: Integer;
@@ -943,7 +826,7 @@ procedure TMainForm.selectPlotSpecies(plotnumb: Integer);
         // Add a plot with species list
         addingPlot := true;
         SetLength(plotSpecies, plotnumb);
-        SetLength(plotSpecies[plotnumb - 1], length(s_Vals));
+        SetLength(plotSpecies[plotnumb - 1], length(self.MainController.getS_Vals));
       end
     else
       addingPlot := false;
@@ -964,7 +847,7 @@ procedure TMainForm.selectPlotSpecies(plotnumb: Integer);
 // async called OnCreate for TSpeciesSWForm
   procedure AfterCreate(AForm: TObject);
   begin
-    (AForm as TSpeciesSWForm).speciesList := s_names;
+    (AForm as TSpeciesSWForm).speciesList := self.MainController.getS_names;
     (AForm as TSpeciesSWForm).fillSpeciesCG();
   end;
 
@@ -974,7 +857,6 @@ begin
   plotSpeciesForm.PopupOpacity := 0.3;
   plotSpeciesForm.Border := fbDialogSizeable;
   plotSpeciesForm.caption := 'Species to plot:';
-
   plotSpeciesForm.ShowModal(@AfterShowModal);
 end;
 
@@ -1016,6 +898,7 @@ begin
   self.xscaleHeightAr[self.numbPlots - 1] := round(0.15 * self.plotsPBAr[self.numbPlots - 1].Height);
   // make %15 of total height
   self.maxYValueAr[self.numbPlots - 1] := self.plotsPBAr[self.numbPlots - 1].Height; // PaintBox dimension
+
   self.plotsPBAr[self.numbPlots - 1].Invalidate;
 end;
 
@@ -1060,7 +943,7 @@ var
   sliderXposition, sliderYposition: Integer;
   editList: TStringList;
 begin
-  // console.log('Edit Slider: slider #: ',sn);
+  // console.log('Edit param Slider: slider #: ',sn);
   sliderXposition := 424;
   sliderYposition := self.sliderPanelAr[sn].Top + 10;
   editList := TStringList.create();
@@ -1091,41 +974,6 @@ begin
   self.RightWPanel.Invalidate;
 end;
 
-procedure TMainForm.setODEsolver();
-begin
-  // If want choice then:
-  // case ODEsolverWRadioGroup.ItemIndex of
-  // 0: solverUsed:= EULER;
-  // 1: solverUsed:= RK4;
-  // 2: solverUsed:= LSODAS;
-  // else solverUsed:= LSODAS;
-  // end;
-  solverUsed := LSODAS;
-end;
-
-// Get initial vals for Species from SBML model
-// TODO: add code for nonSBML models?
-procedure TMainForm.fillSpeciesArray();
-var
-  i: Integer;
-  spAr: array of SBMLspecies;
-begin
-  if sbmlmodel.getSpeciesNumb() > 0 then // TODO: chk if sbml model first
-    begin
-      spAr := sbmlmodel.getSBMLdynamicSpeciesAr;
-      SetLength(s_Vals, Length(spAr));
-      SetLength(s_names, length(s_Vals));
-      for i := 0 to Length(spAr) - 1 do
-        begin
-          if spAr[i].isSetInitialAmount() then
-            s_Vals[i] := spAr[i].getInitialAmount()
-          else if spAr[i].isSetInitialConcentration() then
-            s_Vals[i] := spAr[i].getInitialConcentration();
-          s_names[i] := spAr[i].getID();
-          // Use species ID as name
-        end;
-    end;
-end;
 
 // Select parameter to use for slider
 procedure TMainForm.selectParameter(sNumb: Integer);
@@ -1159,7 +1007,7 @@ var
 // async called OnCreate for TParamSliderSForm
   procedure AfterCreate(AForm: TObject);
   begin
-    (AForm as TParamSliderSForm).paramList := p_names;
+    (AForm as TParamSliderSForm).paramList := self.MainController.getP_Names;
     (AForm as TParamSliderSForm).fillParamRG();
   end;
 
@@ -1185,13 +1033,13 @@ procedure TMainForm.addParamSlider();
           begin
             i := TWebPanel(Sender).tag;
             // assume only slider TWebpanel in right panel.
-            // ShowMessage('WebPanel sent mouse msg:  '+ inttostr(i));
+            // ShowMessage('WebPanel sent mouse msg (addParamSlider):  '+ inttostr(i));
             self.EditSliderList(i);
           end;
       end;
   end;
 
-// ###
+// ***********************
 var
   i, sliderTBarWidth, sliderPanelLeft, sliderPanelWidth: Integer;
 begin
@@ -1238,22 +1086,22 @@ end;
 procedure TMainForm.SetSliderParamValues(sn, paramForSlider: Integer);
 var
   rangeMult: Integer;
+  pVal:Double;
+  pName: String;
 begin
   rangeMult := 10; // default.
-  self.sliderPTBLabelAr[sn].caption := p_names[self.sliderParamAr[sn]] + ': ' +
-    FloatToStr(p_Vals[self.sliderParamAr[sn]]);
+  pName :=  self.MainController.getP_Names[self.sliderParamAr[sn]];
+  pVal := self.MainController.getP_Vals[self.sliderParamAr[sn]];
+  self.sliderPTBLabelAr[sn].caption := pName + ': ' + FloatToStr(pVal);
   self.sliderPLowAr[sn] := 0;
   self.sliderPLLabelAr[sn].caption := FloatToStr(self.sliderPLowAr[sn]);
-  // console.log('SetSliderParamValues sn...',sn,' : ',p_names[self.sliderParamAr[sn]]);
-
   self.sliderPTBarAr[sn].Min := 0;
   self.sliderPTBarAr[sn].Position := trunc((1 / rangeMult) * 100);
   self.sliderPTBarAr[sn].Max := 100;
-  if p_Vals[self.sliderParamAr[sn]] > 0 then
+  if pVal > 0 then
     begin
-      self.sliderPHLabelAr[sn].caption :=
-        FloatToStr(p_Vals[self.sliderParamAr[sn]] * rangeMult);
-      self.sliderPHighAr[sn] := p_Vals[self.sliderParamAr[sn]] * rangeMult;
+      self.sliderPHLabelAr[sn].caption := FloatToStr(pVal * rangeMult);
+      self.sliderPHighAr[sn] := pVal * rangeMult;
     end
   else
     begin
@@ -1265,7 +1113,8 @@ end;
 
 procedure TMainForm.testAddingModel(); // Test remove when needed.
 var
-  speciesAr: array of SBMLspecies;
+  sbmlModel: TModel;
+  speciesAr: array of TSBMLSpecies;
   paramAr: array of SBMLparameter;
   comp: SBMLcompartment;
   rxnProdStoicAr: array of Double;
@@ -1273,52 +1122,49 @@ var
   rxnReactsAr: array of String;
   rxnReactsStoicAr: array of Double;
 begin
-  sbmlmodel := SBMLhelpClass.create();
+  sbmlModel := TModel.create();
 
   SetLength(speciesAr, 3);
-  speciesAr[0] := SBMLspecies.create('S1');
+  speciesAr[0] := TSBMLSpecies.create('S1');
   speciesAr[0].setInitialConcentration(10);
   speciesAr[0].setCompartment('cell');
-  speciesAr[1] := SBMLspecies.create('S2');
+  speciesAr[1] := TSBMLSpecies.create('S2');
   speciesAr[1].setInitialConcentration(2);
   speciesAr[1].setCompartment('cell');
-  speciesAr[2] := SBMLspecies.create('S3');
+  speciesAr[2] := TSBMLSpecies.create('S3');
   speciesAr[2].setInitialConcentration(1);
   speciesAr[2].setCompartment('cell');
-  sbmlmodel.addSBMLspecies(speciesAr[0]);
-  sbmlmodel.addSBMLspecies(speciesAr[1]);
-  sbmlmodel.addSBMLspecies(speciesAr[2]);
+  sbmlModel.addSBMLspecies(speciesAr[0]);
+  sbmlModel.addSBMLspecies(speciesAr[1]);
+  sbmlModel.addSBMLspecies(speciesAr[2]);
 
   comp := SBMLcompartment.create('cell');
   comp.setVolume(2);
   comp.setConstant(true);
-  sbmlmodel.addSBMLcompartment(comp);
+  sbmlModel.addSBMLcompartment(comp);
 
   SetLength(paramAr, 2);
   paramAr[0] := SBMLparameter.create('k1');
   paramAr[0].setValue(0.1);
   paramAr[1] := SBMLparameter.create('k2');
   paramAr[1].setValue(0.05);
-  sbmlmodel.addSBMLParameter(paramAr[0]);
-  sbmlmodel.addSBMLParameter(paramAr[1]);
+  sbmlModel.addSBMLParameter(paramAr[0]);
+  sbmlModel.addSBMLParameter(paramAr[1]);
 
   // Set up reactions:
   rxnProdsAr[0] := speciesAr[1].getID();
   rxnProdStoicAr[0] := 1;
   rxnReactsAr[0] := speciesAr[0].getID();
   rxnReactsStoicAr[0] := 1;
-  sbmlmodel.addSBMLReaction('S1toS2', rxnProdsAr, rxnProdStoicAr, rxnReactsAr,
+  sbmlModel.addSBMLReaction('S1toS2', rxnProdsAr, rxnProdStoicAr, rxnReactsAr,
     rxnReactsStoicAr, 'k1*S1');
 
   rxnProdsAr[0] := speciesAr[2].getID();
   rxnProdStoicAr[0] := 1;
   rxnReactsAr[0] := speciesAr[1].getID();
   rxnReactsStoicAr[0] := 1;
-  sbmlmodel.addSBMLReaction('S2toS3', rxnProdsAr, rxnProdStoicAr, rxnReactsAr,
+  sbmlModel.addSBMLReaction('S2toS3', rxnProdsAr, rxnProdStoicAr, rxnReactsAr,
     rxnReactsStoicAr, 'k2*S2');
-  numbRxns := 2;
-  sbmlModelLoaded := true;
-  // addSBMLReaction(rxn name,products,prodStoich, reactants,reactStoich,kineticFormulaStr);
 
 end;
 
