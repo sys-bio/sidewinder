@@ -1,4 +1,4 @@
-unit plotLayout;
+unit uPlotLayout;
 
 interface
 uses System.SysUtils, System.Classes, JS, Web, Vcl.Controls, WEBLib.ExtCtrls,WEBLib.Dialogs ;
@@ -12,7 +12,6 @@ procedure adjustPlotHeights(totalPlots: integer; pbPlotAr: array of TWebPaintBox
 implementation
 
 procedure configPbPlot(plotNumber : integer; plotPanelWidth, plotPanelHeight: integer; newPBplotAr: array of TWebPaintBox);
-var i: integer;
 begin
    panelW := plotPanelWidth;
    panelH := plotPanelHeight;

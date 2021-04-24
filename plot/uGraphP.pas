@@ -1,4 +1,4 @@
-unit Graphp;
+unit uGraphP;
 
 interface
 
