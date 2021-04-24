@@ -1,9 +1,9 @@
-unit uSBML.model;
+unit uSBMLClasses;
 interface
  uses Web, JS;
 type
 
- SBMLspecies = class
+ TSBMLSpecies = class
    private
    initAmt, initConc: double;
    sid, name: String;
@@ -17,7 +17,7 @@ type
    public
    constructor create(); Overload;
    constructor create(id:String); Overload;
-   constructor create(copySp: SBMLspecies); Overload;   // copy
+   constructor create(copySp: TSBMLSpecies); Overload;   // copy
    function getInitialAmount(): double;
    procedure setInitialAmount(amt:double);
    function isSetInitialAmount(): boolean;
@@ -100,7 +100,7 @@ type
 
 // SBMLlocalParameter not implimented, same methods as SBMLParameter.
 
- SBMLspeciesreference = class
+ TSBMLSpeciesReference = class
  private
     stoichValue: double;
   //  constSetFlag: boolean;
@@ -177,38 +177,38 @@ type
   reactants: array of String;  // remove at "
 
   numbProducts, numbReactants: integer;
-  rxnProducts: array of SBMLspeciesreference;
-  rxnReactants: array of SBMLspeciesreference;
+  rxnProducts: array of TSBMLSpeciesReference;
+  rxnReactants: array of TSBMLSpeciesReference;
 
  public
   kineticLawStr: String;  // temporary, use SBMLkineticlaw class later
   constructor create(id:String; prod: array of String; reactant: array of String); Overload; // remove at some point
-  constructor create(id:String; prod: array of SBMLspeciesreference; reactant: array of SBMLspeciesreference); Overload;
+  constructor create(id:String; prod: array of TSBMLSpeciesReference; reactant: array of TSBMLSpeciesReference); Overload;
   constructor create(id:String); Overload;
   function getID():String;   // from model.getReaction(i).getId()
   function getProducts(): array of String;   // remove at some pointGet products (species) for reaction
   function getReactants(): array of String;  // remove at some pointGet reactants (species) for reaction
-  function getProduct(index: integer):SBMLspeciesreference;
+  function getProduct(index: integer):TSBMLSpeciesReference;
   function getCompartment(): String;
   procedure setCompartment(val:String);
   function isSetCompartment(): boolean;
   procedure setProducts(prod: array of String);  // remove at some point
   procedure setReactants(reactant: array of String);  // remove at some point
-  function getrxnProducts(): array of SBMLspeciesreference;   // Get products (species) for reaction
-  function getrxnReactants(): array of SBMLspeciesreference;  // Get reactants (species) for reaction
-  procedure setrxnProducts(prod: array of SBMLspeciesreference);
-  procedure setrxnReactants(reactant: array of SBMLspeciesreference);
+  function getrxnProducts(): array of TSBMLSpeciesReference;   // Get products (species) for reaction
+  function getrxnReactants(): array of TSBMLSpeciesReference;  // Get reactants (species) for reaction
+  procedure setrxnProducts(prod: array of TSBMLSpeciesReference);
+  procedure setrxnReactants(reactant: array of TSBMLSpeciesReference);
 
   function getNumReactants(): integer;
   function getNumProducts(): integer;
- { function getReactant(n: integer): SBMLspeciesreference;
-  procedure addReactant(spec: SBMLspeciesreference);
-  function getProduct(n: integer): SBMLspeciesreference;
-  procedure addProduct(spec: SBMLspeciesreference);
-  function createReactant(): SBMLspeciesreference;
-  function createProduct(): SBMLspeciesreference;
-  function removeReactant(n:integer): SBMLspeciesreference;
-  function removeProduct(n:integer): SBMLspeciesreference;
+ { function getReactant(n: integer): TSBMLSpeciesReference;
+  procedure addReactant(spec: TSBMLSpeciesReference);
+  function getProduct(n: integer): TSBMLSpeciesReference;
+  procedure addProduct(spec: TSBMLSpeciesReference);
+  function createReactant(): TSBMLSpeciesReference;
+  function createProduct(): TSBMLSpeciesReference;
+  function removeReactant(n:integer): TSBMLSpeciesReference;
+  function removeProduct(n:integer): TSBMLSpeciesReference;
   function createKineticLaw():SBMLkineticlaw;}
   function getKineticLaw(): SBMLkineticlaw;
   procedure setKineticLaw(law: SBMLkineticlaw);
@@ -227,7 +227,7 @@ type
 
 implementation
 // *******************************************************
-  constructor SBMLspecies.create(); Overload;
+  constructor TSBMLSpecies.create(); Overload;
   begin
     sid:= '';
     initAmt:= 0;
@@ -240,7 +240,7 @@ implementation
     nameFlag:= false;
   end;
 
-  constructor SBMLspecies.create(id:String); Overload;
+  constructor TSBMLSpecies.create(id:String); Overload;
   begin
     sid:= id;
     initAmt:= 0;
@@ -253,7 +253,7 @@ implementation
     nameFlag:= false;
 
   end;
-  constructor SBMLspecies.create(copySp: SBMLspecies); Overload;
+  constructor TSBMLSpecies.create(copySp: TSBMLSpecies); Overload;
   begin
     sid:= copySp.getID();
     initAmt:= copySp.getInitialAmount();
@@ -272,86 +272,86 @@ implementation
 
 
   end;
-   function SBMLspecies.getInitialAmount(): double;
+   function TSBMLSpecies.getInitialAmount(): double;
    begin
      Result:= initAmt;
    end;
-   procedure SBMLspecies.setInitialAmount(amt:double);
+   procedure TSBMLSpecies.setInitialAmount(amt:double);
    begin
      initAmt:=amt;
      initAmtFlag:= true;
    end;
-   function SBMLspecies.isSetInitialAmount(): boolean;
+   function TSBMLSpecies.isSetInitialAmount(): boolean;
    begin
      Result:=initAmtFlag;
    end;
-   function SBMLspecies.getInitialConcentration(): double;
+   function TSBMLSpecies.getInitialConcentration(): double;
    begin
      Result:= initConc;
    end;
-   procedure SBMLspecies.setInitialConcentration(amt:double);
+   procedure TSBMLSpecies.setInitialConcentration(amt:double);
    begin
      initConc:= amt;
      initConcFlag:= true;
    end;
-   function SBMLspecies.isSetInitialConcentration():boolean;
+   function TSBMLSpecies.isSetInitialConcentration():boolean;
    begin
      Result:= initConcFlag;
    end;
-   function SBMLspecies.getCompartment(): String;
+   function TSBMLSpecies.getCompartment(): String;
    begin
      Result:= compSid;
    end;
-   procedure SBMLspecies.setCompartment(sid:String);// sid identifier of a Compartment object defined elsewhere in this Model
+   procedure TSBMLSpecies.setCompartment(sid:String);// sid identifier of a Compartment object defined elsewhere in this Model
    begin
      compSid:= sid;
      compFlag:= true;
    end;
-   function SBMLspecies.isSetCompartment():boolean;
+   function TSBMLSpecies.isSetCompartment():boolean;
    begin
      Result:= compFlag;
    end;
-   function SBMLspecies.getBoundaryCondition():boolean; // true if this Species' "boundaryCondition" attribute value is true, false otherwise
+   function TSBMLSpecies.getBoundaryCondition():boolean; // true if this Species' "boundaryCondition" attribute value is true, false otherwise
    begin
      Result:= boundCond;
    end;
-    procedure SBMLspecies.setBoundaryCondition(val:boolean);
+    procedure TSBMLSpecies.setBoundaryCondition(val:boolean);
     begin
       boundCond:= val;
     end;
-   //function SBMLspecies.isSetBoundaryCondition(): boolean; // true if this Species object's "boundaryCondition" attribute is set.
-   function SBMLspecies.getConstant():boolean; // true if this Species's "constant" attribute value is true, false otherwise
+   //function TSBMLSpecies.isSetBoundaryCondition(): boolean; // true if this Species object's "boundaryCondition" attribute is set.
+   function TSBMLSpecies.getConstant():boolean; // true if this Species's "constant" attribute value is true, false otherwise
    begin
      Result:= constFlag;
    end;
-   procedure SBMLspecies.setConstant(val:boolean);
+   procedure TSBMLSpecies.setConstant(val:boolean);
    begin
      constFlag:= val;
    end;
-  // function SBMLspecies.isSetConstant():boolean;
-   function SBMLspecies.getID(): String;
+  // function TSBMLSpecies.isSetConstant():boolean;
+   function TSBMLSpecies.getID(): String;
    begin
      Result:= sid;
    end;
-   procedure SBMLspecies.setID(id:String);
+   procedure TSBMLSpecies.setID(id:String);
    begin
      sid:= id;
      idFlag:= true;
    end;
-   function SBMLspecies.isSetIdAttribute(): boolean;
+   function TSBMLSpecies.isSetIdAttribute(): boolean;
    begin
      Result:= idFlag;
    end;
-   function SBMLspecies.getName(): String;
+   function TSBMLSpecies.getName(): String;
    begin
      Result:= name;
    end;
-   procedure SBMLspecies.setName(val: String);
+   procedure TSBMLSpecies.setName(val: String);
    begin
      name:= val;
      nameFlag:= true;
    end;
-   function SBMLspecies.isSetName(): boolean;
+   function TSBMLSpecies.isSetName(): boolean;
    begin
      Result:= nameFlag;
    end;
@@ -359,7 +359,7 @@ implementation
 
   // ************************************************
 
-  constructor SBMLSpeciesReference.create(); Overload;
+  constructor TSBMLSpeciesReference.create(); Overload;
   begin
      id:= '';
      species:= '' ;
@@ -368,7 +368,7 @@ implementation
      speciesSetFlag:= false;
      stoichSetFlag:= false;
   end;
-  constructor SBMLSpeciesReference.create(id:String); Overload;
+  constructor TSBMLSpeciesReference.create(id:String); Overload;
   begin
      id:= id;
      species:= '' ;
@@ -377,7 +377,7 @@ implementation
      speciesSetFlag:= false;
      stoichSetFlag:= false;
   end;
-  constructor SBMLSpeciesReference.create(id:String; stoich: double); Overload;
+  constructor TSBMLSpeciesReference.create(id:String; stoich: double); Overload;
   begin
      id:= id;
      species:= id ; // for now, may change
@@ -386,45 +386,45 @@ implementation
      speciesSetFlag:= true;
      stoichSetFlag:= false;
   end;
-  function SBMLSpeciesReference.getSpecies():String;
+  function TSBMLSpeciesReference.getSpecies():String;
   begin
     Result:= species;
   end;
-  procedure SBMLSpeciesReference.setSpecies(val:String);
+  procedure TSBMLSpeciesReference.setSpecies(val:String);
   begin
     species:= val;
     speciesSetFlag:= true;
   end;
-  function SBMLSpeciesReference.isSetSpecies(): boolean;
+  function TSBMLSpeciesReference.isSetSpecies(): boolean;
   begin
     Result:= speciesSetFlag;
   end;
 //    function getConstant(): boolean; // check if stoich is constant.
 //    procedure setConstant(val: boolean);
 //    function isSetConstant(): boolean;
-  function SBMLSpeciesReference.getStoichiometry(): double;
+  function TSBMLSpeciesReference.getStoichiometry(): double;
   begin
     Result:= stoichValue;
   end;
-  procedure SBMLSpeciesReference.setStoichiometry(val: double);
+  procedure TSBMLSpeciesReference.setStoichiometry(val: double);
   begin
     stoichValue:= val;
     stoichSetFlag:= true;
   end;
-  function SBMLSpeciesReference.isSetStoichiometry(): boolean;
+  function TSBMLSpeciesReference.isSetStoichiometry(): boolean;
   begin
     Result:= stoichSetFlag;
   end;
-  function SBMLSpeciesReference.getId(): String;
+  function TSBMLSpeciesReference.getId(): String;
   begin
     Result:= id;
   end;
-  procedure SBMLSpeciesReference.setId( val: String);
+  procedure TSBMLSpeciesReference.setId( val: String);
   begin
     id:= val;
     idSetFlag:= true;
   end;
-  function SBMLSpeciesReference.isSetIdAttribute(): boolean;
+  function TSBMLSpeciesReference.isSetIdAttribute(): boolean;
   begin
     Result:= idSetFlag;
   end;
@@ -704,7 +704,7 @@ implementation
   kineticLawStr:= '';
  end;
 
- constructor SBMLReaction.create(id:String; prod: array of SBMLspeciesreference; reactant: array of SBMLspeciesreference);
+ constructor SBMLReaction.create(id:String; prod: array of TSBMLSpeciesReference; reactant: array of TSBMLSpeciesReference);
  begin
   rxnID:= id;
   rxnIdFlagSet:= true;
@@ -776,27 +776,27 @@ implementation
   Result:= reactants;
  end;
 
- function SBMLReaction.getrxnProducts(): array of SBMLspeciesreference;   // Get products (species) for reaction
+ function SBMLReaction.getrxnProducts(): array of TSBMLSpeciesReference;   // Get products (species) for reaction
  begin
  //console.log('GetrxnProducts: number of products:',Length(rxnproducts));
   Result:= rxnproducts;
  end;
- function SBMLReaction.getrxnReactants(): array of SBMLspeciesreference;  // Get reactants (species) for reaction
+ function SBMLReaction.getrxnReactants(): array of TSBMLSpeciesReference;  // Get reactants (species) for reaction
  begin
  //console.log('GetrxnReactants: number of reactants:',Length(rxnreactants));
   Result:= rxnreactants;
  end;
- function SBMLReaction.getProduct(index: integer):SBMLspeciesreference;
+ function SBMLReaction.getProduct(index: integer):TSBMLSpeciesReference;
  begin
    Result:= rxnproducts[index];
  end;
- procedure SBMLReaction.setrxnProducts(prod: array of SBMLspeciesreference);
+ procedure SBMLReaction.setrxnProducts(prod: array of TSBMLSpeciesReference);
  begin
  //console.log('SetrxnProducts: number of products:',Length(prod));
   rxnproducts:= Copy(prod, 0, Length(prod));
  // console.log('SetrxnProducts: After copy:number of products:',Length(rxnproducts));
  end;
- procedure SBMLReaction.setrxnReactants(reactant: array of SBMLspeciesreference);
+ procedure SBMLReaction.setrxnReactants(reactant: array of TSBMLSpeciesReference);
  begin
   rxnreactants:= Copy(reactant, 0, Length(reactant));
  end;
