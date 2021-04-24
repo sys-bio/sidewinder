@@ -1,4 +1,4 @@
-unit ODE_FormatUtility;
+unit uODE_FormatUtility;
 
 // Takes a list of SBML reactions and Lists of Species and parameters and returns
 // An array of equation strings with the names replaced with simple array names.
@@ -6,7 +6,7 @@ unit ODE_FormatUtility;
 // Convert basic math functions to javascript notation (ie pow() -> Math.pow() )
 
 interface
-uses System.SysUtils, System.StrUtils, web, uSBML.model, uSBML.helper, uSBML.model.rule;
+uses System.SysUtils, System.StrUtils, web, uSBMLClasses, uModel, uSBMLClasses.rule;
 
 type
 TFormatODEs = class
@@ -19,21 +19,22 @@ TFormatODEs = class
     assignParamEqs: array of String; // List of SBML param assignment formulas, to be added to final odeEqSet.
     assignSpeciesEqs: array of String; // List of SBML spec assignment formulas, to be added to final odeEqSet.
     rxns: array of SBMLreaction;
-    prods: array of SBMLspeciesreference; // TODO: move to buildODE_LHS()
-    reactants: array of SBMLspeciesreference; // TODO: move to buildODE_LHS()
+    prods: array of TSBMLSpeciesReference; // TODO: move to buildODE_LHS()
+    reactants: array of TSBMLSpeciesReference; // TODO: move to buildODE_LHS()
     speciesStrAr: array of String;   // keep to convert short name to long name.
-    speciesAr: array of SBMLspecies;
-    paramsStr: array of String;    // keep to convert short name to long name.
+    speciesAr: array of TSBMLSpecies;
+    paramsStrAr: array of String;    // keep to convert short name to long name.
     sVals: array of double;   // init val of species, same size as speciesStrAr
-    pVals: array of double;   // init val of parameters, same size as paramsStr.
+    pVals: array of double;   // init val of parameters, same size as paramsStrAr.
 
   function buildODE_LHS( rxn: SBMLreaction ): array of String; // build the 'dydt_s[]=' or '-dydt_s[]=', store in rhsSymbols
   function getODEeqLoc(Speciesdydt : String): Integer; // return index of Species in odeEqs.
-  procedure BuildAssignmentEqs(model: SBMLhelpClass);
+  procedure BuildAssignmentEqs(model: TModel);
   function spBoundaryCondition(speciesId: String): boolean;
+  procedure CreateParamSpeciesLists(model: TModel);
 
   public
-  constructor create( model: SBMLhelpClass);
+  constructor create( model: TModel);
   function replaceStrNames(names: array of String; stringtoedit: String; prefixStr: String):String;
   function StrInArray(const Value : String;const ArrayOfString : Array of String) : Integer;
   function testStrReplace( ): String;  // testing....
@@ -44,7 +45,7 @@ TFormatODEs = class
   function get_sVals(): array of double; // get init vals for species used in eqs.
   function get_pVals(): array of double; // get init vals for params, including comp vols used in eqs.
   function get_speciesStrAr(): array of String;  // SBML Species id
-  function get_paramsStr(): array of String;   // SBML parameter and compartment ids.
+  function get_paramsStrAr(): array of String;   // SBML parameter and compartment ids.
   procedure buildLSODAeqs();   // build LSODA eqs (odeEqs2)
   procedure buildFinalEqSet(); // Build up final ODE eqs list as one string for use by solver.
 
@@ -55,8 +56,8 @@ function JSMathConvert(eqStr: String): String;
 
 implementation
 
-constructor TFormatODEs.create (model: SBMLhelpClass);
-var i, j,k, paramLen, count: Integer;
+constructor TFormatODEs.create (model: TModel);
+var i, j,k,  count: Integer;
     curODE: String;
     odeStrs: array of String;
     lhsSymbols: array of String; // contains the 'dydt_s[]=' argument.
@@ -67,17 +68,70 @@ begin
   self.assignSpeciesEqs := nil;
   setLength(self.speciesAr,Length(model.getSBMLspeciesAr()));
   self.speciesAr := model.getSBMLspeciesAr();
-  setLength(paramsStr, Length(model.getSBMLparameterAr()));
+  setLength(paramsStrAr, Length(model.getSBMLparameterAr()));
   setLength(odeStrs, model.getNumReactions());
   count := 0;
+  self.CreateParamSpeciesLists(model);  // Includes params, compartments, species BCs.
+  self.BuildAssignmentEqs(model);
 
-  // Get parameter and compartment names and combine into one array, pVals[]:
-  SetLength(pVals,Length(paramsStr));
-  for i := 0 to Length(paramsStr)-1 do
+  // *******************************************************************
+  // go through each reaction eq and replace all species and params in arrays:
+  rxns:= Copy(model.getReactions(), 0, model.getNumReactions());
+  for j := 0 to Length(rxns)-1 do
+      begin
+      if rxns[j].isSetKineticLaw() then
+         begin
+         lhsSymbols := buildODE_LHS(rxns[j]);  // check if existing LHS, then just // add eq to it.
+         curODE := rxns[j].getKineticLaw().getFormula()
+         end
+      else odeStrs[j] := '';
+
+      odeStrs[j] := replaceStrNames(speciesStrAr, curODE,'s');
+      odeStrs[j] := replaceStrNames(paramsStrAr, odeStrs[j],'p');
+      setLength (odeEqs,length(lhsSymbols) + count);
+
+      for k := 0 to length(lhsSymbols)-1 do
+          begin
+          found_dydt :=  getODEeqLoc(lhsSymbols[k] );
+          console.log(' found_dydt: ', found_dydt);
+          if found_dydt < 0 then // not found
+             begin
+             if lhsSymbols[k] = '' then
+                self.odeEqs[count] := ''   // Do not add ODE eq for this species
+             else
+                self.odeEqs[count] := lhsSymbols[k] + odeStrs[j] + ')';  // rhs inclosed in perenthesis.
+             count := count + 1;  // count: Total number of eqs: Sum(prod+reactants per rxn)
+             end
+          else
+          begin
+          if ContainsText(lhsSymbols[k],'(-1)*') then
+            self.odeEqs[found_dydt] := self.odeEqs[found_dydt] + '+ ' + '(-1)*('+ odeStrs[j] + ')'
+          else
+            self.odeEqs[found_dydt] := self.odeEqs[found_dydt] + '+ ' + '('+ odeStrs[j] + ')';
+          end;
+        end;
+      end;
+
+  // Now replace math operators:
+  for i := 0 to Length(odeEqs)-1 do
+      begin
+      odeEqs[i] := JSMathConvert(odeEqs[i]);
+      end;
+  buildLSODAeqs();
+end;
+
+
+procedure TFormatODEs.CreateParamSpeciesLists(model: TModel);
+var i, paramLen : integer;
+
+begin
+   // Get parameter and compartment names and combine into one array, pVals[]:
+  SetLength(pVals,Length(paramsStrAr));
+  for i := 0 to Length(paramsStrAr)-1 do
       begin
       if model.getSBMLparameter(i).isSetIDAttribute() then
          begin
-         paramsStr[i] := model.getSBMLparameter(i).getId();
+         paramsStrAr[i] := model.getSBMLparameter(i).getId();
          // Get initial value for each param:
          if model.getSBMLparameter(i).isSetValue() then
            pVals[i] := model.getSBMLparameter(i).getValue()
@@ -85,23 +139,22 @@ begin
          end
       else
          begin
-         paramsStr[i] := '';
+         paramsStrAr[i] := '';
          pVals[i]:= 0;
          end;
       end;
     // Get compartments:
-  paramLen := Length(paramsStr);
-  SetLength(paramsStr, paramLen+model.getCompNumb());
+  paramLen := Length(paramsStrAr);
+  SetLength(paramsStrAr, paramLen+model.getCompNumb());
   SetLength(pVals, paramLen + model.getCompNumb());
   for i := 0 to model.getCompNumb()-1 do
        begin
        if model.getSBMLcompartment(i).isSetIdAttribute() then
           begin
-          paramsStr[paramLen+i] := model.getSBMLcompartment(i).getID();
+          paramsStrAr[paramLen+i] := model.getSBMLcompartment(i).getID();
           end
        else
-          paramsStr[paramLen+i] := model.getSBMLcompartment(i).getName();
-      // console.log('Adding compartment id: ', paramsStr[paramLen+i]);
+          paramsStrAr[paramLen+i] := model.getSBMLcompartment(i).getName();
        // Get Size/Vols of compartments:
        if model.getSBMLcompartment(i).isSetSize() then
           pVals[paramLen+i] := model.getSBMLcompartment(i).getSize()
@@ -115,10 +168,10 @@ begin
       begin
       if self.speciesAr[i].getBoundaryCondition or self.speciesAr[i].getConstant then
         begin
-          paramLen := Length(paramsStr);
-          setLength(paramsStr, paramLen + 1);
+          paramLen := Length(paramsStrAr);
+          setLength(paramsStrAr, paramLen + 1);
           setLength(pVals, paramLen + 1);
-          paramsStr[paramLen] := self.speciesAr[i].getId();
+          paramsStrAr[paramLen] := self.speciesAr[i].getId();
           if self.speciesAr[i].isSetInitialAmount() then
             pVals[paramLen] := self.speciesAr[i].getInitialAmount()
           else if self.speciesAr[i].isSetInitialConcentration() then
@@ -139,55 +192,8 @@ begin
         end;
       end;
 
- // Go through each rule and replace all species and params in array of formulas:
-  BuildAssignmentEqs(model);
-
-  // *******************************************************************
-  // go through each reaction eq and replace all species and params in arrays:
-  rxns:= Copy(model.getReactions(), 0, model.getNumReactions());
-  for j := 0 to Length(rxns)-1 do
-      begin
-      if rxns[j].isSetKineticLaw() then
-         begin
-         lhsSymbols := buildODE_LHS(rxns[j]);  // check if existing LHS, then just // add eq to it.
-         curODE := rxns[j].getKineticLaw().getFormula()
-         end
-      else
-         odeStrs[j] := '';
-
-      odeStrs[j] := replaceStrNames(speciesStrAr, curODE,'s');
-      odeStrs[j] := replaceStrNames(paramsStr, odeStrs[j],'p');
-      setLength (odeEqs,length(lhsSymbols) + count);
-
-      for k := 0 to length(lhsSymbols)-1 do
-          begin
-          found_dydt :=  getODEeqLoc(lhsSymbols[k] );
-          console.log(' found_dydt: ', found_dydt);
-          if found_dydt < 0 then // not found
-             begin
-             if lhsSymbols[k] = '' then
-                self.odeEqs[count] := ''   // Do not add ODE eq for this species
-             else
-                self.odeEqs[count] := lhsSymbols[k] + odeStrs[j] + ')';  // rhs inclosed in perenthesis.
-             count := count + 1;  // count: Total number of eqs: Sum(prod+reactants per rxn)
-             end
-      else
-        begin
-        if ContainsText(lhsSymbols[k],'(-1)*') then
-          self.odeEqs[found_dydt] := self.odeEqs[found_dydt] + '+ ' + '(-1)*('+ odeStrs[j] + ')'
-        else
-          self.odeEqs[found_dydt] := self.odeEqs[found_dydt] + '+ ' + '('+ odeStrs[j] + ')';
-        end;
-      end;
-      end;
-
-  // Now replace math operators:
-  for i := 0 to Length(odeEqs)-1 do
-      begin
-      odeEqs[i] := JSMathConvert(odeEqs[i]);
-      end;
-  buildLSODAeqs();
 end;
+
 
 // ************************************************************
 // Replace names in string with array names ('species1' -> 's[0]')
@@ -216,7 +222,6 @@ end;
      //         console.log('Found match: ',names[i]);  // Found at correct position, k
                if k =1 then beginC:= ' ' // First char of formula string is in names[i]
                else beginC:= Copy(currEqStr,(k-1),1);
-      //          console.log('Char before match ...:',beginC,':...');
                endC:= Copy(currEqStr,(k+length(names[i])),1);
                if StrInArray(beginC,eqdelims) > -1  then
                  begin
@@ -347,9 +352,9 @@ begin
 end;
 
 // **************************************************
-function TFormatODEs.get_paramsStr(): array of String;
+function TFormatODEs.get_paramsStrAr(): array of String;
 begin
-  result:= self.paramsStr;
+  result:= self.paramsStrAr;
 end;
 
 // ***********************************************
@@ -472,7 +477,7 @@ end;
      end;
    end;
 
- procedure TFormatODEs.BuildAssignmentEqs(model: SBMLhelpClass);
+ procedure TFormatODEs.BuildAssignmentEqs(model: TModel);
  var i : integer;
      currString: String;
      rules: array of TSBMLrule;
@@ -493,7 +498,7 @@ end;
                currString:= currString + rules[i].getFormula()
              else currString:= currString + '0';
              currString:= replaceStrNames(self.speciesStrAr, currString,'s');
-             currString:= replaceStrNames(self.paramsStr, currString,'p');
+             currString:= replaceStrNames(self.paramsStrAr, currString,'p');
              currString:= JSMathConvert(currString);
            end;
            if rules[i].isParameter then
@@ -559,8 +564,7 @@ var
      if self.speciesAr[i].getId = speciesId then
        begin
        Result:= self.speciesAr[i].getBoundaryCondition();
-       console.log(' Found the boundary condition');
-
+       //console.log(' Found the boundary condition');
        end;
      end;
 
@@ -581,11 +585,9 @@ const
 var
  i: Integer;
  sbmlStr: String;
- jsStr: String;
- newStr, currStr: String;
+ jsStr, currStr: String;
 
 begin
-  newStr:= '';
   currStr:= eqStr;
   for i := 0 to Length(sbmlOp)-1 do
     begin
