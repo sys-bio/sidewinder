@@ -5,8 +5,8 @@ object SpeciesSWForm: TSpeciesSWForm
   OnCreate = plotFormCreate
   OnShow = WebFormShow
   object okButton1: TWebButton
-    Left = 8
-    Top = 177
+    Left = 112
+    Top = 2
     Width = 70
     Height = 22
     Anchors = [akLeft, akBottom]
@@ -21,7 +21,6 @@ object SpeciesSWForm: TSpeciesSWForm
     ParentFont = False
     WidthPercent = 100.000000000000000000
     OnClick = okButton1Click
-    ExplicitTop = 180
   end
   object SpPlotCG: TWebCheckGroup
     Left = 8

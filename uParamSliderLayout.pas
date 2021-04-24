@@ -1,4 +1,4 @@
-unit paramSliderLayout;
+unit uParamSliderLayout;
 
 interface
 uses System.SysUtils, System.Classes, JS, Web, Vcl.Controls,WEBLib.StdCtrls, WEBLib.ExtCtrls,WEBLib.Dialogs ;
@@ -29,7 +29,7 @@ procedure configPSliderTBar(sliderNumber, sliderPanelWidth : integer;  newSBarAr
 var sliderTBarWidth : integer;
   begin
     // Width of the slider inside the panel
-    sliderTBarWidth:= trunc (0.8*sliderPanelWidth); // 80% of the panel's width
+    sliderTBarWidth:= trunc (0.70*sliderPanelWidth); // 70% of the panel's width
 
     // This defines the location of the slider itself (not the position of the panel)
     newSBarAr[sliderNumber].visible:= True;
@@ -43,7 +43,7 @@ var sliderTBarWidth : integer;
     newSHLabelAr[sliderNumber].visible:= True;
     newSHLabelAr[sliderNumber].Tag:= sliderNumber;
     newSHLabelAr[sliderNumber].Top:= 30;
-    newSHLabelAr[sliderNumber].Left:= sliderPanelWidth - trunc (0.1*sliderPanelWidth);
+    newSHLabelAr[sliderNumber].Left:= sliderPanelWidth - trunc (0.15*sliderPanelWidth);
 
     // Value positioned on the left-side of slider
     newSLLabelAr[sliderNumber].visible:= True;
