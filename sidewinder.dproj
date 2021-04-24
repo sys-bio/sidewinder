@@ -112,8 +112,7 @@
             <FormType>dfm</FormType>
             <DesignClass>TWebForm</DesignClass>
         </DCCReference>
-        <DCCReference Include="sbml\uSBML.helper.pas"/>
-        <DCCReference Include="sbml\uSBML.model.pas"/>
+        <DCCReference Include="sbml\uSBMLClasses.pas"/>
         <DCCReference Include="math\uMath.pas"/>
         <DCCReference Include="math\lsoda\Adamsbdf.pas"/>
         <DCCReference Include="math\lsoda\LSODA.test.pas"/>
@@ -136,24 +135,27 @@
             <FormType>dfm</FormType>
             <DesignClass>TFrame</DesignClass>
         </DCCReference>
-        <DCCReference Include="simulator\ODE_FormatUtility.pas"/>
-        <DCCReference Include="simulator\Simulation.pas"/>
-        <DCCReference Include="plot\GraphP.pas"/>
-        <DCCReference Include="speciesSelectForm.pas">
+        <DCCReference Include="simulator\uODE_FormatUtility.pas"/>
+        <DCCReference Include="simulator\uSimulation.pas"/>
+        <DCCReference Include="plot\uGraphP.pas"/>
+        <DCCReference Include="ufSpeciesSelect.pas">
             <Form>SpeciesSWForm</Form>
             <FormType>dfm</FormType>
             <DesignClass>TWebForm</DesignClass>
         </DCCReference>
-        <DCCReference Include="plot\plotLayout.pas"/>
-        <DCCReference Include="paramSelectForm.pas">
+        <DCCReference Include="plot\uPlotLayout.pas"/>
+        <DCCReference Include="ufParamSelect.pas">
             <Form>Form1</Form>
             <FormType>dfm</FormType>
             <DesignClass>TWebForm</DesignClass>
         </DCCReference>
-        <DCCReference Include="paramSliderLayout.pas"/>
+        <DCCReference Include="uParamSliderLayout.pas"/>
         <DCCReference Include="uSidewinderTypes.pas"/>
         <DCCReference Include="uTestModel.pas"/>
-        <DCCReference Include="sbml\uSBML.model.rule.pas"/>
+        <DCCReference Include="sbml\uSBMLClasses.rule.pas"/>
+        <DCCReference Include="uControllerMain.pas"/>
+        <DCCReference Include="model\uModel.pas"/>
+        <DCCReference Include="sbml\uSBMLReader.pas"/>
         <None Include="index.html"/>
         <None Include="sbml\libsbml.js"/>
         <None Include="sbml\libsbml.wasm"/>

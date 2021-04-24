@@ -6,8 +6,7 @@ uses
   Vcl.Forms,
   WEBLib.Forms,
   ufMain in 'ufMain.pas' {mainForm: TWebForm} {*.html},
-  uSBML.helper in 'sbml\uSBML.helper.pas',
-  uSBML.model in 'sbml\uSBML.model.pas',
+  uSBMLClasses in 'sbml\uSBMLClasses.pas',
   uMath in 'math\uMath.pas',
   Adamsbdf in 'math\lsoda\Adamsbdf.pas',
   LSODA.test in 'math\lsoda\LSODA.test.pas',
@@ -26,16 +25,19 @@ uses
   uNetworkTypes in 'rxn_networks\uNetworkTypes.pas',
   uSelectedObjects in 'rxn_networks\uSelectedObjects.pas',
   ufNodeFrame in 'ufNodeFrame.pas' {Frame1: TFrame},
-  ODE_FormatUtility in 'simulator\ODE_FormatUtility.pas',
-  Simulation in 'simulator\Simulation.pas',
-  GraphP in 'plot\GraphP.pas',
-  speciesSelectForm in 'speciesSelectForm.pas' {SpeciesSWForm: TWebForm} {*.html},
-  plotLayout in 'plot\plotLayout.pas',
-  paramSelectForm in 'paramSelectForm.pas' {Form1: TWebForm} {*.html},
-  paramSliderLayout in 'paramSliderLayout.pas',
+  uODE_FormatUtility in 'simulator\uODE_FormatUtility.pas',
+  uSimulation in 'simulator\uSimulation.pas',
+  uGraphP in 'plot\uGraphP.pas',
+  ufSpeciesSelect in 'ufSpeciesSelect.pas' {SpeciesSWForm: TWebForm} {*.html},
+  uPlotLayout in 'plot\uPlotLayout.pas',
+  ufParamSelect in 'ufParamSelect.pas' {Form1: TWebForm} {*.html},
+  uParamSliderLayout in 'uParamSliderLayout.pas',
   uSidewinderTypes in 'uSidewinderTypes.pas',
   uTestModel in 'uTestModel.pas',
-  uSBML.model.rule in 'sbml\uSBML.model.rule.pas';
+  uSBMLClasses.rule in 'sbml\uSBMLClasses.rule.pas',
+  uControllerMain in 'uControllerMain.pas',
+  uModel in 'model\uModel.pas',
+  uSBMLReader in 'sbml\uSBMLReader.pas';
 
 {$R *.res}
 
