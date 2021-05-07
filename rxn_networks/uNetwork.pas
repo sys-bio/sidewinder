@@ -30,6 +30,8 @@ type
       color : int32;
   end;
 
+  TNetworkEvent = procedure() of object; // Network has been changed.
+
   TParent = class (TObject)
     selected : boolean;
   end;
@@ -110,6 +112,8 @@ type
   end;
 
   TNetwork = class (TObject)
+    private
+      FNetworkEvent: TNetworkEvent;
     public
        id : string;
        nodes : TListOfNodes;
@@ -146,6 +150,8 @@ type
        function    hasReactions (node : TNode) : boolean;
        function    getCurrentState : TNetworkSavedState;
        procedure   loadState (networkState : TNetworkSavedState);
+       property OnNetworkEvent: TNetworkEvent read FNetworkEvent write FNetworkEvent;
+       procedure networkEvent(); // Notify listener that Network has changed.
        constructor Create (id : string);
   end;
 
@@ -286,6 +292,11 @@ begin
   self.id := id;
 end;
 
+procedure TNetwork.networkEvent(); // Notify listener that Network has changed.
+begin
+    if Assigned(FNetworkEvent) then
+      FNetworkEvent();
+end;
 
 procedure TNetwork.loadModel (modelStr : string);
 var JSONRoot, JSONValue1, JSONNodeArray, JSONReactionArray : TJSONValue;
@@ -352,6 +363,7 @@ begin
                     end;
           end;
      end;
+     self.networkEvent; // Notify listener
 end;
 
 
@@ -473,6 +485,7 @@ begin
   result := nodes[length (nodes)-1];
   result.state.x := x; result.state.y := y;
   result.state.Id := Id;
+  self.networkEvent; // Notify listener
 end;
 
 
@@ -484,6 +497,7 @@ begin
   result.state.x := x; result.state.y := y;
   result.state.h := h; result.state.w := w;
   result.state.Id := Id;
+  self.networkEvent; // Notify listener
 end;
 
 
@@ -493,6 +507,7 @@ begin
   nodes[length (nodes)-1] := TNode.create (id);
   result := nodes[length (nodes)-1];
   result.state := state;
+  self.networkEvent; // Notify listener
 end;
 
 
@@ -501,6 +516,7 @@ begin
   setlength (nodes, length (nodes) + 1);
   nodes[length (nodes)-1] := TNode.create (id);
   result := nodes[length (nodes)-1];
+  self.networkEvent; // Notify listener
 end;
 
 
@@ -509,6 +525,7 @@ begin
   setlength (reactions, length (reactions) + 1);
   reactions[length (reactions)-1] := TReaction.create (id, src, dest);
   result := length (reactions) - 1;
+  self.networkEvent; // Notify listener
 end;
 
 
@@ -518,6 +535,7 @@ begin
   reactions[length (reactions)-1] := TReaction.create;
   result := reactions[length (reactions)-1];
   result.state := state;
+  self.networkEvent; // Notify listener
 end;
 
 
@@ -526,6 +544,7 @@ begin
   setlength (reactions, length (reactions) + 1);
   reactions[length (reactions)-1] := reaction;
   result := length (reactions);
+  self.networkEvent; // Notify listener
 end;
 
 
@@ -585,6 +604,7 @@ begin
 
   //if addRateLaw then
   //   newEdge.constructDefaultRateLaw;
+  self.networkEvent; // Notify listener
   result := newReaction;
 end;
 
