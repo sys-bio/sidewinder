@@ -95,7 +95,7 @@ begin
    if self.solverUsed = LSODAS then
    begin
     self.lode.p:= self.p; // set param vals.
- //console.log('self_p: ',self.lode.p[0]);
+// console.log('simulation, self_p: ',self.lode.p[0]);
     tNext:= self.step;
     y:= TVector.create(Length(s));
     for i := 1 to Length(s) do
