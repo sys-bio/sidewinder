@@ -1,22 +1,19 @@
 unit uSBMLReader;
 
 interface
-uses Web, JS,  uSBMLClasses, uSBMLClasses.rule, uModel;
+uses Web, JS,  uSBMLClasses, uSBMLClasses.rule, uModel, uController;
 
 type
-  TSBMLLoadedEvent = procedure() of object;  // Notify when done loading
+  TSBMLLoadedEvent = procedure(model: TModel) of object;  // Notify when done loading
 
   TSBMLRead = class
   private
-
     FNotify: TSBMLLoadedEvent; // send sbml info to listener once asynchronous read done.
 
   public
-  constructor create(newModel: TModel; SBMLtext: String);
-
-  property OnNotify: TSBMLLoadedEvent read FNotify write FNotify; // Not used
-    { Triggers the event if anything is registered }
-  //procedure TriggerEvent();   // not used yet
+    constructor create(newModel: TModel; SBMLtext: String);
+    property OnPing: TSBMLLoadedEvent read FNotify write FNotify;
+    procedure modelLoaded(model:TModel);
   end;
 
 
@@ -87,11 +84,9 @@ implementation
        else {jsRule.setSpeciesConcentration(false);}
 
        if (rule.isSetVariable) {
-      //   console.log('Parameter variable for rule: ',rule.getVariable());
          jsRule.setVariable(rule.getVariable());
        }
        if (rule.isSetId) {
-       //  console.log('Parameter id for rule: ',rule.getId() );
          jsRule.setId(rule.getId());
          }
        newModel.addSBMLrule(jsRule);
@@ -115,12 +110,10 @@ implementation
    if (newSpecies.isSetName()) {
       jsSpecies.setName(newSpecies.getName()); }
    newModel.addSBMLspecies(jsSpecies); // Add new species to array of all species used in model.
-  // console.log('TSBMLSpecies ID: ', jsSpecies.getID());
   }
   for (i=0; i < newModel.numCompartments; i++) {
     const newComp = model.getCompartment(i);
     jsComp.setID(newComp.getId());
-    //  console.log('SBMLcompartment ID: ', jsComp.getID());
     if (newComp.isSetSize()) {
       jsComp.setSize(newComp.getSize()); }
     else if(newComp.isSetVolume()) {
@@ -148,7 +141,6 @@ implementation
     newModel.addSBMLparameter(jsParam);
   }
 
-
   for( i=0; i< newModel.numReactions; i++) {
     var numTotalSpecies;
     var j;
@@ -171,23 +163,18 @@ implementation
     numTotalSpecies = 0;
     numTotalSpecies = model.getReaction(i).getNumProducts();
     for (j=0; j < numTotalSpecies; j++) {
-     products[j] = model.getReaction(i).getProduct(j).getSpecies();
-     prodStoich[j] = model.getReaction(i).getProduct(j).getStoichiometry();
+      products[j] = model.getReaction(i).getProduct(j).getSpecies();
+      prodStoich[j] = model.getReaction(i).getProduct(j).getStoichiometry();
     }
     var kineticForm = model.getReaction(i).getKineticLaw().getFormula();
     const newKineticLaw = model.getReaction(i).getKineticLaw();
-    //jsKineticLaw.setNumParameters(newKineticLaw.getNumParameters());
-
-  //  console.log('model.getReaction... numb of params: ',model.getReaction(i).getKineticLaw().getNumParameters());
-    for (k=0; k < model.getReaction(i).getKineticLaw().getNumParameters(); k++) {
-      //jsKineticLaw.addParameter(model.getReaction(i).getKineticLaw().getParameter(k).getId());
-    }
 
   //  console.log('--> kinetic law: ',model.getReaction(i).getKineticLaw().getFormula());
     newModel.addSBMLReaction(model.getReaction(i).getId(), products, prodStoich, reactants, reactStoich, kineticForm);
 
   }
-  newModel.TriggerEvent();  // libsbml loaded and model processed.
+  newModel.SBML_LoadedEvent();  // libsbml loaded and model processed.
+  this.modelLoaded(newModel);
   libsbml.destroy(doc);
   libsbml.destroy(reader);
   });
@@ -197,5 +184,10 @@ implementation
 
   end;
 
-
+  procedure TSBMLRead.modelLoaded(model: TModel);
+  begin
+      { Call the registerd event only if there is a listener }
+   if Assigned(FNotify) then
+     FNotify(model);
+  end;
 end.
