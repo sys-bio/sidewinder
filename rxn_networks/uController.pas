@@ -5,13 +5,14 @@ interface
 uses SysUtils, Classes, System.UITypes, contnrs, Types, WebLib.ExtCtrls,
   WEBLib.Utils, WEBLib.Buttons, WEBLib.Graphics, WEBLib.Controls,
   Vcl.StdCtrls, WEBLib.StdCtrls, uNetwork, Dialogs, uSelectedObjects, Math,
-  uNetworkCanvas;
+  uNetworkCanvas, uModel;
 
 const
   NOT_SELECTED = -1;
 
 type
   TStackOfSavedStates = array of TNetworkSavedState;
+  TNetworkChangeEvent = procedure(updatedNetwork: TNetwork) of object; // Network has been changed.
 
   TMouseStatus = (sSelect, sAddNode, sAddUniUni, sAddUniBi, sAddBiUni, sAddBiBi,
     sMouseDown, sMoveCentroid, sSelectingBox);
@@ -50,7 +51,8 @@ type
     mouseDownPressed: boolean;
 
     networkCanvas : TNetworkCanvas;
-
+    FNetworkUpdate: TNetworkChangeEvent;
+  public
     procedure loadModel(modelStr: string);
     procedure setAddNodeStatus;
     procedure setAddUniUniReaction;
@@ -69,11 +71,13 @@ type
 
     procedure addUniUniReactionMouseDown(Sender: TObject; x, y: double);
     procedure addAnyReactionMouseDown(Sender: TObject; x, y: double; nReactants, nProducts: integer);
-
     procedure OnMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; x, y: double);
     procedure OnMouseMove(Sender: TObject; Shift: TShiftState; x, y: double);
     procedure OnMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; x, y: double);
 
+    property OnNetworkUpdate: TNetworkChangeEvent read FNetworkUpdate write FNetworkUpdate;
+    procedure networkUpdate(); // Notify listener that Network has changed (Update model).
+    procedure SBMLUpdate(SBMLModel: TModel);
     constructor Create(network: TNetwork);
   end;
 
@@ -114,6 +118,7 @@ begin
   undoStack := TNetworkStack.Create;
 
   self.network := network;
+  self.network.OnNetworkEvent := self.networkUpdate;
   mStatus := sSelect;
   srcNode := NOT_SELECTED;
   destNode := NOT_SELECTED;
@@ -173,7 +178,13 @@ end;
 
 procedure TController.loadModel(modelStr: string);
 begin
-  network.loadModel(modelStr);
+  network.loadModel(modelStr); // JSON format.
+end;
+
+procedure TController.networkUpdate(); // Notify listeners of change.
+begin
+    if Assigned(FNetworkUpdate) then
+      FNetworkUpdate(self.network);
 end;
 
 procedure TController.setSelectStatus;
@@ -549,5 +560,15 @@ begin
       end;
   end;
 end;
+
+procedure TController.SBMLUpdate(SBMLModel: TModel);
+begin
+  // TODO
+
+  if SBMLModel.getSpeciesNumb >0 then
+    console.log('First species: ',SBMLModel.getSBMLSpecies(0).getID);
+
+end;
+
 
 end.
