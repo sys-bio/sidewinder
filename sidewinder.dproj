@@ -157,6 +157,7 @@
         <DCCReference Include="model\uModel.pas"/>
         <DCCReference Include="sbml\uSBMLReader.pas"/>
         <DCCReference Include="sbml\uSBMLWriter.pas"/>
+        <DCCReference Include="plot\uPlotActions.pas"/>
         <None Include="index.html"/>
         <None Include="sbml\libsbml.js"/>
         <None Include="sbml\libsbml.wasm"/>

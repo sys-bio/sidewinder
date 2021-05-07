@@ -16,8 +16,8 @@ uses
   uNetworkTypes, Vcl.Imaging.pngimage, WEBLib.Lists, Vcl.Forms, uModel,
   uSBMLClasses, uSimulation, uControllerMain,
   uODE_FormatUtility, uGraphP, Vcl.Menus, WEBLib.Menus, ufParamSelect,
-  ufSpeciesSelect, uPlotLayout,
-  paramSlider, uParamSliderLayout;
+  ufSpeciesSelect, uPlotLayout, uPlotActions,
+  paramSlider, uParamSliderLayout, uSidewinderTypes;
 
 const
   SLIDERPHEIGHT = 50; // Param Sliders WebPanel height
@@ -27,7 +27,6 @@ const
   // This means a plot extends to 60% of the right panel width
 
 type
-  TspeciesAr = array of String;
 
   TMainForm = class(TWebForm)
     TopWPanel: TWebPanel;
@@ -117,7 +116,6 @@ type
     procedure netDrawScrollBarHorizValueChanged(Sender: TObject; Value: Double);
 
     procedure onLineSimButtonClick(Sender: TObject);
-   // procedure setODEsolver();     //move
     procedure plotsPBArPaint(Sender: TObject);
     procedure addPlotButtonClick(Sender: TObject);
     procedure paramAddSliderBtnClick(Sender: TObject);
@@ -139,12 +137,10 @@ type
     procedure splitterMoved(Sender: TObject);
     procedure btnSimpleClick(Sender: TObject);
     procedure stepSizeEdit1Change(Sender: TObject);
-    // User clicks choice from plot edit list
 
   private
     numbPlots: Integer; // Number of plots displayed
     numbSliders: Integer; // Number of parameter sliders
-    procedure GetSBMLInfo(); // Grab sbml model info.
     procedure InitSimResultsTable(); // Init simResultsMemo.
     procedure addPlot(); // Add a plot
     procedure selectPlotSpecies(plotnumb: Integer);
@@ -159,8 +155,6 @@ type
     // delete, change param slider as needed using TWebListBox.
     procedure DeleteSlider(sn: Integer);
 
- 
-
   public
     network: TNetwork;
     networkController: TController;
@@ -171,13 +165,11 @@ type
     maxYValueAr: array of Integer; // max Y screen dimension for each plot
     currentGeneration: Integer;
     plotSpeciesForm: TSpeciesSWForm;
-    plotSpecies: array of TspeciesAr; // species to graph for each plot
+    plotSpecies: array of TSpeciesAr; // species to graph for each plot
     plotsPBAr: array of TWebPaintBox; // Plot paint boxes
     listOfPlots: array of TPlotGraph; // Plotting class for each plot
-    xscaleHeight: Integer;
-    { This is the space reserved for the x axis labelling, remove }
     xscaleHeightAr: array of Integer;
-    // This is the space reserved for the x axis labelling of each plot
+    // This is the space reserved for the x axis labeling of each plot
     sliderParamForm: TParamSliderSForm;
     // Pop up form to choose parameter for slider.
     sliderParamAr: array of Integer;
@@ -198,7 +190,6 @@ type
     procedure PingSBMLLoaded(); // Notify when done loading or model changes
     procedure getVals(newTime: Double; newVals: array of Double);
     // Get new values (species amt) from simulation run
-    procedure processScan(t_new: Double; y_new: array of Double);
 
   end;
 
@@ -438,7 +429,7 @@ end;
 // Grab SBML model information when notified:
 procedure TMainForm.PingSBMLLoaded();
 begin
-  GetSBMLInfo();
+  paramAddSliderBtn.visible := true;
 end;
 
 procedure TMainForm.plotEditLBClick(Sender: TObject);
@@ -573,8 +564,7 @@ begin
       // get slider parameter position in p_vals array
       self.MainController.changeParamVal(p, newPVal, self.networkController  );
 
-     // self.MainController.getModel.setP_Val(p, self.sliderPTBarAr[i].Position * 0.01 *
-     //   (sliderPHighAr[i] - sliderPLowAr[i]) ); // Fix ?
+
      //   console.log(' new p value: ', newPVal );
       self.sliderPTBLabelAr[i].caption := self.MainController.getModel.getP_Names[self.sliderParamAr[i]] + ': '
         + FloatToStr(self.MainController.getModel.getP_Vals[self.sliderParamAr[i]]);
@@ -660,11 +650,6 @@ begin
   result := trunc(wx * zoomTrackBar.Position / 10);
 end;
 
-// Add more model info as needed here:
-procedure TMainForm.GetSBMLInfo();
-begin
-  paramAddSliderBtn.visible := true;
-end;
 
 // set up Results table (simResultsMemo, WebMemo)  optional ?
 procedure TMainForm.InitSimResultsTable();
@@ -726,7 +711,10 @@ begin
       dataStr := dataStr + floatToStrf(newVals[i], ffExponent, 6, 2) + ', ';
     end;
   simResultsMemo.Lines.Add(dataStr);
-  processScan(newTime, newVals); // <------------
+  inc(self.currentGeneration);
+
+  uPlotActions.processScan(newTime, newVals,listOfPlots,self.plotsPBAr, plotSpecies,
+             currentGeneration );
 
 end;
 
@@ -784,29 +772,6 @@ begin
     end;
 end;
 
-procedure TMainForm.processScan(t_new: Double; y_new: array of Double);
-var
-  Y: array of Double;
-  i: Integer;
-  plot_y: array of Boolean;
-  j: Integer;
-begin
-  inc(currentGeneration); // currentGeneration is 'time' (pixel number)
-  SetLength(plot_y, length(y_new));
-  for j := 0 to length(plotSpecies) - 1 do // cycle through all of the plots
-    begin
-      for i := 0 to length(y_new) - 1 do
-        begin
-          if plotSpecies[j][i] = '' then
-            plot_y[i] := false
-          else
-            plot_y[i] := true;
-        end;
-      // Dynamically draw plots:
-      listOfPlots[j].addPoint(currentGeneration, y_new,  plot_y, true, self.MainController.getCurrTime);
-      self.plotsPBAr[j].Canvas.draw (0, 0, listOfPlots[j].bitmap);
-    end;
-end;
 
 procedure TMainForm.selectPlotSpecies(plotnumb: Integer);
 // plot number to be added or modified
@@ -824,8 +789,7 @@ procedure TMainForm.selectPlotSpecies(plotnumb: Integer);
         SetLength(plotSpecies, plotnumb);
         SetLength(plotSpecies[plotnumb - 1], length(self.MainController.getModel.getS_Vals));
       end
-    else
-      addingPlot := false;
+    else addingPlot := false;
 
     for i := 0 to plotSpeciesForm.SpPlotCG.Items.Count - 1 do
       begin
@@ -869,7 +833,6 @@ procedure TMainForm.addPlot(); // Add a plot
           begin
             i := TWebPaintBox(Sender).tag;
             // assume only plot paintboxes in right panel.
-            // ShowMessage('Paint box sent mouse msg:  '+ inttostr(i));
             self.EditPlotList(i);
           end;
       end;
@@ -894,10 +857,8 @@ begin
   self.xscaleHeightAr[self.numbPlots - 1] := round(0.15 * self.plotsPBAr[self.numbPlots - 1].Height);
   // make %15 of total height
   self.maxYValueAr[self.numbPlots - 1] := self.plotsPBAr[self.numbPlots - 1].Height; // PaintBox dimension
-
   self.plotsPBAr[self.numbPlots - 1].Invalidate;
 
-  //self.mainController.saveSBML('testing.xml');  // Test sbml file save
 end;
 
 // TODO still more cleanup .. reorder plots if middle one deleted ?
@@ -941,7 +902,6 @@ var
   sliderXposition, sliderYposition: Integer;
   editList: TStringList;
 begin
-  // console.log('Edit param Slider: slider #: ',sn);
   sliderXposition := 424;
   sliderYposition := self.sliderPanelAr[sn].Top + 10;
   editList := TStringList.create();
@@ -999,7 +959,7 @@ var
       self.addParamSlider() // <-- Add dynamically created slider
     else
       self.SetSliderParamValues(sNumb, self.sliderParamAr[sNumb]);
-    // update slider with new parameter:
+    // update slider with new parameter.
   end;
 
 // async called OnCreate for TParamSliderSForm
@@ -1045,7 +1005,6 @@ begin
   sliderPanelWidth := trunc((1 - PLOT_WIDTH_PERCENTAGE) * RightWPanel.width);
   sliderPanelLeft := (RightWPanel.width - sliderPanelWidth) - 6;
   // Width of the slider inside the panel
-  // sliderTBarWidth:= trunc (0.8*sliderPanelWidth); // 90% of the panel
 
   i := length(self.sliderPanelAr);
   // array index for current slider to be added.
@@ -1087,7 +1046,7 @@ var
   pVal:Double;
   pName: String;
 begin
-  rangeMult := 10; // default.
+  rangeMult := 10; // default. 10
   pName :=  self.MainController.getModel.getP_Names[self.sliderParamAr[sn]];
   pVal := self.MainController.getModel.getP_Vals[self.sliderParamAr[sn]];
   self.sliderPTBLabelAr[sn].caption := pName + ': ' + FloatToStr(pVal);

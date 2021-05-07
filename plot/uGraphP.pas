@@ -20,7 +20,7 @@ type
     lsxmin, lsxmax : integer;
     x1: TDataType;
     y_vals : array of TDouble_MAXSIZE_Array;
-    sim_Ymax: double; // Current largest y value for all variables of plot, can change during run.
+    sim_Ymax: double; // Current largest y value for all variables of plot, do not change during run.
     graphScreenWidth, canvasHeight : integer;
     canvasWidth: integer;
     yAxisHt: integer; // height of yaxis in pixels.
@@ -52,7 +52,7 @@ type
 
  constructor TPlotGraph.create;
  begin
-   endp:= 0; startp:= 1; size:= 0;
+   endp:= 0; startp:= 1; size:= 0; sim_Ymax := 0;
    bitmap := TBitmap.Create;
  end;
 
@@ -265,10 +265,13 @@ begin
   //sim_Ymax:= 10;//y_curr[0];
   if length(y_vals) <> length(newYValues) then
      setLength (y_vals, length(newYValues));
+
   //for i := 0 to length(newYValues)-1 do
   //  begin
   //    if (sim_Ymax <newYValues[i]) and plot_var[i] then sim_Ymax:= newYValues[i];
   //  end;
+
+
   // flood fill appears to be slighly quicker and eliminates the dots bug
 
   if display then
@@ -289,7 +292,7 @@ begin
   x1[endp] := time;
 
   for i := 0 to Length(newYValues)-1 do
-      y_vals[i][endp] := newYValues[i]; //  round(normalizeY(newYValues[i],sim_yMax));
+   y_vals[i][endp] := newYValues[i]; //  round(normalizeY(newYValues[i],sim_yMax));
 
   if display then
      begin

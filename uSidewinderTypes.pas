@@ -5,6 +5,8 @@ interface
 type
   TDoubleArray = array of double;
   TIntegerArray = array of integer;
+  TspeciesAr = array of String;
+
   TVarNameVal = class  // store string/value pair.
     private
       fId: String;
@@ -14,6 +16,10 @@ type
       constructor create(newCpy: TVarNameVal); overload;
       property Id: String read fId write fId;
       property Val: double read fVal write fVal;
+  end;
+
+  TVarNameValAr = class  // store array of string/value pair.
+      // TODO
   end;
 
 implementation

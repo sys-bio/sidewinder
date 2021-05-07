@@ -38,7 +38,8 @@ uses
   uControllerMain in 'uControllerMain.pas',
   uModel in 'model\uModel.pas',
   uSBMLReader in 'sbml\uSBMLReader.pas',
-  uSBMLWriter in 'sbml\uSBMLWriter.pas';
+  uSBMLWriter in 'sbml\uSBMLWriter.pas',
+  uPlotActions in 'plot\uPlotActions.pas';
 
 {$R *.res}
 
