@@ -37,7 +37,8 @@ uses
   uSBMLClasses.rule in 'sbml\uSBMLClasses.rule.pas',
   uControllerMain in 'uControllerMain.pas',
   uModel in 'model\uModel.pas',
-  uSBMLReader in 'sbml\uSBMLReader.pas';
+  uSBMLReader in 'sbml\uSBMLReader.pas',
+  uSBMLWriter in 'sbml\uSBMLWriter.pas';
 
 {$R *.res}
 
