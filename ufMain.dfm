@@ -110,7 +110,7 @@ object mainForm: TmainForm
       WidthPercent = 100.000000000000000000
       OnClick = addPlotButtonClick
     end
-    object paramSliderBtn: TWebButton
+    object paramAddSliderBtn: TWebButton
       Left = 1352
       Top = 15
       Width = 135
@@ -130,7 +130,7 @@ object mainForm: TmainForm
       ShowHint = True
       Visible = False
       WidthPercent = 100.000000000000000000
-      OnClick = paramSliderBtnClick
+      OnClick = paramAddSliderBtnClick
     end
     object rtLengthEdit1: TWebEdit
       Left = 1278

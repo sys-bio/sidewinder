@@ -31,7 +31,7 @@ TFormatODEs = class
   function getODEeqLoc(Speciesdydt : String): Integer; // return index of Species in odeEqs.
   procedure BuildAssignmentEqs(model: TModel);
   function spBoundaryCondition(speciesId: String): boolean;
-  procedure CreateParamSpeciesLists(model: TModel);
+  //procedure CreateParamSpeciesLists(model: TModel);
 
   public
   constructor create( model: TModel);
@@ -71,7 +71,11 @@ begin
   setLength(paramsStrAr, Length(model.getSBMLparameterAr()));
   setLength(odeStrs, model.getNumReactions());
   count := 0;
-  self.CreateParamSpeciesLists(model);  // Includes params, compartments, species BCs.
+  self.speciesStrAr := model.getS_Names;
+  self.sVals := model.getS_Vals;
+  self.paramsStrAr := model.getP_Names;
+  self.pVals := model.getP_Vals;
+  //self.CreateParamSpeciesLists(model);  // Includes params, compartments, species BCs.
   self.BuildAssignmentEqs(model);
 
   // *******************************************************************
@@ -121,81 +125,6 @@ begin
 end;
 
 
-procedure TFormatODEs.CreateParamSpeciesLists(model: TModel);
-var i, paramLen : integer;
-
-begin
-   // Get parameter and compartment names and combine into one array, pVals[]:
-  SetLength(pVals,Length(paramsStrAr));
-  for i := 0 to Length(paramsStrAr)-1 do
-      begin
-      if model.getSBMLparameter(i).isSetIDAttribute() then
-         begin
-         paramsStrAr[i] := model.getSBMLparameter(i).getId();
-         // Get initial value for each param:
-         if model.getSBMLparameter(i).isSetValue() then
-           pVals[i] := model.getSBMLparameter(i).getValue()
-         else pVals[i] := 0;
-         end
-      else
-         begin
-         paramsStrAr[i] := '';
-         pVals[i]:= 0;
-         end;
-      end;
-    // Get compartments:
-  paramLen := Length(paramsStrAr);
-  SetLength(paramsStrAr, paramLen+model.getCompNumb());
-  SetLength(pVals, paramLen + model.getCompNumb());
-  for i := 0 to model.getCompNumb()-1 do
-       begin
-       if model.getSBMLcompartment(i).isSetIdAttribute() then
-          begin
-          paramsStrAr[paramLen+i] := model.getSBMLcompartment(i).getID();
-          end
-       else
-          paramsStrAr[paramLen+i] := model.getSBMLcompartment(i).getName();
-       // Get Size/Vols of compartments:
-       if model.getSBMLcompartment(i).isSetSize() then
-          pVals[paramLen+i] := model.getSBMLcompartment(i).getSize()
-       else if model.getSBMLcompartment(i).isSetVolume() then
-          pVals[paramLen+i] := model.getSBMLcompartment(i).getVolume()
-          else pVals[paramLen+i] := 1; // default
-       end;
-
-     // now look at species, put species boundary conditions and species constants in parameter list.
-  for i := 0 to Length(self.speciesAr)-1 do
-      begin
-      if self.speciesAr[i].getBoundaryCondition or self.speciesAr[i].getConstant then
-        begin
-          paramLen := Length(paramsStrAr);
-          setLength(paramsStrAr, paramLen + 1);
-          setLength(pVals, paramLen + 1);
-          paramsStrAr[paramLen] := self.speciesAr[i].getId();
-          if self.speciesAr[i].isSetInitialAmount() then
-            pVals[paramLen] := self.speciesAr[i].getInitialAmount()
-          else if self.speciesAr[i].isSetInitialConcentration() then
-            pVals[paramLen] := self.speciesAr[i].getInitialConcentration()
-            else pVals[paramLen] := 0;
-        end
-       else  // species has an ode associated with it.
-        begin
-          SetLength(self.speciesStrAr,Length(speciesStrAr)+1);
-          SetLength(self.sVals,Length(self.sVals)+1);
-          self.speciesStrAr[Length(self.speciesStrAr)-1] := self.speciesAr[i].getId();
-    //   Get initial conc/amounts for each one:
-          if self.speciesAr[i].isSetInitialAmount() then
-            self.sVals[Length(sVals)-1] := self.speciesAr[i].getInitialAmount()
-          else if self.speciesAr[i].isSetInitialConcentration() then
-            self.sVals[Length(sVals)-1] := self.speciesAr[i].getInitialConcentration()
-            else self.sVals[Length(sVals)-1] := 0;
-        end;
-      end;
-
-end;
-
-
-// ************************************************************
 // Replace names in string with array names ('species1' -> 's[0]')
  function TFormatODEs.replaceStrNames(names: array of String; stringtoedit: String; prefixStr: String):String;
  var tmpStoE,tmpCatStr, currEqStr: String; // temp holder for string

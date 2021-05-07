@@ -5,7 +5,7 @@ uses Web, JS, uSBMLClasses, uSBMLClasses.rule;
 
 type
 
-{ Define a procedural type used for event handling }
+{ SBML model has finished loading }
     TPingEvent = procedure() of object;
 
 //  **************************************************************
@@ -23,11 +23,20 @@ type
     modelParams: array of SBMLparameter;
     modelRules: array of TSBMLRule;  // optional
 
-    FPing: TPingEvent; // Used to send sbml info listener once asynchronous read done.
+    // Arrays of Double used by ODE integrator, keep array of strings for mapping:
+    s_Vals: array of Double; // Changes, one to one correlation: s_Vals[n] <=> s_Names[n]
+    s_Names: array of String; // Use species ID as name
+    p_Vals: array of Double; // Changes, Includes compartments and boundary species.
+    p_Names: array of String;//Same size as p_Vals, use to look up modelParams, modelComps, etc
+    FPing: TPingEvent;// Used to send sbml info to listener once asynchronous read done.
+ //   FPingAgain: TPingEvent;// Used to send sbml info to another listener once asynchronous read done.
+    procedure fillSpeciesArray();
+    procedure fillParameterArray();
 
   public
-   constructor create();
 
+
+   constructor create();
    procedure setAnnotationStr(annotate:String);
    function  getAnnotationStr():String;
    procedure setNumReactions (rnxNumb : integer); // TODO, remove, just increment as rxn added.
@@ -53,11 +62,19 @@ type
    function  getSBMLcompartment(i:integer): SBMLcompartment;
    procedure addSBMLcompartment(newComp: SBMLcompartment);
 
+   function getS_Names(): array of String;
+   function getS_Vals(): array of Double;
+   function getP_Names(): array of String;
+   function getP_Vals(): array of Double;
+   function getP_Val(pos: integer): Double;
+   function setP_Val(pos: integer; newVal: Double): Boolean;
+   procedure changeParamVal(pos: Integer; newVal: Double);
    function  getReactions(): array of SBMLReaction;
 
    property OnPing: TPingEvent read FPing write FPing;
     { Triggers the event if anything is registered }
-   procedure TriggerEvent();
+   procedure SBML_LoadedEvent(); // SBML model loaded.
+
 
  end;
 
@@ -85,11 +102,14 @@ begin
 end;
 
 
-procedure TModel.TriggerEvent();
+procedure TModel.SBML_LoadedEvent();
  begin
+   self.fillSpeciesArray;
+   self.fillParameterArray;
    { Call the registerd event only if there is a listener }
    if Assigned(FPing) then
      FPing();
+
  end;
 
  procedure TModel.setAnnotationStr(annotate:String);
@@ -104,31 +124,29 @@ procedure TModel.TriggerEvent();
 
  procedure TModel.addSBMLReaction(rxnid:String; prods: array of String; prodStoich: array of double;
         reactants: array of String; reactantsStoich: array of double; kinetic: String);
-
  var
- newRxn: SBMLReaction;
- len: integer;
- p, r: array of TSBMLSpeciesReference;
-  I: Integer;
-  paramArray: array of String;
+   newRxn: SBMLReaction;
+   len: integer;
+   p, r: array of TSBMLSpeciesReference;
+   I: Integer;
+   paramArray: array of String;
  begin
- //  console.log('In add Reaction', rxnid, reactants[0], prods[0]);
- setlength(p, Length(prods));
- paramArray:= ['nothing', 'empty'];
- for I := 0 to Length(prods)-1 do
-  begin
+   setlength(p, Length(prods));
+   paramArray:= ['nothing', 'empty'];
+   for I := 0 to Length(prods)-1 do
+   begin
      p[I]:= TSBMLSpeciesReference.create(prods[I],prodStoich[I]);
-  end;
+   end;
 
-  setlength(r, Length(reactants));
+   setlength(r, Length(reactants));
 
- for I := 0 to Length(reactants)-1 do
-  begin
+   for I := 0 to Length(reactants)-1 do
+   begin
      r[I]:= TSBMLSpeciesReference.create(reactants[I],reactantsStoich[I]);
-  end;
+   end;
 
    newRxn:= SBMLReaction.create(rxnid, p, r);
-   newRxn.kineticLawStr:= kinetic;   // Get rid of.....
+   newRxn.kineticLawStr:= kinetic;   // Get rid of.....?
    //newId: String; newFormula: String; paramArr: array of String
    newRxn.setKineticLaw(SBMLkineticLaw.create('dummy', kinetic,paramArray));
    len:= Length(SBMLreactions);
@@ -161,7 +179,6 @@ procedure TModel.TriggerEvent();
 
  function TModel.getSBMLspecies(i:integer): TSBMLSpecies; overload;
  begin
-  //console.log('get name of species:',modelSpecies[i].getID() );
    Result:= modelSpecies[i];
  end;
 
@@ -266,4 +283,133 @@ procedure TModel.TriggerEvent();
  begin
    Result:= self.modelRules;
  end;
+
+ // Get initial vals for Species from SBML model
+procedure TModel.fillSpeciesArray();
+var
+  i: Integer;
+  spAr: array of TSBMLSpecies;
+begin
+  if self.getSpeciesNumb() > 0 then
+    begin
+      spAr := self.getSBMLdynamicSpeciesAr; // Do not include BCs and consts
+      SetLength(self.s_Vals, Length(spAr));
+      SetLength(self.s_Names, length(self.s_Vals));
+      for i := 0 to Length(spAr) - 1 do
+        begin
+          if spAr[i].isSetInitialAmount() then
+            self.s_Vals[i] := spAr[i].getInitialAmount()
+          else if spAr[i].isSetInitialConcentration() then
+            self.s_Vals[i] := spAr[i].getInitialConcentration();
+          self.s_Names[i] := spAr[i].getID();
+          // Use species ID as name
+        end;
+    end;
+end;
+
+procedure TModel.fillParameterArray();
+ var i, paramLen : integer;
+
+begin
+   // Get parameter and compartment names and combine into one array, pVals[]:
+  SetLength(self.p_Vals,Length(self.getSBMLparameterAr()));
+  for i := 0 to Length(self.getSBMLparameterAr())-1 do
+      begin
+      if self.getSBMLparameter(i).isSetIDAttribute() then
+         begin
+         self.p_Names[i] := self.getSBMLparameter(i).getId();
+         // Get initial value for each param:
+         if self.getSBMLparameter(i).isSetValue() then
+           p_Vals[i] := self.getSBMLparameter(i).getValue()
+         else p_Vals[i] := 0;
+         end
+      else
+         begin
+         p_Names[i] := '';
+         p_Vals[i]:= 0;
+         end;
+      end;
+    // Get compartments:
+  paramLen := Length(self.p_Names);
+  SetLength(self.p_Names, paramLen + self.getCompNumb());
+  SetLength(self.p_Vals, paramLen + self.getCompNumb());
+  for i := 0 to self.getCompNumb()-1 do
+       begin
+       if self.getSBMLcompartment(i).isSetIdAttribute() then
+          begin
+          p_Names[paramLen+i] := self.getSBMLcompartment(i).getID();
+          end
+       else
+          p_Names[paramLen+i] := self.getSBMLcompartment(i).getName();
+       // Get Size/Vols of compartments:
+       if self.getSBMLcompartment(i).isSetSize() then
+          p_Vals[paramLen+i] := self.getSBMLcompartment(i).getSize()
+       else if self.getSBMLcompartment(i).isSetVolume() then
+          p_Vals[paramLen+i] := self.getSBMLcompartment(i).getVolume()
+          else p_Vals[paramLen+i] := 1; // default
+       end;
+
+     // now look at species, put species boundary conditions and species constants in parameter list.
+  for i := 0 to Length(self.getSBMLspeciesAr())-1 do
+      begin
+      if self.getSBMLspeciesAr()[i].getBoundaryCondition or self.getSBMLspeciesAr()[i].getConstant then
+        begin
+          paramLen := Length(p_Names);
+          setLength(p_Names, paramLen + 1);
+          setLength(p_Vals, paramLen + 1);
+          p_Names[paramLen] := self.getSBMLspeciesAr()[i].getId();
+          if self.getSBMLspeciesAr()[i].isSetInitialAmount() then
+            p_Vals[paramLen] := self.getSBMLspeciesAr()[i].getInitialAmount()
+          else if self.getSBMLspeciesAr()[i].isSetInitialConcentration() then
+            p_Vals[paramLen] := self.getSBMLspeciesAr()[i].getInitialConcentration()
+            else p_Vals[paramLen] := 0;
+        end;
+
+      end;
+
+end;
+
+
+function TModel.getS_Names(): array of String;
+begin
+  Result := self.s_Names;
+end;
+
+function TModel.getS_Vals(): array of Double;
+begin
+  Result := self.s_Vals;
+end;
+
+function TModel.getP_Names(): array of String;
+begin
+  Result := self.p_Names;
+end;
+
+function TModel.getP_Vals(): array of Double;
+begin
+  Result := self.p_Vals;
+end;
+
+function TModel.getP_Val(pos: integer): Double;
+begin
+  Result := self.p_Vals[pos];
+end;
+
+function TModel.setP_Val(pos: integer; newVal: Double): Boolean;
+begin
+  if (Length(self.p_Vals) > (pos + 1)) and (pos >= 0) then
+  begin
+    self.p_Vals[pos] := newVal;
+    Result := true;
+  end
+  else  Result := false;
+end;
+
+procedure TModel.changeParamVal(pos: Integer; newVal: Double );
+begin
+  self.p_Vals[pos] := newVal;
+
+  // Other viewers update ?
+end;
+
 end.   // unit

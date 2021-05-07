@@ -20,7 +20,7 @@ uses
   paramSlider, uParamSliderLayout;
 
 const
-  SLIDERPHEIGHT = 50; // Param Sliders WebPanel width/height
+  SLIDERPHEIGHT = 50; // Param Sliders WebPanel height
 
 const
   PLOT_WIDTH_PERCENTAGE = 0.6;
@@ -46,7 +46,6 @@ type
     zoomLbl: TWebLabel;
     zoomFactorLbl1: TWebLabel; // Displays simulation results
     SBMLmodelMemo: TWebMemo;
-   // WebTimer1: TWebTimer;
     rtLengthEdit1: TWebEdit;
     rtLabel1: TWebLabel;
     stepSizeLabel1: TWebLabel;
@@ -55,7 +54,7 @@ type
     zoomCtlLabel: TWebLabel;
     zoomTrackBar: TWebTrackBar;
     addPlotButton: TWebButton;
-    paramSliderBtn: TWebButton;
+    paramAddSliderBtn: TWebButton;
     NetworkJSONOpenDialog: TWebOpenDialog;
     loadNetworkButton: TWebButton;
     SBMLOpenDialog: TWebOpenDialog;
@@ -118,12 +117,10 @@ type
     procedure netDrawScrollBarHorizValueChanged(Sender: TObject; Value: Double);
 
     procedure onLineSimButtonClick(Sender: TObject);
-   // procedure fillSpeciesArray(); //move
    // procedure setODEsolver();     //move
     procedure plotsPBArPaint(Sender: TObject);
-   // procedure WebTimer1Timer(Sender: TObject);
     procedure addPlotButtonClick(Sender: TObject);
-    procedure ParamSliderBtnClick(Sender: TObject);
+    procedure paramAddSliderBtnClick(Sender: TObject);
     procedure loadNetworkButtonClick(Sender: TObject);
     procedure NetworkJSONOpenDialogChange(Sender: TObject);
     procedure NetworkJSONOpenDialogGetFileAsText(Sender: TObject;
@@ -162,12 +159,11 @@ type
     // delete, change param slider as needed using TWebListBox.
     procedure DeleteSlider(sn: Integer);
 
-    procedure testAddingModel();
-    // just a test for generating a model for the simulator, remove
+ 
 
   public
     network: TNetwork;
-    controller: TController;
+    networkController: TController;
     networkCanvas: TNetworkCanvas;
     origin: TPointF;
     fileName: string;
@@ -195,12 +191,11 @@ type
     sliderPTBLabelAr: array of TWebLabel;
     // Displays slider param name and current value
     paramUpdated: Boolean; // true if a parameter has been updated.
-
     mainController: TControllerMain;
 
     function ScreenToWorld(X, Y: Double): TPointF; // Network drawing panel
     function WorldToScreen(wx: Integer): Integer; // Network drawing panel
-    procedure PingSBMLLoaded(); // Notify when done loading or changeing model
+    procedure PingSBMLLoaded(); // Notify when done loading or model changes
     procedure getVals(newTime: Double; newVals: array of Double);
     // Get new values (species amt) from simulation run
     procedure processScan(t_new: Double; y_new: array of Double);
@@ -238,7 +233,7 @@ end;
 
 procedure TMainForm.btnAddNodeClick(Sender: TObject);
 begin
-  controller.setAddNodeStatus;
+  networkController.setAddNodeStatus;
 end;
 
 procedure TMainForm.btnAutoLayoutClick(Sender: TObject);
@@ -251,12 +246,12 @@ end;
 
 procedure TMainForm.btnBiBiClick(Sender: TObject);
 begin
-  controller.setAddBiBiReaction;
+  networkController.setAddBiBiReaction;
 end;
 
 procedure TMainForm.btnBiUniClick(Sender: TObject);
 begin
-  controller.setAddBiUniReaction;
+  networkController.setAddBiUniReaction;
 end;
 
 procedure TMainForm.btnCenterClick(Sender: TObject);
@@ -276,30 +271,29 @@ procedure TMainForm.btnClearClick(Sender: TObject);
 begin
   network.Clear;
   networkPB1.Invalidate;
-  // self.testAddingModel();
-  // self.MainController.LoadSBML;
+
 end;
 
 procedure TMainForm.btnDrawClick(Sender: TObject);
 var
   n1, n2, n3, n4: TNode;
 begin
-  n1 := controller.addNode('node1', 60, 200);
-  n2 := controller.addNode('node2', 270, 270);
-  n3 := controller.addNode('node3', 540, 80);
-  n4 := controller.addNode('node4', 400, 500);
+  n1 := networkController.addNode('node1', 60, 200);
+  n2 := networkController.addNode('node2', 270, 270);
+  n3 := networkController.addNode('node3', 540, 80);
+  n4 := networkController.addNode('node4', 400, 500);
 
-  controller.addReaction('r1', n1, n2);
-  controller.addReaction('r2', n2, n3);
-  controller.addReaction('r3', n3, n4);
-  controller.addReaction('r4', n4, n2);
+  networkController.addReaction('r1', n1, n2);
+  networkController.addReaction('r2', n2, n3);
+  networkController.addReaction('r3', n3, n4);
+  networkController.addReaction('r4', n4, n2);
 
   networkPB1.Invalidate;
 end;
 
 procedure TMainForm.btnIdleClick(Sender: TObject);
 begin
-  controller.setSelectStatus;
+  networkController.setSelectStatus;
 end;
 
 procedure TMainForm.btnNodeFillColorClick(Sender: TObject);
@@ -346,23 +340,23 @@ begin
   s := getTestModel;
   SBMLmodelMemo.Lines.Text := s;
   SBMLmodelMemo.visible := true;
-  self.MainController.LoadSBML(s);
+  self.MainController.loadSBML(s, self.networkController);
 
 end;
 
 procedure TMainForm.btnUniBiClick(Sender: TObject);
 begin
-  controller.setAddUniBiReaction;
+  networkController.setAddUniBiReaction;
 end;
 
 procedure TMainForm.btnUniUniClick(Sender: TObject);
 begin
-  controller.setAddUniUniReaction;
+  networkController.setAddUniUniReaction;
 end;
 
 procedure TMainForm.editNodeIdExit(Sender: TObject);
 begin
-  controller.setNodeId(editNodeId.Text);
+  networkController.setNodeId(editNodeId.Text);
   networkPB1.Invalidate;
 end;
 
@@ -383,7 +377,7 @@ begin
   SBMLmodelMemo.Lines.Text := AText;
   SBMLmodelMemo.visible := true;
   // Check if sbmlmodel already created, if so, destroy before creating ?
-  self.MainController.LoadSBML(AText);
+  self.MainController.loadSBML(AText, self.networkController);
 end;
 
 procedure TMainForm.onLineSimButtonClick(Sender: TObject);
@@ -420,7 +414,6 @@ begin
             0, self.plotsPBAr[i].width, 0, self.plotsPBAr[i].height,
             xscaleHeightAr[i], yscaleWidth, MainController.getRunTime, MainController.getStepSize);
 
-          // total steps: runTime/stepSize
           // Max viewable steps is PlotWebPB.width (1 pixel per step).
           pixelStepAr[i] := 0;
           if MainController.getRunTime / MainController.getStepSize < self.plotsPBAr[i].width then
@@ -445,7 +438,6 @@ end;
 // Grab SBML model information when notified:
 procedure TMainForm.PingSBMLLoaded();
 begin
-  //sbmlModelLoaded := true;
   GetSBMLInfo();
 end;
 
@@ -479,15 +471,15 @@ begin
   // Handle Ctrl-keys here
   if Key = VK_DELETE then
     begin
-      controller.prepareUndo;
-      controller.deleteSelectedItems;
+      networkController.prepareUndo;
+      networkController.deleteSelectedItems;
       networkPB1.Invalidate;
       exit;
     end;
 
   if (Shift = [ssCtrl]) and (Upcase(Char(Key)) = 'Z') then
     begin
-      controller.Undo;
+      networkController.Undo;
       networkPB1.Invalidate;
     end;
 end;
@@ -499,12 +491,12 @@ var
 begin
   v := ScreenToWorld(X, Y);
 
-  controller.OnMouseDown(Sender, Button, Shift, v.X, v.Y);
+  networkController.OnMouseDown(Sender, Button, Shift, v.X, v.Y);
   networkPB1.Invalidate;
-  if controller.selectedNode <> -1 then
+  if networkController.selectedNode <> -1 then
     begin
-      editNodeId.Text := controller.network.nodes
-        [controller.selectedNode].state.id;
+      editNodeId.Text := networkController.network.nodes
+        [networkController.selectedNode].state.id;
       pnlNodePanel.visible := true;
     end
   else
@@ -518,7 +510,7 @@ var
 begin
   v := ScreenToWorld(X, Y);
 
-  controller.OnMouseMove(Sender, Shift, v.X, v.Y);
+  networkController.OnMouseMove(Sender, Shift, v.X, v.Y);
   networkPB1.Invalidate;
   xLbl.caption := 'X: ' + inttostr(trunc(v.X));
   yLbl.caption := 'Y: ' + inttostr(trunc(v.Y));
@@ -531,7 +523,7 @@ var
 begin
   v := ScreenToWorld(X, Y);
 
-  controller.OnMouseUp(Sender, Button, Shift, v.X, v.Y);
+  networkController.OnMouseUp(Sender, Button, Shift, v.X, v.Y);
   networkPB1.Invalidate;
 end;
 
@@ -556,7 +548,7 @@ begin
   networkPB1.canvas.draw(0, 0, networkCanvas.bitmap);
 end;
 
-procedure TMainForm.ParamSliderBtnClick(Sender: TObject);
+procedure TMainForm.paramAddSliderBtnClick(Sender: TObject);
 var
   i: Integer;
 begin
@@ -567,20 +559,25 @@ end;
 procedure TMainForm.ParamSliderOnChange(Sender: TObject);
 var
   i, p: Integer;
+  newPVal: double;
 begin
   if Sender is TWebTrackBar then
     begin
+      newPVal := 0;
       i := TWebTrackBar(Sender).tag;
       self.MainController.paramUpdated := true;
       p := self.sliderParamAr[i];
-      console.log('Current p value: ',self.MainController.getP_Val(p));
+      newPVal := self.sliderPTBarAr[i].Position * 0.01 *
+        (sliderPHighAr[i] - sliderPLowAr[i]);
+      //console.log('Current p value: ',self.MainController.getP_Val(p));
       // get slider parameter position in p_vals array
-      self.MainController.setP_Val(p, self.sliderPTBarAr[i].Position * 0.01 *
-        (sliderPHighAr[i] - sliderPLowAr[i]) ); // Fix ?
-        console.log(' new p value: ', self.sliderPTBarAr[i].Position * 0.01 *
-        (sliderPHighAr[i] - sliderPLowAr[i]));
-      self.sliderPTBLabelAr[i].caption := self.MainController.getP_Names[self.sliderParamAr[i]] + ': '
-        + FloatToStr(self.MainController.getP_Vals[self.sliderParamAr[i]]);
+      self.MainController.changeParamVal(p, newPVal, self.networkController  );
+
+     // self.MainController.getModel.setP_Val(p, self.sliderPTBarAr[i].Position * 0.01 *
+     //   (sliderPHighAr[i] - sliderPLowAr[i]) ); // Fix ?
+     //   console.log(' new p value: ', newPVal );
+      self.sliderPTBLabelAr[i].caption := self.MainController.getModel.getP_Names[self.sliderParamAr[i]] + ': '
+        + FloatToStr(self.MainController.getModel.getP_Vals[self.sliderParamAr[i]]);
 
     end;
 
@@ -623,7 +620,7 @@ begin
   self.zoomTrackBar.Position := 10;
   origin.X := 0.0;
   origin.Y := 0.0;
-  self.mainController := TControllerMain.Create(self);
+  self.mainController := TControllerMain.Create();
   self.mainController.setOnline(false);
   self.mainController.OnUpdate := self.getVals; // notify when new results
   self.mainController.OnModelUpdate := self.PingSBMLLoaded;
@@ -633,9 +630,10 @@ begin
   // xscaleHeight  := round(0.15* plotPB1.Height);   // make %15 of total height  get rid of
   currentGeneration := 0;
   network := TNetwork.create('testNetwork');
-  controller := TController.create(network);
+  networkController := TController.create(network);
+  networkController.OnNetworkUpdate := self.mainController.networkUpdated;
   networkCanvas := TNetworkCanvas.create(network);
-  controller.networkCanvas := networkCanvas;
+  networkController.networkCanvas := networkCanvas;
   networkCanvas.bitmap.Height := networkPB1.Height;
   networkCanvas.bitmap.width := networkPB1.width;
   LeftWPanel.color := clWhite;
@@ -647,7 +645,7 @@ begin
   if networkCanvas = nil then // Resize may be called before Create
     begin
       network := TNetwork.create('testNetwork');
-      controller := TController.create(network);
+      networkController := TController.create(network);
       networkCanvas := TNetworkCanvas.create(network);
     end;
   networkCanvas.bitmap.Height := networkPB1.Height;
@@ -665,9 +663,7 @@ end;
 // Add more model info as needed here:
 procedure TMainForm.GetSBMLInfo();
 begin
-  paramSliderBtn.visible := true;
-  self.MainController.fillSpeciesArray();
-  self.MainController.fillParameterArray();
+  paramAddSliderBtn.visible := true;
 end;
 
 // set up Results table (simResultsMemo, WebMemo)  optional ?
@@ -680,9 +676,9 @@ begin
   simResultsMemo.Lines.Clear();
   simRTStr := ' Time (s) '; // generate coloumn headers:
 
-  for i := 0 to length(self.MainController.getS_Names) - 1 do
+  for i := 0 to length(self.MainController.getModel.getS_Names) - 1 do
     begin
-      simRTStr := simRTStr + ', ' + self.MainController.getS_Names()[i];
+      simRTStr := simRTStr + ', ' + self.MainController.getModel.getS_Names()[i];
     end;
   simResultsMemo.Lines.Add(simRTStr);
 end;
@@ -747,7 +743,7 @@ begin
     'Enter File Name:', 'jstr.json');
   if fileName <> '' then
     begin
-      jstr := controller.network.convertToJSON();
+      jstr := networkController.network.convertToJSON();
       Application.DownloadTextFile(jstr, fileName);
     end
   else
@@ -756,7 +752,7 @@ end;
 
 procedure TMainForm.mnuUndoClick(Sender: TObject);
 begin
-  controller.Undo;
+  networkController.Undo;
   networkPB1.Invalidate;
 end;
 
@@ -769,7 +765,7 @@ procedure TMainForm.NetworkJSONOpenDialogGetFileAsText(Sender: TObject;
   AFileIndex: Integer; AText: string);
 begin
   try
-    controller.loadModel(AText);
+    networkController.loadModel(AText);
   except
     on E: Exception do
       Showmessage(E.message);
@@ -826,7 +822,7 @@ procedure TMainForm.selectPlotSpecies(plotnumb: Integer);
         // Add a plot with species list
         addingPlot := true;
         SetLength(plotSpecies, plotnumb);
-        SetLength(plotSpecies[plotnumb - 1], length(self.MainController.getS_Vals));
+        SetLength(plotSpecies[plotnumb - 1], length(self.MainController.getModel.getS_Vals));
       end
     else
       addingPlot := false;
@@ -847,7 +843,7 @@ procedure TMainForm.selectPlotSpecies(plotnumb: Integer);
 // async called OnCreate for TSpeciesSWForm
   procedure AfterCreate(AForm: TObject);
   begin
-    (AForm as TSpeciesSWForm).speciesList := self.MainController.getS_names;
+    (AForm as TSpeciesSWForm).speciesList := self.MainController.getModel.getS_names;
     (AForm as TSpeciesSWForm).fillSpeciesCG();
   end;
 
@@ -900,6 +896,8 @@ begin
   self.maxYValueAr[self.numbPlots - 1] := self.plotsPBAr[self.numbPlots - 1].Height; // PaintBox dimension
 
   self.plotsPBAr[self.numbPlots - 1].Invalidate;
+
+  //self.mainController.saveSBML('testing.xml');  // Test sbml file save
 end;
 
 // TODO still more cleanup .. reorder plots if middle one deleted ?
@@ -1007,7 +1005,7 @@ var
 // async called OnCreate for TParamSliderSForm
   procedure AfterCreate(AForm: TObject);
   begin
-    (AForm as TParamSliderSForm).paramList := self.MainController.getP_Names;
+    (AForm as TParamSliderSForm).paramList := self.MainController.getModel.getP_Names;
     (AForm as TParamSliderSForm).fillParamRG();
   end;
 
@@ -1090,8 +1088,8 @@ var
   pName: String;
 begin
   rangeMult := 10; // default.
-  pName :=  self.MainController.getP_Names[self.sliderParamAr[sn]];
-  pVal := self.MainController.getP_Vals[self.sliderParamAr[sn]];
+  pName :=  self.MainController.getModel.getP_Names[self.sliderParamAr[sn]];
+  pVal := self.MainController.getModel.getP_Vals[self.sliderParamAr[sn]];
   self.sliderPTBLabelAr[sn].caption := pName + ': ' + FloatToStr(pVal);
   self.sliderPLowAr[sn] := 0;
   self.sliderPLLabelAr[sn].caption := FloatToStr(self.sliderPLowAr[sn]);
@@ -1111,61 +1109,5 @@ begin
 
 end;
 
-procedure TMainForm.testAddingModel(); // Test remove when needed.
-var
-  sbmlModel: TModel;
-  speciesAr: array of TSBMLSpecies;
-  paramAr: array of SBMLparameter;
-  comp: SBMLcompartment;
-  rxnProdStoicAr: array of Double;
-  rxnProdsAr: array of String;
-  rxnReactsAr: array of String;
-  rxnReactsStoicAr: array of Double;
-begin
-  sbmlModel := TModel.create();
-
-  SetLength(speciesAr, 3);
-  speciesAr[0] := TSBMLSpecies.create('S1');
-  speciesAr[0].setInitialConcentration(10);
-  speciesAr[0].setCompartment('cell');
-  speciesAr[1] := TSBMLSpecies.create('S2');
-  speciesAr[1].setInitialConcentration(2);
-  speciesAr[1].setCompartment('cell');
-  speciesAr[2] := TSBMLSpecies.create('S3');
-  speciesAr[2].setInitialConcentration(1);
-  speciesAr[2].setCompartment('cell');
-  sbmlModel.addSBMLspecies(speciesAr[0]);
-  sbmlModel.addSBMLspecies(speciesAr[1]);
-  sbmlModel.addSBMLspecies(speciesAr[2]);
-
-  comp := SBMLcompartment.create('cell');
-  comp.setVolume(2);
-  comp.setConstant(true);
-  sbmlModel.addSBMLcompartment(comp);
-
-  SetLength(paramAr, 2);
-  paramAr[0] := SBMLparameter.create('k1');
-  paramAr[0].setValue(0.1);
-  paramAr[1] := SBMLparameter.create('k2');
-  paramAr[1].setValue(0.05);
-  sbmlModel.addSBMLParameter(paramAr[0]);
-  sbmlModel.addSBMLParameter(paramAr[1]);
-
-  // Set up reactions:
-  rxnProdsAr[0] := speciesAr[1].getID();
-  rxnProdStoicAr[0] := 1;
-  rxnReactsAr[0] := speciesAr[0].getID();
-  rxnReactsStoicAr[0] := 1;
-  sbmlModel.addSBMLReaction('S1toS2', rxnProdsAr, rxnProdStoicAr, rxnReactsAr,
-    rxnReactsStoicAr, 'k1*S1');
-
-  rxnProdsAr[0] := speciesAr[2].getID();
-  rxnProdStoicAr[0] := 1;
-  rxnReactsAr[0] := speciesAr[1].getID();
-  rxnReactsStoicAr[0] := 1;
-  sbmlModel.addSBMLReaction('S2toS3', rxnProdsAr, rxnProdStoicAr, rxnReactsAr,
-    rxnReactsStoicAr, 'k2*S2');
-
-end;
 
 end.
