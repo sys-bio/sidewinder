@@ -317,6 +317,7 @@ end;
 procedure TControllerMain.changeParamVal(paramNumb: Integer; newParamVal: double;
             networkController: TController);
 begin
+// TODO: Just notify model, model notifies everyone else.....
   self.stopTimer;
   self.sbmlmodel.changeParamVal(paramNumb, newParamVal);
   networkController.SBMLUpdate(self.sbmlmodel);
