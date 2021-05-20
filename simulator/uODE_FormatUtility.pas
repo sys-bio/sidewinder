@@ -31,7 +31,6 @@ TFormatODEs = class
   function getODEeqLoc(Speciesdydt : String): Integer; // return index of Species in odeEqs.
   procedure BuildAssignmentEqs(model: TModel);
   function spBoundaryCondition(speciesId: String): boolean;
-  //procedure CreateParamSpeciesLists(model: TModel);
 
   public
   constructor create( model: TModel);
@@ -141,7 +140,7 @@ end;
        tmpStoE:= '';
        tmpCatStr:= '';
        j:=1; // Position to check in string where name may be.    was 0.
-       while j < length(currEqStr) do
+       while j < length(currEqStr) do // TODO: Chk if names[i]=''
          begin
            k:= 0; // position in string where name found.
            beginC:= ''; endC:= '';
