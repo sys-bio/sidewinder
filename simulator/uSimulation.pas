@@ -26,8 +26,8 @@ type
     p : TDoubleDynArray;   // System/Model Parameters
     constructor Create ( runTime, nStepSize:double; ny, np :Integer; newList: String; solver:ODESolver ); Overload ;
     procedure setODEsolver(solverToUse: ODESolver);
-    function  eval (newTime: double; s: array of double) : double;
-    function  eval2 ( time:double; s: array of double) : double;
+    procedure eval (newTime: double; s: array of double) ;
+    procedure eval2 ( time:double; s: array of double);
     property OnUpdate: TUpdateValEvent read FUpdate write FUpdate;
     { Triggers the event if anything is registered }
     procedure updateVals(time:double; updatedVals: array of double);
@@ -40,7 +40,7 @@ implementation
 
 constructor TSimulationJS.Create ( runTime, nStepSize:double; ny, np : Integer; newList: String; solver:ODESolver ); Overload ;
 var lsodaStr: String;  // LSODA test string. can remove.
-  i:integer;
+
 begin
   self.ny:= ny;
   self.np:= np;
@@ -76,20 +76,18 @@ begin
     self.lode.iopt := 0;
     self.lode.jt := 2;
    asm
-    console.log('LSODA Funct: ', this.LSODAeq);
+    //console.log('LSODA Funct: ', this.LSODAeq);
     var ODE_func2 = new Function('time', 's','p', this.LSODAeq);
     this.lode.Setfcn (ODE_func2);
    end;
   end;
 end;
                              // want to use updated time
-function  TSimulationJS.eval ( newTime: double; s : array of double ) : double;
- var i,j: Integer;
+procedure  TSimulationJS.eval ( newTime: double; s : array of double );
+ var i, j: Integer;
  var numSteps: Integer;
- var dydt_s: array of double;
-    // l : TLsoda;
      y: TVector;
-     t, tNext: double;
+     tNext: double;
 begin
    numSteps:= Round(self.runTime/self.step);
    if self.solverUsed = LSODAS then
@@ -133,12 +131,12 @@ begin
       }
       this.time = rk4Calc.t;
       this.updateVals(this.time,s);
-     console.log( 'Time: ', this.time, 's[0]: ',s[0],', s[1]: ', s[1] );
+   //  console.log( 'Time: ', this.time, 's[0]: ',s[0],', s[1]: ', s[1] );
     break; // end of case RK4
 
    case 2:
     // *** LSODA:
-    console.log('LSODA Funct: ', this.LSODAeq);
+   // console.log('LSODA Funct: ', this.LSODAeq);
     var ODE_func2 = new Function('time', 's','p', this.LSODAeq);
     this.lode.Setfcn (ODE_func2);
     break; // end of case LSODA
@@ -155,7 +153,7 @@ begin
     for i:= 1 to numSteps do
     begin
      self.lode.Execute (y, self.time, tNext);
-     console.log('t: ',self.time, 'y_1: ', y[1], 'y_2: ',y[2]);
+     //console.log('t: ',self.time, 'y_1: ', y[1], 'y_2: ',y[2]);
 
      // Convert TVector back to array of double ( y ->s)
       for j:= 0 to Length(s)-1 do
@@ -177,12 +175,13 @@ begin
 
 end;
 
-function  TSimulationJS.eval2 ( time:double; s: array of double) : double;
+//function  TSimulationJS.eval2 ( time:double; s: array of double) : double;
+procedure  TSimulationJS.eval2 ( time:double; s: array of double);
  var i,j: Integer;
  var numSteps: Integer;
  var dydt_s: array of double;
      y: TVector;
-     t, tNext: double;
+     tNext: double;
 begin
    numSteps:= Round(self.runTime/self.step);  // change to small amt, maybe 5 steps?
    if self.solverUsed = LSODAS then
@@ -197,9 +196,9 @@ begin
 
     self.time:= time; // reset time to current time.
     self.lode.Execute (y, self.time, tNext);
-    console.log('t: ',self.time, 'y_1: ', y[1], 'y_2: ',y[2]);
-    if self.time=tNext then console.log('Self.time moved to next step: ', self.time)
-      else self.time:=tNext;    // remove this once understand what is going on in LSODA code.
+    self.time := tNext;
+    //if self.time=tNext then console.log('Self.time moved to next step: ', self.time)
+    //  else self.time:=tNext;    // remove this once understand what is going on in LSODA code.
      // Convert TVector back to array of double ( y ->s)
     for i:= 0 to Length(s)-1 do
       begin
@@ -216,7 +215,8 @@ begin
    end;
 
   end;
-// return current time of run and variable values to listener:
+
+  // return current time of run and variable values to listener:
 procedure TSimulationJS.UpdateVals( time: double; updatedVals: array of double);
  begin
    if Assigned(FUpdate) then
