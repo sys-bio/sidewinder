@@ -3,13 +3,13 @@ unit uControllerMain;
 interface
 
 uses System.SysUtils, Dialogs, uSimulation, uModel, uSBMLClasses, uODE_FormatUtility,
-     WebLib.Forms, WEBLib.ExtCtrls, Web, uSBMLReader, uController, uSBMLWriter,
-     uNetwork;
+     WebLib.Forms, WEBLib.ExtCtrls, Web, uSBMLReader, uControllerNetwork, uSBMLWriter,
+     uNetwork, uSidewinderTypes;
 
 type
  TUpdateSimEvent = procedure(time:double; updatedVals: array of double) of object;
  // Let listeners know of new simulation update event.
- TModelUpdateEvent = procedure() of object; // model has been loaded or updated
+ TModelUpdateEvent = procedure(updatedModel: TModel) of object; // model has been loaded or updated
 
  TControllerMain = class
   private
@@ -23,8 +23,6 @@ type
     stepSize: Double; // (msec) (integration step)
     pixelStepAr: array of Integer; // pixel equiv of time (integration) step
     currTime: Double;
-    p_Vals: array of Double; // Includes compartments
-    p_Names: array of String;
     online: Boolean; // Simulation running
     ODEready: Boolean; // TRUE: ODE solver is setup.
     WebTimer1: TWebTimer;
@@ -104,7 +102,7 @@ procedure TControllerMain.UpdateVals( time: double; updatedVals: array of double
 procedure TControllerMain.UpdateModel();
   begin
     if Assigned(FModelUpdate) then
-       FModelUpdate();
+       FModelUpdate(self.sbmlmodel);
 
 
   end;
@@ -200,18 +198,6 @@ begin
   ODEready := false;
   self.stepSize := self.WebTimer1.Interval * 0.001; // 1 sec = 1000 msec
   odeFormat := TFormatODEs.create(sbmlmodel);
-
-  if length(p_Vals) < 1 then
-    begin
-      SetLength(p_Vals, length(self.SBMLmodel.getP_Vals())); // Keep params for later
-      SetLength(p_Names, length(p_Vals));
-      for i := 0 to length(self.SBMLmodel.getP_Vals()) - 1 do
-        begin
-          p_Vals[i] := self.SBMLmodel.getP_Val(i);
-          p_Names[i] := self.SBMLmodel.getP_Names()[i];
-        end;
-    end;
-
   // Run Simulation using info from odeFormat:
   odeFormat.buildFinalEqSet();
   if self.getODESolver = LSODAS then
@@ -235,7 +221,7 @@ begin
 end;
 
 
-procedure TControllerMain.UpdateSimulation();
+procedure TControllerMain.UpdateSimulation();  // Move most of this to TSimulationJS class
 begin
   WebTimer1.enabled := true;
   //console.log('Cur time: ',self.currTime);
@@ -317,7 +303,7 @@ end;
 procedure TControllerMain.changeParamVal(paramNumb: Integer; newParamVal: double;
             networkController: TController);
 begin
-// TODO: Just notify model, model notifies everyone else.....
+// model notify everyone else that model has changed.....
   self.stopTimer;
   self.sbmlmodel.changeParamVal(paramNumb, newParamVal);
   networkController.SBMLUpdate(self.sbmlmodel);
