@@ -1,7 +1,7 @@
 unit uModel;
 
 interface
-uses Web, JS, uSBMLClasses, uSBMLClasses.rule;
+uses Web, JS, uSBMLClasses, uSBMLClasses.rule, uSidewinderTypes;
 
 type
 
@@ -26,15 +26,16 @@ type
     // Arrays of Double used by ODE integrator, keep array of strings for mapping:
     s_Vals: array of Double; // Changes, one to one correlation: s_Vals[n] <=> s_Names[n]
     s_Names: array of String; // Use species ID as name
-    p_Vals: array of Double; // Changes, Includes compartments and boundary species.
-    p_Names: array of String;//Same size as p_Vals, use to look up modelParams, modelComps, etc
+    s_NameValAr: TVarNameValAr; // List of species, init val pairs.
+    p_Vals: array of Double; // Holds current value, Changes, Includes compartments and boundary species.
+    p_Names: array of String;//Same size as p_Vals,
+    p_NameValAr: TVarNameValAr;// Holds current param name/value, changes, Includes compartments and boundary species.
     FPing: TPingEvent;// Used to send sbml info to listener once asynchronous read done.
- //   FPingAgain: TPingEvent;// Used to send sbml info to another listener once asynchronous read done.
+  //  FPingAgain: TModelUpdateEvent;// Used to send sbml info to another listener once model updated.
     procedure fillSpeciesArray();
     procedure fillParameterArray();
 
   public
-
 
    constructor create();
    procedure setAnnotationStr(annotate:String);
@@ -267,7 +268,6 @@ procedure TModel.SBML_LoadedEvent();
   len:= Length(modelParams);
   modelParams[len]:= SBMLparameter.create(newParam);
  // console.log('addSBMLparameter: ',modelParams[len].getID());
- // console.log(' ... addSBMLparameter: Value: ',modelParams[len].getValue());
   if newParam.isSetName() then console.log('addSBMLparameter: ',newParam.getname());
 
  end;
@@ -293,79 +293,94 @@ begin
   if self.getSpeciesNumb() > 0 then
     begin
       spAr := self.getSBMLdynamicSpeciesAr; // Do not include BCs and consts
-      SetLength(self.s_Vals, Length(spAr));
-      SetLength(self.s_Names, length(self.s_Vals));
+      self.s_NameValAr := TVarNameValAr.create();
       for i := 0 to Length(spAr) - 1 do
         begin
           if spAr[i].isSetInitialAmount() then
-            self.s_Vals[i] := spAr[i].getInitialAmount()
+          begin
+            self.s_NameValAr.add( TVarNameVal.create(spAr[i].getID(),spAr[i].getInitialAmount));
+          end
           else if spAr[i].isSetInitialConcentration() then
-            self.s_Vals[i] := spAr[i].getInitialConcentration();
-          self.s_Names[i] := spAr[i].getID();
-          // Use species ID as name
+          begin
+            self.s_NameValAr.add(TVarNameVal.create(spAr[i].getID(),spAr[i].getInitialConcentration));
+          end;
+
         end;
+      self.s_Names := self.s_NameValAr.getNameAr();
+      self.s_Vals := self.s_NameValAr.getValAr();
     end;
 end;
 
 procedure TModel.fillParameterArray();
  var i, paramLen : integer;
+     currNameVal: TVarNameVal;
 
 begin
    // Get parameter and compartment names and combine into one array, pVals[]:
-  SetLength(self.p_Vals,Length(self.getSBMLparameterAr()));
+  self.p_NameValAr := TVarNameValAr.create();
   for i := 0 to Length(self.getSBMLparameterAr())-1 do
       begin
+      currNameVal := TVarNameVal.create;
       if self.getSBMLparameter(i).isSetIDAttribute() then
          begin
-         self.p_Names[i] := self.getSBMLparameter(i).getId();
+         currNameVal.setId(self.getSBMLparameter(i).getId());
          // Get initial value for each param:
          if self.getSBMLparameter(i).isSetValue() then
-           p_Vals[i] := self.getSBMLparameter(i).getValue()
-         else p_Vals[i] := 0;
+           begin
+           currNameVal.setVal(self.getSBMLparameter(i).getValue());
+           end
+         else currNameVal.setVal(0);
+
          end
       else
-         begin
-         p_Names[i] := '';
-         p_Vals[i]:= 0;
-         end;
+       begin
+         currNameVal.setId('');
+         currNameVal.setVal(0);
+       end;
+      self.p_NameValAr.add(currNameVal);
       end;
     // Get compartments:
   paramLen := Length(self.p_Names);
-  SetLength(self.p_Names, paramLen + self.getCompNumb());
-  SetLength(self.p_Vals, paramLen + self.getCompNumb());
   for i := 0 to self.getCompNumb()-1 do
        begin
+       currNameVal := TVarNameVal.create();
        if self.getSBMLcompartment(i).isSetIdAttribute() then
-          begin
-          p_Names[paramLen+i] := self.getSBMLcompartment(i).getID();
-          end
-       else
-          p_Names[paramLen+i] := self.getSBMLcompartment(i).getName();
+         currNameVal.setId(self.getSBMLcompartment(i).getID())
+       else currNameVal.setId(self.getSBMLcompartment(i).getName());
        // Get Size/Vols of compartments:
        if self.getSBMLcompartment(i).isSetSize() then
-          p_Vals[paramLen+i] := self.getSBMLcompartment(i).getSize()
+         currNameVal.setVal(self.getSBMLcompartment(i).getSize())
        else if self.getSBMLcompartment(i).isSetVolume() then
-          p_Vals[paramLen+i] := self.getSBMLcompartment(i).getVolume()
-          else p_Vals[paramLen+i] := 1; // default
+            currNameVal.setVal(self.getSBMLcompartment(i).getVolume())
+          else currNameVal.setVal(1);  // Default value
+
+       self.p_NameValAr.Add(currNameVal);
        end;
 
      // now look at species, put species boundary conditions and species constants in parameter list.
   for i := 0 to Length(self.getSBMLspeciesAr())-1 do
       begin
+
       if self.getSBMLspeciesAr()[i].getBoundaryCondition or self.getSBMLspeciesAr()[i].getConstant then
         begin
+          currNameVal := TVarNameVal.create();
           paramLen := Length(p_Names);
-          setLength(p_Names, paramLen + 1);
-          setLength(p_Vals, paramLen + 1);
-          p_Names[paramLen] := self.getSBMLspeciesAr()[i].getId();
+          currNameVal.setId(self.getSBMLspeciesAr()[i].getId());
           if self.getSBMLspeciesAr()[i].isSetInitialAmount() then
-            p_Vals[paramLen] := self.getSBMLspeciesAr()[i].getInitialAmount()
+          begin
+            currNameVal.setVal(self.getSBMLspeciesAr()[i].getInitialAmount());
+          end
           else if self.getSBMLspeciesAr()[i].isSetInitialConcentration() then
-            p_Vals[paramLen] := self.getSBMLspeciesAr()[i].getInitialConcentration()
-            else p_Vals[paramLen] := 0;
+            begin
+              currNameVal.setVal(self.getSBMLspeciesAr()[i].getInitialConcentration());
+            end
+            else currNameVal.setVal(0);
+          self.p_NameValAr.Add(currNameVal);
         end;
 
       end;
+  self.p_Names := self.p_NameValAr.getNameAr();
+  self.p_Vals := self.p_NameValAr.getValAr();
 
 end;
 
@@ -405,7 +420,7 @@ begin
   else  Result := false;
 end;
 
-procedure TModel.changeParamVal(pos: Integer; newVal: Double );
+procedure TModel.changeParamVal(pos: Integer; newVal: Double);
 begin
   self.p_Vals[pos] := newVal;
 
