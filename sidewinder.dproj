@@ -120,7 +120,7 @@
         <DCCReference Include="math\lsoda\odeEquations.pas"/>
         <DCCReference Include="math\lsoda\uMatrix.pas"/>
         <DCCReference Include="math\lsoda\uVector.pas"/>
-        <DCCReference Include="rxn_networks\uController.pas"/>
+        <DCCReference Include="rxn_networks\uControllerNetwork.pas"/>
         <DCCReference Include="rxn_networks\uCreateNetworks.pas"/>
         <DCCReference Include="rxn_networks\uDrawReaction.pas"/>
         <DCCReference Include="rxn_networks\uDrawTypes.pas"/>

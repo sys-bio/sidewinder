@@ -14,7 +14,7 @@ uses
   odeEquations in 'math\lsoda\odeEquations.pas',
   uMatrix in 'math\lsoda\uMatrix.pas',
   uVector in 'math\lsoda\uVector.pas',
-  uController in 'rxn_networks\uController.pas',
+  uControllerNetwork in 'rxn_networks\uControllerNetwork.pas',
   uCreateNetworks in 'rxn_networks\uCreateNetworks.pas',
   uDrawReaction in 'rxn_networks\uDrawReaction.pas',
   uDrawTypes in 'rxn_networks\uDrawTypes.pas',
