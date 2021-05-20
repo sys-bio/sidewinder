@@ -9,7 +9,7 @@ uses
   WEBLib.WebCtrls,
   Vcl.StdCtrls, WEBLib.StdCtrls, WEBLib.Buttons, Vcl.Imaging.pngimage,
   Vcl.Graphics,
-  uController, uNetworkCanvas, uNetwork, Vcl.TMSFNCTypes, Vcl.TMSFNCUtils,
+  uControllerNetwork, uNetworkCanvas, uNetwork, Vcl.TMSFNCTypes, Vcl.TMSFNCUtils,
   Vcl.TMSFNCGraphics,
   Vcl.TMSFNCGraphicsTypes, Vcl.TMSFNCCustomControl, Vcl.TMSFNCScrollBar,
   Vcl.TMSFNCButton, Vcl.TMSFNCToolBar,
@@ -150,6 +150,8 @@ type
     procedure LoadJSONFile();
     procedure DeletePlot(plotn: Integer);
     procedure EditPlotList(plotn: Integer);
+    procedure updatePlots(); // Go through and remove species/plots no longer in model.
+    procedure deletePlotSpecies(plotn: Integer); // Delete a species curve in a plot.
     // delete, change plot species, other added as needed using TWebListBox.
     procedure EditSliderList(sn: Integer);
     // delete, change param slider as needed using TWebListBox.
@@ -187,7 +189,7 @@ type
 
     function ScreenToWorld(X, Y: Double): TPointF; // Network drawing panel
     function WorldToScreen(wx: Integer): Integer; // Network drawing panel
-    procedure PingSBMLLoaded(); // Notify when done loading or model changes
+    procedure PingSBMLLoaded(model:TModel); // Notify when done loading or model changes
     procedure getVals(newTime: Double; newVals: array of Double);
     // Get new values (species amt) from simulation run
 
@@ -427,7 +429,7 @@ begin
 end;
 
 // Grab SBML model information when notified:
-procedure TMainForm.PingSBMLLoaded();
+procedure TMainForm.PingSBMLLoaded(model:TModel);
 begin
   paramAddSliderBtn.visible := true;
 end;
@@ -442,7 +444,7 @@ begin
     begin
       self.DeletePlot(self.plotEditLB.tag);
     end;
-  // else ShowMessage('Cancel');
+  // else ShowMessage('Canceled');
   self.plotEditLB.tag := 0;
   self.plotEditLB.visible := false;
   self.plotEditLB.Top := 40; // default
@@ -894,6 +896,16 @@ begin
   self.plotEditLB.bringToFront;
   self.plotEditLB.visible := true;
 
+end;
+
+procedure TMainForm.updatePlots(); // Go through and remove species/plots no longer in model.
+begin
+  // TODO
+end;
+
+procedure TMainForm.deletePlotSpecies(plotn: Integer); // Delete a species curve in a plot.
+begin
+  // TODO
 end;
 
 procedure TMainForm.EditSliderList(sn: Integer);
