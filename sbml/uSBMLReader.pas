@@ -1,7 +1,7 @@
 unit uSBMLReader;
 
 interface
-uses Web, JS,  uSBMLClasses, uSBMLClasses.rule, uModel, uController;
+uses Web, JS,  uSBMLClasses, uSBMLClasses.rule, uModel, uControllerNetwork;
 
 type
   TSBMLLoadedEvent = procedure(model: TModel) of object;  // Notify when done loading
