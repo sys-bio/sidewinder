@@ -223,7 +223,7 @@ end;
 procedure TMainForm.btnAboutClick(Sender: TObject);
 begin
   Showmessage('Version 0.1');
-  model.testModelUpdate;
+  //model.testModelUpdate;
 end;
 
 procedure TMainForm.btnAddNodeClick(Sender: TObject);
@@ -666,10 +666,8 @@ begin
   simResultsMemo.Lines.Clear();
   simRTStr := ' Time (s) '; // generate coloumn headers:
 
- // for i := 0 to length(self.MainController.getModel.getS_Names) - 1 do
- for i := 0 to length(self.model.getS_Names) - 1 do
+  for i := 0 to length(self.model.getS_Names) - 1 do
     begin
- //     simRTStr := simRTStr + ', ' + self.MainController.getModel.getS_Names()[i];
       simRTStr := simRTStr + ', ' + self.model.getS_Names()[i];
     end;
   simResultsMemo.Lines.Add(simRTStr);
@@ -794,7 +792,6 @@ procedure TMainForm.selectPlotSpecies(plotnumb: Integer);
         // Add a plot with species list
         addingPlot := true;
         SetLength(plotSpecies, plotnumb);
-   //     SetLength(plotSpecies[plotnumb - 1], length(self.MainController.getModel.getS_Vals));
         SetLength(plotSpecies[plotnumb - 1], length(self.model.getS_Vals));
       end
     else addingPlot := false;
@@ -815,7 +812,6 @@ procedure TMainForm.selectPlotSpecies(plotnumb: Integer);
 // async called OnCreate for TSpeciesSWForm
   procedure AfterCreate(AForm: TObject);
   begin
- //   (AForm as TSpeciesSWForm).speciesList := self.MainController.getModel.getS_names;
     (AForm as TSpeciesSWForm).speciesList := self.model.getS_names;
     (AForm as TSpeciesSWForm).fillSpeciesCG();
   end;
@@ -985,7 +981,6 @@ var
 // async called OnCreate for TParamSliderSForm
   procedure AfterCreate(AForm: TObject);
   begin
-  //  (AForm as TParamSliderSForm).paramList := self.MainController.getModel.getP_Names;
     (AForm as TParamSliderSForm).paramList := self.model.getP_Names;
     (AForm as TParamSliderSForm).fillParamRG();
   end;
@@ -1068,8 +1063,6 @@ var
   pName: String;
 begin
   rangeMult := 10; // default. 10
-//  pName :=  self.MainController.getModel.getP_Names[self.sliderParamAr[sn]];
-//  pVal := self.MainController.getModel.getP_Vals[self.sliderParamAr[sn]];
   pName :=  self.model.getP_Names[self.sliderParamAr[sn]];
   pVal := self.model.getP_Vals[self.sliderParamAr[sn]];
   self.sliderPTBLabelAr[sn].caption := pName + ': ' + FloatToStr(pVal);
