@@ -141,6 +141,7 @@ type
   private
     numbPlots: Integer; // Number of plots displayed
     numbSliders: Integer; // Number of parameter sliders
+    model: TModel;  // The sbml model
     procedure InitSimResultsTable(); // Init simResultsMemo.
     procedure addPlot(); // Add a plot
     procedure selectPlotSpecies(plotnumb: Integer);
@@ -189,7 +190,7 @@ type
 
     function ScreenToWorld(X, Y: Double): TPointF; // Network drawing panel
     function WorldToScreen(wx: Integer): Integer; // Network drawing panel
-    procedure PingSBMLLoaded(model:TModel); // Notify when done loading or model changes
+    procedure PingSBMLLoaded(newModel:TModel); // Notify when done loading or model changes
     procedure getVals(newTime: Double; newVals: array of Double);
     // Get new values (species amt) from simulation run
 
@@ -222,6 +223,7 @@ end;
 procedure TMainForm.btnAboutClick(Sender: TObject);
 begin
   Showmessage('Version 0.1');
+  model.testModelUpdate;
 end;
 
 procedure TMainForm.btnAddNodeClick(Sender: TObject);
@@ -391,7 +393,7 @@ begin
       except
         on Exception: EConvertError do
           begin
-            MainController.SetRunTime(200);
+            MainController.SetRunTime(200); // Hard coded for now.
             self.rtLengthEdit1.Text := FloatToStr(MainController.getRunTime);
           end;
       end;
@@ -429,9 +431,11 @@ begin
 end;
 
 // Grab SBML model information when notified:
-procedure TMainForm.PingSBMLLoaded(model:TModel);
+procedure TMainForm.PingSBMLLoaded(newModel:TModel);
 begin
+  model := newModel;
   paramAddSliderBtn.visible := true;
+  //  updatePlots() <-- Check if plot species are no longer in model.
 end;
 
 procedure TMainForm.plotEditLBClick(Sender: TObject);
@@ -562,14 +566,13 @@ begin
       p := self.sliderParamAr[i];
       newPVal := self.sliderPTBarAr[i].Position * 0.01 *
         (sliderPHighAr[i] - sliderPLowAr[i]);
-      //console.log('Current p value: ',self.MainController.getP_Val(p));
       // get slider parameter position in p_vals array
-      self.MainController.changeParamVal(p, newPVal, self.networkController  );
-
-
-     //   console.log(' new p value: ', newPVal );
-      self.sliderPTBLabelAr[i].caption := self.MainController.getModel.getP_Names[self.sliderParamAr[i]] + ': '
-        + FloatToStr(self.MainController.getModel.getP_Vals[self.sliderParamAr[i]]);
+      self.MainController.stopTimer;
+      self.model.changeParamVal(p, newPVal);
+      networkController.SBMLUpdate(self.model);
+      self.MainController.startTimer;
+      self.sliderPTBLabelAr[i].caption := self.model.getP_Names[self.sliderParamAr[i]] + ': '
+        + FloatToStr(self.model.getP_Vals[self.sliderParamAr[i]]);
 
     end;
 
@@ -663,9 +666,11 @@ begin
   simResultsMemo.Lines.Clear();
   simRTStr := ' Time (s) '; // generate coloumn headers:
 
-  for i := 0 to length(self.MainController.getModel.getS_Names) - 1 do
+ // for i := 0 to length(self.MainController.getModel.getS_Names) - 1 do
+ for i := 0 to length(self.model.getS_Names) - 1 do
     begin
-      simRTStr := simRTStr + ', ' + self.MainController.getModel.getS_Names()[i];
+ //     simRTStr := simRTStr + ', ' + self.MainController.getModel.getS_Names()[i];
+      simRTStr := simRTStr + ', ' + self.model.getS_Names()[i];
     end;
   simResultsMemo.Lines.Add(simRTStr);
 end;
@@ -789,7 +794,8 @@ procedure TMainForm.selectPlotSpecies(plotnumb: Integer);
         // Add a plot with species list
         addingPlot := true;
         SetLength(plotSpecies, plotnumb);
-        SetLength(plotSpecies[plotnumb - 1], length(self.MainController.getModel.getS_Vals));
+   //     SetLength(plotSpecies[plotnumb - 1], length(self.MainController.getModel.getS_Vals));
+        SetLength(plotSpecies[plotnumb - 1], length(self.model.getS_Vals));
       end
     else addingPlot := false;
 
@@ -809,7 +815,8 @@ procedure TMainForm.selectPlotSpecies(plotnumb: Integer);
 // async called OnCreate for TSpeciesSWForm
   procedure AfterCreate(AForm: TObject);
   begin
-    (AForm as TSpeciesSWForm).speciesList := self.MainController.getModel.getS_names;
+ //   (AForm as TSpeciesSWForm).speciesList := self.MainController.getModel.getS_names;
+    (AForm as TSpeciesSWForm).speciesList := self.model.getS_names;
     (AForm as TSpeciesSWForm).fillSpeciesCG();
   end;
 
@@ -901,6 +908,7 @@ end;
 procedure TMainForm.updatePlots(); // Go through and remove species/plots no longer in model.
 begin
   // TODO
+  //  EditPlotList(plotn: Integer); <-- check each plot to see if need to remove plot species.
 end;
 
 procedure TMainForm.deletePlotSpecies(plotn: Integer); // Delete a species curve in a plot.
@@ -977,7 +985,8 @@ var
 // async called OnCreate for TParamSliderSForm
   procedure AfterCreate(AForm: TObject);
   begin
-    (AForm as TParamSliderSForm).paramList := self.MainController.getModel.getP_Names;
+  //  (AForm as TParamSliderSForm).paramList := self.MainController.getModel.getP_Names;
+    (AForm as TParamSliderSForm).paramList := self.model.getP_Names;
     (AForm as TParamSliderSForm).fillParamRG();
   end;
 
@@ -1059,8 +1068,10 @@ var
   pName: String;
 begin
   rangeMult := 10; // default. 10
-  pName :=  self.MainController.getModel.getP_Names[self.sliderParamAr[sn]];
-  pVal := self.MainController.getModel.getP_Vals[self.sliderParamAr[sn]];
+//  pName :=  self.MainController.getModel.getP_Names[self.sliderParamAr[sn]];
+//  pVal := self.MainController.getModel.getP_Vals[self.sliderParamAr[sn]];
+  pName :=  self.model.getP_Names[self.sliderParamAr[sn]];
+  pVal := self.model.getP_Vals[self.sliderParamAr[sn]];
   self.sliderPTBLabelAr[sn].caption := pName + ': ' + FloatToStr(pVal);
   self.sliderPLowAr[sn] := 0;
   self.sliderPLLabelAr[sn].caption := FloatToStr(self.sliderPLowAr[sn]);

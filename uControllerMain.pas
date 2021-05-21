@@ -54,14 +54,12 @@ type
     procedure updateSimulation();
     procedure loadSBML(sbmlStr: String; networkController: TController );
     procedure saveSBML(fileName: String);
-    procedure changeParamVal(paramNumb: Integer; newParamVal: double;
-                             networkController: TController);
     procedure stopTimer();
     procedure startTimer();
     procedure networkUpdated(updatedNetwork: TNetwork); // Network has changed, update model
     property OnUpdate: TUpdateSimEvent read FUpdate write FUpdate;
     property OnModelUpdate: TModelUpdateEvent read FModelUpdate write FModelUpdate;
-    procedure UpdateModel(); // Ping listeners that model has been loaded or changed.
+    procedure ModelUpdated(); // Ping listeners that model has been loaded or changed.
 
     procedure UpdateVals( time: double; updatedVals: array of double);
             // Send new values to listeners.
@@ -76,6 +74,7 @@ begin
   self.modelLoaded := false;
   self.currTime := 0;
   self.stepSize := 0.1; // 100 msec
+  self.runTime := 500; // sec
   self.WebTimer1 := TWebTimer.Create(nil);
   self.WebTimer1.OnTimer := WebTimer1Timer;
   self.WebTimer1.Enabled := false;
@@ -84,11 +83,13 @@ begin
 
 end;
 
-// Grab SBML model information when notified:
+// Grab SBML model information when notified by model of change:
 procedure TControllerMain.SBMLLoaded();
 begin
+console.log(' In TControllerMain.SBMLLoaded()');
   self.modelLoaded := true;
-  self.UpdateModel();
+  self.setUpSimulation();
+  self.ModelUpdated();
 end;
 
 
@@ -99,17 +100,19 @@ procedure TControllerMain.UpdateVals( time: double; updatedVals: array of double
      FUpdate(time, updatedVals);
  end;
 
-procedure TControllerMain.UpdateModel();
+// Sendout notification model has been updated:
+procedure TControllerMain.ModelUpdated();
   begin
     if Assigned(FModelUpdate) then
        FModelUpdate(self.sbmlmodel);
-
+    console.log(' In TControllerMain.ModelUpdated()');
 
   end;
 
-procedure TControllerMain.networkUpdated(updatedNetwork: TNetwork); // Network has changed, update model
+  // Network has changed, update model
+procedure TControllerMain.networkUpdated(updatedNetwork: TNetwork);
 begin
-  // TODO
+  // TODO    Update Model to reflect any Network changes.
   console.log('Network changed');
 end;
 
@@ -298,16 +301,6 @@ begin
   self.updateSimulation();
   if self.currTime > runTime then
     self.WebTimer1.enabled := false;
-end;
-
-procedure TControllerMain.changeParamVal(paramNumb: Integer; newParamVal: double;
-            networkController: TController);
-begin
-// model notify everyone else that model has changed.....
-  self.stopTimer;
-  self.sbmlmodel.changeParamVal(paramNumb, newParamVal);
-  networkController.SBMLUpdate(self.sbmlmodel);
-  self.startTimer;
 end;
 
 end.
