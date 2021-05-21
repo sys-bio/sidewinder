@@ -34,7 +34,7 @@ type
     procedure WebTimer1Timer(Sender: TObject);
 
   public
-    paramUpdated: Boolean; // true if a parameter has been updated.
+    paramUpdated: Boolean; // true if a parameter val has been updated.
     constructor Create();
     procedure SBMLLoaded(); // Notify when done loading libSBMLjs
     procedure setODESolver();
