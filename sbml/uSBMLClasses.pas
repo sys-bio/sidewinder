@@ -189,6 +189,7 @@ type
   function getProducts(): array of String;   // remove at some pointGet products (species) for reaction
   function getReactants(): array of String;  // remove at some pointGet reactants (species) for reaction
   function getProduct(index: integer):TSBMLSpeciesReference;
+  function getReactant(index: integer): TSBMLSpeciesReference;
   function getCompartment(): String;
   procedure setCompartment(val:String);
   function isSetCompartment(): boolean;
@@ -201,9 +202,8 @@ type
 
   function getNumReactants(): integer;
   function getNumProducts(): integer;
- { function getReactant(n: integer): TSBMLSpeciesReference;
+ {
   procedure addReactant(spec: TSBMLSpeciesReference);
-  function getProduct(n: integer): TSBMLSpeciesReference;
   procedure addProduct(spec: TSBMLSpeciesReference);
   function createReactant(): TSBMLSpeciesReference;
   function createProduct(): TSBMLSpeciesReference;
@@ -789,6 +789,10 @@ implementation
  function SBMLReaction.getProduct(index: integer):TSBMLSpeciesReference;
  begin
    Result:= rxnproducts[index];
+ end;
+ function SBMLReaction.getReactant(index: integer):TSBMLSpeciesReference;
+ begin
+   Result:= rxnreactants[index];
  end;
  procedure SBMLReaction.setrxnProducts(prod: array of TSBMLSpeciesReference);
  begin
