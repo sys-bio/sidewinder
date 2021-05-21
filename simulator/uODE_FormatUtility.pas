@@ -85,7 +85,7 @@ begin
       if rxns[j].isSetKineticLaw() then
          begin
          lhsSymbols := buildODE_LHS(rxns[j]);  // check if existing LHS, then just // add eq to it.
-         curODE := rxns[j].getKineticLaw().getFormula()
+         curODE := rxns[j].getKineticLaw().getFormula();
          end
       else odeStrs[j] := '';
 
