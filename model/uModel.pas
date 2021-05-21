@@ -71,10 +71,12 @@ type
    function setP_Val(pos: integer; newVal: Double): Boolean;
    procedure changeParamVal(pos: Integer; newVal: Double);
    function  getReactions(): array of SBMLReaction;
+   function getReaction(i: integer): SBMLReaction;
 
    property OnPing: TPingEvent read FPing write FPing;
     { Triggers the event if anything is registered }
    procedure SBML_LoadedEvent(); // SBML model loaded.
+   procedure testModelUpdate(); // check model update mechanism
 
 
  end;
@@ -102,7 +104,7 @@ begin
    result:= numReactions;
 end;
 
-
+// Notify others that model has been loaded/changed
 procedure TModel.SBML_LoadedEvent();
  begin
    self.fillSpeciesArray;
@@ -158,6 +160,16 @@ procedure TModel.SBML_LoadedEvent();
  function TModel.getReactions(): array of SBMLReaction;
  begin
     Result:= SBMLreactions;
+ end;
+
+ function TModel.getReaction(i: integer): SBMLReaction;
+ begin
+   if self.getNumReactions >i then
+   begin
+     Result := SBMLreactions[i];
+   end
+   else Result := nil;
+
  end;
 
  function TModel.getSpeciesNumb(): integer;
@@ -425,6 +437,32 @@ begin
   self.p_Vals[pos] := newVal;
 
   // Other viewers update ?
+end;
+
+procedure TModel.testModelUpdate();
+var i: integer;
+   rxn: SBMLReaction;
+   ids: array of String;
+begin
+  // TODO  make changes ...
+  // Works with uTestModel
+  rxn := nil;
+  if self.getNumReactions()>1 then
+  begin
+    if self.getReaction(0).isSetKineticLaw then
+    begin
+      self.getReaction(0).getKineticLaw.setFormula('k1 * G1');
+      self.getReaction(0).getReactant(0).setId('G1');
+      self.getReaction(0).getReactants()[0] := 'G1';
+      self.getSBMLSpecies(0).setId('G1');
+    end;
+
+    console.log('Formula: ',self.getReaction(0).getKineticLaw.getFormula());
+    console.log('species: ',self.getReaction(0).getReactant(0).getId());
+    self.SBML_LoadedEvent();
+  end;
+
+
 end;
 
 end.   // unit
