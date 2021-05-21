@@ -1,6 +1,6 @@
 unit uSimulation;
 
-// Set up an execute a simulation.
+// Set up and execute a simulation.
 
 interface
 
@@ -197,8 +197,7 @@ begin
     self.time:= time; // reset time to current time.
     self.lode.Execute (y, self.time, tNext);
     self.time := tNext;
-    //if self.time=tNext then console.log('Self.time moved to next step: ', self.time)
-    //  else self.time:=tNext;    // remove this once understand what is going on in LSODA code.
+   
      // Convert TVector back to array of double ( y ->s)
     for i:= 0 to Length(s)-1 do
       begin
