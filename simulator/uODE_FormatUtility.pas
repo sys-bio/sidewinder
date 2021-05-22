@@ -96,7 +96,7 @@ begin
       for k := 0 to length(lhsSymbols)-1 do
           begin
           found_dydt :=  getODEeqLoc(lhsSymbols[k] );
-          console.log(' found_dydt: ', found_dydt);
+         // console.log(' found_dydt: ', found_dydt);
           if found_dydt < 0 then // not found
              begin
              if lhsSymbols[k] = '' then
@@ -476,8 +476,8 @@ end;
     // Run Simulation using info from odeFormat:
    odeEqSet:= odeEqSet + ' return dydt_s ;' ;
    odeEqSet2:= odeEqSet2 + ' return dydt_s;';  // Add eqs LSODA list.
-   console.log('*** Final odeEqSetVal: *****');
-   console.log(odeEqSet);
+//   console.log('*** Final odeEqSetVal: *****');
+//   console.log(odeEqSet);
    console.log(' ** LSODA eqs: **');
    console.log(odeEqSet2);
  end;

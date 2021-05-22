@@ -712,7 +712,7 @@ implementation
   rxnNameFlagSet:= false;
   compartment:= '';
   compartmentFlagSet:= false;
-  console.log('Create rxn: number of products:',Length(prod));
+ // console.log('Create rxn: number of products:',Length(prod));
   rxnproducts:= Copy(prod, 0, Length(prod));  // list of species
   rxnreactants:= Copy(reactant, 0, Length(reactant)); // list of species
   numbProducts:= Length(prod);
