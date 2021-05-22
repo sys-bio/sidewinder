@@ -28,6 +28,7 @@ type
     WebTimer1: TWebTimer;
     FUpdate: TUpdateSimEvent;// Send Updated Sim values (time,species amts) to listeners.
     FModelUpdate: TModelUpdateEvent; // Notify ufMain that sbml model loaded/changed.
+    FModelUpdate2: TModelUpdateEvent; // Notify uControllerNetwork that model loaded/changed.
 
     procedure setupSimulation();
     procedure startSimulation(odeEqs: String; odeFormat: TFormatODEs);
@@ -57,8 +58,9 @@ type
     procedure stopTimer();
     procedure startTimer();
     procedure networkUpdated(updatedNetwork: TNetwork); // Network has changed, update model
-    property OnUpdate: TUpdateSimEvent read FUpdate write FUpdate;
+    property OnSimUpdate: TUpdateSimEvent read FUpdate write FUpdate;
     property OnModelUpdate: TModelUpdateEvent read FModelUpdate write FModelUpdate;
+    property OnModelUpdate2: TModelUpdateEvent read FModelUpdate2 write FModelUpdate2;
     procedure ModelUpdated(); // Ping listeners that model has been loaded or changed.
 
     procedure UpdateVals( time: double; updatedVals: array of double);
@@ -86,7 +88,7 @@ end;
 // Grab SBML model information when notified by model of change:
 procedure TControllerMain.SBMLLoaded();
 begin
-console.log(' In TControllerMain.SBMLLoaded()');
+//console.log(' In TControllerMain.SBMLLoaded()');
   self.modelLoaded := true;
   self.setUpSimulation();
   self.ModelUpdated();
@@ -103,10 +105,11 @@ procedure TControllerMain.UpdateVals( time: double; updatedVals: array of double
 // Sendout notification model has been updated:
 procedure TControllerMain.ModelUpdated();
   begin
+  console.log(' TControllerMain.ModelUpdated');
     if Assigned(FModelUpdate) then
        FModelUpdate(self.sbmlmodel);
-    console.log(' In TControllerMain.ModelUpdated()');
-
+    if Assigned(FModelUpdate2) then
+       FModelUpdate2(self.sbmlmodel);
   end;
 
   // Network has changed, update model
@@ -275,9 +278,8 @@ begin
   begin
     // Check if sbmlmodel already created, if so, destroy before creating ?
     self.sbmlmodel := TModel.create();
-    self.sbmlmodel.OnPing := SBMLLoaded; // Register callback function
+    self.sbmlmodel.OnPing := self.SBMLLoaded; // Register callback function
     SBMLReader := TSBMLRead.create(sbmlmodel, self.sbmlText );// Process text with libsbml.js
-    SBMLReader.OnPing := networkController.SBMLUpdate;
     // Register callback function so that network viewer can be updated.
   end
   else showMessage ('SBML text empty.');
