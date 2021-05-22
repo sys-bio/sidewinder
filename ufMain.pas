@@ -435,6 +435,7 @@ procedure TMainForm.PingSBMLLoaded(newModel:TModel);
 begin
   model := newModel;
   paramAddSliderBtn.visible := true;
+ // self.NetworkController.SBMLUpdate(newModel);
   //  updatePlots() <-- Check if plot species are no longer in model.
 end;
 
@@ -617,21 +618,24 @@ begin
   origin.Y := 0.0;
   self.mainController := TControllerMain.Create();
   self.mainController.setOnline(false);
-  self.mainController.OnUpdate := self.getVals; // notify when new results
-  self.mainController.OnModelUpdate := self.PingSBMLLoaded;
   onLineSimButton.font.color := clred;
   onLineSimButton.caption := 'Simulation: Offline';
   self.mainController.setODEsolver;
   // xscaleHeight  := round(0.15* plotPB1.Height);   // make %15 of total height  get rid of
   currentGeneration := 0;
   network := TNetwork.create('testNetwork');
-  networkController := TController.create(network);
-  networkController.OnNetworkUpdate := self.mainController.networkUpdated;
-  networkCanvas := TNetworkCanvas.create(network);
-  networkController.networkCanvas := networkCanvas;
-  networkCanvas.bitmap.Height := networkPB1.Height;
-  networkCanvas.bitmap.width := networkPB1.width;
+  self.networkController := TController.create(network);
+  self.networkCanvas := TNetworkCanvas.create(network);
+  self.networkController.networkCanvas := networkCanvas;
+  self.networkCanvas.bitmap.Height := networkPB1.Height;
+  self.networkCanvas.bitmap.width := networkPB1.width;
   LeftWPanel.color := clWhite;
+  // Notification of changes:
+  self.mainController.OnSimUpdate := self.getVals; // notify when new results
+  self.mainController.OnModelUpdate := self.PingSBMLLoaded;
+  self.networkController.OnNetworkUpdate := self.mainController.networkUpdated;
+  self.mainController.OnModelUpdate2 := self.networkController.SBMLUpdate;
+
 
 end;
 
