@@ -96,7 +96,7 @@ begin
           else
             self.eval(newTime, s);
         end;
-end
+end;
                              // want to use updated time
 procedure  TSimulationJS.eval ( newTime: double; s : array of double );
  var i, j: Integer;
