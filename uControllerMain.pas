@@ -102,7 +102,7 @@ procedure TControllerMain.UpdateVals( time: double; updatedVals: array of double
      FUpdate(time, updatedVals);
  end;
 
-// Sendout notification model has been updated:
+// Sendout notification that model has been updated:
 procedure TControllerMain.ModelUpdated();
   begin
   console.log(' TControllerMain.ModelUpdated');
@@ -202,7 +202,6 @@ var
   odeFormat: TFormatODEs;
 begin
   ODEready := false;
-  self.stepSize := self.WebTimer1.Interval * 0.001; // 1 sec = 1000 msec
   odeFormat := TFormatODEs.create(sbmlmodel);
   // Run Simulation using info from odeFormat:
   odeFormat.buildFinalEqSet();
@@ -218,20 +217,16 @@ begin
   runSim := TSimulationJS.create(runTime, stepSize, length(self.SBMLmodel.getS_Vals), length(self.SBMLmodel.getP_Vals()), odeEqs, solverUsed);
   runSim.OnUpdate := self.getVals; // register callback function.
   runSim.p := self.SBMLmodel.getP_Vals();
-  currTime := 0;
-  if solverUsed = LSODAS then
-    runSim.eval2(currTime, self.SBMLmodel.getS_Vals)
-  else
-    runSim.eval(currTime, self.SBMLmodel.getS_Vals);
+  self.currTime := 0;
   ODEready := true;
+  self.UpdateSimulation;
 end;
 
 
-procedure TControllerMain.UpdateSimulation();  // Move most of this to TSimulationJS class
+procedure TControllerMain.UpdateSimulation();
 begin
-  WebTimer1.enabled := true;
-  //console.log('Cur time: ',self.currTime);
-  stepSize := self.WebTimer1.Interval * 0.001; // 1 sec = 1000 msec
+  console.log('Cur time: ',self.currTime);
+  self.stepSize := self.WebTimer1.Interval * 0.001; // 1 sec = 1000 msec
   if ODEready = true then
     begin
       runSim.setStepSize(stepSize);
@@ -240,19 +235,13 @@ begin
           runSim.p := self.SBMLmodel.getP_Vals; // Update parameters ...
           self.paramUpdated := false;
         end;
-      // Get last time and s values and pass into eval2:
-      if length(self.SBMLmodel.getS_Vals) > 0 then
-        begin
-          if solverUsed = LSODAS then
-            runSim.eval2(currTime, self.SBMLmodel.getS_Vals)
-          else
-            runSim.eval(currTime, self.SBMLmodel.getS_Vals);
-        end;
+      self.runSim.nextEval(self.currTime, self.SBMLmodel.getS_Vals);
     end
     // else error msg needed?
   else
     self.setupSimulation();
 end;
+
 
 procedure TControllerMain.stopTimer();
 begin

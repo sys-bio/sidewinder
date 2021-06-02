@@ -26,10 +26,11 @@ type
     p : TDoubleDynArray;   // System/Model Parameters
     constructor Create ( runTime, nStepSize:double; ny, np :Integer; newList: String; solver:ODESolver ); Overload ;
     procedure setODEsolver(solverToUse: ODESolver);
+    procedure nextEval(newTime: double; s: array of double; newPVals: array of double);
     procedure eval (newTime: double; s: array of double) ;
     procedure eval2 ( time:double; s: array of double);
     property OnUpdate: TUpdateValEvent read FUpdate write FUpdate;
-    { Triggers the event if anything is registered }
+    { Notify listener of updated values }
     procedure updateVals(time:double; updatedVals: array of double);
     procedure setStepSize(newStep: double);
     function getStepSize(): double;
@@ -82,6 +83,20 @@ begin
    end;
   end;
 end;
+
+procedure TSimulationJS.nextEval(newTime: double; s: array of double; newPVals: array of double);
+begin
+      self.setStepSize(self.step);
+      self.p := newPVals;
+      // Get last time and s values and pass into eval2:
+      if length(s) > 0 then
+        begin
+          if self.solverUsed = LSODAS then
+            self.eval2(newTime, s)
+          else
+            self.eval(newTime, s);
+        end;
+end
                              // want to use updated time
 procedure  TSimulationJS.eval ( newTime: double; s : array of double );
  var i, j: Integer;
