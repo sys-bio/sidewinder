@@ -232,10 +232,10 @@ begin
       runSim.setStepSize(stepSize);
       if self.paramUpdated then
         begin
-          runSim.p := self.SBMLmodel.getP_Vals; // Update parameters ...
+         // runSim.p := self.SBMLmodel.getP_Vals; // Update parameters ...
           self.paramUpdated := false;
         end;
-      self.runSim.nextEval(self.currTime, self.SBMLmodel.getS_Vals);
+      self.runSim.nextEval(self.currTime, self.SBMLmodel.getS_Vals, self.SBMLmodel.getP_Vals);
     end
     // else error msg needed?
   else
