@@ -564,9 +564,10 @@ end;
 procedure TController.SBMLUpdate(SBMLModel: TModel);
 begin
   // TODO
-
+   // Note: need to check that infinite loop created with
+   //    network update causes model to update which causes network to update ...
   if SBMLModel.getSpeciesNumb >0 then
-    console.log('First species: ',SBMLModel.getSBMLSpecies(0).getID);
+    console.log('TController.SBMLUpdate, First species: ',SBMLModel.getSBMLSpecies(0).getID);
 
 end;
 
