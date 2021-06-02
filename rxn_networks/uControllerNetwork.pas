@@ -77,7 +77,7 @@ type
 
     property OnNetworkUpdate: TNetworkChangeEvent read FNetworkUpdate write FNetworkUpdate;
     procedure networkUpdate(); // Notify listener that Network has changed (Update model).
-    procedure SBMLUpdate(SBMLModel: TModel);
+    procedure SBMLUpdated(SBMLModel: TModel);
     constructor Create(network: TNetwork);
   end;
 
@@ -561,7 +561,7 @@ begin
   end;
 end;
 
-procedure TController.SBMLUpdate(SBMLModel: TModel);
+procedure TController.SBMLUpdated(SBMLModel: TModel);
 begin
   // TODO
    // Note: need to check that infinite loop created with
