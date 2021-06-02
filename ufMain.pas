@@ -570,7 +570,7 @@ begin
       // get slider parameter position in p_vals array
       self.MainController.stopTimer;
       self.model.changeParamVal(p, newPVal);
-      networkController.SBMLUpdate(self.model);
+      networkController.SBMLUpdated(self.model);
       self.MainController.startTimer;
       self.sliderPTBLabelAr[i].caption := self.model.getP_Names[self.sliderParamAr[i]] + ': '
         + FloatToStr(self.model.getP_Vals[self.sliderParamAr[i]]);
@@ -630,11 +630,14 @@ begin
   self.networkCanvas.bitmap.Height := networkPB1.Height;
   self.networkCanvas.bitmap.width := networkPB1.width;
   LeftWPanel.color := clWhite;
+
   // Notification of changes:
-  self.mainController.OnSimUpdate := self.getVals; // notify when new results
+  self.mainController.OnSimUpdate := self.getVals; // notify when new Sim results
   self.mainController.OnModelUpdate := self.PingSBMLLoaded;
   self.networkController.OnNetworkUpdate := self.mainController.networkUpdated;
-  self.mainController.OnModelUpdate2 := self.networkController.SBMLUpdate;
+   // Notify main controller when network has changed.
+  self.mainController.OnModelUpdate2 := self.networkController.SBMLUpdated;
+    // Notify network viewer that model changed.
 
 
 end;
