@@ -166,7 +166,7 @@ type
     fileName: string;
     graphBitmap1: TBitmap; // get rid of
     maxYValueAr: array of Integer; // max Y screen dimension for each plot
-    currentGeneration: Integer;
+    currentGeneration: Integer; // Used by plots as current x axis point
     plotSpeciesForm: TSpeciesSWForm;
     plotSpecies: array of TSpeciesAr; // species to graph for each plot
     plotsPBAr: array of TWebPaintBox; // Plot paint boxes
