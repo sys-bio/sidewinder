@@ -225,7 +225,7 @@ end;
 
 procedure TControllerMain.UpdateSimulation();
 begin
-  console.log('Cur time: ',self.currTime);
+  //console.log('Cur time: ',self.currTime);
   self.stepSize := self.WebTimer1.Interval * 0.001; // 1 sec = 1000 msec
   if ODEready = true then
     begin

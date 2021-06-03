@@ -47,8 +47,8 @@ begin
   self.np:= np;
   self.eqList:= newList;
   // TEST string for LSODA:
-  lsodaStr:= 'let dydt_s = pas.uVector.TVector.$create("create$1",[s.length]);';
-  lsodaStr:= lsodaStr + ' dydt_s.setVal(2, (p[0] * s[0]));dydt_s.setVal(1, ((-1)* (p[0] * s[0]))); return dydt_s ;';
+ // lsodaStr:= 'let dydt_s = pas.uVector.TVector.$create("create$1",[s.length]);';
+ // lsodaStr:= lsodaStr + ' dydt_s.setVal(2, (p[0] * s[0]));dydt_s.setVal(1, ((-1)* (p[0] * s[0]))); return dydt_s ;';
   //self.LSODAeq:= lsodaStr;
   self.LSODAeq:= newList;
 
