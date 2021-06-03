@@ -31,7 +31,6 @@ type
     p_Names: array of String;//Same size as p_Vals,
     p_NameValAr: TVarNameValAr;// Holds current param name/value, changes, Includes compartments and boundary species.
     FPing: TPingEvent;// Used to send sbml info to listener once asynchronous read done.
-  //  FPingAgain: TModelUpdateEvent;// Used to send sbml info to another listener once model updated.
     procedure fillSpeciesArray();
     procedure fillParameterArray();
 
