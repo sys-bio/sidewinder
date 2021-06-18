@@ -13,7 +13,8 @@ unit uNetwork;
 interface
 
 
-Uses SysUtils, Classes, Types, libthreejs, WEBLib.Graphics, Math, WEBLib.Utils, WEBLib.JSON, uNetworkTypes;
+Uses SysUtils, Classes, Types, libthreejs, WEBLib.Graphics, Math, WEBLib.Utils,
+     WEBLib.JSON, System.Generics.Collections, uNetworkTypes;
 
 const
   // The following constant is the distance between the outer
@@ -114,6 +115,7 @@ type
   TNetwork = class (TObject)
     private
       FNetworkEvent: TNetworkEvent;
+//      FNetworkEventList: TList<TNetworkEvent>;
     public
        id : string;
        nodes : TListOfNodes;
@@ -151,6 +153,7 @@ type
        function    getCurrentState : TNetworkSavedState;
        procedure   loadState (networkState : TNetworkSavedState);
        property OnNetworkEvent: TNetworkEvent read FNetworkEvent write FNetworkEvent;
+   //    procedure OnNetworkEventAdd(newListener: TNetworkEvent);
        procedure networkEvent(); // Notify listener that Network has changed.
        constructor Create (id : string);
   end;
@@ -290,13 +293,27 @@ end;
 constructor TNetwork.create (id : string);
 begin
   self.id := id;
+ // FNetworkEventList := TList<TNetworkEvent>.create;
 end;
 
-procedure TNetwork.networkEvent(); // Notify listener that Network has changed.
+procedure TNetwork.networkEvent();
+var
+  i: TNetworkEvent; // Notify listener that Network has changed.
 begin
-    if Assigned(FNetworkEvent) then
-      FNetworkEvent();
+  if Assigned(FNetworkEvent) then
+    FNetworkEvent();
+
+ { for i in self.FNetworkEventList do
+  begin
+    if Assigned(i) then    // if statement not really necessary
+      i;
+  end; }
 end;
+
+{procedure TNetwork.OnNetworkEventAdd(newListener: TNetworkEvent);
+begin
+  self.FNetworkEventList.add(newListener);
+end;  }
 
 procedure TNetwork.loadModel (modelStr : string);
 var JSONRoot, JSONValue1, JSONNodeArray, JSONReactionArray : TJSONValue;

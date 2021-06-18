@@ -5,14 +5,14 @@ interface
 uses SysUtils, Classes, System.UITypes, contnrs, Types, WebLib.ExtCtrls,
   WEBLib.Utils, WEBLib.Buttons, WEBLib.Graphics, WEBLib.Controls,
   Vcl.StdCtrls, WEBLib.StdCtrls, uNetwork, Dialogs, uSelectedObjects, Math,
-  uNetworkCanvas, uModel;
+  uNetworkCanvas,uModel;
 
 const
   NOT_SELECTED = -1;
 
 type
   TStackOfSavedStates = array of TNetworkSavedState;
-  TNetworkChangeEvent = procedure(updatedNetwork: TNetwork) of object; // Network has been changed.
+ // TNetworkChangeEvent = procedure(updatedNetwork: TNetwork) of object; // Network has been changed.
 
   TMouseStatus = (sSelect, sAddNode, sAddUniUni, sAddUniBi, sAddBiUni, sAddBiBi,
     sMouseDown, sMoveCentroid, sSelectingBox);
@@ -51,7 +51,9 @@ type
     mouseDownPressed: boolean;
 
     networkCanvas : TNetworkCanvas;
-    FNetworkUpdate: TNetworkChangeEvent;
+   // FNetworkUpdate: TNetworkChangeEvent;
+
+    sbmlModel: TModel;
   public
     procedure loadModel(modelStr: string);
     procedure setAddNodeStatus;
@@ -75,9 +77,10 @@ type
     procedure OnMouseMove(Sender: TObject; Shift: TShiftState; x, y: double);
     procedure OnMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; x, y: double);
 
-    property OnNetworkUpdate: TNetworkChangeEvent read FNetworkUpdate write FNetworkUpdate;
-    procedure networkUpdate(); // Notify listener that Network has changed (Update model).
-    procedure SBMLUpdated(SBMLModel: TModel);
+   // property OnNetworkUpdate: TNetworkChangeEvent read FNetworkUpdate write FNetworkUpdate;  // Not needed
+  //  procedure networkUpdate(); // Notify listener that Network has changed (Update model). <-- Remove, just have TNetwork notify
+    procedure SBMLUpdated(updatedModel: TModel);
+
     constructor Create(network: TNetwork);
   end;
 
@@ -118,7 +121,7 @@ begin
   undoStack := TNetworkStack.Create;
 
   self.network := network;
-  self.network.OnNetworkEvent := self.networkUpdate;
+  //self.network.OnNetworkEvent := self.networkUpdate;
   mStatus := sSelect;
   srcNode := NOT_SELECTED;
   destNode := NOT_SELECTED;
@@ -181,12 +184,12 @@ begin
   network.loadModel(modelStr); // JSON format.
 end;
 
-procedure TController.networkUpdate(); // Notify listeners of change.
+{procedure TController.networkUpdate(); // Notify listeners of change.
 begin
     if Assigned(FNetworkUpdate) then
       FNetworkUpdate(self.network);
 end;
-
+  }
 procedure TController.setSelectStatus;
 begin
   mStatus := sSelect;
@@ -561,13 +564,15 @@ begin
   end;
 end;
 
-procedure TController.SBMLUpdated(SBMLModel: TModel);
+
+//procedure TController.SBMLUpdated(SBMLModel: TModel);
+procedure TController.SBMLUpdated(updatedModel: TModel);
 begin
-  // TODO
+  // TODO : update Network to reflect updated model.
    // Note: need to check that infinite loop created with
    //    network update causes model to update which causes network to update ...
-  if SBMLModel.getSpeciesNumb >0 then
-    console.log('TController.SBMLUpdate, First species: ',SBMLModel.getSBMLSpecies(0).getID);
+  if updatedModel.getSpeciesNumb >0 then
+    console.log('Network: TController.SBMLUpdate, First species: ',updatedModel.getSBMLSpecies(0).getID);
 
 end;
 

@@ -3,18 +3,19 @@ unit uControllerMain;
 interface
 
 uses System.SysUtils, Dialogs, uSimulation, uModel, uSBMLClasses, uODE_FormatUtility,
-     WebLib.Forms, WEBLib.ExtCtrls, Web, uSBMLReader, uControllerNetwork, uSBMLWriter,
+     WebLib.Forms,{ WEBLib.ExtCtrls,} Web, uSBMLReader, uControllerNetwork, uSBMLWriter,
      uNetwork, uSidewinderTypes;
 
 type
  TUpdateSimEvent = procedure(time:double; updatedVals: array of double) of object;
  // Let listeners know of new simulation update event.
- TModelUpdateEvent = procedure(updatedModel: TModel) of object; // model has been loaded or updated
-
+  TUpdateModelEvent = procedure(model: TModel) of object;
+ 
  TControllerMain = class
   private
     sbmlText: String;
     sbmlmodel: TModel;
+    writeSBMLFileName: String;
     numbRxns: Integer;
     modelLoaded: Boolean;
     solverUsed: ODEsolver;
@@ -25,22 +26,19 @@ type
     currTime: Double;
     online: Boolean; // Simulation running
     ODEready: Boolean; // TRUE: ODE solver is setup.
-    WebTimer1: TWebTimer;
+    networkUpdate: Boolean; // Use to prevent circular update when network is changed.
     FUpdate: TUpdateSimEvent;// Send Updated Sim values (time,species amts) to listeners.
-    FModelUpdate: TModelUpdateEvent; // Notify ufMain that sbml model loaded/changed.
-    FModelUpdate2: TModelUpdateEvent; // Notify uControllerNetwork that model loaded/changed.
-
-    procedure setupSimulation();
-    procedure startSimulation(odeEqs: String; odeFormat: TFormatODEs);
-    procedure WebTimer1Timer(Sender: TObject);
-
+    FSBMLUpdate: TUpdateModelEvent;
+    currNetworkCtrl : TController;
+    procedure createSimulation();
   public
     paramUpdated: Boolean; // true if a parameter val has been updated.
-    constructor Create();
+    constructor Create(networkCtrl: TController);
     procedure SBMLLoaded(); // Notify when done loading libSBMLjs
     procedure setODESolver();
     function getODESolver(): ODEsolver;
     function getModel: TModel;
+    procedure setModel(newModel: TModel);
     procedure SetRunTime(newTime: Double);
     function GetRunTime(): Double;
     function GetStepSize(): Double;
@@ -52,17 +50,16 @@ type
     function IsModelLoaded(): Boolean;
     procedure SetTimerEnabled(bTimer: Boolean);
     procedure SetTimerInterval(nInterval: Integer);
-    procedure updateSimulation();
-    procedure loadSBML(sbmlStr: String; networkController: TController );
+    procedure loadSBML(sbmlStr: String);
     procedure saveSBML(fileName: String);
+    procedure modelWritten(modelStr: String); // SBML string created and ready to use.
+    procedure changeParameterVal(pos: Integer; newVal: Double);
     procedure stopTimer();
     procedure startTimer();
-    procedure networkUpdated(updatedNetwork: TNetwork); // Network has changed, update model
+    function getSimulation(): TSimulationJS;
+   procedure networkUpdated(); // Network has changed, update model
     property OnSimUpdate: TUpdateSimEvent read FUpdate write FUpdate;
-    property OnModelUpdate: TModelUpdateEvent read FModelUpdate write FModelUpdate;
-    property OnModelUpdate2: TModelUpdateEvent read FModelUpdate2 write FModelUpdate2;
-    procedure ModelUpdated(); // Ping listeners that model has been loaded or changed.
-
+    property OnSBMLUpdate: TUpdateModelEvent read FSBMLUpdate write FSBMLUpdate;
     procedure UpdateVals( time: double; updatedVals: array of double);
             // Send new values to listeners.
     procedure getVals(newTime: Double; newVals: array of Double);
@@ -70,30 +67,42 @@ type
  end;
 
 implementation
-constructor TControllerMain.Create();
+constructor TControllerMain.Create(networkCtrl: TController);
 begin
   self.sbmlText := '';
   self.modelLoaded := false;
   self.currTime := 0;
   self.stepSize := 0.1; // 100 msec
   self.runTime := 500; // sec
-  self.WebTimer1 := TWebTimer.Create(nil);
-  self.WebTimer1.OnTimer := WebTimer1Timer;
-  self.WebTimer1.Enabled := false;
-  self.WebTimer1.Interval := 100;  // default, msec
   self.online := false;
-
+  self.networkUpdate := false;
+  self.sbmlmodel := TModel.create();
+  self.sbmlmodel.OnPing := self.SBMLLoaded;  // Register callback function
+  //console.log('In TControllerMain.Create, adding networkController');
+  self.currNetworkCtrl := networkCtrl;
+  self.OnSBMLUpdate := networkCtrl.SBMLUpdated;
+  networkCtrl.network.OnNetworkEvent := self.networkUpdated;
 end;
 
 // Grab SBML model information when notified by model of change:
 procedure TControllerMain.SBMLLoaded();
 begin
-//console.log(' In TControllerMain.SBMLLoaded()');
   self.modelLoaded := true;
-  self.setUpSimulation();
-  self.ModelUpdated();
+  if Assigned(FSBMLUpdate) then
+     FSBMLUpdate(self.sbmlmodel);
+
+  self.createSimulation;
 end;
 
+procedure TControllerMain.createSimulation();
+begin
+  if self.runSim <> nil then
+  begin
+    self.runSim.Free;
+  end;
+  self.runSim := TSimulationJS.create(self.runTime, self.stepSize, self.SBMLmodel, self.solverUsed);
+  self.runSim.OnUpdate := self.getVals; // register callback function.
+end;
 
 // return current time of run and variable values to listener:
 procedure TControllerMain.UpdateVals( time: double; updatedVals: array of double);
@@ -102,21 +111,14 @@ procedure TControllerMain.UpdateVals( time: double; updatedVals: array of double
      FUpdate(time, updatedVals);
  end;
 
-// Sendout notification that model has been updated:
-procedure TControllerMain.ModelUpdated();
-  begin
-  console.log(' TControllerMain.ModelUpdated');
-    if Assigned(FModelUpdate) then
-       FModelUpdate(self.sbmlmodel);
-    if Assigned(FModelUpdate2) then
-       FModelUpdate2(self.sbmlmodel);
-  end;
-
   // Network has changed, update model
-procedure TControllerMain.networkUpdated(updatedNetwork: TNetwork);
+procedure TControllerMain.networkUpdated();
 begin
-  // TODO    Update Model to reflect any Network changes.
+  // TODO: Only make update when user wants to 'model save' or before 'start simulation'.
   console.log('Network changed');
+  self.networkUpdate := true;      // after model updated, change to false.
+   // TODO    Update Model to reflect any Network changes, may not go here since only update in two cases.:
+   // generateModel(self.currNetworkCtrl.network): TModel;    <-- Return new Model.
 end;
 
 procedure TControllerMain.setODESolver();
@@ -141,6 +143,11 @@ begin
   Result := self.SBMLModel;
 end;
 
+procedure TControllerMain.setModel(newModel: TModel);
+begin
+  self.SBMLModel := newModel;
+end;
+
 function TControllerMain.GetStepSize(): Double;
 begin
   Result := self.StepSize;
@@ -153,11 +160,12 @@ end;
 
 function TControllerMain.IsOnline(): Boolean;
 begin
-  Result := self.online;
+  Result := self.runSim.IsOnline;
 end;
 procedure TControllerMain.SetOnline(bOnline: Boolean);
 begin
-  self.online := bOnline;
+  if self.runSim <> nil then
+    self.runSim.SetOnline(bOnline);
 end;
 
 function TControllerMain.getCurrTime: Double;
@@ -178,12 +186,14 @@ end;
 
 procedure TControllerMain.SetTimerEnabled(bTimer: Boolean);
 begin
-  self.WebTimer1.Enabled := bTimer;
+  self.runSim.SetTimerEnabled(bTimer);
+  if bTimer then self.runSim.updateSimulation();
+
 end;
 
 procedure TControllerMain.SetTimerInterval(nInterval: Integer);
 begin
-  self.WebTimer1.Interval := nInterval;
+  self.runSim.SetTimerInterval(nInterval);
 end;
 
 procedure TControllerMain.SetRunTime(newTime: Double);
@@ -196,60 +206,21 @@ begin
   Result := self.runTime;
 end;
 
-procedure TControllerMain.setupSimulation();
-var
-  i: Integer;
-  odeFormat: TFormatODEs;
+function TControllerMain.getSimulation(): TSimulationJS;
 begin
-  ODEready := false;
-  odeFormat := TFormatODEs.create(sbmlmodel);
-  // Run Simulation using info from odeFormat:
-  odeFormat.buildFinalEqSet();
-  if self.getODESolver = LSODAS then
-    self.startSimulation(odeFormat.getODEeqSet2(), odeFormat)
-  else
-    self.startSimulation(odeFormat.getODEeqSet(), odeFormat);
-end;
-
-
-procedure TControllerMain.startSimulation(odeEqs: String; odeFormat: TFormatODEs);
-begin
-  runSim := TSimulationJS.create(runTime, stepSize, length(self.SBMLmodel.getS_Vals), length(self.SBMLmodel.getP_Vals()), odeEqs, solverUsed);
-  runSim.OnUpdate := self.getVals; // register callback function.
-  runSim.p := self.SBMLmodel.getP_Vals();
-  self.currTime := 0;
-  ODEready := true;
-  self.UpdateSimulation;
-end;
-
-
-procedure TControllerMain.UpdateSimulation();
-begin
-  //console.log('Cur time: ',self.currTime);
-  self.stepSize := self.WebTimer1.Interval * 0.001; // 1 sec = 1000 msec
-  if ODEready = true then
-    begin
-      runSim.setStepSize(stepSize);
-      if self.paramUpdated then
-        begin
-          self.paramUpdated := false;
-        end;
-      self.runSim.nextEval(self.currTime, self.SBMLmodel.getS_Vals, self.SBMLmodel.getP_Vals);
-    end
-    // else error msg needed?
-  else
-    self.setupSimulation();
+  Result := self.runSim;
 end;
 
 
 procedure TControllerMain.stopTimer();
 begin
-  self.WebTimer1.enabled := false;
+  self.runSim.stopTimer;
 end;
 
 procedure TControllerMain.startTimer();
 begin
-  self.WebTimer1.enabled := true;
+  self.runSim.startTimer;
+ // console.log('TControllerMain.startTimer(');
 end;
 
 procedure TControllerMain.getVals(newTime: Double; newVals: array of Double);
@@ -258,39 +229,39 @@ begin
   self.UpdateVals(newTime, newVals); // pass on to listeners.
 end;
 
-procedure TControllerMain.loadSBML(sbmlStr: String ;networkController: TController );
+procedure TControllerMain.loadSBML(sbmlStr: String );
 var SBMLReader: TSBMLRead;
 begin
   sbmlText := sbmlStr; // store the sbml model as text.
   if sbmlText <> '' then
   begin
-    // Check if sbmlmodel already created, if so, destroy before creating ?
-    self.sbmlmodel := TModel.create();
-    self.sbmlmodel.OnPing := self.SBMLLoaded; // Register callback function
     SBMLReader := TSBMLRead.create(sbmlmodel, self.sbmlText );// Process text with libsbml.js
-    // Register callback function so that network viewer can be updated.
   end
   else showMessage ('SBML text empty.');
 
 end;
 
 procedure TControllerMain.saveSBML(fileName: String);
-var sbmlStr: String;
-    writerSBML: TSBMLWriter;
+var writerSBML: TSBMLWriter;
 begin
-
-  sbmlStr := '';
-  // TODO
- // writerSBML := TSBMLWriter.create(self.sbmlmodel);
- // sbmlStr := writerSBML.getSBMLStr();   // need to be notified, async
-
+  self.writeSBMLFileName := fileName;
+  if self.sbmlmodel <> nil then
+  begin
+    writerSBML := TSBMLWriter.create();
+    writerSBML.OnNotify := self.modelWritten;
+    writerSBML.buildSBMLString(self.sbmlmodel);
+  end;
 end;
 
-procedure TControllerMain.WebTimer1Timer(Sender: TObject);
+procedure TControllerMain.modelWritten(modelStr: String);
+ begin
+   //console.log('Here is sbml written: ',modelStr);
+   Application.DownloadTextFile(modelStr, self.writeSBMLFileName);
+ end;
+
+procedure TControllerMain.changeParameterVal(pos: Integer; newVal: Double);
 begin
-  self.updateSimulation();
-  if self.currTime > runTime then
-    self.WebTimer1.enabled := false;
+  self.sbmlmodel.changeParamVal(pos, newVal);
 end;
 
 end.

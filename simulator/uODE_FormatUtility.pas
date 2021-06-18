@@ -164,7 +164,7 @@ end;
                    begin
                     // leave str alone:
                      tmpStoE:= tmpStoE + tmpCatStr + names[i];
-                     console.log('No match, string: ',tmpStoE);
+                  //   console.log('No match, string: ',tmpStoE);
                    end;
 
                 end
@@ -478,8 +478,8 @@ end;
    odeEqSet2:= odeEqSet2 + ' return dydt_s;';  // Add eqs LSODA list.
 //   console.log('*** Final odeEqSetVal: *****');
 //   console.log(odeEqSet);
-   console.log(' ** LSODA eqs: **');
-   console.log(odeEqSet2);
+ //  console.log(' ** LSODA eqs: **');
+ //  console.log(odeEqSet2);
  end;
 
  function TFormatODEs.spBoundaryCondition(speciesId: String): boolean;

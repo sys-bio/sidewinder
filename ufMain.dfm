@@ -197,6 +197,20 @@ object mainForm: TmainForm
       WidthPercent = 100.000000000000000000
       OnClick = btnSimpleClick
     end
+    object SaveSBMLButton: TWebButton
+      Left = 544
+      Top = 10
+      Width = 96
+      Height = 32
+      Caption = 'Save SBML'
+      ChildOrder = 12
+      ElementClassName = 'btn btn-primary btn-sm'
+      ElementFont = efCSS
+      HeightStyle = ssAuto
+      HeightPercent = 100.000000000000000000
+      WidthPercent = 100.000000000000000000
+      OnClick = SaveSBMLButtonClick
+    end
   end
   object bottomWPanel: TWebPanel
     Left = 0

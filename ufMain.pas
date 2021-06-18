@@ -83,6 +83,7 @@ type
     netDrawScrollBarHoriz: TTMSFNCScrollBar;
     splitter: TWebSplitter;
     btnSimple: TWebButton;
+    SaveSBMLButton: TWebButton;
 
     procedure btnUniUniClick(Sender: TObject);
     procedure btnBiBiClick(Sender: TObject);
@@ -137,11 +138,12 @@ type
     procedure splitterMoved(Sender: TObject);
     procedure btnSimpleClick(Sender: TObject);
     procedure stepSizeEdit1Change(Sender: TObject);
+    procedure SaveSBMLButtonClick(Sender: TObject);
 
   private
     numbPlots: Integer; // Number of plots displayed
     numbSliders: Integer; // Number of parameter sliders
-    model: TModel;  // The sbml model
+
     procedure InitSimResultsTable(); // Init simResultsMemo.
     procedure addPlot(); // Add a plot
     procedure selectPlotSpecies(plotnumb: Integer);
@@ -190,7 +192,7 @@ type
 
     function ScreenToWorld(X, Y: Double): TPointF; // Network drawing panel
     function WorldToScreen(wx: Integer): Integer; // Network drawing panel
-    procedure PingSBMLLoaded(newModel:TModel); // Notify when done loading or model changes
+    procedure PingSBMLLoaded(); // Notify when done loading or model changes
     procedure getVals(newTime: Double; newVals: array of Double);
     // Get new values (species amt) from simulation run
 
@@ -198,7 +200,6 @@ type
 
 var
   mainForm: TMainForm;
-
   pixelStepAr: array of Integer; // pixel equiv of time (integration) step
   spSelectform: TSpeciesSWForm; // display speciecs select to plot radio group
 
@@ -335,9 +336,8 @@ begin
   s := getTestModel;
   SBMLmodelMemo.Lines.Text := s;
   SBMLmodelMemo.visible := true;
-  self.MainController.loadSBML(s, self.networkController);
-
-end;
+  self.MainController.loadSBML(s);
+ end;
 
 procedure TMainForm.btnUniBiClick(Sender: TObject);
 begin
@@ -353,6 +353,18 @@ procedure TMainForm.editNodeIdExit(Sender: TObject);
 begin
   networkController.setNodeId(editNodeId.Text);
   networkPB1.Invalidate;
+end;
+
+procedure TMainForm.SaveSBMLButtonClick(Sender: TObject);
+begin
+  fileName := InputBox('Save model to the downloads directory',
+    'Enter File Name:', 'newSBML.xml');
+  if fileName <> '' then
+    begin
+      mainController.saveSBML(fileName);
+    end
+  else
+    Showmessage('Save cancelled');
 end;
 
 procedure TMainForm.SBMLloadButtonClick(Sender: TObject);
@@ -372,7 +384,7 @@ begin
   SBMLmodelMemo.Lines.Text := AText;
   SBMLmodelMemo.visible := true;
   // Check if sbmlmodel already created, if so, destroy before creating ?
-  self.MainController.loadSBML(AText, self.networkController);
+  self.MainController.loadSBML(AText);
 end;
 
 procedure TMainForm.onLineSimButtonClick(Sender: TObject);
@@ -418,7 +430,6 @@ begin
           end;
       self.InitSimResultsTable();  // Set table of Sim results.
       MainController.SetTimerEnabled(true); // Turn on web timer (Start simulation)
-      MainController.updateSimulation();
     end
   else
     begin
@@ -430,13 +441,14 @@ begin
     end;
 end;
 
-// Grab SBML model information when notified:
-procedure TMainForm.PingSBMLLoaded(newModel:TModel);
+procedure TMainForm.PingSBMLLoaded();
+var
+  i: Integer;
 begin
-  model := newModel;
+
   paramAddSliderBtn.visible := true;
- // self.NetworkController.SBMLUpdate(newModel);
-  //  updatePlots() <-- Check if plot species are no longer in model.
+  // 1. Update current slider?
+  //  2. updatePlots() <-- TODO: Check if plot species are no longer in model.
 end;
 
 procedure TMainForm.plotEditLBClick(Sender: TObject);
@@ -569,11 +581,10 @@ begin
         (sliderPHighAr[i] - sliderPLowAr[i]);
       // get slider parameter position in p_vals array
       self.MainController.stopTimer;
-      self.model.changeParamVal(p, newPVal);
-      networkController.SBMLUpdated(self.model);
+      self.MainController.changeParameterVal(p, newPVal);
       self.MainController.startTimer;
-      self.sliderPTBLabelAr[i].caption := self.model.getP_Names[self.sliderParamAr[i]] + ': '
-        + FloatToStr(self.model.getP_Vals[self.sliderParamAr[i]]);
+      self.sliderPTBLabelAr[i].caption := self.MainController.getModel.getP_Names[self.sliderParamAr[i]] + ': '
+        + FloatToStr(self.MainController.getModel.getP_Vals[self.sliderParamAr[i]]);
 
     end;
 
@@ -616,27 +627,43 @@ begin
   self.zoomTrackBar.Position := 10;
   origin.X := 0.0;
   origin.Y := 0.0;
-  self.mainController := TControllerMain.Create();
-  self.mainController.setOnline(false);
-  onLineSimButton.font.color := clred;
-  onLineSimButton.caption := 'Simulation: Offline';
-  self.mainController.setODEsolver;
-  // xscaleHeight  := round(0.15* plotPB1.Height);   // make %15 of total height  get rid of
-  currentGeneration := 0;
-  network := TNetwork.create('testNetwork');
-  self.networkController := TController.create(network);
+  self.network := TNetwork.create('testNetwork');
+  self.networkController := TController.create(network);  // Move this inside of self.mainController
   self.networkCanvas := TNetworkCanvas.create(network);
   self.networkController.networkCanvas := networkCanvas;
   self.networkCanvas.bitmap.Height := networkPB1.Height;
   self.networkCanvas.bitmap.width := networkPB1.width;
   LeftWPanel.color := clWhite;
 
+  self.mainController := TControllerMain.Create(self.networkController);
+  self.mainController.setOnline(false);
+  onLineSimButton.font.color := clred;
+  onLineSimButton.caption := 'Simulation: Offline';
+  self.mainController.setODEsolver;
+  // xscaleHeight  := round(0.15* plotPB1.Height);   // make %15 of total height  get rid of
+  currentGeneration := 0;
+
+  if self.mainController.getModel <> nil then
+  begin
+    self.mainController.getModel.OnPing2 := self.PingSBMLLoaded;
+
+  end
+  else
+  begin
+    ShowMessage('Blank model not created.');
+  end;
+
+  //self.model := TModel.create();  // Model to be used by all.
+  //self.model.OnPing2 := self.PingSBMLLoaded;
+  //self.mainController.setModel(self.model);
+  //self.networkController.setSBMLModel(self.model);
   // Notification of changes:
   self.mainController.OnSimUpdate := self.getVals; // notify when new Sim results
-  self.mainController.OnModelUpdate := self.PingSBMLLoaded;
-  self.networkController.OnNetworkUpdate := self.mainController.networkUpdated;
+  //self.mainController.OnModelUpdate := self.PingSBMLLoaded;
+  //self.networkController.OnNetworkUpdate := self.mainController.networkUpdated;
    // Notify main controller when network has changed.
-  self.mainController.OnModelUpdate2 := self.networkController.SBMLUpdated;
+  //self.mainController.OnModelUpdate2 := self.networkController.SBMLUpdated;
+  //self.model.OnPing3 := self.networkController.SBMLUpdated;
     // Notify network viewer that model changed.
 
 
@@ -673,9 +700,9 @@ begin
   simResultsMemo.Lines.Clear();
   simRTStr := ' Time (s) '; // generate coloumn headers:
 
-  for i := 0 to length(self.model.getS_Names) - 1 do
+  for i := 0 to length(self.mainController.getModel.getS_Names) - 1 do
     begin
-      simRTStr := simRTStr + ', ' + self.model.getS_Names()[i];
+      simRTStr := simRTStr + ', ' + self.mainController.getModel.getS_Names()[i];
     end;
   simResultsMemo.Lines.Add(simRTStr);
 end;
@@ -799,7 +826,7 @@ procedure TMainForm.selectPlotSpecies(plotnumb: Integer);
         // Add a plot with species list
         addingPlot := true;
         SetLength(plotSpecies, plotnumb);
-        SetLength(plotSpecies[plotnumb - 1], length(self.model.getS_Vals));
+        SetLength(plotSpecies[plotnumb - 1], length(self.mainController.getModel.getS_Vals));
       end
     else addingPlot := false;
 
@@ -819,7 +846,7 @@ procedure TMainForm.selectPlotSpecies(plotnumb: Integer);
 // async called OnCreate for TSpeciesSWForm
   procedure AfterCreate(AForm: TObject);
   begin
-    (AForm as TSpeciesSWForm).speciesList := self.model.getS_names;
+    (AForm as TSpeciesSWForm).speciesList := self.mainController.getModel.getS_names;
     (AForm as TSpeciesSWForm).fillSpeciesCG();
   end;
 
@@ -988,7 +1015,7 @@ var
 // async called OnCreate for TParamSliderSForm
   procedure AfterCreate(AForm: TObject);
   begin
-    (AForm as TParamSliderSForm).paramList := self.model.getP_Names;
+    (AForm as TParamSliderSForm).paramList := self.mainController.getModel.getP_Names;
     (AForm as TParamSliderSForm).fillParamRG();
   end;
 
@@ -1070,8 +1097,8 @@ var
   pName: String;
 begin
   rangeMult := 10; // default. 10
-  pName :=  self.model.getP_Names[self.sliderParamAr[sn]];
-  pVal := self.model.getP_Vals[self.sliderParamAr[sn]];
+  pName :=  self.mainController.getModel.getP_Names[self.sliderParamAr[sn]];
+  pVal := self.mainController.getModel.getP_Vals[self.sliderParamAr[sn]];
   self.sliderPTBLabelAr[sn].caption := pName + ': ' + FloatToStr(pVal);
   self.sliderPLowAr[sn] := 0;
   self.sliderPLLabelAr[sn].caption := FloatToStr(self.sliderPLowAr[sn]);

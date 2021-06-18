@@ -31,6 +31,8 @@ type
     p_Names: array of String;//Same size as p_Vals,
     p_NameValAr: TVarNameValAr;// Holds current param name/value, changes, Includes compartments and boundary species.
     FPing: TPingEvent;// Used to send sbml info to listener once asynchronous read done.
+    FPing2: TPingEvent;// Used to send sbml info to listener once asynchronous read done.
+    FPing3: TPingEvent;// Used to send sbml info to listener once asynchronous read done.
     procedure fillSpeciesArray();
     procedure fillParameterArray();
 
@@ -73,10 +75,11 @@ type
    function getReaction(i: integer): SBMLReaction;
 
    property OnPing: TPingEvent read FPing write FPing;
+   property OnPing2: TPingEvent read FPing2 write FPing2;
+   property OnPing3: TPingEvent read FPing3 write FPing3;
     { Triggers the event if anything is registered }
-   procedure SBML_LoadedEvent(); // SBML model loaded.
+   procedure SBML_UpdateEvent(); // SBML model updated.
    procedure testModelUpdate(); // check model update mechanism
-
 
  end;
 
@@ -104,19 +107,24 @@ begin
 end;
 
 // Notify others that model has been loaded/changed
-procedure TModel.SBML_LoadedEvent();
+procedure TModel.SBML_UpdateEvent();
  begin
    self.fillSpeciesArray;
    self.fillParameterArray;
    { Call the registerd event only if there is a listener }
    if Assigned(FPing) then
      FPing();
-
+   if Assigned(FPing2) then
+     FPing2();
+   if Assigned(FPing3) then
+     FPing3();
+    console.log('SBML_UpdateEvent: Model has been updated....');
  end;
 
  procedure TModel.setAnnotationStr(annotate:String);
  begin
   annotationStr:=annotate;
+  self.SBML_UpdateEvent;
  end;
 
  function TModel.getAnnotationStr():String;
@@ -426,6 +434,7 @@ begin
   if (Length(self.p_Vals) > (pos + 1)) and (pos >= 0) then
   begin
     self.p_Vals[pos] := newVal;
+
     Result := true;
   end
   else  Result := false;
@@ -434,8 +443,9 @@ end;
 procedure TModel.changeParamVal(pos: Integer; newVal: Double);
 begin
   self.p_Vals[pos] := newVal;
-
+  console.log('TModel.changeParamVal, pos: ',pos,', Value: ',newVal);
   // Other viewers update ?
+
 end;
 
 procedure TModel.testModelUpdate();
@@ -458,7 +468,7 @@ begin
 
     console.log('Formula: ',self.getReaction(0).getKineticLaw.getFormula());
     console.log('species: ',self.getReaction(0).getReactant(0).getId());
-    self.SBML_LoadedEvent();
+    self.SBML_UpdateEvent();
   end;
 
 

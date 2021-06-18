@@ -4,7 +4,8 @@ unit uSimulation;
 
 interface
 
- Uses Classes, Types, JS, Web, SysUtils, LSODA.test, adamsbdf, uVector;
+ Uses Classes, Types, JS, Web, SysUtils, LSODA.test, adamsbdf, uVector, uModel,
+     uODE_FormatUtility, WEBLib.ExtCtrls;
 
 type
   TUpdateValEvent = procedure(time:double; updatedVals: array of double) of object;
@@ -20,11 +21,19 @@ type
     runTime: double;    // Length of simulation.
     solverUsed: ODESolver;
     lode: TLsoda;       // LSODA solver
+    model: TModel;     // SBML model to simulate
+    WebTimer1: TWebTimer;
+    online: Boolean; // Simulation running
+    ODEready: Boolean; // TRUE: ODE solver is setup. NEEDED ??
     FUpdate: TUpdateValEvent;// Used to send Updated values (species amts) to listeners.
+    procedure WebTimer1Timer(Sender: TObject);
 
    public
     p : TDoubleDynArray;   // System/Model Parameters
-    constructor Create ( runTime, nStepSize:double; ny, np :Integer; newList: String; solver:ODESolver ); Overload ;
+    paramUpdated: Boolean; // true if a parameter val has been updated.
+
+    constructor Create ( runTime, nStepSize: double; newModel: TModel; solver: ODESolver ); Overload ;
+    //constructor Create ( runTime, nStepSize:double; ny, np :Integer; newList: String; solver:ODESolver ); Overload ;
     procedure setODEsolver(solverToUse: ODESolver);
     procedure nextEval(newTime: double; s: array of double; newPVals: array of double);
     procedure eval (newTime: double; s: array of double) ;
@@ -34,23 +43,33 @@ type
     procedure updateVals(time:double; updatedVals: array of double);
     procedure setStepSize(newStep: double);
     function getStepSize(): double;
+    procedure generateEquations(); // Take SBML model and generate eqs compatible for solver.
+    function IsOnline(): Boolean;
+    procedure SetOnline(bOnline: Boolean);
+    procedure SetTimerEnabled(bTimer: Boolean);
+    procedure SetTimerInterval(nInterval: Integer);
+    procedure stopTimer();
+    procedure startTimer();
+    procedure startSimulation();
+    procedure updateSimulation();
     procedure testLSODA();  // Solve test equations. All pascal code.
  end;
 
 implementation
 
-constructor TSimulationJS.Create ( runTime, nStepSize:double; ny, np : Integer; newList: String; solver:ODESolver ); Overload ;
-var lsodaStr: String;  // LSODA test string. can remove.
-
+constructor TSimulationJS.Create ( runTime, nStepSize: double; newModel: TModel; solver: ODESolver ); Overload ;
+//constructor TSimulationJS.Create (runTime, nStepSize:double; ny, np :Integer; newList: String; solver:ODESolver ); Overload ;
 begin
-  self.ny:= ny;
-  self.np:= np;
-  self.eqList:= newList;
-  // TEST string for LSODA:
- // lsodaStr:= 'let dydt_s = pas.uVector.TVector.$create("create$1",[s.length]);';
- // lsodaStr:= lsodaStr + ' dydt_s.setVal(2, (p[0] * s[0]));dydt_s.setVal(1, ((-1)* (p[0] * s[0]))); return dydt_s ;';
-  //self.LSODAeq:= lsodaStr;
-  self.LSODAeq:= newList;
+  self.WebTimer1 := TWebTimer.Create(nil);
+  self.WebTimer1.OnTimer := WebTimer1Timer;
+  self.WebTimer1.Enabled := false;
+  self.WebTimer1.Interval := 100;  // default, msec
+  self.online := false;
+  self.model := newModel;
+  self.ny := length(self.model.getS_Vals);
+  self.np := length(self.model.getP_Vals);
+  self.solverUsed:= solver;
+  self.generateEquations();
 
   setLength(self.p,self.np);
   setLength(self.dydt,self.ny);
@@ -62,7 +81,6 @@ begin
     self.runTime:= runTime
   else self.runTime:= 10;
 
-  self.solverUsed:= solver;
   self.time:= 0;
 
   // lsoda setup
@@ -82,20 +100,60 @@ begin
     this.lode.Setfcn (ODE_func2);
    end;
   end;
+
+end;
+
+procedure TSimulationJS.startSimulation();
+begin
+  self.p := self.model.getP_Vals();
+  self.ODEready := true;
+  self.updateSimulation;
+end;
+
+procedure TSimulationJS.updateSimulation();
+begin
+//console.log( 'In  TSimulationJS.updateSimulation');
+  if self.ODEready = true then
+    begin
+      self.setStepSize(self.WebTimer1.Interval * 0.001); // 1 sec = 1000 msec;
+      if self.paramUpdated then
+        begin
+          self.paramUpdated := false;
+        end;
+      self.nextEval(self.time, self.model.getS_Vals, self.model.getP_Vals);
+    end
+    // else error msg needed?
+  else
+    self.startSimulation();
+end;
+
+procedure TSimulationJS.generateEquations();
+var
+  i: Integer;
+  odeFormat: TFormatODEs;
+begin
+  //ODEready := false;
+  odeFormat := TFormatODEs.create(self.model);
+  // Run Simulation using info from odeFormat:
+  odeFormat.buildFinalEqSet();
+   if self.solverUsed = LSODAS then
+    self.LSODAeq := odeFormat.getODEeqSet2()
+  else
+    self.eqList := odeFormat.getODEeqSet();
 end;
 
 procedure TSimulationJS.nextEval(newTime: double; s: array of double; newPVals: array of double);
 begin
-      self.setStepSize(self.step);
-      self.p := newPVals;
-      // Get last time and s values and pass into eval2:
-      if length(s) > 0 then
-        begin
-          if self.solverUsed = LSODAS then
-            self.eval2(newTime, s)
-          else
-            self.eval(newTime, s);
-        end;
+  self.setStepSize(self.step);
+  self.p := newPVals;
+   // Get last time and s values and pass into eval2:
+  if length(s) > 0 then
+    begin
+      if self.solverUsed = LSODAS then
+        self.eval2(newTime, s)
+      else
+        self.eval(newTime, s);
+    end;
 end;
                              // want to use updated time
 procedure  TSimulationJS.eval ( newTime: double; s : array of double );
@@ -190,7 +248,6 @@ begin
 
 end;
 
-//function  TSimulationJS.eval2 ( time:double; s: array of double) : double;
 procedure  TSimulationJS.eval2 ( time:double; s: array of double);
  var i,j: Integer;
  var numSteps: Integer;
@@ -233,6 +290,7 @@ begin
   // return current time of run and variable values to listener:
 procedure TSimulationJS.UpdateVals( time: double; updatedVals: array of double);
  begin
+  // console.log('TSimulationJS.UpdateVals, time: ',time);
    if Assigned(FUpdate) then
      FUpdate(time, updatedVals);
  end;
@@ -252,6 +310,44 @@ function TSimulationJS.getStepSize(): double;
  begin
   Result:= self.step;
  end;
+
+function TSimulationJS.IsOnline(): Boolean;
+begin
+  Result := self.online;
+end;
+
+procedure TSimulationJS.SetOnline(bOnline: Boolean);
+begin
+  self.online := bOnline;
+end;
+
+procedure TSimulationJS.SetTimerEnabled(bTimer: Boolean);
+begin
+  self.WebTimer1.Enabled := bTimer;
+end;
+
+procedure TSimulationJS.SetTimerInterval(nInterval: Integer);
+begin
+  self.WebTimer1.Interval := nInterval;
+end;
+
+procedure TSimulationJS.stopTimer();
+begin
+  self.WebTimer1.enabled := false;
+end;
+
+procedure TSimulationJS.startTimer();
+begin
+  self.WebTimer1.enabled := true;
+end;
+
+procedure TSimulationJS.WebTimer1Timer(Sender: TObject);
+begin
+
+  self.updateSimulation();
+  if self.time > runTime then
+    self.WebTimer1.enabled := false;
+end;
 
 procedure TSimulationJS.testLSODA();
 
