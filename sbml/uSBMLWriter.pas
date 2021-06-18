@@ -3,7 +3,7 @@ interface
 uses Web, JS, uSBMLClasses, uSBMLClasses.rule, uModel;
 
 type
-  TSBMLWriteLoaded = procedure() of object;  // Notify when done loading
+  TSBMLWriteLoaded = procedure(SBMLStr: String) of object;  // Notify when done loading
 
   TSBMLWriter = class
   private
@@ -11,42 +11,57 @@ type
     sbmlModel: TModel;
     sbmlStr: String;
   public
-    constructor create(model: TModel );
+    constructor create();
+    procedure buildSBMLString(model: TModel);
     property OnNotify: TSBMLWriteLoaded read FNotify write FNotify;
-
-    function getSBMLStr(): String;
+    procedure SBMLStrCreated(modelStr: String);
 
   end;
 
 implementation
 
- constructor TSBMLWriter.create(model: TModel);
+ constructor TSBMLWriter.create();
+ begin
+   self.sbmlStr := '';
+   self.sbmlModel := nil;
+ end;
+ procedure TSBMLWriter.buildSBMLString(model: TModel);
  begin
    self.sbmlStr := '';
    self.sbmlModel := model;
-   console.log('In TSBMLWriter.create ');
+  // console.log('In TSBMLWriter.create ');
   asm;   // javascript
-   // TODO
-   // libsbml().then((libsbml) => {
+   try  {
 
-  // now it is safe to use the module
-  //  const writer = new libsbml.SBMLWriter();   // declare later ?
-  //  const sbmlDoc = new libsbml.SBMLDocument();
-  //  const model = sbmlDoc.createModel();
+       libsbml().then((libsbml) => {
+   // now it is safe to use the module
+       const writeModel = new GenerateSBMLModel(libsbml, model);
+       writeModel.buildModel();
+       this.SBMLStrCreated(this.sbmlStr);
+       //libsbml.destroy(sbmlDoc);
+       //libsbml.destroy(writer);
+      });
 
-  //  libsbml.destroy(doc);
-  //  libsbml.destroy(writer);
+      } catch(e) {
+        if (e instanceof Error ) {
+        //  console.log(' loading libsbml: ', e.code);
+          const writeModel = new GenerateSBMLModel(libsbml, model);
+          writeModel.buildModel();
+          this.sbmlStr = writeModel.getSBMLString();
+          this.SBMLStrCreated(this.sbmlStr);
+       }
+        else throw e;
+      }
 
-   // });
-  end;
-
-
+  end;  // asm block
 
  end;
 
- function TSBMLWriter.getSBMLStr(): String;
+ procedure TSBMLWriter.SBMLStrCreated(modelStr: String);
  begin
-   Result := self.sbmlStr;
+    if Assigned(FNotify) then
+     FNotify(modelStr);
  end;
+
 
 end.

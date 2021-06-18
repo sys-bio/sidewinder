@@ -239,6 +239,8 @@
             <ResourceType>RCDATA</ResourceType>
             <ResourceId>PngImage_14</ResourceId>
         </RcItem>
+        <None Include="sbml\writeSBMLmodel.js"/>
+        <None Include="sbml\readSBMLmodel.js"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>
@@ -457,6 +459,12 @@
                         <Overwrite>true</Overwrite>
                     </Platform>
                 </DeployFile>
+                <DeployFile LocalName="sbml\writeSBMLmodel.js" Configuration="Debug" Class="ProjectFile">
+                    <Platform Name="Win32">
+                        <RemoteDir>.\</RemoteDir>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
                 <DeployFile LocalName="js\bootstrap.js" Configuration="Debug" Class="ProjectFile">
                     <Platform Name="Win32">
                         <RemoteDir>.\</RemoteDir>
@@ -464,6 +472,12 @@
                     </Platform>
                 </DeployFile>
                 <DeployFile LocalName="images\arrow1.png" Configuration="Debug" Class="ProjectFile">
+                    <Platform Name="Win32">
+                        <RemoteDir>.\</RemoteDir>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="sbml\readSBMLmodel.js" Configuration="Debug" Class="ProjectFile">
                     <Platform Name="Win32">
                         <RemoteDir>.\</RemoteDir>
                         <Overwrite>true</Overwrite>
