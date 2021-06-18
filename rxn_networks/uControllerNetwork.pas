@@ -76,9 +76,6 @@ type
     procedure OnMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; x, y: double);
     procedure OnMouseMove(Sender: TObject; Shift: TShiftState; x, y: double);
     procedure OnMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; x, y: double);
-
-   // property OnNetworkUpdate: TNetworkChangeEvent read FNetworkUpdate write FNetworkUpdate;  // Not needed
-  //  procedure networkUpdate(); // Notify listener that Network has changed (Update model). <-- Remove, just have TNetwork notify
     procedure SBMLUpdated(updatedModel: TModel);
 
     constructor Create(network: TNetwork);

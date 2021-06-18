@@ -653,19 +653,8 @@ begin
     ShowMessage('Blank model not created.');
   end;
 
-  //self.model := TModel.create();  // Model to be used by all.
-  //self.model.OnPing2 := self.PingSBMLLoaded;
-  //self.mainController.setModel(self.model);
-  //self.networkController.setSBMLModel(self.model);
   // Notification of changes:
   self.mainController.OnSimUpdate := self.getVals; // notify when new Sim results
-  //self.mainController.OnModelUpdate := self.PingSBMLLoaded;
-  //self.networkController.OnNetworkUpdate := self.mainController.networkUpdated;
-   // Notify main controller when network has changed.
-  //self.mainController.OnModelUpdate2 := self.networkController.SBMLUpdated;
-  //self.model.OnPing3 := self.networkController.SBMLUpdated;
-    // Notify network viewer that model changed.
-
 
 end;
 
