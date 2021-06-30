@@ -57,7 +57,7 @@ type
     procedure stopTimer();
     procedure startTimer();
     function getSimulation(): TSimulationJS;
-   procedure networkUpdated(); // Network has changed, update model
+    procedure networkUpdated(); // Network has changed, update model
     property OnSimUpdate: TUpdateSimEvent read FUpdate write FUpdate;
     property OnSBMLUpdate: TUpdateModelEvent read FSBMLUpdate write FSBMLUpdate;
     procedure UpdateVals( time: double; updatedVals: array of double);
@@ -78,7 +78,6 @@ begin
   self.networkUpdate := false;
   self.sbmlmodel := TModel.create();
   self.sbmlmodel.OnPing := self.SBMLLoaded;  // Register callback function
-  //console.log('In TControllerMain.Create, adding networkController');
   self.currNetworkCtrl := networkCtrl;
   self.OnSBMLUpdate := networkCtrl.SBMLUpdated;
   networkCtrl.network.OnNetworkEvent := self.networkUpdated;
