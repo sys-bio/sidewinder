@@ -39,7 +39,8 @@ uses
   uModel in 'model\uModel.pas',
   uSBMLReader in 'sbml\uSBMLReader.pas',
   uSBMLWriter in 'sbml\uSBMLWriter.pas',
-  uPlotActions in 'plot\uPlotActions.pas';
+  uPlotActions in 'plot\uPlotActions.pas',
+  uBuildRateLaw in 'rxn_networks\uBuildRateLaw.pas';
 
 {$R *.res}
 

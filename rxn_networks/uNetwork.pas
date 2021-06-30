@@ -14,7 +14,7 @@ interface
 
 
 Uses SysUtils, Classes, Types, libthreejs, WEBLib.Graphics, Math, WEBLib.Utils,
-     WEBLib.JSON, System.Generics.Collections, uNetworkTypes;
+     WEBLib.JSON, Web, System.Generics.Collections, uNetworkTypes, uBuildRateLaw, uSBMLClasses;
 
 const
   // The following constant is the distance between the outer
@@ -50,6 +50,7 @@ type
   // This is used to support undo operations and json reading and writing
   TNodeState = record
        id : string;
+       amt: double;   // amount of species
        x, y, w, h : double;
        fillColor, outlineColor : TColor;
        outlineThickness : integer;
@@ -60,7 +61,6 @@ type
 
   TNode = class (TParent)
        state : TNodeState;
-
        addReactionSelected : boolean;
        dx, dy : double; // for autolayout algorithm
 
@@ -86,6 +86,10 @@ type
       destId  : array[0..5] of string;  // Stores node Ids, saved to json
       srcPtr  : array[0..5] of TNode;
       destPtr : array[0..5] of TNode;  // These are not saved to json as they are pointers
+      rateLaw : string;                // Mass action rate law for reaction
+      srcStoich : array[0..5] of double; // src Stoichiometric coefficients of the rxn.
+      destStoich : array[0..5] of double;// dest  "
+      rateParams :TList<TSBMLparameter>; // rate and param consts,
       fillColor : TColor;
       thickness : integer;
 
@@ -98,6 +102,9 @@ type
        procedure   unSelect;
        function    getCurrentState : TReactionState;
        procedure   loadState (nodes : TListOfNodes; reactionState : TReactionState);
+       procedure   setRateRule;
+       procedure   setDefaultParams;
+       function    getRateRule: string;
        constructor create; overload;
        constructor create (id : string; src, dest : TNode); overload;
    end;
@@ -115,7 +122,6 @@ type
   TNetwork = class (TObject)
     private
       FNetworkEvent: TNetworkEvent;
-//      FNetworkEventList: TList<TNetworkEvent>;
     public
        id : string;
        nodes : TListOfNodes;
@@ -153,7 +159,6 @@ type
        function    getCurrentState : TNetworkSavedState;
        procedure   loadState (networkState : TNetworkSavedState);
        property OnNetworkEvent: TNetworkEvent read FNetworkEvent write FNetworkEvent;
-   //    procedure OnNetworkEventAdd(newListener: TNetworkEvent);
        procedure networkEvent(); // Notify listener that Network has changed.
        constructor Create (id : string);
   end;
@@ -191,6 +196,7 @@ procedure TNodeState.saveAsJSON (nodeObject : TJSONObject);
 var colorObject : TJSONObject;
 begin
   nodeObject.AddPair ('id', id);
+  nodeObject.AddPair ('amt', amt);  // to be added.
   nodeObject.AddPair ('x', TJSONNumber.Create (x));
   nodeObject.AddPair ('y', TJSONNumber.Create (y));
   nodeObject.AddPair ('w', TJSONNumber.Create (w));
@@ -205,6 +211,7 @@ end;
 procedure TNodeState.loadFromJSON (obj : TJSONObject);
 begin
    id := obj.GetJSONValue('id');
+   amt := strtofloat (obj.GetJSonValue('amt'));  // to be added
    x := strtofloat (obj.GetJSONValue ('x'));
    y := strtofloat (obj.GetJsonValue ('y'));
    h := strtofloat (obj.GetJSONValue ('h'));
@@ -293,7 +300,6 @@ end;
 constructor TNetwork.create (id : string);
 begin
   self.id := id;
- // FNetworkEventList := TList<TNetworkEvent>.create;
 end;
 
 procedure TNetwork.networkEvent();
@@ -303,17 +309,7 @@ begin
   if Assigned(FNetworkEvent) then
     FNetworkEvent();
 
- { for i in self.FNetworkEventList do
-  begin
-    if Assigned(i) then    // if statement not really necessary
-      i;
-  end; }
 end;
-
-{procedure TNetwork.OnNetworkEventAdd(newListener: TNetworkEvent);
-begin
-  self.FNetworkEventList.add(newListener);
-end;  }
 
 procedure TNetwork.loadModel (modelStr : string);
 var JSONRoot, JSONValue1, JSONNodeArray, JSONReactionArray : TJSONValue;
@@ -502,7 +498,6 @@ begin
   result := nodes[length (nodes)-1];
   result.state.x := x; result.state.y := y;
   result.state.Id := Id;
-  self.networkEvent; // Notify listener
 end;
 
 
@@ -514,7 +509,6 @@ begin
   result.state.x := x; result.state.y := y;
   result.state.h := h; result.state.w := w;
   result.state.Id := Id;
-  self.networkEvent; // Notify listener
 end;
 
 
@@ -524,7 +518,6 @@ begin
   nodes[length (nodes)-1] := TNode.create (id);
   result := nodes[length (nodes)-1];
   result.state := state;
-  self.networkEvent; // Notify listener
 end;
 
 
@@ -533,7 +526,7 @@ begin
   setlength (nodes, length (nodes) + 1);
   nodes[length (nodes)-1] := TNode.create (id);
   result := nodes[length (nodes)-1];
-  self.networkEvent; // Notify listener
+
 end;
 
 
@@ -542,7 +535,6 @@ begin
   setlength (reactions, length (reactions) + 1);
   reactions[length (reactions)-1] := TReaction.create (id, src, dest);
   result := length (reactions) - 1;
-  self.networkEvent; // Notify listener
 end;
 
 
@@ -552,7 +544,6 @@ begin
   reactions[length (reactions)-1] := TReaction.create;
   result := reactions[length (reactions)-1];
   result.state := state;
-  self.networkEvent; // Notify listener
 end;
 
 
@@ -561,7 +552,6 @@ begin
   setlength (reactions, length (reactions) + 1);
   reactions[length (reactions)-1] := reaction;
   result := length (reactions);
-  self.networkEvent; // Notify listener
 end;
 
 
@@ -619,9 +609,14 @@ begin
   else
      computeAnyToAnyCoordinates (newReaction, sourceNodes, destNodes);
 
-  //if addRateLaw then
-  //   newEdge.constructDefaultRateLaw;
-  self.networkEvent; // Notify listener
+  // add Rate rule
+  console.log('TNetwork.AddAnyToAnyEdge new reaction');
+  if newReaction.getRateRule = '' then
+  begin
+    newReaction.setDefaultParams;
+    newReaction.setRateRule;
+  end;
+
   result := newReaction;
 end;
 
@@ -773,6 +768,7 @@ end;
 constructor TNode.create (id : string);
 begin
   self.state.id := id;
+  self.state.amt := 1.0;
   state.w := 60; state.h := 40;
   selected := false;
   addReactionSelected := false;
@@ -872,24 +868,49 @@ constructor TReaction.Create;
 begin
   state.fillColor := clWebLightSteelBlue;
   state.thickness := DEFAULT_REACTION_THICKNESS;
-
+   console.log('TReaction.create().....');
   selected := False;
 end;
 
 constructor TReaction.create (id : string; src, dest : TNode);
+
 begin
   Create;
-
   state.nReactants := 1; state.nProducts := 1;
   state.id := id;
   state.srcPtr[0] := src;
   state.destPtr[0] := dest;
-
   // These are used for undo and loading fro json file
   state.srcId[0] := src.state.id;
   state.destId[0] := dest.state.id;
+  self.setDefaultParams;
+  self.setRateRule();
 end;
 
+procedure TReaction.setDefaultParams();
+var newRateConst, newParam: TSBMLparameter;
+  i: Integer;
+begin
+  newRateConst := TSBMLparameter.create(RXN_k_F+ state.id);
+  newRateConst.setValue(1.0);
+  state.rateParams := TList<TSBMLparameter>.create;
+  state.rateParams.Add(newRateConst);
+  for i := 0 to state.nReactants -1 do
+  begin
+    state.srcStoich[i] := 1.0; // default
+    newParam := TSBMLparameter.create(RXN_R_EXP+ state.srcId[i]);//Order of reaction reactant Exp
+    newParam.setValue(1.0); // Default
+    state.rateParams.Add(newParam);
+  end;
+  for i := 0 to state.nProducts do
+  begin
+    state.destStoich[i] := 1.0;
+    newParam := TSBMLparameter.create(RXN_P_EXP+ state.destId[i]);//Order of reaction product Exp
+    newParam.setValue(1.0);  // default
+    state.rateParams.Add(newParam);
+  end;
+
+end;
 
 procedure TReaction.loadState (nodes : TListOfNodes; reactionState : TReactionState);
 var i, j, k : integer;
@@ -937,6 +958,19 @@ begin
  selected := false;
 end;
 
+procedure TReaction.setRateRule; // Build rate rule
+var newRate: tRateLaw;
+begin
+  newRate := tRateLaw.create(state.nReactants, state.nProducts, state.srcId,
+               state.destId,  state.rateParams);
+  state.rateLaw := newRate.getRateFormula();
+  console.log('setRateRule: ',state.rateLaw);
+end;
+
+function TReaction.getRateRule: string;
+begin
+  Result := state.rateLaw;
+end;
 
 end.
 
