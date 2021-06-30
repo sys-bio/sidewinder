@@ -51,8 +51,7 @@ type
     mouseDownPressed: boolean;
 
     networkCanvas : TNetworkCanvas;
-   // FNetworkUpdate: TNetworkChangeEvent;
-
+  
     sbmlModel: TModel;
   public
     procedure loadModel(modelStr: string);
@@ -118,7 +117,6 @@ begin
   undoStack := TNetworkStack.Create;
 
   self.network := network;
-  //self.network.OnNetworkEvent := self.networkUpdate;
   mStatus := sSelect;
   srcNode := NOT_SELECTED;
   destNode := NOT_SELECTED;
