@@ -71,7 +71,7 @@ type
  end;
 
 
- SBMLparameter = class
+ TSBMLparameter = class
  private
     value: double;
     valSetFlag, constSetFlag: boolean;
@@ -81,7 +81,7 @@ type
  public
     constructor create(); Overload;
     constructor create(paramId: String); Overload;
-    constructor create(copyParam:SBMLparameter); Overload;
+    constructor create(copyParam:TSBMLparameter); Overload;
     function getValue():double;
     procedure setValue(val: double);
     procedure unSetValueFlag();
@@ -98,7 +98,7 @@ type
 
  end;
 
-// SBMLlocalParameter not implimented, same methods as SBMLParameter.
+// SBMLlocalParameter not implimented, same methods as TSBMLParameter.
 
  TSBMLSpeciesReference = class
  private
@@ -430,7 +430,7 @@ implementation
   end;
 
   //   ******************************************
-  constructor SBMLparameter.create(); Overload;
+  constructor TSBMLparameter.create(); Overload;
   begin
     id:= '';
     value:= 0;
@@ -439,7 +439,7 @@ implementation
     constSetFlag:= false;
     nameSetFlag:= false;
   end;
-  constructor SBMLparameter.create(paramId:String); Overload;
+  constructor TSBMLparameter.create(paramId:String); Overload;
   begin
     id:= paramId;
     value:= 0;
@@ -449,7 +449,7 @@ implementation
     nameSetFlag:= false;
   end;
 
-  constructor SBMLparameter.create(copyParam:SBMLparameter); Overload;
+  constructor TSBMLparameter.create(copyParam:TSBMLparameter); Overload;
   begin
     id:= copyParam.getId;
     idSetFlag:= copyParam.isSetIDAttribute;
@@ -459,58 +459,58 @@ implementation
     name:= copyParam.getName;
     value:= copyParam.getValue;
   end;
-  function SBMLparameter.getValue():double;
+  function TSBMLparameter.getValue():double;
   begin
     Result:= self.value;
   end;
-  procedure SBMLparameter.setValue(val: double);
+  procedure TSBMLparameter.setValue(val: double);
   begin
     self.value:= val;
     self.valSetFlag:= true;
   end;
-  function SBMLparameter.isSetValue(): boolean;
+  function TSBMLparameter.isSetValue(): boolean;
   begin
     Result:= self.valSetFlag;
   end;
-  procedure SBMLparameter.unSetValueFlag();
+  procedure TSBMLparameter.unSetValueFlag();
   begin
     self.valSetFlag:= false;
   end;
-  function SBMLparameter.getConstant(): boolean; // true if param constant.
+  function TSBMLparameter.getConstant(): boolean; // true if param constant.
   begin
     Result:= self.constSetFlag;
   end;
-  procedure SBMLparameter.setConstant(val: boolean);
+  procedure TSBMLparameter.setConstant(val: boolean);
   begin
     self.constSetFlag:= val;
   end;
-  function SBMLparameter.isSetConstant(): boolean;
+  function TSBMLparameter.isSetConstant(): boolean;
   begin
     Result:= self.constSetFlag;
   end;
-  function SBMLparameter.getId(): String;
+  function TSBMLparameter.getId(): String;
   begin
     Result:= self.id;
   end;
-  procedure SBMLparameter.setId(val: String);
+  procedure TSBMLparameter.setId(val: String);
   begin
     self.id:= val;
     self.idSetFlag:= true;
   end;
-  function SBMLparameter.isSetIDAttribute(): boolean;
+  function TSBMLparameter.isSetIDAttribute(): boolean;
   begin
     Result:= self.idSetFlag;
   end;
-  function SBMLparameter.getName(): String;
+  function TSBMLparameter.getName(): String;
   begin
     Result:= self.name;
   end;
-  procedure SBMLparameter.setName(val: String);
+  procedure TSBMLparameter.setName(val: String);
   begin
     self.name:= val;
     self.nameSetFlag:= true;
   end;
-  function SBMLparameter.isSetName(): boolean;
+  function TSBMLparameter.isSetName(): boolean;
   begin
     Result:= self.nameSetFlag;
   end;
@@ -672,7 +672,7 @@ implementation
      numParams:= i;
    end;
 
-   function SBMLkineticlaw.addParameter(param:String): String;  // SBMLparameter;
+   function SBMLkineticlaw.addParameter(param:String): String;  // TSBMLparameter;
     var len: integer;
    begin
     len:= Length(paramIds);
@@ -680,11 +680,11 @@ implementation
     paramIds[len]:= param;
     console.log('kineticLaw.addParameter: ',param);
    end;
-   function SBMLkineticlaw.getParameter(n: integer): String; // SBMLparameter;
+   function SBMLkineticlaw.getParameter(n: integer): String; // TSBMLparameter;
    begin
      Result:= paramIds[n];
    end;
-  // function removeParameter(n: integer): String; // SBMLparameter;
+  // function removeParameter(n: integer): String; // TSBMLparameter;
 
  // **************************************************************
  constructor SBMLReaction.create(id:String; prod: array of String; reactant: array of String); // remove at some point

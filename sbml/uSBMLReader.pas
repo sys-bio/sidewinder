@@ -24,7 +24,7 @@ implementation
     jsSpecies: TJSObject;
     newComp: SBMLcompartment;
     jsComp: TJSObject;
-    newParam: SBMLparameter;
+    newParam: TSBMLparameter;
     jsParam: TJSObject;
     newRule: TSBMLRule;
     jsRule: TJSObject;
@@ -33,7 +33,7 @@ implementation
     jsSpecies:= JS.ToObject(newSpecies);
     newComp:= SBMLcompartment.create(); // a new compartment
     jsComp:= JS.ToObject(newComp);
-    newParam:= SBMLparameter.create(); // a new parameter
+    newParam:= TSBMLparameter.create(); // a new parameter
     jsParam:= JS.ToObject(newParam);
     newRule:= TSBMLRule.create;
     jsRule:= JS.ToObject(newRule);

@@ -20,7 +20,7 @@ type
     sbmlreactions: array of SBMLReaction; // list of reactions
     modelSpecies: array of TSBMLSpecies;
     modelComps: array of SBMLcompartment;
-    modelParams: array of SBMLparameter;
+    modelParams: array of TSBMLparameter;
     modelRules: array of TSBMLRule;  // optional
 
     // Arrays of Double used by ODE integrator, keep array of strings for mapping:
@@ -47,9 +47,9 @@ type
         reactants: array of String; reactantsStoich: array of double; kinetic: String);
 
    function  getParamNumb(): integer;
-   function  getSBMLparameter(i:integer): SBMLparameter;
-   function  getSBMLparameterAr(): array of SBMLparameter;
-   procedure addSBMLparameter(newParam: SBMLparameter);
+   function  getSBMLparameter(i:integer): TSBMLparameter;
+   function  getSBMLparameterAr(): array of TSBMLparameter;
+   procedure addSBMLparameter(newParam: TSBMLparameter);
    function  getSBMLmodelRules():array of TSBMLrule;
    procedure addSBMLrule( newR: TSBMLrule);
    function  getSpeciesNumb(): integer;
@@ -272,20 +272,20 @@ procedure TModel.SBML_UpdateEvent();
  begin
    Result:= numParams;
  end;
- function TModel.getSBMLparameter(i:integer): SBMLparameter;
+ function TModel.getSBMLparameter(i:integer): TSBMLparameter;
  begin
     Result:= modelParams[i];
  end;
 
- function TModel.getSBMLparameterAr(): array of SBMLparameter;
+ function TModel.getSBMLparameterAr(): array of TSBMLparameter;
  begin
    Result:= modelParams;
  end;
- procedure TModel.addSBMLparameter(newParam: SBMLparameter);
+ procedure TModel.addSBMLparameter(newParam: TSBMLparameter);
  var len:integer;
  begin
   len:= Length(modelParams);
-  modelParams[len]:= SBMLparameter.create(newParam);
+  modelParams[len]:= TSBMLparameter.create(newParam);
  // console.log('addSBMLparameter: ',modelParams[len].getID());
   if newParam.isSetName() then console.log('addSBMLparameter: ',newParam.getname());
 
