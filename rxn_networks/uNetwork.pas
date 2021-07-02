@@ -50,7 +50,7 @@ type
   // This is used to support undo operations and json reading and writing
   TNodeState = record
        id : string;
-       amt: double;   // amount of species
+       amt: double;   // amount of species, assume conc, unit volume
        x, y, w, h : double;
        fillColor, outlineColor : TColor;
        outlineThickness : integer;
@@ -196,7 +196,7 @@ procedure TNodeState.saveAsJSON (nodeObject : TJSONObject);
 var colorObject : TJSONObject;
 begin
   nodeObject.AddPair ('id', id);
-  nodeObject.AddPair ('amt', amt);  // to be added.
+  nodeObject.AddPair ('amt', TJSONNumber.Create(amt));  // to be added.
   nodeObject.AddPair ('x', TJSONNumber.Create (x));
   nodeObject.AddPair ('y', TJSONNumber.Create (y));
   nodeObject.AddPair ('w', TJSONNumber.Create (w));
@@ -887,8 +887,8 @@ begin
   self.setRateRule();
 end;
 
-procedure TReaction.setDefaultParams();
-var newRateConst, newParam: TSBMLparameter;
+procedure TReaction.setDefaultParams();   // Note need to just use stoich values instead of Order of reaction
+var newRateConst, newParam: TSBMLparameter; // Get rid of Order of reaction exponent
   i: Integer;
 begin
   newRateConst := TSBMLparameter.create(RXN_k_F+ state.id);

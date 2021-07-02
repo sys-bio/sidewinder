@@ -8,7 +8,7 @@ Uses SysUtils, Classes, Types, Math, WEBLib.Utils, WEBLib.JSON, System.Generics.
      uNetworkTypes, uSBMLClasses;
 
 const
- RXN_R_EXP = 'ORR_'; //Order of reaction reactant exponent label
+ RXN_R_EXP = 'ORR_'; //Order of reaction reactant exponent label  Stochiometric amt
  RXN_P_EXP = 'ORP_'; //Order of reaction product exponent label
  RXN_k_F   = 'kf_';  // forward reaction rate label
  RXN_k_B   = 'kb_';  // backward reaction rate label

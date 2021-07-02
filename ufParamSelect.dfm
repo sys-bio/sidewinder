@@ -1,15 +1,23 @@
 object ParamSliderSForm: TParamSliderSForm
-  Width = 200
+  Width = 234
   Height = 212
+  ElementClassName = 'card'
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWhite
+  Font.Height = -11
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  ParentFont = False
   OnCreate = WebFormCreate
   OnShow = WebFormShow
   object OkButton1: TWebButton
-    Left = 112
-    Top = 0
-    Width = 64
+    Left = 152
+    Top = 3
+    Width = 58
     Height = 22
     Caption = 'OK'
     ChildOrder = 1
+    ElementClassName = 'btn btn-primary btn-sm'
     HeightPercent = 100.000000000000000000
     WidthPercent = 100.000000000000000000
     OnClick = OkButton1Click
@@ -17,7 +25,7 @@ object ParamSliderSForm: TParamSliderSForm
   object paramRG: TWebRadioGroup
     Left = 16
     Top = 31
-    Width = 160
+    Width = 137
     Height = 120
     HeightPercent = 100.000000000000000000
     WidthPercent = 100.000000000000000000

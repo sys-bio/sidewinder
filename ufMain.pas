@@ -845,6 +845,7 @@ begin
   plotSpeciesForm.PopupOpacity := 0.3;
   plotSpeciesForm.Border := fbDialogSizeable;
   plotSpeciesForm.caption := 'Species to plot:';
+
   plotSpeciesForm.ShowModal(@AfterShowModal);
 end;
 
@@ -941,7 +942,7 @@ var
   sliderXposition, sliderYposition: Integer;
   editList: TStringList;
 begin
-  sliderXposition := 424;
+  sliderXposition := 350; //424;
   sliderYposition := self.sliderPanelAr[sn].Top + 10;
   editList := TStringList.create();
   editList.Add('Change slider parameter.');

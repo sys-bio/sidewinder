@@ -916,13 +916,20 @@ object mainForm: TmainForm
       object plotEditLB: TWebListBox
         Left = 64
         Top = 216
-        Width = 121
-        Height = 97
-        ElementClassName = 'form-control'
+        Width = 140
+        Height = 75
+        Color = clWhite
+        ElementClassName = 'form-control bg-dark form-control-sm text-white'
         ElementFont = efCSS
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWhite
+        Font.Height = -11
+        Font.Name = 'Tahoma'
+        Font.Style = []
         HeightPercent = 100.000000000000000000
         ItemHeight = 13
         ItemIndex = -1
+        ParentFont = False
         Visible = False
         WidthPercent = 100.000000000000000000
         OnClick = plotEditLBClick
@@ -930,9 +937,9 @@ object mainForm: TmainForm
       object SliderEditLB: TWebListBox
         Left = 191
         Top = 216
-        Width = 121
-        Height = 60
-        ElementClassName = 'form-control'
+        Width = 165
+        Height = 65
+        ElementClassName = 'form-control bg-dark form-control-sm text-white'
         ElementFont = efCSS
         HeightPercent = 100.000000000000000000
         ItemHeight = 13
