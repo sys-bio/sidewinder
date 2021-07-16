@@ -74,7 +74,6 @@ begin
   self.sVals := model.getS_Vals;
   self.paramsStrAr := model.getP_Names;
   self.pVals := model.getP_Vals;
-  //self.CreateParamSpeciesLists(model);  // Includes params, compartments, species BCs.
   self.BuildAssignmentEqs(model);
 
   // *******************************************************************
@@ -107,7 +106,7 @@ begin
              end
           else
           begin
-          if ContainsText(lhsSymbols[k],'(-1)*') then
+          if ContainsText(lhsSymbols[k],'(-1)*') then     // << ----- BUG: Need stoich coeff for species, not '1' in here
             self.odeEqs[found_dydt] := self.odeEqs[found_dydt] + '+ ' + '(-1)*('+ odeStrs[j] + ')'
           else
             self.odeEqs[found_dydt] := self.odeEqs[found_dydt] + '+ ' + '('+ odeStrs[j] + ')';
@@ -229,10 +228,10 @@ begin
   parList:= ['v1','Vm3','m', 'n', 'Kr','Ka','p'];
   for i := 0 to Length(testEq)-1 do
     begin
-    //console.log('TEST - Init Eq: ', testEq[i]);
+    console.log('TEST - Init Eq: ', testEq[i]);
     finalEq:= replaceStrNames(spList, testEq[i],'s');
     finalEq:= replaceStrNames(parList, finalEq,'p');
-    //console.log('TEST -> Final Eq: ', finalEq);
+    console.log('TEST -> Final Eq: ', finalEq);
     end;
 end;
 
@@ -287,8 +286,10 @@ end;
 
 // ***********************************************
 // build the 'dydt_s[]=' or 'dydt_s[]= (-1)*', store in lhsSymbols[]
+// TODO: Put in Stoich coeffs.
 function TFormatODEs.buildODE_LHS(rxn: SBMLreaction):array of String;
 var i, nr, np: Integer;
+    stoich: double;
     tmpSpId: String;
     lhs: array of String;
  // TODO move self.products and self.reactants to here
@@ -306,13 +307,17 @@ begin
       begin
         for i := 0 to np-1 do
         begin
+          stoich := 1.0;  // default
           if self.prods[i].isSetSpecies() then
           begin
             tmpSpId:= self.prods[i].getSpecies();
             if self.spBoundaryCondition(tmpSpId) = false then  // <-- need actual species in array of species.
-              lhs[i]:= ODESTART + IntToStr(strInArray(self.prods[0].getSpecies(),speciesStrAr))+']'+'= ('    // dydt_name
+            begin
+              if self.prods[i].isSetStoichiometry then stoich := self.prods[i].getStoichiometry;
+              lhs[i]:= ODESTART + IntToStr(strInArray(self.prods[i].getSpecies(),speciesStrAr))+']'+'= ('+stoich.ToString+')* ('; // dydt_name
+            end
             else lhs[i]:= '';  // No ODE for boundary condition.
-           // console.log('... Products lhs: ', lhs[np+i]);
+            console.log('... Products lhs: ', lhs[np+i]);
           end;
         end;
       end;
@@ -321,27 +326,29 @@ begin
   if nr>0 then
   begin
     self.reactants:= rxn.getRxnReactants();
-    // Works with only one product/reactant, need to generalize for many products.
+    // Works with only one product/reactant, need to generalize for many products.DONE ??
     // Need one ODE one for Reactant (-);
   if length(self.reactants)>0 then
      begin
       for i := 0 to nr-1 do
       begin
         tmpSpId:= '';
+        stoich := 1;  // default
         if self.reactants[i].isSetSpecies() then
         begin
           tmpSpId:= self.reactants[i].getSpecies;
           if self.spBoundaryCondition(tmpSpId) = false then    // <-- need actual species in array of species.
           begin
           //console.log('Boundary condition not set');
-            lhs[np+i]:= ODESTART + IntToStr(strInArray(reactants[0].getSpecies(),speciesStrAr))+']'+'= (-1)* ('    // dydt_name
+            if self.reactants[i].isSetStoichiometry then stoich := self.reactants[i].getStoichiometry;
+            lhs[np+i]:= ODESTART + IntToStr(strInArray(reactants[i].getSpecies(),speciesStrAr))+']'+'= (-'+stoich.ToString+')* (' ;   // dydt_name
           end
           else
           begin
            // console.log('Boundary condition SET!!!');
             lhs[np+i]:= '';
           end;
-         // console.log('. Reactants lhs: ', lhs[np+i]);
+          console.log('. Reactants lhs: ', lhs[np+i]);
         end;
       end;
      end;
@@ -476,10 +483,10 @@ end;
     // Run Simulation using info from odeFormat:
    odeEqSet:= odeEqSet + ' return dydt_s ;' ;
    odeEqSet2:= odeEqSet2 + ' return dydt_s;';  // Add eqs LSODA list.
-//   console.log('*** Final odeEqSetVal: *****');
-//   console.log(odeEqSet);
- //  console.log(' ** LSODA eqs: **');
- //  console.log(odeEqSet2);
+   console.log('*** Final odeEqSetVal: *****');
+   console.log(odeEqSet);
+   console.log(' ** LSODA eqs: **');
+   console.log(odeEqSet2);
  end;
 
  function TFormatODEs.spBoundaryCondition(speciesId: String): boolean;
