@@ -13,7 +13,6 @@ type
   public
     constructor create(newModel: TModel; SBMLtext: String);
     property OnSBMLLoaded: TSBMLLoadedEvent read FNotify write FNotify;
-    procedure modelLoaded(model:TModel);
   end;
 
 
@@ -22,7 +21,7 @@ implementation
   var
     newSpecies: TSBMLSpecies;
     jsSpecies: TJSObject;
-    newComp: SBMLcompartment;
+    newComp: TSBMLcompartment;
     jsComp: TJSObject;
     newParam: TSBMLparameter;
     jsParam: TJSObject;
@@ -31,7 +30,7 @@ implementation
   begin
     newSpecies:= TSBMLSpecies.create(); // a new species
     jsSpecies:= JS.ToObject(newSpecies);
-    newComp:= SBMLcompartment.create(); // a new compartment
+    newComp:= TSBMLcompartment.create(); // a new compartment
     jsComp:= JS.ToObject(newComp);
     newParam:= TSBMLparameter.create(); // a new parameter
     jsParam:= JS.ToObject(newParam);
@@ -41,7 +40,6 @@ implementation
   asm;   // javascript
 
   try {
-   // if(typeof libsbml() === 'undefined') {console.log(' libsbml is undefined');}
     libsbml().then((libsbml) => {
 
   // now it is safe to use the module
@@ -86,10 +84,5 @@ implementation
 
   end;
 
-  procedure TSBMLRead.modelLoaded(model: TModel);
-  begin
-      { Call the registerd event only if there is a listener }
-   if Assigned(FNotify) then
-     FNotify(model);
-  end;
+  
 end.

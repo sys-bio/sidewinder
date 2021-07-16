@@ -9,7 +9,6 @@ class ProcessSBML {
    this.model = libSBMLModel; // Model from libSBML doc.getModel()
  }
  getNumbers(tModela) { //  class TModel
-   tModela.numReactions = this.model.getNumReactions();
    tModela.numSpecies = this.model.getNumSpecies();
    tModela.numParams = this.model.getNumParameters();
    tModela.numCompartments = this.model.getNumCompartments();
@@ -119,7 +118,7 @@ getRules(tModela, tRule) {
 
   getReactions(tModela){
     var i;
-    for( i=0; i< tModela.numReactions; i++) {
+    for( i=0; i< this.model.getNumReactions(); i++) {
       var numTotalSpecies;
       var j;
       var k;
