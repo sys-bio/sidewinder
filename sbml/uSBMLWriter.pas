@@ -37,6 +37,7 @@ implementation
    // now it is safe to use the module
        const writeModel = new GenerateSBMLModel(libsbml, model);
        writeModel.buildModel();
+       this.sbmlStr = writeModel.getSBMLString();
        this.SBMLStrCreated(this.sbmlStr);
        //libsbml.destroy(sbmlDoc);
        //libsbml.destroy(writer);
