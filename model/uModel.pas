@@ -19,9 +19,10 @@ type
     annotationStr: String;    // optional
     sbmlreactions: array of SBMLReaction; // list of reactions
     modelSpecies: array of TSBMLSpecies;
-    modelComps: array of SBMLcompartment;
+    modelComps: array of TSBMLcompartment;
     modelParams: array of TSBMLparameter;
     modelRules: array of TSBMLRule;  // optional
+    modelId: String; // optional model name
 
     // Arrays of Double used by ODE integrator, keep array of strings for mapping:
     s_Vals: array of Double; // Changes, one to one correlation: s_Vals[n] <=> s_Names[n]
@@ -32,7 +33,7 @@ type
     p_NameValAr: TVarNameValAr;// Holds current param name/value, changes, Includes compartments and boundary species.
     FPing: TPingEvent;// Used to send sbml info to listener once asynchronous read done.
     FPing2: TPingEvent;// Used to send sbml info to listener once asynchronous read done.
-    FPing3: TPingEvent;// Used to send sbml info to listener once asynchronous read done.
+   // FPing3: TPingEvent;// Used to send sbml info to listener once asynchronous read done.
     procedure fillSpeciesArray();
     procedure fillParameterArray();
 
@@ -44,8 +45,8 @@ type
    procedure setNumReactions (rnxNumb : integer); // TODO, remove, just increment as rxn added.
    function  getNumReactions : integer;
    procedure addSBMLReaction(rxnid:String; prods: array of String; prodStoich: array of double;
-        reactants: array of String; reactantsStoich: array of double; kinetic: String);
-
+        reactants: array of String; reactantsStoich: array of double; kinetic: String); overload;
+   procedure addSBMLReaction(newReaction: SBMLReaction); overload;
    function  getParamNumb(): integer;
    function  getSBMLparameter(i:integer): TSBMLparameter;
    function  getSBMLparameterAr(): array of TSBMLparameter;
@@ -60,9 +61,9 @@ type
    function  getSBML_BC_SpeciesAr(): array of TSBMLSpecies; // Just species listed as boundary condition for a species
    function  getSBMLdynamicSpeciesAr(): array of TSBMLSpecies;  // return species that are not a bc or amt (not conc) is constant.
    function  getCompNumb(): integer;
-   function  getSBMLcompartmentsArr(): array of SBMLcompartment;
-   function  getSBMLcompartment(i:integer): SBMLcompartment;
-   procedure addSBMLcompartment(newComp: SBMLcompartment);
+   function  getSBMLcompartmentsArr(): array of TSBMLcompartment;
+   function  getSBMLcompartment(i:integer): TSBMLcompartment;
+   procedure addSBMLcompartment(newComp: TSBMLcompartment);
 
    function getS_Names(): array of String;
    function getS_Vals(): array of Double;
@@ -76,7 +77,7 @@ type
 
    property OnPing: TPingEvent read FPing write FPing;
    property OnPing2: TPingEvent read FPing2 write FPing2;
-   property OnPing3: TPingEvent read FPing3 write FPing3;
+  // property OnPing3: TPingEvent read FPing3 write FPing3;
     { Triggers the event if anything is registered }
    procedure SBML_UpdateEvent(); // SBML model updated.
    procedure testModelUpdate(); // check model update mechanism
@@ -88,10 +89,11 @@ implementation
 constructor TModel.create();
 begin
     errors:=0;
-    numReactions:= -1;
+    numReactions:= 0;
     numSpecies:= 0; numParams:= 0; numCompartments:= 0;
     numEvents:= 0; numRules:= 0; numFuncDefs:=0;
     modelRules:= nil;
+    modelId := '';
 end;
 
 
@@ -116,9 +118,9 @@ procedure TModel.SBML_UpdateEvent();
      FPing();
    if Assigned(FPing2) then
      FPing2();
-   if Assigned(FPing3) then
-     FPing3();
-    console.log('SBML_UpdateEvent: Model has been updated....');
+  // if Assigned(FPing3) then
+   //  FPing3();
+    console.log('TModel.SBML_UpdateEvent: SBML_UpdateEvent: Model has been updated....');
  end;
 
  procedure TModel.setAnnotationStr(annotate:String);
@@ -162,6 +164,17 @@ procedure TModel.SBML_UpdateEvent();
    len:= Length(SBMLreactions);
    SetLength(SBMLreactions,len+1);    // Add new reaction to array
    sbmlreactions[len]:= newRxn;
+ //  if self.numReactions = -1 then self.numReactions := 1
+   inc(self.numReactions);
+ end;
+
+ procedure TModel.addSBMLReaction(newReaction: SBMLReaction); overload;
+ var len: integer;
+ begin
+   len:= Length(self.sbmlreactions);
+   SetLength(self.sbmlreactions, len+1);
+   self.sbmlreactions[len] := newReaction; // Need to create instead?
+   inc(self.numReactions);
  end;
 
  function TModel.getReactions(): array of SBMLReaction;
@@ -181,7 +194,8 @@ procedure TModel.SBML_UpdateEvent();
 
  function TModel.getSpeciesNumb(): integer;
  begin
-   Result:= numSpecies;
+   self.numSpecies := Length(self.modelSpecies);
+   Result:= self.numSpecies;
  end;
 
  procedure TModel.addSBMLspecies(newSpecies: TSBMLSpecies);
@@ -247,11 +261,11 @@ procedure TModel.SBML_UpdateEvent();
  end;
 
 
- function TModel.getSBMLcompartmentsArr(): array of SBMLcompartment;
+ function TModel.getSBMLcompartmentsArr(): array of TSBMLcompartment;
  begin
    Result := self.modelComps;
  end;
- function TModel.getSBMLcompartment(i:integer): SBMLcompartment;
+ function TModel.getSBMLcompartment(i:integer): TSBMLcompartment;
  begin
    Result:= modelComps[i];
  end;
@@ -261,11 +275,11 @@ procedure TModel.SBML_UpdateEvent();
    Result:= numCompartments;
  end;
 
- procedure TModel.addSBMLcompartment(newComp: SBMLcompartment);
+ procedure TModel.addSBMLcompartment(newComp: TSBMLcompartment);
  var len:integer;
  begin
    len:= Length(modelComps);
-   modelComps[len]:= SBMLcompartment.create(newComp);
+   modelComps[len]:= TSBMLcompartment.create(newComp);
  end;
 
  function TModel.getParamNumb(): integer;
@@ -286,7 +300,6 @@ procedure TModel.SBML_UpdateEvent();
  begin
   len:= Length(modelParams);
   modelParams[len]:= TSBMLparameter.create(newParam);
- // console.log('addSBMLparameter: ',modelParams[len].getID());
   if newParam.isSetName() then console.log('addSBMLparameter: ',newParam.getname());
 
  end;

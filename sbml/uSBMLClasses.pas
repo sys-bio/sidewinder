@@ -41,7 +41,7 @@ type
    function isSetName(): boolean;
  end;
 
- SBMLcompartment = class
+ TSBMLcompartment = class
  private
     id, name: String;
     size: double; // vol returns size.
@@ -51,7 +51,7 @@ type
  public
     constructor create(); Overload;
     constructor create(val:String); Overload;
-    constructor create(copyComp:SBMLcompartment); Overload;
+    constructor create(copyComp:TSBMLcompartment); Overload;
 
     function getConstant(): boolean; // true if compartment size constant
     procedure setConstant(val: boolean);
@@ -111,8 +111,8 @@ type
     stoichSetFlag: boolean;
  public
     constructor create(); Overload;
-    constructor create(id:String); Overload;
-    constructor create(id:String; stoich: double); Overload;
+    constructor create(newId:String); Overload;
+    constructor create(newId:String; stoich: double); Overload;
     function getSpecies():String;
     procedure setSpecies(val:String);
     function isSetSpecies(): boolean;
@@ -363,28 +363,28 @@ implementation
   begin
      id:= '';
      species:= '' ;
-     stoichValue:= 1;  // Default is '1' do not set stoich flag.
+     stoichValue:= 1;  // Default is '1'
      idSetFlag:= false;
      speciesSetFlag:= false;
-     stoichSetFlag:= false;
+     stoichSetFlag:= true;
   end;
-  constructor TSBMLSpeciesReference.create(id:String); Overload;
+  constructor TSBMLSpeciesReference.create(newId:String); Overload;
   begin
-     id:= id;
+     id:= newId;
      species:= '' ;
-     stoichValue:= 1;  // Default is '1' do not set stoich flag.
+     stoichValue:= 1;  // Default is '1'
      idSetFlag:= true;
      speciesSetFlag:= false;
-     stoichSetFlag:= false;
+     stoichSetFlag:= true;
   end;
-  constructor TSBMLSpeciesReference.create(id:String; stoich: double); Overload;
+  constructor TSBMLSpeciesReference.create(newId:String; stoich: double); Overload;
   begin
-     id:= id;
-     species:= id ; // for now, may change
+     id:= newId;
+     species:= newId ; // for now, may change
      stoichValue:= stoich;
      idSetFlag:= true;
      speciesSetFlag:= true;
-     stoichSetFlag:= false;
+     stoichSetFlag:= true;
   end;
   function TSBMLSpeciesReference.getSpecies():String;
   begin
@@ -516,7 +516,7 @@ implementation
   end;
 
   // ****************************************
-  constructor SBMLcompartment.create(); Overload;
+  constructor TSBMLcompartment.create(); Overload;
     begin
       id:= '';
       size:= -1;
@@ -526,7 +526,7 @@ implementation
       volSetFlag:= false;
       constSetFlag:= false;
     end;
-  constructor SBMLcompartment.create(val:String); Overload;
+  constructor TSBMLcompartment.create(val:String); Overload;
     begin
       id:= val;
       size:= -1;
@@ -537,7 +537,7 @@ implementation
       constSetFlag:= false;
     end;
 
-  constructor SBMLcompartment.create(copyComp:SBMLcompartment); Overload;
+  constructor TSBMLcompartment.create(copyComp:TSBMLcompartment); Overload;
   begin
     id:= copyComp.getID();
     size:= copyComp.getSize();
@@ -549,68 +549,68 @@ implementation
     constSetFlag:= copyComp.isSetConstant();
 
   end;
-  function SBMLcompartment.getConstant(): boolean; // true if compartment size constant
+  function TSBMLcompartment.getConstant(): boolean; // true if compartment size constant
   begin
       Result:= constSetFlag;
   end;
-  procedure SBMLcompartment.setConstant(val: boolean);
+  procedure TSBMLcompartment.setConstant(val: boolean);
   begin
     constSetFlag:= val;
   end;
-  function SBMLcompartment.isSetConstant(): boolean;
+  function TSBMLcompartment.isSetConstant(): boolean;
   begin
     Result:= constSetFlag;
   end;
 
-  function SBMLcompartment.getSize(): double;
+  function TSBMLcompartment.getSize(): double;
   begin
     Result:= size;
   end;
-  procedure SBMLcompartment.setSize(val:double);
+  procedure TSBMLcompartment.setSize(val:double);
   begin
     size:= val;
     sizeSetFlag:= true;
   end;
-  function SBMLcompartment.isSetSize(): boolean;
+  function TSBMLcompartment.isSetSize(): boolean;
   begin
     Result:= sizeSetFlag;
   end;
-  function SBMLcompartment.getVolume(): double; // level 1 only, otherwise returns 'size'
+  function TSBMLcompartment.getVolume(): double; // level 1 only, otherwise returns 'size'
   begin
     Result:= size;
   end;
-  procedure SBMLcompartment.setVolume(val:double); // level 1 only
+  procedure TSBMLcompartment.setVolume(val:double); // level 1 only
   begin
     size:= val;
   end;
-  function SBMLcompartment.isSetVolume():boolean;//  true if the "volume" attribute ("size" in Level 2 and above) of this Compartment object is set.
+  function TSBMLcompartment.isSetVolume():boolean;//  true if the "volume" attribute ("size" in Level 2 and above) of this Compartment object is set.
   begin
     // ??? necessary??
     Result:= sizeSetFlag;
   end;
-  function SBMLcompartment.getID(): String;
+  function TSBMLcompartment.getID(): String;
   begin
     Result:= id;
   end;
-  procedure SBMLcompartment.setID(val:String);
+  procedure TSBMLcompartment.setID(val:String);
   begin
     id:= val;
     idSetFLag:= true;
   end;
-  function SBMLcompartment.isSetIdAttribute(): boolean;
+  function TSBMLcompartment.isSetIdAttribute(): boolean;
   begin
     Result:= idSetFlag;
   end;
-  function SBMLcompartment.getName(): String;
+  function TSBMLcompartment.getName(): String;
   begin
     Result:= name;
   end;
-  procedure SBMLcompartment.setName(val:String);
+  procedure TSBMLcompartment.setName(val:String);
   begin
     name:= val;
     nameSetFlag:= true;
   end;
-  function SBMLcompartment.isSetName(): boolean;
+  function TSBMLcompartment.isSetName(): boolean;
   begin
     Result:= nameSetFlag;
   end;
