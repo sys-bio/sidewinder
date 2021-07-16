@@ -94,6 +94,7 @@ object mainForm: TmainForm
       Font.Style = [fsBold]
       HeightPercent = 100.000000000000000000
       ParentFont = False
+      Visible = False
       WidthPercent = 100.000000000000000000
       OnClick = onLineSimButtonClick
     end
@@ -107,6 +108,7 @@ object mainForm: TmainForm
       ElementClassName = 'btn btn-primary btn-sm'
       ElementFont = efCSS
       HeightPercent = 100.000000000000000000
+      Visible = False
       WidthPercent = 100.000000000000000000
       OnClick = addPlotButtonClick
     end
@@ -210,6 +212,26 @@ object mainForm: TmainForm
       HeightPercent = 100.000000000000000000
       WidthPercent = 100.000000000000000000
       OnClick = SaveSBMLButtonClick
+    end
+    object SetUpSimButton: TWebButton
+      Left = 816
+      Top = 10
+      Width = 125
+      Height = 32
+      Caption = 'New simulation'
+      ChildOrder = 13
+      ElementClassName = 'btn btn-primary btn-sm'
+      ElementFont = efCSS
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWhite
+      Font.Height = -11
+      Font.Name = 'Tahoma'
+      Font.Style = []
+      HeightStyle = ssAuto
+      HeightPercent = 100.000000000000000000
+      ParentFont = False
+      WidthPercent = 100.000000000000000000
+      OnClick = SetUpSimButtonClick
     end
   end
   object bottomWPanel: TWebPanel
@@ -789,9 +811,9 @@ object mainForm: TmainForm
       end
       object pnlNodePanel: TWebPanel
         Left = 8
-        Top = 500
+        Top = 488
         Width = 122
-        Height = 173
+        Height = 185
         ElementClassName = 'card'
         HeightPercent = 100.000000000000000000
         WidthPercent = 100.000000000000000000
@@ -802,7 +824,7 @@ object mainForm: TmainForm
         ElementFont = efCSS
         object nodeOutlineLabel: TWebLabel
           Left = 10
-          Top = 128
+          Top = 144
           Width = 38
           Height = 13
           Caption = 'Outline:'
@@ -817,7 +839,7 @@ object mainForm: TmainForm
         end
         object nodeFillLabel: TWebLabel
           Left = 3
-          Top = 80
+          Top = 96
           Width = 44
           Height = 13
           Caption = 'Node Fill:'
@@ -831,8 +853,8 @@ object mainForm: TmainForm
           WidthPercent = 100.000000000000000000
         end
         object editNodeLabel: TWebLabel
-          Left = 14
-          Top = 16
+          Left = 10
+          Top = 3
           Width = 83
           Height = 13
           Caption = 'Name of Species:'
@@ -845,11 +867,26 @@ object mainForm: TmainForm
           ParentFont = False
           WidthPercent = 100.000000000000000000
         end
+        object nodeConcLabel: TWebLabel
+          Left = 2
+          Top = 60
+          Width = 47
+          Height = 13
+          Caption = 'Init Conc:'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWhite
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          HeightPercent = 100.000000000000000000
+          ParentFont = False
+          WidthPercent = 100.000000000000000000
+        end
         object btnNodeOutlineColor: TWebColorPicker
-          Left = 54
-          Top = 112
+          Left = 52
+          Top = 136
           Width = 51
-          Height = 41
+          Height = 33
           HeightPercent = 100.000000000000000000
           WidthPercent = 100.000000000000000000
           ChildOrder = 3
@@ -859,7 +896,7 @@ object mainForm: TmainForm
         end
         object editNodeId: TWebEdit
           Left = 10
-          Top = 35
+          Top = 22
           Width = 95
           Height = 22
           ChildOrder = 4
@@ -870,16 +907,34 @@ object mainForm: TmainForm
           OnExit = editNodeIdExit
         end
         object btnNodeFillColor: TWebColorPicker
-          Left = 53
-          Top = 65
+          Left = 52
+          Top = 88
           Width = 52
-          Height = 41
+          Height = 33
           HeightPercent = 100.000000000000000000
           WidthPercent = 100.000000000000000000
           ChildOrder = 3
           Color = 11788021
           Role = ''
           OnClick = btnNodeFillColorClick
+        end
+        object editNodeConc: TWebEdit
+          Left = 52
+          Top = 55
+          Width = 65
+          Height = 22
+          ChildOrder = 7
+          ElementClassName = 'form-control'
+          ElementFont = efCSS
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          HeightPercent = 100.000000000000000000
+          ParentFont = False
+          WidthPercent = 100.000000000000000000
+          OnExit = editNodeConcExit
         end
       end
     end
@@ -979,6 +1034,8 @@ object mainForm: TmainForm
         OnMouseMove = networkPB1MouseMove
         OnMouseUp = networkPB1MouseUp
         OnMouseWheel = networkPB1MouseWheel
+        ExplicitLeft = -1
+        ExplicitTop = -6
       end
       object netDrawScrollBarVert: TTMSFNCScrollBar
         Left = 1118

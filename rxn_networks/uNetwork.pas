@@ -50,7 +50,7 @@ type
   // This is used to support undo operations and json reading and writing
   TNodeState = record
        id : string;
-       amt: double;   // amount of species, assume conc, unit volume
+       conc: double;   // conc of species, assume unit volume
        x, y, w, h : double;
        fillColor, outlineColor : TColor;
        outlineThickness : integer;
@@ -196,7 +196,7 @@ procedure TNodeState.saveAsJSON (nodeObject : TJSONObject);
 var colorObject : TJSONObject;
 begin
   nodeObject.AddPair ('id', id);
-  nodeObject.AddPair ('amt', TJSONNumber.Create(amt));  // to be added.
+  nodeObject.AddPair ('conc', TJSONNumber.Create(conc));  // to be added.
   nodeObject.AddPair ('x', TJSONNumber.Create (x));
   nodeObject.AddPair ('y', TJSONNumber.Create (y));
   nodeObject.AddPair ('w', TJSONNumber.Create (w));
@@ -211,7 +211,7 @@ end;
 procedure TNodeState.loadFromJSON (obj : TJSONObject);
 begin
    id := obj.GetJSONValue('id');
-   amt := strtofloat (obj.GetJSonValue('amt'));  // to be added
+   conc := strtofloat (obj.GetJSonValue('conc'));  // to be added
    x := strtofloat (obj.GetJSONValue ('x'));
    y := strtofloat (obj.GetJsonValue ('y'));
    h := strtofloat (obj.GetJSONValue ('h'));
@@ -498,6 +498,7 @@ begin
   result := nodes[length (nodes)-1];
   result.state.x := x; result.state.y := y;
   result.state.Id := Id;
+  self.networkEvent; // Notify listener
 end;
 
 
@@ -509,6 +510,7 @@ begin
   result.state.x := x; result.state.y := y;
   result.state.h := h; result.state.w := w;
   result.state.Id := Id;
+  self.networkEvent; // Notify listener
 end;
 
 
@@ -518,6 +520,7 @@ begin
   nodes[length (nodes)-1] := TNode.create (id);
   result := nodes[length (nodes)-1];
   result.state := state;
+  self.networkEvent; // Notify listener
 end;
 
 
@@ -526,6 +529,7 @@ begin
   setlength (nodes, length (nodes) + 1);
   nodes[length (nodes)-1] := TNode.create (id);
   result := nodes[length (nodes)-1];
+  self.networkEvent; // Notify listener
 
 end;
 
@@ -535,6 +539,7 @@ begin
   setlength (reactions, length (reactions) + 1);
   reactions[length (reactions)-1] := TReaction.create (id, src, dest);
   result := length (reactions) - 1;
+  self.networkEvent; // Notify listener
 end;
 
 
@@ -544,6 +549,7 @@ begin
   reactions[length (reactions)-1] := TReaction.create;
   result := reactions[length (reactions)-1];
   result.state := state;
+  self.networkEvent; // Notify listener
 end;
 
 
@@ -552,6 +558,7 @@ begin
   setlength (reactions, length (reactions) + 1);
   reactions[length (reactions)-1] := reaction;
   result := length (reactions);
+  self.networkEvent; // Notify listener
 end;
 
 
@@ -616,7 +623,7 @@ begin
     newReaction.setDefaultParams;
     newReaction.setRateRule;
   end;
-
+  self.networkEvent; // Notify listener
   result := newReaction;
 end;
 
@@ -768,7 +775,7 @@ end;
 constructor TNode.create (id : string);
 begin
   self.state.id := id;
-  self.state.amt := 1.0;
+  self.state.conc := 0.0;
   state.w := 60; state.h := 40;
   selected := false;
   addReactionSelected := false;
@@ -888,7 +895,7 @@ begin
 end;
 
 procedure TReaction.setDefaultParams();   // Note need to just use stoich values instead of Order of reaction
-var newRateConst, newParam: TSBMLparameter; // Get rid of Order of reaction exponent
+var newRateConst,newParam: TSBMLparameter; // Get rid of Order of reaction exponent
   i: Integer;
 begin
   newRateConst := TSBMLparameter.create(RXN_k_F+ state.id);
@@ -898,16 +905,16 @@ begin
   for i := 0 to state.nReactants -1 do
   begin
     state.srcStoich[i] := 1.0; // default
-    newParam := TSBMLparameter.create(RXN_R_EXP+ state.srcId[i]);//Order of reaction reactant Exp
-    newParam.setValue(1.0); // Default
-    state.rateParams.Add(newParam);
+   // newParam := TSBMLparameter.create(RXN_R_EXP+ state.srcId[i]);//Order of reaction reactant Exp
+   // newParam.setValue(1.0); // Default
+   // state.rateParams.Add(newParam);
   end;
   for i := 0 to state.nProducts do
   begin
     state.destStoich[i] := 1.0;
-    newParam := TSBMLparameter.create(RXN_P_EXP+ state.destId[i]);//Order of reaction product Exp
-    newParam.setValue(1.0);  // default
-    state.rateParams.Add(newParam);
+   // newParam := TSBMLparameter.create(RXN_P_EXP+ state.destId[i]);//Order of reaction product Exp
+   // newParam.setValue(1.0);  // default
+   // state.rateParams.Add(newParam);
   end;
 
 end;
@@ -962,7 +969,7 @@ procedure TReaction.setRateRule; // Build rate rule
 var newRate: tRateLaw;
 begin
   newRate := tRateLaw.create(state.nReactants, state.nProducts, state.srcId,
-               state.destId,  state.rateParams);
+               state.destId, state.srcStoich, state.destStoich, state.rateParams);
   state.rateLaw := newRate.getRateFormula();
   console.log('setRateRule: ',state.rateLaw);
 end;

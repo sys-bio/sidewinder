@@ -29,8 +29,10 @@ type
     networkUpdate: Boolean; // Use to prevent circular update when network is changed.
     FUpdate: TUpdateSimEvent;// Send Updated Sim values (time,species amts) to listeners.
     FSBMLUpdate: TUpdateModelEvent;
+    FSBMLUpdate2: TUpdateModelEvent;
     currNetworkCtrl : TController;
     procedure createSimulation();
+    procedure createModel(); // Instatiate TModel and attach listener
   public
     paramUpdated: Boolean; // true if a parameter val has been updated.
     constructor Create(networkCtrl: TController);
@@ -48,6 +50,7 @@ type
     procedure SetOnline(bOnline: Boolean);
     procedure SetModelLoaded(bModelLoaded: boolean);
     function IsModelLoaded(): Boolean;
+    function IsNetworkUpdated(): Boolean;  // true: network changed, need to update model.
     procedure SetTimerEnabled(bTimer: Boolean);
     procedure SetTimerInterval(nInterval: Integer);
     procedure loadSBML(sbmlStr: String);
@@ -57,9 +60,11 @@ type
     procedure stopTimer();
     procedure startTimer();
     function getSimulation(): TSimulationJS;
+    procedure updateModel(); // Update model for simulation.
     procedure networkUpdated(); // Network has changed, update model
     property OnSimUpdate: TUpdateSimEvent read FUpdate write FUpdate;
     property OnSBMLUpdate: TUpdateModelEvent read FSBMLUpdate write FSBMLUpdate;
+    property OnSBMLUpdate2: TUpdateModelEvent read FSBMLUpdate2 write FSBMLUpdate2;
     procedure UpdateVals( time: double; updatedVals: array of double);
             // Send new values to listeners.
     procedure getVals(newTime: Double; newVals: array of Double);
@@ -76,8 +81,9 @@ begin
   self.runTime := 500; // sec
   self.online := false;
   self.networkUpdate := false;
-  self.sbmlmodel := TModel.create();
-  self.sbmlmodel.OnPing := self.SBMLLoaded;  // Register callback function
+ // self.sbmlmodel := TModel.create();
+ // self.sbmlmodel.OnPing := self.SBMLLoaded;  // Register callback function
+  self.createModel;
   self.currNetworkCtrl := networkCtrl;
   self.OnSBMLUpdate := networkCtrl.SBMLUpdated;
   networkCtrl.network.OnNetworkEvent := self.networkUpdated;
@@ -86,15 +92,28 @@ end;
 // Grab SBML model information when notified by model of change:
 procedure TControllerMain.SBMLLoaded();
 begin
+console.log('TControllerMain.SBMLLoaded. creating new simulation');
   self.modelLoaded := true;
+  self.createSimulation;
   if Assigned(FSBMLUpdate) then
      FSBMLUpdate(self.sbmlmodel);
+   if Assigned(FSBMLUpdate2) then
+     FSBMLUpdate2(self.sbmlmodel);
 
-  self.createSimulation;
+
+end;
+
+procedure TControllerMain.createModel();
+begin
+console.log('TControllerMain.createModel');
+  if self.sbmlmodel <> nil then self.sbmlmodel.Free;
+  self.sbmlmodel := TModel.create();
+  self.sbmlmodel.OnPing := self.SBMLLoaded;  // Register callback function
 end;
 
 procedure TControllerMain.createSimulation();
 begin
+console.log('TControllerMain.createSimulation');
   if self.runSim <> nil then
   begin
     self.runSim.Free;
@@ -110,14 +129,22 @@ procedure TControllerMain.UpdateVals( time: double; updatedVals: array of double
      FUpdate(time, updatedVals);
  end;
 
-  // Network has changed, update model
+  // Network has changed, notify controller
 procedure TControllerMain.networkUpdated();
 begin
-  // TODO: Only make update when user wants to 'model save' or before 'start simulation'.
   console.log('Network changed');
   self.networkUpdate := true;      // after model updated, change to false.
-   // TODO    Update Model to reflect any Network changes, may not go here since only update in two cases.:
-   // generateModel(self.currNetworkCtrl.network): TModel;    <-- Return new Model.
+end;
+
+
+procedure TControllerMain.updateModel(); // Network changed, so update model.
+begin
+
+  console.log('TControllerMain.updateModel');
+    self.createModel();
+    self.sbmlmodel := self.currNetworkCtrl.createSBMLModel(self.sbmlmodel);
+    self.networkUpdate := false;
+   // self.createSimulation();
 end;
 
 procedure TControllerMain.setODESolver();
@@ -182,6 +209,10 @@ function TControllerMain.IsModelLoaded(): Boolean;
 begin
   Result := self.modelLoaded;
 end;
+function TControllerMain.IsNetworkUpdated(): Boolean;
+begin
+  Result := self.NetworkUpdate;
+end;
 
 procedure TControllerMain.SetTimerEnabled(bTimer: Boolean);
 begin
@@ -244,6 +275,12 @@ procedure TControllerMain.saveSBML(fileName: String);
 var writerSBML: TSBMLWriter;
 begin
   self.writeSBMLFileName := fileName;
+  // currently can have both sbml loaded from file and network model.
+  if length(self.sbmlmodel.getSBMLspeciesAr) <1 then
+  begin
+    self.sbmlmodel := self.currNetworkCtrl.createSBMLModel(self.sbmlmodel);
+  end;
+
   if self.sbmlmodel <> nil then
   begin
     writerSBML := TSBMLWriter.create();

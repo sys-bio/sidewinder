@@ -84,6 +84,9 @@ type
     splitter: TWebSplitter;
     btnSimple: TWebButton;
     SaveSBMLButton: TWebButton;
+    SetUpSimButton: TWebButton;
+    nodeConcLabel: TWebLabel;
+    editNodeConc: TWebEdit;
 
     procedure btnUniUniClick(Sender: TObject);
     procedure btnBiBiClick(Sender: TObject);
@@ -139,6 +142,8 @@ type
     procedure btnSimpleClick(Sender: TObject);
     procedure stepSizeEdit1Change(Sender: TObject);
     procedure SaveSBMLButtonClick(Sender: TObject);
+    procedure SetUpSimButtonClick(Sender: TObject);
+    procedure editNodeConcExit(Sender: TObject);
 
   private
     numbPlots: Integer; // Number of plots displayed
@@ -192,7 +197,7 @@ type
 
     function ScreenToWorld(X, Y: Double): TPointF; // Network drawing panel
     function WorldToScreen(wx: Integer): Integer; // Network drawing panel
-    procedure PingSBMLLoaded(); // Notify when done loading or model changes
+    procedure PingSBMLLoaded(newModel:TModel); // Notify when done loading or model changes
     procedure getVals(newTime: Double; newVals: array of Double);
     // Get new values (species amt) from simulation run
 
@@ -212,7 +217,9 @@ Uses uGraphUtils, uCreateNetworks, uLayout, uTestModel;
 procedure TMainForm.addPlotButtonClick(Sender: TObject);
 begin
   // Make runtime, stepsize, simulation buttons visible
-  // TODO: need to check if model ready for simulation first.
+  // Check if network has changed first.
+ // if mainController.IsNetworkUpdated then mainController.updateModel;
+
   self.numbPlots := self.numbPlots + 1;
   rtLabel1.visible := true;
   rtLengthEdit1.visible := true;
@@ -441,12 +448,14 @@ begin
     end;
 end;
 
-procedure TMainForm.PingSBMLLoaded();
+procedure TMainForm.PingSBMLLoaded(newModel:TModel);
 var
   i: Integer;
 begin
-
+  console.log(' TMainForm.PingSBMLLoaded');
   paramAddSliderBtn.visible := true;
+  onLineSimButton.visible := true;
+  addPlotButton.visible := true;
   // 1. Update current slider?
   //  2. updatePlots() <-- TODO: Check if plot species are no longer in model.
 end;
@@ -507,6 +516,8 @@ begin
     begin
       editNodeId.Text := networkController.network.nodes
         [networkController.selectedNode].state.id;
+      editNodeConc.Text := networkController.network.nodes
+        [networkCOntroller.selectedNode].state.conc.ToString;
       pnlNodePanel.visible := true;
     end
   else
@@ -556,6 +567,12 @@ procedure TMainForm.networkPB1Paint(Sender: TObject);
 begin
   networkCanvas.paint;
   networkPB1.canvas.draw(0, 0, networkCanvas.bitmap);
+end;
+
+procedure TMainForm.editNodeConcExit(Sender: TObject);
+begin
+  networkController.setNodeConc(editNodeConc.Text);
+  networkPB1.Invalidate;
 end;
 
 procedure TMainForm.paramAddSliderBtnClick(Sender: TObject);
@@ -642,16 +659,16 @@ begin
   self.mainController.setODEsolver;
   // xscaleHeight  := round(0.15* plotPB1.Height);   // make %15 of total height  get rid of
   currentGeneration := 0;
+  self.mainController.OnSBMLUpdate2 := self.PingSBMLLoaded;
+  //if self.mainController.getModel <> nil then
+  //begin
+  //  self.mainController.getModel.OnPing2 := self.PingSBMLLoaded;
 
-  if self.mainController.getModel <> nil then
-  begin
-    self.mainController.getModel.OnPing2 := self.PingSBMLLoaded;
-
-  end
-  else
-  begin
-    ShowMessage('Blank model not created.');
-  end;
+  //end
+  //else
+  //begin
+  //  ShowMessage('Blank model not created.');
+  //end;
 
   // Notification of changes:
   self.mainController.OnSimUpdate := self.getVals; // notify when new Sim results
@@ -1108,5 +1125,11 @@ begin
 
 end;
 
+
+procedure TMainForm.SetUpSimButtonClick(Sender: TObject);
+begin
+  mainController.updateModel;
+ // self.mainController.getModel.OnPing2 := self.PingSBMLLoaded;
+end;
 
 end.

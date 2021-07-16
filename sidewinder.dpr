@@ -40,7 +40,8 @@ uses
   uSBMLReader in 'sbml\uSBMLReader.pas',
   uSBMLWriter in 'sbml\uSBMLWriter.pas',
   uPlotActions in 'plot\uPlotActions.pas',
-  uBuildRateLaw in 'rxn_networks\uBuildRateLaw.pas';
+  uBuildRateLaw in 'rxn_networks\uBuildRateLaw.pas',
+  uNetworkToModel in 'rxn_networks\uNetworkToModel.pas';
 
 {$R *.res}
 

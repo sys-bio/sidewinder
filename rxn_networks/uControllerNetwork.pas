@@ -5,7 +5,7 @@ interface
 uses SysUtils, Classes, System.UITypes, contnrs, Types, WebLib.ExtCtrls,
   WEBLib.Utils, WEBLib.Buttons, WEBLib.Graphics, WEBLib.Controls,
   Vcl.StdCtrls, WEBLib.StdCtrls, uNetwork, Dialogs, uSelectedObjects, Math,
-  uNetworkCanvas,uModel;
+  uNetworkCanvas,uModel, uNetworkToModel;
 
 const
   NOT_SELECTED = -1;
@@ -52,7 +52,7 @@ type
 
     networkCanvas : TNetworkCanvas;
   
-    sbmlModel: TModel;
+    //sbmlModel: TModel;
   public
     procedure loadModel(modelStr: string);
     procedure setAddNodeStatus;
@@ -65,6 +65,7 @@ type
     function  addNode(Id: string; x, y: double): TNode; overload;
     procedure addNode(x, y: double); overload;
     procedure setNodeId (id : string);
+    procedure setNodeConc (conc : string);
     function  addReaction(Id: string; src, dest: TNode): integer;
     procedure prepareUndo;
     procedure undo;
@@ -75,6 +76,7 @@ type
     procedure OnMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; x, y: double);
     procedure OnMouseMove(Sender: TObject; Shift: TShiftState; x, y: double);
     procedure OnMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; x, y: double);
+    function createSBMLModel(currentModel: TModel): TModel; // Build SBML model based on current Network
     procedure SBMLUpdated(updatedModel: TModel);
 
     constructor Create(network: TNetwork);
@@ -263,6 +265,23 @@ begin
   network.nodes[selectedNode].state.id := Id;
 end;
 
+procedure TController.setNodeConc (conc : string);
+var index : integer;
+    newConc: double;
+begin
+  if selectedNode = -1 then
+     exit;
+
+  prepareUndo;
+  try
+    newConc := StrToFloat(conc);
+  except
+    on Exception: EConvertError do
+     // ShowMessage(Exception.Message);
+      ShowMessage ('Conc must be a number');
+  end;
+  network.nodes[selectedNode].state.conc := newConc;
+end;
 
 procedure TController.addUniUniReactionMouseDown(Sender: TObject; x, y: double);
 var
@@ -559,8 +578,15 @@ begin
   end;
 end;
 
+function TController.createSBMLModel(currentModel: TModel): TModel;
+var builder: TNetworkToModel;
+begin
+  builder := TNetworkToModel.create(currentModel, network);
+  currentModel.SBML_UpdateEvent; // Notify listeners
+  Result := builder.getModel();
 
-//procedure TController.SBMLUpdated(SBMLModel: TModel);
+end;
+
 procedure TController.SBMLUpdated(updatedModel: TModel);
 begin
   // TODO : update Network to reflect updated model.
