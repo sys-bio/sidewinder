@@ -1127,9 +1127,35 @@ end;
 
 
 procedure TMainForm.SetUpSimButtonClick(Sender: TObject);
+var i: integer;
 begin
+  // delete existing plots
+  if length(self.plotsPBAr) > 0 then
+  begin
+    for i := 0 to length(self.plotsPBAr)-1 do
+      begin
+        self.DeletePlot(i);
+      end;
+   // setLength(self.plotsPBAr, 0);
+   // setLength(self.listOfPlots, 0);
+   // setLength(self.maxYValueAr, 0);
+   // setLength(pixelStepAr, 0);
+   // setLength(self.xscaleHeightAr, 0);
+    self.numbPlots := 0;
+    self.RightWPanel.Invalidate;
+  end;
+
+  // delete existing param sliders.
+  if length(self.sliderPanelAr) >0 then
+  begin
+   for i := 0 to length(self.sliderPanelAr) -1 do
+     begin
+       self.DeleteSlider(i);
+     end;
+   setLength(self.sliderPanelAr, 0);
+  end;
   mainController.updateModel;
- // self.mainController.getModel.OnPing2 := self.PingSBMLLoaded;
+
 end;
 
 end.

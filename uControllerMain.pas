@@ -117,6 +117,8 @@ console.log('TControllerMain.createSimulation');
   if self.runSim <> nil then
   begin
     self.runSim.Free;
+    self.currTime := 0;
+    self.online := false;
   end;
   self.runSim := TSimulationJS.create(self.runTime, self.stepSize, self.SBMLmodel, self.solverUsed);
   self.runSim.OnUpdate := self.getVals; // register callback function.
@@ -250,7 +252,6 @@ end;
 procedure TControllerMain.startTimer();
 begin
   self.runSim.startTimer;
- // console.log('TControllerMain.startTimer(');
 end;
 
 procedure TControllerMain.getVals(newTime: Double; newVals: array of Double);
@@ -291,7 +292,6 @@ end;
 
 procedure TControllerMain.modelWritten(modelStr: String);
  begin
-   //console.log('Here is sbml written: ',modelStr);
    Application.DownloadTextFile(modelStr, self.writeSBMLFileName);
  end;
 
