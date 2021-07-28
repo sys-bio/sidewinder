@@ -90,7 +90,7 @@ begin
      self.rateFormula := self.rateFormula + self.rS[0].ToString + ') * pow(';
      self.rateFormula := self.rateFormula + self.reactants[1]+ ', '+ self.rS[1].ToString +')';
   end;
-  console.log('generateRateLaw: '+ self.rateFormula);
+ // console.log('generateRateLaw: '+ self.rateFormula);
 end;
 
 function tRateLaw.getRateFormula(): string;

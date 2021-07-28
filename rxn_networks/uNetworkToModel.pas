@@ -1,5 +1,5 @@
 unit uNetworkToModel;
-
+ // *** Currently only one-way reactions.
 interface
 uses Web, JS, uModel, uSBMLClasses, uNetwork;
 
@@ -19,7 +19,7 @@ public
   constructor create(newModel: TModel; newNetwork: TNetwork);
   function getModel:TModel;
  // procedure setModel(newModel: TModel);
- // procedure setNetwork(newNetwork: TNetwork);
+ // procedure setNetwork(newNetwork: TNetwork);   // TODO
 
 end;
 
@@ -31,7 +31,6 @@ begin
   self.network := newNetwork;
   self.setCompartments;
   self.setSpecies;
-  //self.setParameters; // Currently done in setReactions as all params in rxn equations
   self.setReactions;
 
 end;
@@ -57,6 +56,7 @@ begin
     newSpecies := TSBMLSpecies.create(nodes[i].state.id);
     newSpecies.setInitialConcentration(nodes[i].state.conc);
     newSpecies.setCompartment(DEFAULT_COMP);
+    newSpecies.setHasOnlySubstanceUnits(false); // species units is conc.
     self.model.addSBMLspecies(newSpecies);
   end;
 end;
@@ -81,8 +81,11 @@ begin
       if self.network.reactions[i].state.srcId[j] <> '' then
       begin
         setLength(newSpecReacts, k+1);
-        newSpecReacts[k] := TSBMLSpeciesReference.create(self.network.reactions[i].state.srcId[j],
-                        self.network.reactions[i].state.srcStoich[j] );
+        newSpecReacts[k] := TSBMLSpeciesReference.create(self.network.reactions[i].state.srcId[j] +
+                            self.network.reactions[i].state.id,
+                            self.network.reactions[i].state.srcStoich[j] );
+        newSpecReacts[k].setSpecies(self.network.reactions[i].state.srcId[j]);
+        newSpecReacts[k].setConstant(true);  // default: const stoich coeff
       end;
     end;
 
@@ -94,12 +97,15 @@ begin
       if self.network.reactions[i].state.destId[j] <> '' then
       begin
         setLength(newSpecProds, k+1);
-        newSpecProds[k] := TSBMLSpeciesReference.create(self.network.reactions[i].state.destId[j],
+        newSpecProds[k] := TSBMLSpeciesReference.create(self.network.reactions[i].state.destId[j] +
+                         self.network.reactions[i].state.id,
                         self.network.reactions[i].state.destStoich[j] );
+        newSpecProds[k].setSpecies(self.network.reactions[i].state.destId[j]);
+        newSpecProds[k].setConstant(true); // default: const stoich coeff
       end;
     end;
     newReaction := SBMLReaction.create(self.network.reactions[i].state.id, newSpecProds, newSpecReacts );
-
+    newReaction.setReversible(false); // Currently on one-way reactions.
     newLaw := SBMLkineticLaw.create();
     for j := 0 to (self.network.reactions[i].state.rateParams.count -1) do
     begin
