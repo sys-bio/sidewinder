@@ -10,6 +10,7 @@ type
    compSid: String; // Compartment sid
    boundCond: boolean;
    amtConst: boolean; // if amt constant.
+   hasOnlySubstanceUnits: boolean;   // 4.6.5 The hasOnlySubstanceUnits attribute
    initAmtFlag, initConcFlag: boolean;
    compFlag, boundCondFlag, constFlag: boolean;
    idFlag, nameFlag: boolean;
@@ -30,9 +31,10 @@ type
    function getBoundaryCondition():boolean; // true if this Species' "boundaryCondition" attribute value is true, false otherwise
    procedure setBoundaryCondition(val:boolean);
   // function isSetBoundaryCondition(): boolean; // true if this Species object's "boundaryCondition" attribute is set.
-   function getConstant():boolean; // true if this Species's "constant" attribute value is true, false otherwise
+   function getConstant(): boolean; // true if this Species's "constant" attribute value is true, false otherwise
    procedure setConstant(val:boolean);
-  // function isSetConstant():boolean;
+   function getHasOnlySubstanceUnits(): boolean;
+   procedure setHasOnlySubstanceUnits(newHasOnly: boolean);
    function getID(): String;
    procedure setID(id:String);
    function isSetIdAttribute(): boolean;
@@ -102,8 +104,9 @@ type
 
  TSBMLSpeciesReference = class
  private
-    stoichValue: double;
-  //  constSetFlag: boolean;
+    stoichValue: double;  // A positive value indicates the species is effectively a
+    // product and a negative value indicates the species is effectively a reactant
+    spConst: boolean;  // Stoich constant ?
     id, species: String;
    // name: String;
     idSetFlag, speciesSetFlag: boolean;
@@ -119,13 +122,11 @@ type
     function getId(): String;
     procedure setId( val: String);
     function isSetIdAttribute(): boolean;
-//    function getConstant(): boolean; // check if stoich is constant.
-//    procedure setConstant(val: boolean);
+    function getConstant(): boolean; // check if stoich is constant.
+    procedure setConstant(val: boolean);
 //    function isSetConstant(): boolean;
     function getStoichiometry(): double;
     procedure setStoichiometry(val: double);
- //   function getStoichiometry(): double;
- //   procedure setStoichiometry(val: double);
     function isSetStoichiometry(): boolean;
  //   function getName(): String;
  //   procedure setName(val: String);
@@ -171,6 +172,7 @@ type
   rxnNameFlagSet: boolean;
   compartment: String;  // Compartment sid
   compartmentFlagSet: boolean;
+  reversible: boolean;
   kineticlaw: SBMLkineticlaw;
   kineticLawFlagSet: boolean;
   products: array of String;   // remove at some point
@@ -193,6 +195,8 @@ type
   function getCompartment(): String;
   procedure setCompartment(val:String);
   function isSetCompartment(): boolean;
+  function getReversible(): boolean;
+  procedure setReversible(r: boolean);
   procedure setProducts(prod: array of String);  // remove at some point
   procedure setReactants(reactant: array of String);  // remove at some point
   function getrxnProducts(): array of TSBMLSpeciesReference;   // Get products (species) for reaction
@@ -213,8 +217,6 @@ type
   function getKineticLaw(): SBMLkineticlaw;
   procedure setKineticLaw(law: SBMLkineticlaw);
   function isSetKineticLaw(): boolean;
-//  function getReversible(): boolean;
-//  procedure setReversible();
 //  function isSetReversible(): boolean;
 //  procedure unsetReversible();
   procedure setId(id: String);
@@ -238,6 +240,7 @@ implementation
     boundCond:= false; amtConst:= false; initAmtFlag:= false; initConcFlag:= false;
     compFlag:= false; boundCondFlag:= false; constFlag:= false;
     nameFlag:= false;
+    self.hasOnlySubstanceUnits := false;
   end;
 
   constructor TSBMLSpecies.create(id:String); Overload;
@@ -251,6 +254,7 @@ implementation
     boundCond:= false; amtConst:= false; initAmtFlag:= false; initConcFlag:= false;
     compFlag:= false; boundCondFlag:= false; constFlag:= false;
     nameFlag:= false;
+    self.hasOnlySubstanceUnits := false;
 
   end;
   constructor TSBMLSpecies.create(copySp: TSBMLSpecies); Overload;
@@ -268,6 +272,7 @@ implementation
     initAmtFlag:= copySp.isSetInitialAmount();
     initConcFlag:= copySp.isSetInitialConcentration();
     compFlag:= copySp.isSetCompartment();
+    self.hasOnlySubstanceUnits := copySp.getHasOnlySubstanceUnits();
 
 
 
@@ -329,6 +334,15 @@ implementation
      constFlag:= val;
    end;
   // function TSBMLSpecies.isSetConstant():boolean;
+   function TSBMLSpecies.getHasOnlySubstanceUnits(): boolean;
+   begin
+     Result := self.hasOnlySubstanceUnits;
+   end;
+   procedure TSBMLSpecies.setHasOnlySubstanceUnits(newHasOnly: boolean);
+   begin
+     self.hasOnlySubstanceUnits := newHasOnly;
+   end;
+
    function TSBMLSpecies.getID(): String;
    begin
      Result:= sid;
@@ -363,10 +377,11 @@ implementation
   begin
      id:= '';
      species:= '' ;
-     stoichValue:= 1;  // Default is '1'
+     stoichValue:= 1;  // Default Stoich coefficient is '1'
      idSetFlag:= false;
      speciesSetFlag:= false;
-     stoichSetFlag:= true;
+     stoichSetFlag:= false;
+     self.spConst := true;  // default
   end;
   constructor TSBMLSpeciesReference.create(newId:String); Overload;
   begin
@@ -375,12 +390,12 @@ implementation
      stoichValue:= 1;  // Default is '1'
      idSetFlag:= true;
      speciesSetFlag:= false;
-     stoichSetFlag:= true;
+     stoichSetFlag:= false;
   end;
   constructor TSBMLSpeciesReference.create(newId:String; stoich: double); Overload;
   begin
      id:= newId;
-     species:= newId ; // for now, may change
+     species:= '' ; // Cannot be the same as id
      stoichValue:= stoich;
      idSetFlag:= true;
      speciesSetFlag:= true;
@@ -399,9 +414,16 @@ implementation
   begin
     Result:= speciesSetFlag;
   end;
-//    function getConstant(): boolean; // check if stoich is constant.
-//    procedure setConstant(val: boolean);
-//    function isSetConstant(): boolean;
+
+  function TSBMLSpeciesReference.getConstant(): boolean; // check if stoich is constant.
+  begin
+    Result := self.spConst;
+  end;
+  procedure TSBMLSpeciesReference.setConstant(val: boolean);
+  begin
+    self.spConst := val;
+  end;
+
   function TSBMLSpeciesReference.getStoichiometry(): double;
   begin
     Result:= stoichValue;
@@ -702,6 +724,7 @@ implementation
   kineticlaw:= nil;
   kineticLawFlagSet:= false;
   kineticLawStr:= '';
+  reversible := false;
  end;
 
  constructor SBMLReaction.create(id:String; prod: array of TSBMLSpeciesReference; reactant: array of TSBMLSpeciesReference);
@@ -720,6 +743,7 @@ implementation
   kineticlaw:= nil;
   kineticLawFlagSet:= false;
   kineticLawStr:= '';
+  self.reversible := false;  // default
  end;
 
  constructor SBMLReaction.create(id:String);
@@ -737,6 +761,7 @@ implementation
   kineticLawStr:= '';
   kineticlaw:= nil;
   kineticLawFlagSet:= false;
+  self.reversible := false;
  end;
 
  function SBMLReaction.getCompartment(): String;
@@ -827,8 +852,16 @@ implementation
  begin
    Result:= kineticLawFlagSet;
  end;
-//  function getReversible(): boolean;
-//  procedure setReversible();
+
+  function SBMLReaction.getReversible(): boolean;
+  begin
+    Result := self.reversible;
+  end;
+  procedure SBMLReaction.setReversible(r: boolean);
+  begin
+    self.reversible := r;
+  end;
+
 //  function isSetReversible(): boolean;
 //  procedure unsetReversible();
  procedure SBMLReaction.setId(id: String);

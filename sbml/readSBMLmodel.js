@@ -74,6 +74,8 @@ getRules(tModela, tRule) {
       // console.log( ' Setting boundary condition to true') }
       if (newSpecies.isSetName()) {
         tSpecies.setName(newSpecies.getName()); }
+      if (newSpecies.isSetHasOnlySubstanceUnits()) {
+        tSpecies.setHasOnlySubstanceUnits(newSpecies.getHasOnlySubstanceUnits()); }
       tModela.addSBMLspecies(tSpecies); // Add new species to array of all species used in model.
     }
     return tModela;
@@ -134,18 +136,26 @@ getRules(tModela, tRule) {
         if( this.model.getReaction(i).getReactant(j).isSetStoichiometry() ) {
           reactStoich[j] = this.model.getReaction(i).getReactant(j).getStoichiometry();
         }
-        else { reactStoich[j] =1; }  // default
+        else { reactStoich[j] = 1; }  // default for reactant
       }
       numTotalSpecies = 0;
       numTotalSpecies = this.model.getReaction(i).getNumProducts();
       for (j=0; j < numTotalSpecies; j++) {
         products[j] = this.model.getReaction(i).getProduct(j).getSpecies();
-        prodStoich[j] = this.model.getReaction(i).getProduct(j).getStoichiometry();
+        if( this.model.getReaction(i).getProduct(j).isSetStoichiometry() ) {
+          prodStoich[j] = this.model.getReaction(i).getProduct(j).getStoichiometry();
+        }
+        else { prodStoich[j] = 1; }
       }
       var kineticForm = this.model.getReaction(i).getKineticLaw().getFormula();
+      var rxnReversible;
+      if (this.model.getReaction(i).isSetReversible()) {
+        rxnReversible = this.model.getReaction(i).getReversible(); }
+      else { rxnReversible = true; } // level 2 default is true
       const newKineticLaw = this.model.getReaction(i).getKineticLaw();
    //console.log('--> kinetic law: ',this.model.getReaction(i).getKineticLaw().getFormula());
-      tModela.addSBMLReaction(this.model.getReaction(i).getId(), products, prodStoich, reactants, reactStoich, kineticForm);
+      tModela.addSBMLReaction(this.model.getReaction(i).getId(), products, prodStoich,
+                              reactants, reactStoich, kineticForm, rxnReversible);
     }
     return tModela;
   }

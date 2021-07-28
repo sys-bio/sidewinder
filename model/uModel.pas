@@ -45,7 +45,7 @@ type
    procedure setNumReactions (rnxNumb : integer); // TODO, remove, just increment as rxn added.
    function  getNumReactions : integer;
    procedure addSBMLReaction(rxnid:String; prods: array of String; prodStoich: array of double;
-        reactants: array of String; reactantsStoich: array of double; kinetic: String); overload;
+        reactants: array of String; reactantsStoich: array of double; kinetic: String; newReverse: boolean); overload;
    procedure addSBMLReaction(newReaction: SBMLReaction); overload;
    function  getParamNumb(): integer;
    function  getSBMLparameter(i:integer): TSBMLparameter;
@@ -135,7 +135,7 @@ procedure TModel.SBML_UpdateEvent();
  end;
 
  procedure TModel.addSBMLReaction(rxnid:String; prods: array of String; prodStoich: array of double;
-        reactants: array of String; reactantsStoich: array of double; kinetic: String);
+        reactants: array of String; reactantsStoich: array of double; kinetic: String; newReverse: boolean);
  var
    newRxn: SBMLReaction;
    len: integer;
@@ -147,24 +147,26 @@ procedure TModel.SBML_UpdateEvent();
    paramArray:= ['nothing', 'empty'];
    for I := 0 to Length(prods)-1 do
    begin
-     p[I]:= TSBMLSpeciesReference.create(prods[I],prodStoich[I]);
+     p[I]:= TSBMLSpeciesReference.create(prods[I] + rxnid,prodStoich[I]);
+     p[I].setSpecies(prods[I]);
    end;
 
    setlength(r, Length(reactants));
 
    for I := 0 to Length(reactants)-1 do
    begin
-     r[I]:= TSBMLSpeciesReference.create(reactants[I],reactantsStoich[I]);
+     r[I]:= TSBMLSpeciesReference.create(reactants[I] + rxnid,reactantsStoich[I]);
+     r[I].setSpecies(reactants[I]);
    end;
 
    newRxn:= SBMLReaction.create(rxnid, p, r);
+   newRxn.setReversible(newReverse);
    newRxn.kineticLawStr:= kinetic;   // Get rid of.....?
    //newId: String; newFormula: String; paramArr: array of String
    newRxn.setKineticLaw(SBMLkineticLaw.create('dummy', kinetic,paramArray));
    len:= Length(SBMLreactions);
    SetLength(SBMLreactions,len+1);    // Add new reaction to array
    sbmlreactions[len]:= newRxn;
- //  if self.numReactions = -1 then self.numReactions := 1
    inc(self.numReactions);
  end;
 

@@ -31,7 +31,7 @@ class GenerateSBMLModel {
      const newComp = this.libSBMLmodel.createCompartment();
      newComp.setId(rxnComps[i].getID());
      if(rxnComps[i].isSetName()){newComp.setName(rxnComps[i].getName());}
-     newComp.setConstant = rxnComps[i].getConstant();
+     newComp.setConstant(rxnComps[i].getConstant());
      if(rxnComps[i].isSetSize()){newComp.setSize(rxnComps[i].getSize());}
      if(rxnComps[i].isSetVolume()){newComp.setVolume(rxnComps[i].getVolume());}
    }
@@ -64,6 +64,7 @@ class GenerateSBMLModel {
      if(rxnSpecies[i].isSetCompartment())
        {newSpecies.setCompartment(rxnSpecies[i].getCompartment());}
      newSpecies.setConstant(rxnSpecies[i].getConstant());
+     newSpecies.setHasOnlySubstanceUnits(rxnSpecies[i].getHasOnlySubstanceUnits());
    }
  }
 
@@ -96,6 +97,7 @@ class GenerateSBMLModel {
      newReaction.setId(rxnReactions[i].getID());
      if(rxnReactions[i].isSetName()){ newReaction.setName(rxnReactions[i].getName());}
      if(rxnReactions[i].isSetCompartment()){ newReaction.setCompartment(rxnReactions[i].getCompartment());}
+     newReaction.setReversible(rxnReactions[i].getReversible());
      // Reactants:
      var rxnSpeciesRef = rxnReactions[i].getrxnReactants();
      for(j=0; j< rxnSpeciesRef.length; j++) {
@@ -105,6 +107,7 @@ class GenerateSBMLModel {
          newReactant.setName(rxnSpeciesRef[j].getSpecies()); } // name same as species
        if(rxnSpeciesRef[j].isSetStoichiometry())    // Stoich is double, convert to int?
          {newReactant.setStoichiometry(rxnSpeciesRef[j].getStoichiometry()); }
+       newReactant.setConstant(rxnSpeciesRef[j].getConstant()); // stoich constant?
      }
      // Products:
      rxnSpeciesRef = rxnReactions[i].getrxnProducts();
@@ -115,6 +118,7 @@ class GenerateSBMLModel {
          newProduct.setName(rxnSpeciesRef[j].getSpecies()); } // name same as species
        if(rxnSpeciesRef[j].isSetStoichiometry())     // Stoich is double, convert to int?
          {newProduct.setStoichiometry(rxnSpeciesRef[j].getStoichiometry()); }
+       newProduct.setConstant(rxnSpeciesRef[j].getConstant()); // stoich constant?
      }
      // Kinetic Law:  Note: local param not implimented.
      if( rxnReactions[i].isSetKineticLaw()) {
