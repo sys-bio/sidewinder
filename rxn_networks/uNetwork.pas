@@ -150,7 +150,7 @@ type
        function    addUniUniReaction (id : string; src, dest : TNode) : integer; overload;
        function    addReaction (state : TReactionState) : TReaction; overload;
        function    addReaction (reaction : TReaction) : integer; overload;
-       function    addAnyToAnyEdge (sourceNodes, destNodes : array of TNode; var edgeIndex : integer) : TReaction;
+       function    addAnyToAnyEdge (id: string; sourceNodes, destNodes : array of TNode; var edgeIndex : integer) : TReaction;
        procedure   unSelectAll;
        procedure   unReactionSelect;
        procedure   centerNetwork (w, h : integer);
@@ -574,7 +574,8 @@ begin
 end;
 
 
-function TNetwork.AddAnyToAnyEdge (sourceNodes, destNodes : array of TNode; var edgeIndex : integer) : TReaction;
+//function TNetwork.AddAnyToAnyEdge (sourceNodes, destNodes : array of TNode; var edgeIndex : integer) : TReaction;
+function TNetwork.AddAnyToAnyEdge (id: string; sourceNodes, destNodes : array of TNode; var edgeIndex : integer) : TReaction;
 var newReaction : TReaction;
     i : integer;
     nSource, nDestination : integer;
@@ -600,7 +601,7 @@ begin
 
   //    newEdge.destConnectedNodeList.Add (TConnectedNode.Create (destNodes[i], 1));
 
-  newReaction.state.id := 'J1'; //getUniqueReactionName();
+  newReaction.state.id := id; //getUniqueReactionName();
   edgeIndex := addReaction (newReaction);
 
   // Update Node to inform it which edges it is connected to, required when
@@ -617,7 +618,6 @@ begin
      computeAnyToAnyCoordinates (newReaction, sourceNodes, destNodes);
 
   // add Rate rule
-  console.log('TNetwork.AddAnyToAnyEdge new reaction');
   if newReaction.getRateRule = '' then
   begin
     newReaction.setDefaultParams;
@@ -875,7 +875,6 @@ constructor TReaction.Create;
 begin
   state.fillColor := clWebLightSteelBlue;
   state.thickness := DEFAULT_REACTION_THICKNESS;
-   console.log('TReaction.create().....');
   selected := False;
 end;
 
@@ -971,7 +970,7 @@ begin
   newRate := tRateLaw.create(state.nReactants, state.nProducts, state.srcId,
                state.destId, state.srcStoich, state.destStoich, state.rateParams);
   state.rateLaw := newRate.getRateFormula();
-  console.log('setRateRule: ',state.rateLaw);
+//  console.log('setRateRule: ',state.rateLaw);
 end;
 
 function TReaction.getRateRule: string;

@@ -359,7 +359,9 @@ begin
       if not(destNodeCounter < nProducts - 1) then
       begin
         prepareUndo;
-        network.AddAnyToAnyEdge(sourceNodes, destNodes, index);
+      //  network.AddAnyToAnyEdge(sourceNodes, destNodes, index);
+     // console.log('TController.addAnyReactionMouseDown. Number of reactions: ',inttostr(Length(network.reactions)));
+        network.AddAnyToAnyEdge('J' + inttostr(Length(network.reactions) ), sourceNodes, destNodes, index);
         sourceNodeCounter := -1;
         destNodeCounter := -1;
         network.UnSelectAll;
