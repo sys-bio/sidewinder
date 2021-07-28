@@ -6,7 +6,8 @@ unit uODE_FormatUtility;
 // Convert basic math functions to javascript notation (ie pow() -> Math.pow() )
 
 interface
-uses System.SysUtils, System.StrUtils, web, uSBMLClasses, uModel, uSBMLClasses.rule;
+uses System.SysUtils, System.StrUtils, System.StrUtils, System.Types,
+     web, uSBMLClasses, uModel, uSBMLClasses.rule;
 
 type
 TFormatODEs = class
@@ -61,6 +62,7 @@ var i, j,k,  count: Integer;
     odeStrs: array of String;
     lhsSymbols: array of String; // contains the 'dydt_s[]=' argument.
     found_dydt: Integer;
+    splitStrAr: TStringDynArray;
 
 begin
   self.assignParamEqs := nil;
@@ -106,10 +108,25 @@ begin
              end
           else
           begin
-          if ContainsText(lhsSymbols[k],'(-1)*') then     // << ----- BUG: Need stoich coeff for species, not '1' in here
-            self.odeEqs[found_dydt] := self.odeEqs[found_dydt] + '+ ' + '(-1)*('+ odeStrs[j] + ')'
+          splitStrAr := SplitString(lhsSymbols[k],'='); // grab the stoich coeff
+          if ContainsText(lhsSymbols[k],'(-1)*') then  // still need to put in stoich coeff
+            begin
+           // splitStrAr := SplitString(lhsSymbols[k],'=' ); // grab the stoich coeff
+            if Length(splitStrAr) > 1 then
+              begin
+            //  console.log('-1 on lhs: ', splitStrAr[1]);
+               self.odeEqs[found_dydt] := self.odeEqs[found_dydt] + '+ ' + splitStrAr[1]+ odeStrs[j] + ')' ;
+              end;
+
+            end
           else
-            self.odeEqs[found_dydt] := self.odeEqs[found_dydt] + '+ ' + '('+ odeStrs[j] + ')';
+            begin
+            //splitStrAr := nil;
+            //splitStrAr := SplitString(lhsSymbols[k],'='); // grab the stoich coeff
+            if Length(splitStrAr) > 1 then
+              self.odeEqs[found_dydt] := self.odeEqs[found_dydt] + '+ ' + splitStrAr[1] + odeStrs[j] + ')';
+            end;
+         // console.log('current odeEqs: ', self.odeEqs[found_dydt]);
           end;
         end;
       end;
@@ -314,7 +331,7 @@ begin
             if self.spBoundaryCondition(tmpSpId) = false then  // <-- need actual species in array of species.
             begin
               if self.prods[i].isSetStoichiometry then stoich := self.prods[i].getStoichiometry;
-              lhs[i]:= ODESTART + IntToStr(strInArray(self.prods[i].getSpecies(),speciesStrAr))+']'+'= ('+stoich.ToString+')* ('; // dydt_name
+                lhs[i]:= ODESTART + IntToStr(strInArray(self.prods[i].getSpecies(),speciesStrAr))+']'+'= (1)*('+stoich.ToString+')* ('; // dydt_name
             end
             else lhs[i]:= '';  // No ODE for boundary condition.
             console.log('... Products lhs: ', lhs[np+i]);
@@ -341,14 +358,14 @@ begin
           begin
           //console.log('Boundary condition not set');
             if self.reactants[i].isSetStoichiometry then stoich := self.reactants[i].getStoichiometry;
-            lhs[np+i]:= ODESTART + IntToStr(strInArray(reactants[i].getSpecies(),speciesStrAr))+']'+'= (-'+stoich.ToString+')* (' ;   // dydt_name
+              lhs[np+i]:= ODESTART + IntToStr(strInArray(reactants[i].getSpecies(),speciesStrAr))+']'+'= (-1)*('+stoich.ToString+')* (' ;   // dydt_name
           end
           else
           begin
            // console.log('Boundary condition SET!!!');
             lhs[np+i]:= '';
           end;
-          console.log('. Reactants lhs: ', lhs[np+i]);
+         // console.log('. Reactants lhs: ', lhs[np+i]);
         end;
       end;
      end;
@@ -499,7 +516,6 @@ var
      if self.speciesAr[i].getId = speciesId then
        begin
        Result:= self.speciesAr[i].getBoundaryCondition();
-       //console.log(' Found the boundary condition');
        end;
      end;
 
