@@ -148,7 +148,7 @@ type
                      Fitol, Fitask, Fistate, Fiopt, Fjt, Fiwork5, Fiwork6 : integer;
                      Fiwork7, Fiwork8, Fiwork9 : integer;
                      Frwork1, Frwork5, Frwork6, Frwork7 : double;
-                     FDerivatives : fcnProc;
+                    // FDerivatives : fcnProc;
                      odeClass: TODE_eqs;    // Added.
 
                      procedure terminate(var istate: integer );
@@ -206,6 +206,8 @@ type
                      property  rwork6 : double  read Frwork6 write Frwork6;
                      property  rwork7 : double  read Frwork7 write Frwork7;
                      var p: array of double;  // parameters used in ODE eqs.
+
+                     FDerivatives : fcnProc;  // Originally private.
                    end;
 
 
