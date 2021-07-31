@@ -17,8 +17,8 @@ object mainForm: TmainForm
     BorderStyle = bsSingle
     ElementBodyClassName = 'card-body-10  bg-dark text-white'
     object rtLabel1: TWebLabel
-      Left = 1210
-      Top = 9
+      Left = 1572
+      Top = 15
       Width = 62
       Height = 13
       Caption = 'Run time (s):'
@@ -33,7 +33,7 @@ object mainForm: TmainForm
       WidthPercent = 100.000000000000000000
     end
     object stepSizeLabel1: TWebLabel
-      Left = 1201
+      Left = 1563
       Top = 34
       Width = 71
       Height = 13
@@ -80,8 +80,8 @@ object mainForm: TmainForm
       OnClick = mnuSaveClick
     end
     object onLineSimButton: TWebButton
-      Left = 970
-      Top = 15
+      Left = 1170
+      Top = 11
       Width = 120
       Height = 25
       Caption = 'Simulation: Offline'
@@ -99,8 +99,8 @@ object mainForm: TmainForm
       OnClick = onLineSimButtonClick
     end
     object addPlotButton: TWebButton
-      Left = 1096
-      Top = 15
+      Left = 1312
+      Top = 11
       Width = 96
       Height = 25
       Caption = 'Add Plot'
@@ -113,8 +113,8 @@ object mainForm: TmainForm
       OnClick = addPlotButtonClick
     end
     object paramAddSliderBtn: TWebButton
-      Left = 1352
-      Top = 15
+      Left = 1414
+      Top = 11
       Width = 135
       Height = 25
       Hint = 'Add parameter slider'
@@ -135,8 +135,8 @@ object mainForm: TmainForm
       OnClick = paramAddSliderBtnClick
     end
     object rtLengthEdit1: TWebEdit
-      Left = 1278
-      Top = 6
+      Left = 1640
+      Top = 12
       Width = 33
       Height = 22
       ChildOrder = 2
@@ -146,8 +146,8 @@ object mainForm: TmainForm
       WidthPercent = 100.000000000000000000
     end
     object stepSizeEdit1: TWebEdit
-      Left = 1279
-      Top = 34
+      Left = 1640
+      Top = 32
       Width = 33
       Height = 22
       ChildOrder = 5
@@ -214,7 +214,7 @@ object mainForm: TmainForm
       OnClick = SaveSBMLButtonClick
     end
     object SetUpSimButton: TWebButton
-      Left = 816
+      Left = 712
       Top = 10
       Width = 125
       Height = 32
@@ -232,6 +232,24 @@ object mainForm: TmainForm
       ParentFont = False
       WidthPercent = 100.000000000000000000
       OnClick = SetUpSimButtonClick
+    end
+    object WebTabSet1: TWebTabSet
+      Left = 883
+      Top = 13
+      Width = 233
+      Height = 27
+      ElementClassName = 'nav nav-pills'
+      HeightPercent = 100.000000000000000000
+      WidthPercent = 100.000000000000000000
+      ChildOrder = 14
+      Color = clWhite
+      ItemIndex = 2
+      Items.Strings = (
+        'Nodes'
+        'Reactions'
+        'Simulator')
+      TabOrder = 12
+      OnClick = WebTabSet1Click
     end
   end
   object bottomWPanel: TWebPanel
@@ -809,10 +827,229 @@ object mainForm: TmainForm
         ShowHint = True
         OnClick = btnAddNodeClick
       end
+    end
+    object RightWPanel: TWebPanel
+      Left = 1278
+      Top = 0
+      Width = 522
+      Height = 715
+      ElementClassName = 'card rounded-0'
+      HeightPercent = 100.000000000000000000
+      WidthPercent = 100.000000000000000000
+      Align = alRight
+      BorderColor = clSilver
+      BorderStyle = bsNone
+      ChildOrder = 2
+      ElementBodyClassName = 'card-body-shadow'
+      ElementFont = efCSS
+      object simResultsMemo: TWebMemo
+        Left = 6
+        Top = 544
+        Width = 513
+        Height = 165
+        AutoSize = False
+        ElementClassName = 'form-control'
+        ElementFont = efCSS
+        HeightPercent = 100.000000000000000000
+        Lines.Strings = (
+          'simResultsMemo')
+        SelLength = 0
+        SelStart = 0
+        Visible = False
+        WidthPercent = 100.000000000000000000
+      end
+      object plotEditLB: TWebListBox
+        Left = 64
+        Top = 216
+        Width = 140
+        Height = 75
+        Color = clWhite
+        ElementClassName = 'form-control bg-dark form-control-sm text-white'
+        ElementFont = efCSS
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWhite
+        Font.Height = -11
+        Font.Name = 'Tahoma'
+        Font.Style = []
+        HeightPercent = 100.000000000000000000
+        ItemHeight = 13
+        ItemIndex = -1
+        ParentFont = False
+        Visible = False
+        WidthPercent = 100.000000000000000000
+        OnClick = plotEditLBClick
+      end
+      object SliderEditLB: TWebListBox
+        Left = 191
+        Top = 216
+        Width = 165
+        Height = 65
+        ElementClassName = 'form-control bg-dark form-control-sm text-white'
+        ElementFont = efCSS
+        HeightPercent = 100.000000000000000000
+        ItemHeight = 13
+        ItemIndex = -1
+        Visible = False
+        WidthPercent = 100.000000000000000000
+        OnClick = SliderEditLBClick
+      end
+    end
+    object pnlCenter: TWebPanel
+      Left = 137
+      Top = 0
+      Width = 826
+      Height = 715
+      ElementClassName = 'card rounded-0'
+      HeightPercent = 100.000000000000000000
+      WidthPercent = 100.000000000000000000
+      Align = alClient
+      BorderColor = clSilver
+      BorderStyle = bsNone
+      ChildOrder = 2
+      ElementBodyClassName = 'card-body'
+      ElementFont = efCSS
+      ExplicitWidth = 836
+      object networkPB1: TWebPaintBox
+        Left = 0
+        Top = 0
+        Width = 808
+        Height = 697
+        HeightPercent = 100.000000000000000000
+        WidthPercent = 100.000000000000000000
+        Align = alClient
+        ChildOrder = 3
+        ElementFont = efCSS
+        OnPaint = networkPB1Paint
+        OnKeyDown = networkPB1KeyDown
+        OnMouseDown = networkPB1MouseDown
+        OnMouseMove = networkPB1MouseMove
+        OnMouseUp = networkPB1MouseUp
+        OnMouseWheel = networkPB1MouseWheel
+        ExplicitWidth = 818
+      end
+      object netDrawScrollBarVert: TTMSFNCScrollBar
+        Left = 808
+        Top = 0
+        Width = 18
+        Height = 697
+        Align = alRight
+        ParentDoubleBuffered = False
+        Color = 15592941
+        DoubleBuffered = True
+        TabOrder = 1
+        Fill.Color = 15592941
+        Stroke.Color = 8882055
+        Appearance.ThumbFill.Color = 14803425
+        Appearance.ScrollButtonLeftFill.Color = 14803425
+        Appearance.ScrollButtonRightFill.Color = 14803425
+        Appearance.ScrollButtonLeftHoverFill.Color = 16511461
+        Appearance.ScrollButtonRightHoverFill.Color = 16511461
+        Appearance.ScrollButtonLeftDownFill.Color = 16378843
+        Appearance.ScrollButtonRightDownFill.Color = 16378843
+        Appearance.ThumbButtonLeftFill.Color = 14803425
+        Appearance.ThumbButtonRightFill.Color = 14803425
+        Appearance.ThumbButtonLeftHoverFill.Color = 16511461
+        Appearance.ThumbButtonRightHoverFill.Color = 16511461
+        Appearance.ThumbButtonLeftDownFill.Color = 16378843
+        Appearance.ThumbButtonRightDownFill.Color = 16378843
+        Appearance.ThumbStroke.Color = 8882055
+        Appearance.ScrollButtonLeftStroke.Color = 8882055
+        Appearance.ScrollButtonRightStroke.Color = 8882055
+        Appearance.ScrollButtonLeftHoverStroke.Color = 11632444
+        Appearance.ScrollButtonRightHoverStroke.Color = 11632444
+        Appearance.ScrollButtonLeftDownStroke.Color = 11632444
+        Appearance.ScrollButtonRightDownStroke.Color = 11632444
+        Appearance.ThumbButtonLeftStroke.Color = 8882055
+        Appearance.ThumbButtonRightStroke.Color = 8882055
+        Appearance.ThumbButtonLeftHoverStroke.Color = 11632444
+        Appearance.ThumbButtonRightHoverStroke.Color = 11632444
+        Appearance.ThumbButtonLeftDownStroke.Color = 11632444
+        Appearance.ThumbButtonRightDownStroke.Color = 11632444
+        Appearance.FixedThumb = True
+        Max = 1000.000000000000000000
+        PageSize = 10.000000000000000000
+        OnValueChanged = netDrawScrollBarVertValueChanged
+        ExplicitLeft = 818
+      end
+      object netDrawScrollBarHoriz: TTMSFNCScrollBar
+        Left = 0
+        Top = 697
+        Width = 826
+        Height = 18
+        Align = alBottom
+        ParentDoubleBuffered = False
+        Color = 15592941
+        DoubleBuffered = True
+        TabOrder = 2
+        Fill.Color = 15592941
+        Stroke.Color = 8882055
+        Appearance.ThumbFill.Color = 14803425
+        Appearance.ScrollButtonLeftFill.Color = 14803425
+        Appearance.ScrollButtonRightFill.Color = 14803425
+        Appearance.ScrollButtonLeftHoverFill.Color = 16511461
+        Appearance.ScrollButtonRightHoverFill.Color = 16511461
+        Appearance.ScrollButtonLeftDownFill.Color = 16378843
+        Appearance.ScrollButtonRightDownFill.Color = 16378843
+        Appearance.ThumbButtonLeftFill.Color = 14803425
+        Appearance.ThumbButtonRightFill.Color = 14803425
+        Appearance.ThumbButtonLeftHoverFill.Color = 16511461
+        Appearance.ThumbButtonRightHoverFill.Color = 16511461
+        Appearance.ThumbButtonLeftDownFill.Color = 16378843
+        Appearance.ThumbButtonRightDownFill.Color = 16378843
+        Appearance.ThumbStroke.Color = 8882055
+        Appearance.ScrollButtonLeftStroke.Color = 8882055
+        Appearance.ScrollButtonRightStroke.Color = 8882055
+        Appearance.ScrollButtonLeftHoverStroke.Color = 11632444
+        Appearance.ScrollButtonRightHoverStroke.Color = 11632444
+        Appearance.ScrollButtonLeftDownStroke.Color = 11632444
+        Appearance.ScrollButtonRightDownStroke.Color = 11632444
+        Appearance.ThumbButtonLeftStroke.Color = 8882055
+        Appearance.ThumbButtonRightStroke.Color = 8882055
+        Appearance.ThumbButtonLeftHoverStroke.Color = 11632444
+        Appearance.ThumbButtonRightHoverStroke.Color = 11632444
+        Appearance.ThumbButtonLeftDownStroke.Color = 11632444
+        Appearance.ThumbButtonRightDownStroke.Color = 11632444
+        Appearance.FixedThumb = True
+        Kind = sbkHorizontal
+        Max = 1000.000000000000000000
+        PageSize = 10.000000000000000000
+        OnValueChanged = netDrawScrollBarHorizValueChanged
+        ExplicitWidth = 836
+      end
+    end
+    object splitter: TWebSplitter
+      Left = 963
+      Top = 0
+      Width = 5
+      Height = 715
+      HeightPercent = 100.000000000000000000
+      WidthPercent = 100.000000000000000000
+      Align = alRight
+      ChildOrder = 3
+      Color = clBtnFace
+      OnMoved = splitterMoved
+      ExplicitLeft = 973
+    end
+    object RNodeEditWPanel: TWebPanel
+      Left = 1118
+      Top = 0
+      Width = 160
+      Height = 715
+      ElementClassName = 'card'
+      HeightPercent = 100.000000000000000000
+      WidthPercent = 100.000000000000000000
+      Align = alRight
+      BorderColor = clSilver
+      BorderStyle = bsSingle
+      ChildOrder = 4
+      ElementBodyClassName = 'card-body'
+      ElementFont = efCSS
+      Visible = False
+      ExplicitLeft = 1128
       object pnlNodePanel: TWebPanel
         Left = 8
-        Top = 488
-        Width = 122
+        Top = 0
+        Width = 160
         Height = 185
         ElementClassName = 'card'
         HeightPercent = 100.000000000000000000
@@ -921,7 +1158,7 @@ object mainForm: TmainForm
         object editNodeConc: TWebEdit
           Left = 52
           Top = 55
-          Width = 65
+          Width = 90
           Height = 22
           ChildOrder = 7
           ElementClassName = 'form-control'
@@ -934,208 +1171,185 @@ object mainForm: TmainForm
           HeightPercent = 100.000000000000000000
           ParentFont = False
           WidthPercent = 100.000000000000000000
+          OnChange = editNodeConcChange
           OnExit = editNodeConcExit
         end
       end
     end
-    object RightWPanel: TWebPanel
-      Left = 1278
+    object RRxnEditWPanel: TWebPanel
+      Left = 968
       Top = 0
-      Width = 522
+      Width = 150
       Height = 715
-      ElementClassName = 'card rounded-0'
+      ElementClassName = 'card'
       HeightPercent = 100.000000000000000000
       WidthPercent = 100.000000000000000000
       Align = alRight
       BorderColor = clSilver
-      BorderStyle = bsNone
-      ChildOrder = 2
-      ElementBodyClassName = 'card-body-shadow'
-      ElementFont = efCSS
-      object simResultsMemo: TWebMemo
-        Left = 6
-        Top = 544
-        Width = 513
-        Height = 165
-        AutoSize = False
-        ElementClassName = 'form-control'
-        ElementFont = efCSS
-        HeightPercent = 100.000000000000000000
-        Lines.Strings = (
-          'simResultsMemo')
-        SelLength = 0
-        SelStart = 0
-        Visible = False
-        WidthPercent = 100.000000000000000000
-      end
-      object plotEditLB: TWebListBox
-        Left = 64
-        Top = 216
-        Width = 140
-        Height = 75
-        Color = clWhite
-        ElementClassName = 'form-control bg-dark form-control-sm text-white'
-        ElementFont = efCSS
-        Font.Charset = DEFAULT_CHARSET
-        Font.Color = clWhite
-        Font.Height = -11
-        Font.Name = 'Tahoma'
-        Font.Style = []
-        HeightPercent = 100.000000000000000000
-        ItemHeight = 13
-        ItemIndex = -1
-        ParentFont = False
-        Visible = False
-        WidthPercent = 100.000000000000000000
-        OnClick = plotEditLBClick
-      end
-      object SliderEditLB: TWebListBox
-        Left = 191
-        Top = 216
-        Width = 165
-        Height = 65
-        ElementClassName = 'form-control bg-dark form-control-sm text-white'
-        ElementFont = efCSS
-        HeightPercent = 100.000000000000000000
-        ItemHeight = 13
-        ItemIndex = -1
-        Visible = False
-        WidthPercent = 100.000000000000000000
-        OnClick = SliderEditLBClick
-      end
-    end
-    object pnlCenter: TWebPanel
-      Left = 137
-      Top = 0
-      Width = 1136
-      Height = 715
-      ElementClassName = 'card rounded-0'
-      HeightPercent = 100.000000000000000000
-      WidthPercent = 100.000000000000000000
-      Align = alClient
-      BorderColor = clSilver
-      BorderStyle = bsNone
-      ChildOrder = 2
+      BorderStyle = bsSingle
+      ChildOrder = 5
       ElementBodyClassName = 'card-body'
       ElementFont = efCSS
-      object networkPB1: TWebPaintBox
-        Left = 0
-        Top = 0
-        Width = 1118
-        Height = 697
+      Visible = False
+      ExplicitLeft = 978
+      object RxnRatePanel: TWebPanel
+        Left = 5
+        Top = 60
+        Width = 200
+        Height = 60
+        ElementClassName = 'card'
         HeightPercent = 100.000000000000000000
         WidthPercent = 100.000000000000000000
-        Align = alClient
-        ChildOrder = 3
+        BorderColor = clSilver
+        BorderStyle = bsSingle
+        ChildOrder = 2
+        ElementBodyClassName = 'card-body-shadow'
         ElementFont = efCSS
-        OnPaint = networkPB1Paint
-        OnKeyDown = networkPB1KeyDown
-        OnMouseDown = networkPB1MouseDown
-        OnMouseMove = networkPB1MouseMove
-        OnMouseUp = networkPB1MouseUp
-        OnMouseWheel = networkPB1MouseWheel
-        ExplicitLeft = -1
-        ExplicitTop = -6
+        object rateLawLabel: TWebLabel
+          Left = 20
+          Top = 20
+          Width = 49
+          Height = 13
+          Caption = 'Rate Law:'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWhite
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          HeightPercent = 100.000000000000000000
+          ParentFont = False
+          WidthPercent = 100.000000000000000000
+        end
+        object rateLawEqLabel: TWebLabel
+          Left = 85
+          Top = 20
+          Width = 3
+          Height = 13
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWhite
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          HeightPercent = 100.000000000000000000
+          ParentFont = False
+          WidthPercent = 100.000000000000000000
+        end
       end
-      object netDrawScrollBarVert: TTMSFNCScrollBar
-        Left = 1118
-        Top = 0
-        Width = 18
-        Height = 697
-        Align = alRight
-        ParentDoubleBuffered = False
-        Color = 15592941
-        DoubleBuffered = True
-        TabOrder = 1
-        Fill.Color = 15592941
-        Stroke.Color = 8882055
-        Appearance.ThumbFill.Color = 14803425
-        Appearance.ScrollButtonLeftFill.Color = 14803425
-        Appearance.ScrollButtonRightFill.Color = 14803425
-        Appearance.ScrollButtonLeftHoverFill.Color = 16511461
-        Appearance.ScrollButtonRightHoverFill.Color = 16511461
-        Appearance.ScrollButtonLeftDownFill.Color = 16378843
-        Appearance.ScrollButtonRightDownFill.Color = 16378843
-        Appearance.ThumbButtonLeftFill.Color = 14803425
-        Appearance.ThumbButtonRightFill.Color = 14803425
-        Appearance.ThumbButtonLeftHoverFill.Color = 16511461
-        Appearance.ThumbButtonRightHoverFill.Color = 16511461
-        Appearance.ThumbButtonLeftDownFill.Color = 16378843
-        Appearance.ThumbButtonRightDownFill.Color = 16378843
-        Appearance.ThumbStroke.Color = 8882055
-        Appearance.ScrollButtonLeftStroke.Color = 8882055
-        Appearance.ScrollButtonRightStroke.Color = 8882055
-        Appearance.ScrollButtonLeftHoverStroke.Color = 11632444
-        Appearance.ScrollButtonRightHoverStroke.Color = 11632444
-        Appearance.ScrollButtonLeftDownStroke.Color = 11632444
-        Appearance.ScrollButtonRightDownStroke.Color = 11632444
-        Appearance.ThumbButtonLeftStroke.Color = 8882055
-        Appearance.ThumbButtonRightStroke.Color = 8882055
-        Appearance.ThumbButtonLeftHoverStroke.Color = 11632444
-        Appearance.ThumbButtonRightHoverStroke.Color = 11632444
-        Appearance.ThumbButtonLeftDownStroke.Color = 11632444
-        Appearance.ThumbButtonRightDownStroke.Color = 11632444
-        Appearance.FixedThumb = True
-        Max = 1000.000000000000000000
-        PageSize = 10.000000000000000000
-        OnValueChanged = netDrawScrollBarVertValueChanged
+      object RxnSpStoichPanel: TWebPanel
+        Left = 5
+        Top = 180
+        Width = 200
+        Height = 200
+        ElementClassName = 'card'
+        HeightPercent = 100.000000000000000000
+        WidthPercent = 100.000000000000000000
+        BorderColor = clSilver
+        BorderStyle = bsSingle
+        ChildOrder = 1
+        ElementBodyClassName = 'card-body-shadow'
+        ElementFont = efCSS
+        object RxnStoichLabel: TWebLabel
+          Left = 10
+          Top = 5
+          Width = 126
+          Height = 16
+          Caption = 'Species Stoichiometry'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWhite
+          Font.Height = -13
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          HeightPercent = 100.000000000000000000
+          ParentFont = False
+          WidthPercent = 100.000000000000000000
+        end
+        object StoicReactantsLabel: TWebLabel
+          Left = 10
+          Top = 30
+          Width = 53
+          Height = 13
+          Caption = 'Reactants:'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWhite
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          HeightPercent = 100.000000000000000000
+          ParentFont = False
+          WidthPercent = 100.000000000000000000
+        end
+        object StoichProductsLabel: TWebLabel
+          Left = 10
+          Top = 120
+          Width = 46
+          Height = 13
+          Caption = 'Products:'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWhite
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          HeightPercent = 100.000000000000000000
+          ParentFont = False
+          WidthPercent = 100.000000000000000000
+        end
       end
-      object netDrawScrollBarHoriz: TTMSFNCScrollBar
-        Left = 0
-        Top = 697
-        Width = 1136
-        Height = 18
-        Align = alBottom
-        ParentDoubleBuffered = False
-        Color = 15592941
-        DoubleBuffered = True
-        TabOrder = 2
-        Fill.Color = 15592941
-        Stroke.Color = 8882055
-        Appearance.ThumbFill.Color = 14803425
-        Appearance.ScrollButtonLeftFill.Color = 14803425
-        Appearance.ScrollButtonRightFill.Color = 14803425
-        Appearance.ScrollButtonLeftHoverFill.Color = 16511461
-        Appearance.ScrollButtonRightHoverFill.Color = 16511461
-        Appearance.ScrollButtonLeftDownFill.Color = 16378843
-        Appearance.ScrollButtonRightDownFill.Color = 16378843
-        Appearance.ThumbButtonLeftFill.Color = 14803425
-        Appearance.ThumbButtonRightFill.Color = 14803425
-        Appearance.ThumbButtonLeftHoverFill.Color = 16511461
-        Appearance.ThumbButtonRightHoverFill.Color = 16511461
-        Appearance.ThumbButtonLeftDownFill.Color = 16378843
-        Appearance.ThumbButtonRightDownFill.Color = 16378843
-        Appearance.ThumbStroke.Color = 8882055
-        Appearance.ScrollButtonLeftStroke.Color = 8882055
-        Appearance.ScrollButtonRightStroke.Color = 8882055
-        Appearance.ScrollButtonLeftHoverStroke.Color = 11632444
-        Appearance.ScrollButtonRightHoverStroke.Color = 11632444
-        Appearance.ScrollButtonLeftDownStroke.Color = 11632444
-        Appearance.ScrollButtonRightDownStroke.Color = 11632444
-        Appearance.ThumbButtonLeftStroke.Color = 8882055
-        Appearance.ThumbButtonRightStroke.Color = 8882055
-        Appearance.ThumbButtonLeftHoverStroke.Color = 11632444
-        Appearance.ThumbButtonRightHoverStroke.Color = 11632444
-        Appearance.ThumbButtonLeftDownStroke.Color = 11632444
-        Appearance.ThumbButtonRightDownStroke.Color = 11632444
-        Appearance.FixedThumb = True
-        Kind = sbkHorizontal
-        Max = 1000.000000000000000000
-        PageSize = 10.000000000000000000
-        OnValueChanged = netDrawScrollBarHorizValueChanged
+      object RxnParamPanel: TWebPanel
+        Left = 5
+        Top = 416
+        Width = 200
+        Height = 121
+        ElementClassName = 'card'
+        HeightPercent = 100.000000000000000000
+        WidthPercent = 100.000000000000000000
+        BorderColor = clSilver
+        BorderStyle = bsSingle
+        ChildOrder = 2
+        ElementBodyClassName = 'card-body-shadow'
+        ElementFont = efCSS
+        object RxnParamLabel: TWebLabel
+          Left = 10
+          Top = 10
+          Width = 144
+          Height = 13
+          Caption = 'Reaction rate and parameters'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWhite
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          HeightPercent = 100.000000000000000000
+          ParentFont = False
+          WidthPercent = 100.000000000000000000
+        end
+        object RxnParamComboBox: TWebComboBox
+          Left = 10
+          Top = 29
+          Width = 145
+          Height = 21
+          ElementClassName = 'custom-select'
+          ElementFont = efCSS
+          HeightPercent = 100.000000000000000000
+          WidthPercent = 100.000000000000000000
+          OnChange = RxnParamComboBoxChange
+          OnClick = RxnParamComboBoxClick
+          OnEnter = RxnParamComboBoxEnter
+          OnExit = RxnParamComboBoxExit
+          ItemIndex = -1
+        end
+        object RxnParamEdit: TWebEdit
+          Left = 20
+          Top = 75
+          Width = 121
+          Height = 22
+          ChildOrder = 2
+          ElementClassName = 'form-control'
+          ElementFont = efCSS
+          HeightPercent = 100.000000000000000000
+          WidthPercent = 100.000000000000000000
+          OnChange = RxnParamEditChange
+        end
       end
-    end
-    object splitter: TWebSplitter
-      Left = 1273
-      Top = 0
-      Width = 5
-      Height = 715
-      HeightPercent = 100.000000000000000000
-      WidthPercent = 100.000000000000000000
-      Align = alRight
-      ChildOrder = 3
-      Color = clBtnFace
-      OnMoved = splitterMoved
     end
   end
   object NetworkJSONOpenDialog: TWebOpenDialog

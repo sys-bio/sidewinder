@@ -17,13 +17,14 @@ uses
   uSBMLClasses, uSimulation, uControllerMain,
   uODE_FormatUtility, uGraphP, Vcl.Menus, WEBLib.Menus, ufParamSelect,
   ufSpeciesSelect, uPlotLayout, uPlotActions,
-  paramSlider, uParamSliderLayout, uSidewinderTypes;
+  paramSlider, uParamSliderLayout, uSidewinderTypes, WEBLib.ComCtrls;
 
 const
   SLIDERPHEIGHT = 50; // Param Sliders WebPanel height
 
 const
   PLOT_WIDTH_PERCENTAGE = 0.6;
+  NODE_TAB = 0; REACTION_TAB = 1; SIMULATION_TAB = 2;
   // This means a plot extends to 60% of the right panel width
 
 type
@@ -73,7 +74,8 @@ type
     btnNodeOutlineColor: TWebColorPicker;
     editNodeId: TWebEdit;
     btnNodeFillColor: TWebColorPicker;
-    RightWPanel: TWebPanel;
+    RightWPanel: TWebPanel;   // Holds simulation tab.
+    
     simResultsMemo: TWebMemo;
     plotEditLB: TWebListBox;
     SliderEditLB: TWebListBox;
@@ -87,6 +89,20 @@ type
     SetUpSimButton: TWebButton;
     nodeConcLabel: TWebLabel;
     editNodeConc: TWebEdit;
+    WebTabSet1: TWebTabSet;
+    RNodeEditWPanel: TWebPanel;
+    RRxnEditWPanel: TWebPanel;
+    RxnRatePanel: TWebPanel;
+    rateLawLabel: TWebLabel;
+    rateLawEqLabel: TWebLabel;
+    RxnSpStoichPanel: TWebPanel;
+    RxnParamPanel: TWebPanel;
+    RxnParamLabel: TWebLabel;
+    RxnParamComboBox: TWebComboBox;
+    RxnParamEdit: TWebEdit;
+    RxnStoichLabel: TWebLabel;
+    StoicReactantsLabel: TWebLabel;
+    StoichProductsLabel: TWebLabel;
 
     procedure btnUniUniClick(Sender: TObject);
     procedure btnBiBiClick(Sender: TObject);
@@ -144,6 +160,13 @@ type
     procedure SaveSBMLButtonClick(Sender: TObject);
     procedure SetUpSimButtonClick(Sender: TObject);
     procedure editNodeConcExit(Sender: TObject);
+    procedure WebTabSet1Click(Sender: TObject);
+    procedure RxnParamComboBoxChange(Sender: TObject);
+    procedure RxnParamEditChange(Sender: TObject);
+    procedure RxnParamComboBoxEnter(Sender: TObject);
+    procedure RxnParamComboBoxClick(Sender: TObject);
+    procedure RxnParamComboBoxExit(Sender: TObject);
+    procedure editNodeConcChange(Sender: TObject);
 
   private
     numbPlots: Integer; // Number of plots displayed
@@ -164,6 +187,11 @@ type
     procedure EditSliderList(sn: Integer);
     // delete, change param slider as needed using TWebListBox.
     procedure DeleteSlider(sn: Integer);
+    procedure adjustRightTabWPanels(); // Adjust all right panels
+                  // (node edit, rxn edit, simulation) to same width, height
+    procedure updateRxnRatePanel(); // Refresh with current rxn info.
+    procedure updateRxnParamPanel();
+    procedure setRightPanels(); // set correct panel to be visible
 
   public
     network: TNetwork;
@@ -356,6 +384,7 @@ begin
   networkController.setAddUniUniReaction;
 end;
 
+
 procedure TMainForm.editNodeIdExit(Sender: TObject);
 begin
   networkController.setNodeId(editNodeId.Text);
@@ -484,6 +513,60 @@ begin
   plotsPBAr[plot_i - 1].canvas.draw(0, 0, listOfPlots[plot_i - 1].bitmap);
 end;
 
+procedure TMainForm.RxnParamComboBoxChange(Sender: TObject);  // NOT needed.
+var i: integer;
+begin
+ console.log('TMainForm.RxnParamComboBoxChange');
+ //i := self.RxnParamComboBox.ItemIndex;
+ //self.rxnParamEdit.text := floattostr(networkController.network.reactions[networkController.selectedEdge].state.rateParams.Items[i].getValue);
+end;
+
+procedure TMainForm.RxnParamComboBoxClick(Sender: TObject);
+var i: integer;
+begin
+console.log('TMainForm.RxnParamComboBoxClick');
+  i := self.RxnParamComboBox.ItemIndex;
+  self.rxnParamEdit.text := floattostr(networkController.network.reactions[networkController.selectedEdge].state.rateParams.Items[i].getValue);
+  //self.RxnParamComboBox.invalidate;
+end;
+
+procedure TMainForm.RxnParamComboBoxEnter(Sender: TObject);
+var i: integer;
+begin
+console.log('TMainForm.RxnParamComboBoxEnter');
+ // i := self.RxnParamComboBox.ItemIndex;
+ // self.rxnParamEdit.text := floattostr(networkController.network.reactions[networkController.selectedEdge].state.rateParams.Items[i].getValue);
+end;
+
+procedure TMainForm.RxnParamComboBoxExit(Sender: TObject);
+var i: integer;
+begin
+  console.log('TMainForm.RxnParamComboBoxExit');
+ // self.RxnParamComboBox.invalidate;
+ // i := self.RxnParamComboBox.ItemIndex;
+ // self.rxnParamEdit.text := floattostr(networkController.network.reactions[networkController.selectedEdge].state.rateParams.Items[i].getValue);
+end;
+
+procedure TMainForm.RxnParamEditChange(Sender: TObject);
+var newVal: double;
+begin
+try
+  begin
+    newVal :=strtofloat(self.RxnParamEdit.text);
+    self.networkController.network.reactions[networkController.selectedEdge].state.rateParams.Items[self.RxnParamComboBox.ItemIndex].setValue(newVal);
+  end;
+except
+  on Exception : EConvertError do
+  begin
+    ShowMessage(Exception.Message);
+    self.RxnParamEdit.text := floattostr(self.networkController.network.reactions[networkController.selectedEdge].state.rateParams.Items[self.RxnParamComboBox.ItemIndex].getValue());
+
+  end;
+
+end;
+
+end;
+
 procedure TMainForm.networkPB1KeyDown(Sender: TObject; var Key: Word;
   Shift: TShiftState);
 begin
@@ -519,9 +602,32 @@ begin
       editNodeConc.Text := networkController.network.nodes
         [networkCOntroller.selectedNode].state.conc.ToString;
       pnlNodePanel.visible := true;
+      self.WebTabSet1.ItemIndex := NODE_TAB;
+      self.RRxnEditWPanel.visible := false;
+      self.RightWPanel.visible := false;
+      self.RNodeEditWPanel.visible := true;
+      self.RNodeEditWPanel.invalidate;
+      self.WebTabSet1Click(nil); // View node edit tab
     end
-  else
-    pnlNodePanel.visible := false;
+  else if networkController.selectedEdge <>-1 then
+    begin
+      console.log(' A reaction has been selected');
+      self.updateRxnParamPanel;
+      self.WebTabSet1.ItemIndex := REACTION_TAB;
+      self.RightWPanel.visible := false;
+      self.RNodeEditWPanel.visible := false;
+      self.RRxnEditWPanel.visible := true;
+      self.updateRxnRatePanel;
+      //self.updateRxnParamPanel;
+      self.RxnRatePanel.invalidate;
+
+    end;
+ //   begin
+ //     pnlNodePanel.visible := false;
+
+ //   end;
+
+
 end;
 
 procedure TMainForm.networkPB1MouseMove(Sender: TObject; Shift: TShiftState;
@@ -567,6 +673,12 @@ procedure TMainForm.networkPB1Paint(Sender: TObject);
 begin
   networkCanvas.paint;
   networkPB1.canvas.draw(0, 0, networkCanvas.bitmap);
+end;
+
+procedure TMainForm.editNodeConcChange(Sender: TObject);   // better than Exit?
+begin
+ // networkController.setNodeConc(editNodeConc.Text);
+ // networkPB1.Invalidate;
 end;
 
 procedure TMainForm.editNodeConcExit(Sender: TObject);
@@ -651,26 +763,21 @@ begin
   self.networkCanvas.bitmap.Height := networkPB1.Height;
   self.networkCanvas.bitmap.width := networkPB1.width;
   LeftWPanel.color := clWhite;
+  self.WebTabSet1.ItemIndex := SIMULATION_TAB;
+  self.RNodeEditWPanel.visible := false;
+  self.RNodeEditWPanel.ElementBodyClassName := RightWPanel.ElementBodyClassName;
+  self.RRxnEditWPanel.ElementBodyClassName := RightWPanel.ElementBodyClassName;
+  self.RRxnEditWPanel.visible := false;
+  self.adjustRightTabWPanels;
 
   self.mainController := TControllerMain.Create(self.networkController);
   self.mainController.setOnline(false);
   onLineSimButton.font.color := clred;
   onLineSimButton.caption := 'Simulation: Offline';
   self.mainController.setODEsolver;
-  // xscaleHeight  := round(0.15* plotPB1.Height);   // make %15 of total height  get rid of
   currentGeneration := 0;
   self.mainController.OnSBMLUpdate2 := self.PingSBMLLoaded;
-  //if self.mainController.getModel <> nil then
-  //begin
-  //  self.mainController.getModel.OnPing2 := self.PingSBMLLoaded;
-
-  //end
-  //else
-  //begin
-  //  ShowMessage('Blank model not created.');
-  //end;
-
-  // Notification of changes:
+   // Notification of changes:
   self.mainController.OnSimUpdate := self.getVals; // notify when new Sim results
 
 end;
@@ -688,6 +795,48 @@ begin
   networkPB1.Invalidate;
 end;
 
+
+
+
+procedure TMainForm.WebTabSet1Click(Sender: TObject);
+begin
+console.log('TMainForm.WebTabSet1Click: ',inttostr(self.WebTabSet1.ItemIndex));
+ self.setRightPanels;
+end;
+
+procedure TMainForm.setRightPanels();
+begin
+  if self.WebTabSet1.ItemIndex = NODE_TAB then
+  begin
+    self.RightWPanel.visible := false;
+    self.RRxnEditWPanel.visible := false;
+    self.RNodeEditWPanel.visible := true;
+    self.RightWPanel.invalidate;
+    self.RRxnEditWPanel.invalidate;
+    self.RNodeEditWPanel.invalidate;
+  end
+  else if self.WebTabSet1.ItemIndex = REACTION_TAB then
+  begin
+    self.updateRxnParamPanel;
+    self.RightWPanel.visible := false;
+    self.RRxnEditWPanel.visible := true;
+    self.RNodeEditWPanel.visible := false;
+    self.RightWPanel.invalidate;
+    self.RNodeEditWPanel.invalidate;
+    self.RRxnEditWPanel.invalidate;
+
+    self.updateRxnRatePanel;
+  end
+  else if self.WebTabSet1.ItemIndex = SIMULATION_TAB then
+  begin
+    self.RightWPanel.visible := true;
+    self.RRxnEditWPanel.visible := false;
+    self.RNodeEditWPanel.visible := false;
+    self.RNodeEditWPanel.invalidate;
+    self.RRxnEditWPanel.invalidate;
+    self.RightWPanel.invalidate;
+  end;
+end;
 
 function TMainForm.WorldToScreen(wx: Integer): Integer;
 begin
@@ -733,6 +882,7 @@ procedure TMainForm.splitterMoved(Sender: TObject);
 begin
   networkCanvas.bitmap.Height := networkPB1.Height;
   networkCanvas.bitmap.width := networkPB1.width;
+  self.adjustRightTabWPanels; //TODO: Need to adjust right panels based on tab focus
   networkPB1.Invalidate;
 end;
 
@@ -1136,13 +1286,12 @@ begin
       begin
         self.DeletePlot(i);
       end;
-   // setLength(self.plotsPBAr, 0);
-   // setLength(self.listOfPlots, 0);
-   // setLength(self.maxYValueAr, 0);
-   // setLength(pixelStepAr, 0);
-   // setLength(self.xscaleHeightAr, 0);
+
     self.numbPlots := 0;
-    self.RightWPanel.Invalidate;
+
+    self.WebTabSet1.ItemIndex := SIMULATION_TAB;
+    self.setRightPanels;
+    self.RightWPanel.invalidate;
   end;
 
   // delete existing param sliders.
@@ -1156,6 +1305,53 @@ begin
   end;
   mainController.updateModel;
 
+end;
+
+procedure TMainForm.adjustRightTabWPanels(); // Adjust all right panels to same width, height
+begin
+  self.RNodeEditWPanel.Width := RightWPanel.Width;
+  self.RNodeEditWPanel.Top := RightWPanel.Top;
+  self.RNodeEditWPanel.Height := RightWPanel.Height;
+  self.RNodeEditWPanel.Left := RightWPanel.Left;
+  self.RRxnEditWPanel.Width := RightWPanel.Width;
+  self.RRxnEditWPanel.Top := RightWPanel.Top;
+  self.RRxnEditWPanel.Height := RightWPanel.Height;
+  self.RRxnEditWPanel.Left := RightWPanel.Left;
+  self.RNodeEditWPanel.invalidate;
+  self.RRxnEditWPanel.invalidate;
+end;
+
+procedure TMainForm.updateRxnRatePanel(); // Refresh with current rxn info.
+begin
+   self.rateLawEqLabel.Caption := networkController.network.reactions[networkController.selectedEdge].state.rateLaw;
+   self.RxnRatePanel.Width := self.rateLawEqLabel.Width + self.rateLawLabel.Width + 60;
+   self.RxnRatePanel.invalidate;
+   self.RightWPanel.visible := false;
+   self.RRxnEditWPanel.visible := true;
+   self.RNodeEditWPanel.visible := false;
+   self.RightWPanel.invalidate;
+   self.RNodeEditWPanel.invalidate;
+   self.RRxnEditWPanel.invalidate;
+end;
+
+procedure TMainForm.updateRxnParamPanel();
+var paramTStr: string;
+    i: integer;
+begin
+  paramTStr:= '';
+  self.RxnParamComboBox.clear;
+  for i := 0 to networkController.network.reactions[networkController.selectedEdge].state.rateParams.count -1 do
+  begin
+
+      paramTStr := networkController.network.reactions[networkController.selectedEdge].state.rateParams.Items[i].getId;
+      if paramTStr <> '' then
+      begin
+        self.RxnParamComboBox.AddItem( paramTStr,nil);
+      end;
+
+  end;
+  self.RxnParamComboBox.ItemIndex := 0;
+  self.RxnParamComboBox.invalidate;
 end;
 
 end.

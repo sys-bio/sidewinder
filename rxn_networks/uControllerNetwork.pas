@@ -31,6 +31,7 @@ type
     mStatus: TMouseStatus;
     srcNode, destNode: integer;
     selectedNode: integer;
+    selectedEdge: integer;
     currentX, currentY: double;
     MouseX, MouseY : double;
 
@@ -125,6 +126,7 @@ begin
   sourceNodeCounter := -1;
   destNodeCounter := -1;
   selectedNode := -1;
+  selectedEdge := -1;
   selectedObjects := TSelectedObjects.Create;
   mouseDownPressed := False;
 end;
@@ -328,7 +330,7 @@ var
   index: integer;
 begin
   (Sender as TPaintBox).cursor := crHandPoint;
-
+   console.log(' TController.addAnyReactionMouseDown');
   anyByAny_nReactants := nReactants;
   anyByAny_nProducts := nProducts;
 
@@ -360,7 +362,6 @@ begin
       begin
         prepareUndo;
       //  network.AddAnyToAnyEdge(sourceNodes, destNodes, index);
-     // console.log('TController.addAnyReactionMouseDown. Number of reactions: ',inttostr(Length(network.reactions)));
         network.AddAnyToAnyEdge('J' + inttostr(Length(network.reactions) ), sourceNodes, destNodes, index);
         sourceNodeCounter := -1;
         destNodeCounter := -1;
@@ -444,6 +445,7 @@ begin
 
       mStatus := sMouseDown;
       selectedNode := index;
+      selectedEdge := -1;
       network.nodes[index].selected := True;
       currentX := x;
       currentY := y;
@@ -453,6 +455,9 @@ begin
     if network.overEdge(x, y, index) <> nil then
     begin
       network.UnSelectAll;
+      selectedEdge := index;
+      selectedNode := -1;
+      console.log('mouse click over edge');
       network.reactions[index].selected := True;
       exit;
     end;
@@ -470,6 +475,7 @@ begin
     network.UnSelectAll;
     selectedObjects.Clear;
     selectedNode := -1;
+    selectedEdge := -1;
     mouseDownPressed := True;
     MouseX := x; MouseY := y;
   finally
