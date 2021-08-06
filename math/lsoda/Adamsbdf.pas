@@ -99,7 +99,7 @@ unit adamsbdf;
 
 interface
 
-uses SysUtils, uVector, uMatrix, LsodaMat, Dialogs, odeEquations, JS, Web;
+uses SysUtils, uVector, uMatrix, LsodaMat, {Dialogs,} odeEquations, JS, Web;
 
 type
     ELsodaException = class (Exception);
@@ -148,7 +148,7 @@ type
                      Fitol, Fitask, Fistate, Fiopt, Fjt, Fiwork5, Fiwork6 : integer;
                      Fiwork7, Fiwork8, Fiwork9 : integer;
                      Frwork1, Frwork5, Frwork6, Frwork7 : double;
-                    // FDerivatives : fcnProc;
+                     FDerivatives : fcnProc;
                      odeClass: TODE_eqs;    // Added.
 
                      procedure terminate(var istate: integer );
@@ -178,7 +178,7 @@ type
                      constructor Create (n : integer); virtual;
                      destructor  destroy; override;
                      procedure   Setfcn (fcn : fcnProc);        // <----- Use if js ODE eqs
-                     //procedure   Setfcn (odeClass_fcn : TODE_eqs);  // <--- Use if all pascal code
+                     procedure   SetfcnPascal (odeClass_fcn : TODE_eqs);  // <--- Use if all pascal code
 
                      { y = array of initial values of variables. t = initial value of
                      independent variable, tout, value of t when output is required.
@@ -207,7 +207,6 @@ type
                      property  rwork7 : double  read Frwork7 write Frwork7;
                      var p: array of double;  // parameters used in ODE eqs.
 
-                     FDerivatives : fcnProc;  // Originally private.
                    end;
 
 
@@ -276,16 +275,17 @@ begin
   Fatol.free;
 end;
 
-
+ // Using Javascript function that is passed in at runtime:
 procedure TLsoda.Setfcn (fcn : fcnProc);
-//procedure TLsoda.Setfcn (odeClass_fcn : TODE_eqs);  // Use for all pascal code
 begin
-
   self.FDerivatives := fcn;
- // self.FDerivatives:= odeClass_fcn.ComputeODEs;  // <--- Use for all pascal code
 end;
 
-
+// Using precompiled Pascal function.
+procedure  TLsoda.SetfcnPascal (odeClass_fcn : TODE_eqs);  // <--- Use if all pascal code
+begin
+  self.FDerivatives := odeClass_fcn.ComputeODEs;
+end;
 
 {**************************************************************}
 function max(a, b : double) : double;
