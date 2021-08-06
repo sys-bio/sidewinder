@@ -33,7 +33,6 @@ type
     paramUpdated: Boolean; // true if a parameter val has been updated.
 
     constructor Create ( runTime, nStepSize: double; newModel: TModel; solver: ODESolver ); Overload ;
-    //constructor Create ( runTime, nStepSize:double; ny, np :Integer; newList: String; solver:ODESolver ); Overload ;
     procedure setODEsolver(solverToUse: ODESolver);
     procedure nextEval(newTime: double; s: array of double; newPVals: array of double);
     procedure eval (newTime: double; s: array of double) ;
@@ -58,7 +57,8 @@ type
 implementation
 
 constructor TSimulationJS.Create ( runTime, nStepSize: double; newModel: TModel; solver: ODESolver ); Overload ;
-//constructor TSimulationJS.Create (runTime, nStepSize:double; ny, np :Integer; newList: String; solver:ODESolver ); Overload ;
+var
+  i: integer;
 begin
   self.WebTimer1 := TWebTimer.Create(nil);
   self.WebTimer1.OnTimer := WebTimer1Timer;
@@ -87,8 +87,11 @@ begin
   if self.solverUsed = LSODAS then
   begin
     self.lode :=  TLsoda.create(ny);
-    self.lode.rtol[1] := 1e-4; self.lode.rtol[2] := 1e-4; self.lode.rtol[3] := 1e-4;
-    self.lode.atol[1] := 1e-6; self.lode.atol[2] := 1e-10; self.lode.atol[3] := 1e-6;
+    for i := 1 to ny do
+    begin
+      self.lode.rtol[i] := 1e-4;
+      self.lode.atol[i] := 1e-6;
+    end;
     self.lode.itol := 2;
     self.lode.itask := 1;
     self.lode.istate := 1;
