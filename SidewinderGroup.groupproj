@@ -1,0 +1,48 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{4E973007-D7C7-419F-909A-C5BA7E878E60}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="sidewinder.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="math\lsoda\Sidewinder.Test.LSODA.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="sidewinder">
+        <MSBuild Projects="sidewinder.dproj"/>
+    </Target>
+    <Target Name="sidewinder:Clean">
+        <MSBuild Projects="sidewinder.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="sidewinder:Make">
+        <MSBuild Projects="sidewinder.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Sidewinder_Test_LSODA">
+        <MSBuild Projects="math\lsoda\Sidewinder.Test.LSODA.dproj"/>
+    </Target>
+    <Target Name="Sidewinder_Test_LSODA:Clean">
+        <MSBuild Projects="math\lsoda\Sidewinder.Test.LSODA.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="Sidewinder_Test_LSODA:Make">
+        <MSBuild Projects="math\lsoda\Sidewinder.Test.LSODA.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="sidewinder;Sidewinder_Test_LSODA"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="sidewinder:Clean;Sidewinder_Test_LSODA:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="sidewinder:Make;Sidewinder_Test_LSODA:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>
