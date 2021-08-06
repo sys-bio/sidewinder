@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sbml xmlns="http://www.sbml.org/sbml/level3/version2/core" level="3" version="2">
+  <model>
+    <listOfCompartments>
+      <compartment id="unit_compartment" size="1" constant="true"/>
+    </listOfCompartments>
+    <listOfSpecies>
+      <species id="node1" compartment="unit_compartment" initialConcentration="11" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false"/>
+      <species id="node2" compartment="unit_compartment" initialConcentration="0.5" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false"/>
+      <species id="node3" compartment="unit_compartment" initialConcentration="0" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false"/>
+      <species id="node4" compartment="unit_compartment" initialConcentration="0" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false"/>
+    </listOfSpecies>
+    <listOfParameters>
+      <parameter id="kf_J0" value="1" constant="false"/>
+      <parameter id="kf_J1" value="1" constant="false"/>
+    </listOfParameters>
+    <listOfReactions>
+      <reaction id="J0" reversible="false" compartment="unit_compartment">
+        <listOfReactants>
+          <speciesReference id="node1J0" name="node1" species="node1" stoichiometry="1" constant="true"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference id="node2J0" name="node2" species="node2" stoichiometry="1" constant="true"/>
+          <speciesReference id="node3J0" name="node3" species="node3" stoichiometry="1" constant="true"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> kf_J0 </ci>
+              <apply>
+                <power/>
+                <ci> node1 </ci>
+                <cn type="integer"> 1 </cn>
+              </apply>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="J1" reversible="false" compartment="unit_compartment">
+        <listOfReactants>
+          <speciesReference id="node3J1" name="node3" species="node3" stoichiometry="1" constant="true"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference id="node4J1" name="node4" species="node4" stoichiometry="1" constant="true"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> kf_J1 </ci>
+              <apply>
+                <power/>
+                <ci> node3 </ci>
+                <cn type="integer"> 1 </cn>
+              </apply>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+    </listOfReactions>
+  </model>
+</sbml>
