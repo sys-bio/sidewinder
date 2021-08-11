@@ -8,7 +8,7 @@ uses
   WEBLib.Forms, WEBLib.Dialogs, Vcl.Controls, Dialogs, WEBLib.ExtCtrls,
   WEBLib.WebCtrls,
   Vcl.StdCtrls, WEBLib.StdCtrls, WEBLib.Buttons, Vcl.Imaging.pngimage,
-  Vcl.Graphics,
+  Vcl.Graphics,System.Generics.Collections,
   uControllerNetwork, uNetworkCanvas, uNetwork, Vcl.TMSFNCTypes, Vcl.TMSFNCUtils,
   Vcl.TMSFNCGraphics,
   Vcl.TMSFNCGraphicsTypes, Vcl.TMSFNCCustomControl, Vcl.TMSFNCScrollBar,
@@ -23,9 +23,9 @@ const
   SLIDERPHEIGHT = 50; // Param Sliders WebPanel height
 
 const
-  PLOT_WIDTH_PERCENTAGE = 0.6;
-  NODE_TAB = 0; REACTION_TAB = 1; SIMULATION_TAB = 2;
-  // This means a plot extends to 60% of the right panel width
+  PLOT_WIDTH_PERCENTAGE = 0.6; // This means a plot extends to 60% of the right panel width
+  NODE_TAB = 2; REACTION_TAB = 1; SIMULATION_TAB = 0;
+
 
 type
 
@@ -75,7 +75,6 @@ type
     editNodeId: TWebEdit;
     btnNodeFillColor: TWebColorPicker;
     RightWPanel: TWebPanel;   // Holds simulation tab.
-    
     simResultsMemo: TWebMemo;
     plotEditLB: TWebListBox;
     SliderEditLB: TWebListBox;
@@ -136,7 +135,8 @@ type
     procedure netDrawScrollBarHorizValueChanged(Sender: TObject; Value: Double);
 
     procedure onLineSimButtonClick(Sender: TObject);
-    procedure plotsPBArPaint(Sender: TObject);
+   // procedure plotsPBArPaint(Sender: TObject);
+    procedure plotsPBListPaint(Sender: TObject);
     procedure addPlotButtonClick(Sender: TObject);
     procedure paramAddSliderBtnClick(Sender: TObject);
     procedure loadNetworkButtonClick(Sender: TObject);
@@ -179,7 +179,9 @@ type
     procedure SetSliderParamValues(sn, paramForSlider: Integer);
     procedure selectParameter(sNumb: Integer); // Get parameter for slider
     procedure LoadJSONFile();
-    procedure DeletePlot(plotn: Integer);
+    procedure DeletePlot(plotIndex: Integer); // Index of plot to delete
+    function  getEmptyPlotPosition(): Integer;
+    function  getPlotPBIndex(plotTag: integer): Integer; // Return Plot index of tag.
     procedure EditPlotList(plotn: Integer);
     procedure updatePlots(); // Go through and remove species/plots no longer in model.
     procedure deletePlotSpecies(plotn: Integer); // Delete a species curve in a plot.
@@ -192,6 +194,7 @@ type
     procedure updateRxnRatePanel(); // Refresh with current rxn info.
     procedure updateRxnParamPanel();
     procedure setRightPanels(); // set correct panel to be visible
+    procedure setUpSimulationUI(); // Set up sim related buttons, plots, etc
 
   public
     network: TNetwork;
@@ -200,13 +203,13 @@ type
     origin: TPointF;
     fileName: string;
     graphBitmap1: TBitmap; // get rid of
-    maxYValueAr: array of Integer; // max Y screen dimension for each plot
+    maxYValueList: TList<Integer>; // max Y screen dimension for each plot
     currentGeneration: Integer; // Used by plots as current x axis point
     plotSpeciesForm: TSpeciesSWForm;
-    plotSpecies: array of TSpeciesAr; // species to graph for each plot
-    plotsPBAr: array of TWebPaintBox; // Plot paint boxes
-    listOfPlots: array of TPlotGraph; // Plotting class for each plot
-    xscaleHeightAr: array of Integer;
+    plotSpecies: TList<TSpeciesList>; // species to graph for each plot
+    plotsPBList: TList<TWebPaintBox>; // Plot paint boxes
+    listOfPlots: TList<TPlotGraph>;   // Plotting class for each plot
+    xscaleHeightList: TList<Integer>;
     // This is the space reserved for the x axis labeling of each plot
     sliderParamForm: TParamSliderSForm;
     // Pop up form to choose parameter for slider.
@@ -233,7 +236,7 @@ type
 
 var
   mainForm: TMainForm;
-  pixelStepAr: array of Integer; // pixel equiv of time (integration) step
+  pixelStepList: TList<Integer>; // pixel equiv of time (integration) step
   spSelectform: TSpeciesSWForm; // display speciecs select to plot radio group
 
 implementation
@@ -445,25 +448,22 @@ begin
             self.rtLengthEdit1.Text := FloatToStr(MainController.getRunTime);
           end;
       end;
-
-      for i := 0 to length (listOfPlots) - 1 do
-          begin
-          //listOfPlots[i].initGraph(0, 200, 0, maxYValueAr[i], 0,
-          //  graphBitmapAr[i].width, 0, graphBitmapAr[i].Height,
-          //  xscaleHeightAr[i], runTime, stepSize);
-
+      if pixelStepList = nil then
+        pixelStepList := TList<Integer>.create;
+      for i := 0 to listOfPlots.Count - 1 do
+        begin
           yScaleWidth := 16; // Gap between the left edge and y axis
           listOfPlots[i].initGraph(0, 200, 0, 10, // The 10 is the max Y value in world coords
-            0, self.plotsPBAr[i].width, 0, self.plotsPBAr[i].height,
-            xscaleHeightAr[i], yscaleWidth, MainController.getRunTime, MainController.getStepSize);
+            0, self.plotsPBList[i].width, 0, self.plotsPBList[i].height,
+            xscaleHeightList.Items[i], yscaleWidth, MainController.getRunTime, MainController.getStepSize);
 
           // Max viewable steps is PlotWebPB.width (1 pixel per step).
-          pixelStepAr[i] := 0;
-          if MainController.getRunTime / MainController.getStepSize < self.plotsPBAr[i].width then
-             pixelStepAr[i] := round(self.plotsPBAr[i].width * MainController.getStepSize / MainController.getRunTime)
+          pixelStepList.Add(0);  // Default number.
+          if MainController.getRunTime / MainController.getStepSize < self.plotsPBList[i].width then
+             pixelStepList[i] := round(self.plotsPBList[i].width * MainController.getStepSize / MainController.getRunTime)
           else
-             pixelStepAr[i] := 1;
-          end;
+             pixelStepList[i] := 1;
+        end;
       self.InitSimResultsTable();  // Set table of Sim results.
       MainController.SetTimerEnabled(true); // Turn on web timer (Start simulation)
     end
@@ -497,7 +497,7 @@ begin
     end;
   if self.plotEditLB.ItemIndex = 1 then // delete plot
     begin
-      self.DeletePlot(self.plotEditLB.tag);
+      self.DeletePlot(getPlotPBIndex(self.plotEditLB.tag));
     end;
   // else ShowMessage('Canceled');
   self.plotEditLB.tag := 0;
@@ -505,12 +505,12 @@ begin
   self.plotEditLB.Top := 40; // default
 end;
 
-procedure TMainForm.plotsPBArPaint(Sender: TObject);
+procedure TMainForm.plotsPBListPaint(Sender: TObject);
 var
   plot_i: Integer;
 begin
   plot_i := (Sender as TWebPaintBox).tag;
-  plotsPBAr[plot_i - 1].canvas.draw(0, 0, listOfPlots[plot_i - 1].bitmap);
+  plotsPBList.items[plot_i - 1].canvas.draw(0, 0, listOfPlots.Items[plot_i - 1].bitmap);
 end;
 
 procedure TMainForm.RxnParamComboBoxChange(Sender: TObject);  // NOT needed.
@@ -518,7 +518,7 @@ var i: integer;
 begin
  console.log('TMainForm.RxnParamComboBoxChange');
  //i := self.RxnParamComboBox.ItemIndex;
- //self.rxnParamEdit.text := floattostr(networkController.network.reactions[networkController.selectedEdge].state.rateParams.Items[i].getValue);
+ //self.rxnParamEdit.text := floattostr(networkController.network.reactions[networkController.selectedEdge].state.rateParams[i].getValue);
 end;
 
 procedure TMainForm.RxnParamComboBoxClick(Sender: TObject);
@@ -526,7 +526,7 @@ var i: integer;
 begin
 console.log('TMainForm.RxnParamComboBoxClick');
   i := self.RxnParamComboBox.ItemIndex;
-  self.rxnParamEdit.text := floattostr(networkController.network.reactions[networkController.selectedEdge].state.rateParams.Items[i].getValue);
+  self.rxnParamEdit.text := floattostr(networkController.network.reactions[networkController.selectedEdge].state.rateParams[i].getValue);
   //self.RxnParamComboBox.invalidate;
 end;
 
@@ -535,7 +535,7 @@ var i: integer;
 begin
 console.log('TMainForm.RxnParamComboBoxEnter');
  // i := self.RxnParamComboBox.ItemIndex;
- // self.rxnParamEdit.text := floattostr(networkController.network.reactions[networkController.selectedEdge].state.rateParams.Items[i].getValue);
+ // self.rxnParamEdit.text := floattostr(networkController.network.reactions[networkController.selectedEdge].state.rateParams[i].getValue);
 end;
 
 procedure TMainForm.RxnParamComboBoxExit(Sender: TObject);
@@ -544,7 +544,7 @@ begin
   console.log('TMainForm.RxnParamComboBoxExit');
  // self.RxnParamComboBox.invalidate;
  // i := self.RxnParamComboBox.ItemIndex;
- // self.rxnParamEdit.text := floattostr(networkController.network.reactions[networkController.selectedEdge].state.rateParams.Items[i].getValue);
+ // self.rxnParamEdit.text := floattostr(networkController.network.reactions[networkController.selectedEdge].state.rateParams[i].getValue);
 end;
 
 procedure TMainForm.RxnParamEditChange(Sender: TObject);
@@ -553,13 +553,13 @@ begin
 try
   begin
     newVal :=strtofloat(self.RxnParamEdit.text);
-    self.networkController.network.reactions[networkController.selectedEdge].state.rateParams.Items[self.RxnParamComboBox.ItemIndex].setValue(newVal);
+    self.networkController.network.reactions[networkController.selectedEdge].state.rateParams[self.RxnParamComboBox.ItemIndex].setValue(newVal);
   end;
 except
   on Exception : EConvertError do
   begin
     ShowMessage(Exception.Message);
-    self.RxnParamEdit.text := floattostr(self.networkController.network.reactions[networkController.selectedEdge].state.rateParams.Items[self.RxnParamComboBox.ItemIndex].getValue());
+    self.RxnParamEdit.text := floattostr(self.networkController.network.reactions[networkController.selectedEdge].state.rateParams[self.RxnParamComboBox.ItemIndex].getValue());
 
   end;
 
@@ -611,22 +611,16 @@ begin
     end
   else if networkController.selectedEdge <>-1 then
     begin
-      console.log(' A reaction has been selected');
+      //console.log(' A reaction has been selected');
       self.updateRxnParamPanel;
       self.WebTabSet1.ItemIndex := REACTION_TAB;
       self.RightWPanel.visible := false;
       self.RNodeEditWPanel.visible := false;
       self.RRxnEditWPanel.visible := true;
       self.updateRxnRatePanel;
-      //self.updateRxnParamPanel;
       self.RxnRatePanel.invalidate;
 
     end;
- //   begin
- //     pnlNodePanel.visible := false;
-
- //   end;
-
 
 end;
 
@@ -796,8 +790,6 @@ begin
 end;
 
 
-
-
 procedure TMainForm.WebTabSet1Click(Sender: TObject);
 begin
 console.log('TMainForm.WebTabSet1Click: ',inttostr(self.WebTabSet1.ItemIndex));
@@ -806,7 +798,7 @@ end;
 
 procedure TMainForm.setRightPanels();
 begin
-  if self.WebTabSet1.ItemIndex = NODE_TAB then
+ { if self.WebTabSet1.ItemIndex = NODE_TAB then
   begin
     self.RightWPanel.visible := false;
     self.RRxnEditWPanel.visible := false;
@@ -827,7 +819,8 @@ begin
 
     self.updateRxnRatePanel;
   end
-  else if self.WebTabSet1.ItemIndex = SIMULATION_TAB then
+  else }
+   if self.WebTabSet1.ItemIndex = SIMULATION_TAB then
   begin
     self.RightWPanel.visible := true;
     self.RRxnEditWPanel.visible := false;
@@ -908,7 +901,7 @@ begin
   simResultsMemo.Lines.Add(dataStr);
   inc(self.currentGeneration);
 
-  uPlotActions.processScan(newTime, newVals,listOfPlots,self.plotsPBAr, plotSpecies,
+  uPlotActions.processScan(newTime, newVals,listOfPlots,self.plotsPBList, plotSpecies,
              currentGeneration );
 
 end;
@@ -977,23 +970,33 @@ procedure TMainForm.selectPlotSpecies(plotnumb: Integer);
     i: Integer;
     addingPlot: Boolean;
   begin
-    if length(plotSpecies) < plotnumb then
+    if self.plotSpecies = nil then
+      self.plotSpecies := TList<TSpeciesList>.create;
+    if self.plotSpecies.Count < plotnumb then
       begin
         // Add a plot with species list
         addingPlot := true;
-        SetLength(plotSpecies, plotnumb);
-        SetLength(plotSpecies[plotnumb - 1], length(self.mainController.getModel.getS_Vals));
+        self.plotSpecies.Add(TSpeciesList.create);
       end
-    else addingPlot := false;
+    else
+      begin    // Changing species to plot, so clear out old entries:
+        addingPlot := false;
+        self.plotSpecies.Items[getPlotPBIndex(plotNumb)].Clear;
+      end;
 
     for i := 0 to plotSpeciesForm.SpPlotCG.Items.Count - 1 do
       begin
         if plotSpeciesForm.SpPlotCG.checked[i] then
           begin
-            plotSpecies[plotnumb - 1][i] := plotSpeciesForm.SpPlotCG.Items[i];
+            if addingPlot then
+              self.plotSpecies[plotnumb - 1].Add(plotSpeciesForm.SpPlotCG.Items[i])
+            else
+              self.plotSpecies[getPlotPBIndex(plotNumb)].Add(plotSpeciesForm.SpPlotCG.Items[i]);
           end
         else
-          plotSpecies[plotnumb - 1][i] := '';
+          if addingPlot then
+            self.plotSpecies.Items[plotnumb - 1].Add('')
+          else self.plotSpecies.Items[getPlotPBIndex(plotNumb)].Add('');
       end;
     if addingPlot then
       self.addPlot(); // <-- Add dynamically created plot at this point
@@ -1012,7 +1015,6 @@ begin
   plotSpeciesForm.PopupOpacity := 0.3;
   plotSpeciesForm.Border := fbDialogSizeable;
   plotSpeciesForm.caption := 'Species to plot:';
-
   plotSpeciesForm.ShowModal(@AfterShowModal);
 end;
 
@@ -1034,51 +1036,115 @@ procedure TMainForm.addPlot(); // Add a plot
       end;
   end;
 
+var plotPositionToAdd: integer; // Add plot to next empty position.
 begin
-  setLength(self.xscaleHeightAr, length(self.xscaleHeightAr) + 1);
-  setLength(self.plotsPBAr, length(self.plotsPBAr) + 1);
-  setLength(self.maxYValueAr, length(self.maxYValueAr) + 1); // Screen Y height
-  setLength(pixelStepAr, length(pixelStepAr) + 1);
-  setLength(self.listOfPlots, length(listOfPlots) + 1); // ***
+  plotPositionToAdd := -1;
+  plotPositionToAdd := self.getEmptyPlotPosition();
+  if self.plotsPBList = nil then
+    self.plotsPBList := TList<TWebPaintBox>.create;
+  if self.xscaleHeightList = nil then
+    self.xscaleHeightList := TList<Integer>.create;
+  if self.listOfPlots = nil then
+    self.listOfPlots := TList<TPlotGraph>.create;
+  if self.maxYValueList = nil then
+    self.maxYValueList := TList<Integer>.create;
+  if pixelStepList = nil then
+    pixelStepList := TList<Integer>.create;
 
-  self.listOfPlots[self.numbPlots - 1] := TPlotGraph.create;
-  self.plotsPBAr[self.numbPlots - 1] := TWebPaintBox.create(self.RightWPanel);
-  self.plotsPBAr[self.numbPlots - 1].parent := self.RightWPanel;
-  self.plotsPBAr[self.numbPlots - 1].OnPaint := plotsPBArPaint;
-  self.plotsPBAr[self.numbPlots - 1].OnMouseDown := plotOnMouseDown;
+  self.listOfPlots.Add(TPlotGraph.create);
+  self.plotsPBList.Add(TWebPaintBox.create(self.RightWPanel));
+  self.plotsPBList[self.numbPlots - 1].parent := self.RightWPanel;
+  self.plotsPBList[self.numbPlots - 1].OnPaint := plotsPBListPaint;
+  self.plotsPBList[self.numbPlots - 1].OnMouseDown := plotOnMouseDown;
 
-  configPbPlot(self.numbPlots,
-    trunc(self.RightWPanel.width * PLOT_WIDTH_PERCENTAGE), self.RightWPanel.Height, self.plotsPBAr);
+  console.log('Position to add plot: ',plotPositionToAdd);
+  self.plotsPBList[self.numbPlots - 1].Tag := plotPositionToAdd;
+//  console.log('Adding plot, tag: ',self.plotsPBList[self.numbPlots - 1].Tag);
+  configPbPlot(plotPositionToAdd, self.numbPlots,
+    trunc(self.RightWPanel.width * PLOT_WIDTH_PERCENTAGE), self.RightWPanel.Height, self.plotsPBList);
 
-  self.xscaleHeightAr[self.numbPlots - 1] := round(0.15 * self.plotsPBAr[self.numbPlots - 1].Height);
+  self.xscaleHeightList.Add( round(0.15 * self.plotsPBList[self.numbPlots - 1].Height) );
   // make %15 of total height
-  self.maxYValueAr[self.numbPlots - 1] := self.plotsPBAr[self.numbPlots - 1].Height; // PaintBox dimension
-  self.plotsPBAr[self.numbPlots - 1].Invalidate;
+  self.maxYValueList.Add(self.plotsPBList[self.numbPlots - 1].Height); // PaintBox dimension
+  self.plotsPBList[self.numbPlots - 1].Invalidate;
 
 end;
 
-// TODO still more cleanup .. reorder plots if middle one deleted ?
-// Look at plotsPBAr[].Top value to determine order ? Still look at 'Tag' value for ordering?
-procedure TMainForm.DeletePlot(plotn: Integer);
+function  TMainForm.getPlotPBIndex(plotTag: integer): Integer;
+var i: integer;
 begin
-  self.plotsPBAr[plotn - 1].free;
-  delete(self.plotsPBAr, (plotn - 1), 1);
-  delete(self.listOfPlots, (plotn - 1), 1);
-  delete(self.maxYValueAr, (plotn - 1), 1);
-  delete(self.plotSpecies, (plotn - 1), 1);
-  delete(pixelStepAr, (plotn - 1), 1);
-  delete(self.xscaleHeightAr, (plotn - 1), 1);
-  self.numbPlots := self.numbPlots - 1;
-  self.RightWPanel.Invalidate;
+  Result := -1;
+  for i := 0 to self.numbPlots -1 do
+  begin
+    if self.plotsPBList[i].Tag = plotTag then
+      Result := i;
+  end;
+end;
+
+function TMainForm.getEmptyPlotPosition(): Integer;
+var i, plotPosition, totalPlots: Integer;
+
+begin
+  plotPosition := 1;
+  totalPlots := self.numbPlots;
+  if self.numbPlots >1 then
+  begin
+    for i := 0 to totalPlots -2 do
+    begin
+      if self.plotsPBList[i].Tag = plotPosition then
+        inc(plotPosition);
+    end;
+  end;
+
+  Result := plotPosition;
+end;
+
+
+procedure TMainForm.DeletePlot(plotIndex: Integer);
+var tempObj: TObject;
+begin
+  try
+    begin
+      try
+        begin
+        //console.log('Deleting plot with tag: ',self.plotsPBList[plotIndex].Tag);
+          tempObj := self.plotsPBList[plotIndex];
+          tempObj.Free;
+          self.plotsPBList.Delete(plotIndex);
+          self.xscaleHeightList.Delete(plotIndex);
+          tempObj := self.listOfPLots[plotIndex];
+          tempObj.Free;
+          self.listOfPlots.Delete(plotIndex);
+          self.maxYValueList.Delete(plotIndex);
+          tempObj := self.plotSpecies[plotIndex];
+          tempObj.Free;
+          self.plotSpecies.Delete(plotIndex);
+          pixelStepList.Delete(plotIndex);
+          self.numbPlots := self.numbPlots - 1;
+        end;
+      finally
+        self.RightWPanel.Invalidate;
+      end;
+
+    end;
+  except
+     on EArgumentOutOfRangeException do
+      ShowMessage('Plot number not in array');
+
+  end;
+
 end;
 
 procedure TMainForm.EditPlotList(plotn: Integer);
 var
   plotXposition, plotYposition: Integer;
+  plotIndex: Integer;
   editList: TStringList;
 begin
+  plotIndex := -1;
+  plotIndex := getPlotPBIndex(plotn);
   plotXposition := 40;
-  plotYposition := self.plotsPBAr[plotn - 1].Top + 10;
+  plotYposition := self.plotsPBList[plotIndex].Top + 10;
   editList := TStringList.create();
   editList.Add('Change plot species.');
   editList.Add('Delete plot.');
@@ -1100,7 +1166,7 @@ end;
 
 procedure TMainForm.deletePlotSpecies(plotn: Integer); // Delete a species curve in a plot.
 begin
-  // TODO
+  // TODO: Just delete plot, get new list of species from user and create new plot.
 end;
 
 procedure TMainForm.EditSliderList(sn: Integer);
@@ -1109,7 +1175,7 @@ var
   sliderXposition, sliderYposition: Integer;
   editList: TStringList;
 begin
-  sliderXposition := 350; //424;
+  sliderXposition := 350;
   sliderYposition := self.sliderPanelAr[sn].Top + 10;
   editList := TStringList.create();
   editList.Add('Change slider parameter.');
@@ -1277,33 +1343,8 @@ end;
 
 
 procedure TMainForm.SetUpSimButtonClick(Sender: TObject);
-var i: integer;
 begin
-  // delete existing plots
-  if length(self.plotsPBAr) > 0 then
-  begin
-    for i := 0 to length(self.plotsPBAr)-1 do
-      begin
-        self.DeletePlot(i);
-      end;
-
-    self.numbPlots := 0;
-
-    self.WebTabSet1.ItemIndex := SIMULATION_TAB;
-    self.setRightPanels;
-    self.RightWPanel.invalidate;
-  end;
-
-  // delete existing param sliders.
-  if length(self.sliderPanelAr) >0 then
-  begin
-   for i := 0 to length(self.sliderPanelAr) -1 do
-     begin
-       self.DeleteSlider(i);
-     end;
-   setLength(self.sliderPanelAr, 0);
-  end;
-  mainController.updateModel;
+  self.setUpSimulationUI(); // Clear out old plots, simulation, parameter sliders for new sim.
 
 end;
 
@@ -1352,6 +1393,45 @@ begin
   end;
   self.RxnParamComboBox.ItemIndex := 0;
   self.RxnParamComboBox.invalidate;
+end;
+
+procedure TMainForm.setUpSimulationUI();
+var i: integer;
+begin
+   // delete existing plots
+  if self.numbPlots >0 then
+  begin
+    if (self.plotsPBList.Count) > 0 then
+    begin
+      for i := 0 to self.plotsPBList.Count-1 do
+      begin
+        self.DeletePlot(i);
+      end;
+
+      self.numbPlots := 0;
+
+      self.WebTabSet1.ItemIndex := SIMULATION_TAB;
+      self.setRightPanels;
+      self.RightWPanel.invalidate;
+    end;
+  end;
+
+
+  // delete existing param sliders.
+  if self.sliderPanelAr <> nil then
+  begin
+    if length(self.sliderPanelAr) >0 then
+    begin
+      for i := 0 to length(self.sliderPanelAr) -1 do
+      begin
+        self.DeleteSlider(i);
+      end;
+      setLength(self.sliderPanelAr, 0);
+    end;
+  end;
+
+  mainController.updateModel;
+
 end;
 
 end.

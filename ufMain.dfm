@@ -17,7 +17,7 @@ object mainForm: TmainForm
     BorderStyle = bsSingle
     ElementBodyClassName = 'card-body-10  bg-dark text-white'
     object rtLabel1: TWebLabel
-      Left = 1572
+      Left = 1420
       Top = 15
       Width = 62
       Height = 13
@@ -33,7 +33,7 @@ object mainForm: TmainForm
       WidthPercent = 100.000000000000000000
     end
     object stepSizeLabel1: TWebLabel
-      Left = 1563
+      Left = 1420
       Top = 34
       Width = 71
       Height = 13
@@ -80,8 +80,8 @@ object mainForm: TmainForm
       OnClick = mnuSaveClick
     end
     object onLineSimButton: TWebButton
-      Left = 1170
-      Top = 11
+      Left = 941
+      Top = 10
       Width = 120
       Height = 25
       Caption = 'Simulation: Offline'
@@ -99,8 +99,8 @@ object mainForm: TmainForm
       OnClick = onLineSimButtonClick
     end
     object addPlotButton: TWebButton
-      Left = 1312
-      Top = 11
+      Left = 1088
+      Top = 10
       Width = 96
       Height = 25
       Caption = 'Add Plot'
@@ -113,8 +113,8 @@ object mainForm: TmainForm
       OnClick = addPlotButtonClick
     end
     object paramAddSliderBtn: TWebButton
-      Left = 1414
-      Top = 11
+      Left = 1214
+      Top = 10
       Width = 135
       Height = 25
       Hint = 'Add parameter slider'
@@ -135,7 +135,7 @@ object mainForm: TmainForm
       OnClick = paramAddSliderBtnClick
     end
     object rtLengthEdit1: TWebEdit
-      Left = 1640
+      Left = 1497
       Top = 12
       Width = 33
       Height = 22
@@ -146,7 +146,7 @@ object mainForm: TmainForm
       WidthPercent = 100.000000000000000000
     end
     object stepSizeEdit1: TWebEdit
-      Left = 1640
+      Left = 1497
       Top = 32
       Width = 33
       Height = 22
@@ -214,7 +214,7 @@ object mainForm: TmainForm
       OnClick = SaveSBMLButtonClick
     end
     object SetUpSimButton: TWebButton
-      Left = 712
+      Left = 664
       Top = 10
       Width = 125
       Height = 32
@@ -234,10 +234,10 @@ object mainForm: TmainForm
       OnClick = SetUpSimButtonClick
     end
     object WebTabSet1: TWebTabSet
-      Left = 883
-      Top = 13
-      Width = 233
-      Height = 27
+      Left = 811
+      Top = 10
+      Width = 78
+      Height = 32
       ElementClassName = 'nav nav-pills'
       HeightPercent = 100.000000000000000000
       WidthPercent = 100.000000000000000000
@@ -245,9 +245,7 @@ object mainForm: TmainForm
       Color = clWhite
       ItemIndex = 2
       Items.Strings = (
-        'Nodes'
-        'Reactions'
-        'Simulator')
+        'Simulator page')
       TabOrder = 12
       OnClick = WebTabSet1Click
     end
@@ -908,7 +906,6 @@ object mainForm: TmainForm
       ChildOrder = 2
       ElementBodyClassName = 'card-body'
       ElementFont = efCSS
-      ExplicitWidth = 836
       object networkPB1: TWebPaintBox
         Left = 0
         Top = 0
@@ -925,7 +922,6 @@ object mainForm: TmainForm
         OnMouseMove = networkPB1MouseMove
         OnMouseUp = networkPB1MouseUp
         OnMouseWheel = networkPB1MouseWheel
-        ExplicitWidth = 818
       end
       object netDrawScrollBarVert: TTMSFNCScrollBar
         Left = 808
@@ -969,7 +965,6 @@ object mainForm: TmainForm
         Max = 1000.000000000000000000
         PageSize = 10.000000000000000000
         OnValueChanged = netDrawScrollBarVertValueChanged
-        ExplicitLeft = 818
       end
       object netDrawScrollBarHoriz: TTMSFNCScrollBar
         Left = 0
@@ -1014,7 +1009,6 @@ object mainForm: TmainForm
         Max = 1000.000000000000000000
         PageSize = 10.000000000000000000
         OnValueChanged = netDrawScrollBarHorizValueChanged
-        ExplicitWidth = 836
       end
     end
     object splitter: TWebSplitter
@@ -1028,7 +1022,6 @@ object mainForm: TmainForm
       ChildOrder = 3
       Color = clBtnFace
       OnMoved = splitterMoved
-      ExplicitLeft = 973
     end
     object RNodeEditWPanel: TWebPanel
       Left = 1118
@@ -1045,7 +1038,6 @@ object mainForm: TmainForm
       ElementBodyClassName = 'card-body'
       ElementFont = efCSS
       Visible = False
-      ExplicitLeft = 1128
       object pnlNodePanel: TWebPanel
         Left = 8
         Top = 0
@@ -1191,7 +1183,6 @@ object mainForm: TmainForm
       ElementBodyClassName = 'card-body'
       ElementFont = efCSS
       Visible = False
-      ExplicitLeft = 978
       object RxnRatePanel: TWebPanel
         Left = 5
         Top = 60

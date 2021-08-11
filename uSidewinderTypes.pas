@@ -5,7 +5,7 @@ uses System.Generics.Collections;
 type
   TDoubleArray = array of double;
   TIntegerArray = array of integer;
-  TspeciesAr = array of String;
+  TSpeciesList = TList<String>;
 
   TVarNameVal = class  // store string/value pair.
     private
