@@ -268,8 +268,7 @@ begin
       begin
         y[i]:= s[i-1];
       end;
-    //dydt_s := self.lode.FDerivatives (0, s, self.p);
-    console.log('dydt: ',dydt[0],dydt[1],dydt[2],dydt[3]);
+
     self.time:= time; // reset time to current time.
     self.lode.Execute (y, self.time, tNext);
     self.time := tNext;
