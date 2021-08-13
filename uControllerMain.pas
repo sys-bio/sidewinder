@@ -3,7 +3,7 @@ unit uControllerMain;
 interface
 
 uses System.SysUtils, Dialogs, uSimulation, uModel, uSBMLClasses, uODE_FormatUtility,
-     WebLib.Forms,{ WEBLib.ExtCtrls,} Web, uSBMLReader, uControllerNetwork, uSBMLWriter,
+     WebLib.Forms, Web, uSBMLReader, uControllerNetwork, uSBMLWriter,
      uNetwork, uSidewinderTypes;
 
 type
@@ -31,11 +31,13 @@ type
     FSBMLUpdate: TUpdateModelEvent;
     FSBMLUpdate2: TUpdateModelEvent;
     currNetworkCtrl : TController;
-    procedure createSimulation();
-    procedure createModel(); // Instatiate TModel and attach listener
+
+
   public
     paramUpdated: Boolean; // true if a parameter val has been updated.
     constructor Create(networkCtrl: TController);
+    procedure createModel(); // Instatiate TModel and attach listener
+    procedure createSimulation();
     procedure SBMLLoaded(); // Notify when done loading libSBMLjs
     procedure setODESolver();
     function getODESolver(): ODEsolver;
@@ -59,8 +61,8 @@ type
     procedure changeParameterVal(pos: Integer; newVal: Double);
     procedure stopTimer();
     procedure startTimer();
+    procedure resetCurrTime();
     function getSimulation(): TSimulationJS;
-    procedure updateModel(); // Update model for simulation.
     procedure networkUpdated(); // Network has changed, update model
     property OnSimUpdate: TUpdateSimEvent read FUpdate write FUpdate;
     property OnSBMLUpdate: TUpdateModelEvent read FSBMLUpdate write FSBMLUpdate;
@@ -76,17 +78,20 @@ constructor TControllerMain.Create(networkCtrl: TController);
 begin
   self.sbmlText := '';
   self.modelLoaded := false;
-  self.currTime := 0;
+  self.resetCurrTime;
   self.stepSize := 0.1; // 100 msec
   self.runTime := 500; // sec
   self.online := false;
   self.networkUpdate := false;
- // self.sbmlmodel := TModel.create();
- // self.sbmlmodel.OnPing := self.SBMLLoaded;  // Register callback function
   self.createModel;
   self.currNetworkCtrl := networkCtrl;
   self.OnSBMLUpdate := networkCtrl.SBMLUpdated;
   networkCtrl.network.OnNetworkEvent := self.networkUpdated;
+end;
+
+procedure TControllerMain.resetCurrTime();
+begin
+  self.currTime := 0;
 end;
 
 // Grab SBML model information when notified by model of change:
@@ -109,6 +114,12 @@ console.log('TControllerMain.createModel');
   if self.sbmlmodel <> nil then self.sbmlmodel.Free;
   self.sbmlmodel := TModel.create();
   self.sbmlmodel.OnPing := self.SBMLLoaded;  // Register callback function
+  if self.networkUpdate then  // Create from Network
+    begin
+      self.sbmlmodel := self.currNetworkCtrl.createSBMLModel(self.sbmlmodel);
+      self.networkUpdate := true;
+    end;
+
 end;
 
 procedure TControllerMain.createSimulation();
@@ -120,6 +131,7 @@ console.log('TControllerMain.createSimulation');
     self.currTime := 0;
     self.online := false;
   end;
+
   self.runSim := TSimulationJS.create(self.runTime, self.stepSize, self.SBMLmodel, self.solverUsed);
   self.runSim.OnUpdate := self.getVals; // register callback function.
 end;
@@ -136,17 +148,6 @@ procedure TControllerMain.networkUpdated();
 begin
   console.log('Network changed');
   self.networkUpdate := true;      // after model updated, change to false.
-end;
-
-
-procedure TControllerMain.updateModel(); // Network changed, so update model.
-begin
-
-  console.log('TControllerMain.updateModel');
-    self.createModel();
-    self.sbmlmodel := self.currNetworkCtrl.createSBMLModel(self.sbmlmodel);
-    self.networkUpdate := false;
-   // self.createSimulation();
 end;
 
 procedure TControllerMain.setODESolver();
@@ -277,10 +278,8 @@ var writerSBML: TSBMLWriter;
 begin
   self.writeSBMLFileName := fileName;
   // currently can have both sbml loaded from file and network model.
-  if length(self.sbmlmodel.getSBMLspeciesAr) <1 then
-  begin
-    self.sbmlmodel := self.currNetworkCtrl.createSBMLModel(self.sbmlmodel);
-  end;
+  if self.networkUpdate = true then
+    self.createModel;
 
   if self.sbmlmodel <> nil then
   begin
