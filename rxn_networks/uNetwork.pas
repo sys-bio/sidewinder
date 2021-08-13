@@ -420,13 +420,22 @@ end;
 
 // Check if node is connected to any reactions
 function TNetwork.hasReactions (node : TNode) : boolean;
-var i : integer;
+var i, j : integer;
 begin
   result := False;
   for i := 0 to length (reactions) - 1 do
       begin
-      if (reactions[i].state.srcPtr[0] = node) or (reactions[i].state.destPtr[0] = node) then
-         exit (True);
+      for j := 0 to length(reactions[i].state.srcPtr) do
+        begin
+          if reactions[i].state.srcPtr[j] = node then
+            exit (True);
+        end;
+      for j := 0 to length(reactions[i].state.destPtr) do
+        begin
+          if reactions[i].state.destPtr[j] = node then
+            exit (True);
+        end;
+
       end;
 end;
 
