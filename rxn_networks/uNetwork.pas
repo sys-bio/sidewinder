@@ -150,6 +150,7 @@ type
        function    addUniUniReaction (id : string; src, dest : TNode) : integer; overload;
        function    addReaction (state : TReactionState) : TReaction; overload;
        function    addReaction (reaction : TReaction) : integer; overload;
+       procedure   updateReactions(node: TNode);  // Node Id changes
        function    addAnyToAnyEdge (id: string; sourceNodes, destNodes : array of TNode; var edgeIndex : integer) : TReaction;
        procedure   unSelectAll;
        procedure   unReactionSelect;
@@ -303,12 +304,9 @@ begin
 end;
 
 procedure TNetwork.networkEvent();
-var
-  i: TNetworkEvent; // Notify listener that Network has changed.
 begin
   if Assigned(FNetworkEvent) then
     FNetworkEvent();
-
 end;
 
 procedure TNetwork.loadModel (modelStr : string);
@@ -430,6 +428,40 @@ begin
       if (reactions[i].state.srcPtr[0] = node) or (reactions[i].state.destPtr[0] = node) then
          exit (True);
       end;
+end;
+
+
+procedure TNetwork.updateReactions(node: TNode); // nodeId changes
+var i, j: integer;
+begin
+  if self.hasReactions(node) then
+  begin
+    for i := 0 to length (self.reactions) - 1 do
+    begin
+      for j := 0 to length(reactions[i].state.srcId) do
+      begin
+        if reactions[i].state.srcPtr[j] = node then
+        begin
+          reactions[i].state.srcId[j] := node.state.id;
+        end;
+      end;
+      for j := 0 to length(reactions[i].state.destId) do
+      begin
+        if reactions[i].state.destPtr[j] = node then
+        begin
+            reactions[i].state.destId[j] := node.state.id;
+        end;
+      end;
+       // Update rateLaws with new nodeId of all reactions:
+      if self.reactions[i].getRateRule <> '' then
+        begin
+          self.reactions[i].setRateRule;
+        end;
+
+    end;
+
+  end;
+
 end;
 
 
@@ -904,16 +936,10 @@ begin
   for i := 0 to state.nReactants -1 do
   begin
     state.srcStoich[i] := 1.0; // default
-   // newParam := TSBMLparameter.create(RXN_R_EXP+ state.srcId[i]);//Order of reaction reactant Exp
-   // newParam.setValue(1.0); // Default
-   // state.rateParams.Add(newParam);
   end;
   for i := 0 to state.nProducts do
   begin
     state.destStoich[i] := 1.0;
-   // newParam := TSBMLparameter.create(RXN_P_EXP+ state.destId[i]);//Order of reaction product Exp
-   // newParam.setValue(1.0);  // default
-   // state.rateParams.Add(newParam);
   end;
 
 end;

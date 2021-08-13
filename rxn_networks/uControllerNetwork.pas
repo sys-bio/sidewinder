@@ -65,7 +65,7 @@ type
     procedure setSelectStatus;
     function  addNode(Id: string; x, y: double): TNode; overload;
     procedure addNode(x, y: double); overload;
-    procedure setNodeId (id : string);
+    procedure setNodeId (Id : string);
     procedure setNodeConc (conc : string);
     function  addReaction(Id: string; src, dest: TNode): integer;
     procedure prepareUndo;
@@ -251,7 +251,7 @@ begin
 end;
 
 
-procedure TController.setNodeId (id : string);
+procedure TController.setNodeId (Id : string);
 var index : integer;
 begin
   if selectedNode = -1 then
@@ -265,6 +265,9 @@ begin
      end;
 
   network.nodes[selectedNode].state.id := Id;
+  // Update reactions that have this node:
+  network.updateReactions(network.nodes[selectedNode]);
+  network.networkEvent;
 end;
 
 procedure TController.setNodeConc (conc : string);
@@ -283,6 +286,7 @@ begin
       ShowMessage ('Conc must be a number');
   end;
   network.nodes[selectedNode].state.conc := newConc;
+  network.networkEvent;
 end;
 
 procedure TController.addUniUniReactionMouseDown(Sender: TObject; x, y: double);
