@@ -135,7 +135,6 @@ type
     procedure netDrawScrollBarHorizValueChanged(Sender: TObject; Value: Double);
 
     procedure onLineSimButtonClick(Sender: TObject);
-   // procedure plotsPBArPaint(Sender: TObject);
     procedure plotsPBListPaint(Sender: TObject);
     procedure addPlotButtonClick(Sender: TObject);
     procedure paramAddSliderBtnClick(Sender: TObject);
@@ -202,7 +201,6 @@ type
     networkCanvas: TNetworkCanvas;
     origin: TPointF;
     fileName: string;
-    graphBitmap1: TBitmap; // get rid of
     maxYValueList: TList<Integer>; // max Y screen dimension for each plot
     currentGeneration: Integer; // Used by plots as current x axis point
     plotSpeciesForm: TSpeciesSWForm;
@@ -248,9 +246,6 @@ Uses uGraphUtils, uCreateNetworks, uLayout, uTestModel;
 procedure TMainForm.addPlotButtonClick(Sender: TObject);
 begin
   // Make runtime, stepsize, simulation buttons visible
-  // Check if network has changed first.
- // if mainController.IsNetworkUpdated then mainController.updateModel;
-
   self.numbPlots := self.numbPlots + 1;
   rtLabel1.visible := true;
   rtLengthEdit1.visible := true;
@@ -453,7 +448,7 @@ begin
       for i := 0 to listOfPlots.Count - 1 do
         begin
           yScaleWidth := 16; // Gap between the left edge and y axis
-          listOfPlots[i].initGraph(0, 200, 0, 10, // The 10 is the max Y value in world coords
+          listOfPlots[i].initGraph(0, 200, 0, 10, // The 10 is the max Y value (yend) in world coords
             0, self.plotsPBList[i].width, 0, self.plotsPBList[i].height,
             xscaleHeightList.Items[i], yscaleWidth, MainController.getRunTime, MainController.getStepSize);
 
@@ -527,7 +522,6 @@ begin
 console.log('TMainForm.RxnParamComboBoxClick');
   i := self.RxnParamComboBox.ItemIndex;
   self.rxnParamEdit.text := floattostr(networkController.network.reactions[networkController.selectedEdge].state.rateParams[i].getValue);
-  //self.RxnParamComboBox.invalidate;
 end;
 
 procedure TMainForm.RxnParamComboBoxEnter(Sender: TObject);
@@ -669,7 +663,7 @@ begin
   networkPB1.canvas.draw(0, 0, networkCanvas.bitmap);
 end;
 
-procedure TMainForm.editNodeConcChange(Sender: TObject);   // better than Exit?
+procedure TMainForm.editNodeConcChange(Sender: TObject);   // Do not use.
 begin
  // networkController.setNodeConc(editNodeConc.Text);
  // networkPB1.Invalidate;
@@ -685,7 +679,7 @@ procedure TMainForm.paramAddSliderBtnClick(Sender: TObject);
 var
   i: Integer;
 begin
-  // TODO: Check if already 10 sliders, if so then showmessage( 'Only 10 parameter sliders allowed, edit existing one');
+  // TODO: Check if already 5 sliders, if so then showmessage( 'Only 5 parameter sliders allowed, edit existing one');
   self.selectParameter(length(sliderParamAr));
 end;
 
@@ -962,7 +956,7 @@ end;
 
 
 procedure TMainForm.selectPlotSpecies(plotnumb: Integer);
-// plot number to be added or modified
+ // plotnumb: plot number, not index, to be added or modified
 
   // Pass back to caller after closing popup:
   procedure AfterShowModal(AValue: TModalResult);
@@ -1037,6 +1031,7 @@ procedure TMainForm.addPlot(); // Add a plot
   end;
 
 var plotPositionToAdd: integer; // Add plot to next empty position.
+    //newPlotPB: TWebPaintBox;
 begin
   plotPositionToAdd := -1;
   plotPositionToAdd := self.getEmptyPlotPosition();
@@ -1052,13 +1047,14 @@ begin
     pixelStepList := TList<Integer>.create;
 
   self.listOfPlots.Add(TPlotGraph.create);
+
   self.plotsPBList.Add(TWebPaintBox.create(self.RightWPanel));
   self.plotsPBList[self.numbPlots - 1].parent := self.RightWPanel;
   self.plotsPBList[self.numbPlots - 1].OnPaint := plotsPBListPaint;
   self.plotsPBList[self.numbPlots - 1].OnMouseDown := plotOnMouseDown;
-
-  console.log('Position to add plot: ',plotPositionToAdd);
   self.plotsPBList[self.numbPlots - 1].Tag := plotPositionToAdd;
+  console.log('Position to add plot: ',plotPositionToAdd);
+
 //  console.log('Adding plot, tag: ',self.plotsPBList[self.numbPlots - 1].Tag);
   configPbPlot(plotPositionToAdd, self.numbPlots,
     trunc(self.RightWPanel.width * PLOT_WIDTH_PERCENTAGE), self.RightWPanel.Height, self.plotsPBList);
@@ -1398,18 +1394,19 @@ end;
 procedure TMainForm.setUpSimulationUI();
 var i: integer;
 begin
+  self.currentGeneration := 0; // reset current x axis point (pixel)
    // delete existing plots
   if self.numbPlots >0 then
   begin
     if (self.plotsPBList.Count) > 0 then
     begin
-      for i := 0 to self.plotsPBList.Count-1 do
+    //  for i := 0 to self.plotsPBList.Count-1 do
+      for i := self.plotsPBList.Count-1 downto 0 do
       begin
         self.DeletePlot(i);
       end;
 
       self.numbPlots := 0;
-
       self.WebTabSet1.ItemIndex := SIMULATION_TAB;
       self.setRightPanels;
       self.RightWPanel.invalidate;
@@ -1422,7 +1419,8 @@ begin
   begin
     if length(self.sliderPanelAr) >0 then
     begin
-      for i := 0 to length(self.sliderPanelAr) -1 do
+      for i := length(self.sliderPanelAr) -1 downto 0 do
+     // for i := 0 to length(self.sliderPanelAr) -1 do
       begin
         self.DeleteSlider(i);
       end;
@@ -1430,7 +1428,11 @@ begin
     end;
   end;
 
-  mainController.updateModel;
+  mainController.resetCurrTime;
+  //mainController.stepSize := 0.1; // 100 msec
+ // mainController.runTime := 500; // sec
+  mainController.createModel;
+  mainController.createSimulation;
 
 end;
 
