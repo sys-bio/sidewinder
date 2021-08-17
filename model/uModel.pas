@@ -224,10 +224,12 @@ procedure TModel.SBML_UpdateEvent();
    for i := 0 to Length(self.modelSpecies)-1 do
      begin
        if self.modelSpecies[i].getId = spId then
-         Result := self.modelSpecies[i]
-       else Result:= nil;
-
+       begin
+         Result := self.modelSpecies[i];
+         exit;
+       end;
      end;
+   Result:= nil;
  end;
 
  // Just species listed as boundary condition for a species
