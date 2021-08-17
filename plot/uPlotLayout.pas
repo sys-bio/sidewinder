@@ -18,7 +18,6 @@ begin
    panelH := plotPanelHeight;
    currPlot := plotNumber;
 
-  // newPBplotList.Items[plotNumber-1].Tag := plotNumber;  // keep track of its order in plot list.
    if plotNumber > defaultNumbPlots then
       adjustPlotHeights(totalPlots, newPBplotList)
    else
