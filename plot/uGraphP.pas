@@ -15,12 +15,14 @@ type
   TPlotGraph = class
   private
     endp: integer ; startp: integer; size: integer;
+    wxmin, wxmax, wymin, wymax : integer;  // world coord min/max, wymax is integer of y_valsMax
+    sxmin, sxmax,  symin, symax : integer; // screen coord min/max
     a, b, a1, b1 : single;
     maxpoints : integer;
     lsxmin, lsxmax : integer;
     x1: TDataType;
     y_vals : array of TDouble_MAXSIZE_Array;
-    sim_Ymax: double; // Current largest y value for all variables of plot, do not change during run.
+    y_valsMax: double; // Largest y value for all variables of plot, do not change during run.
     graphScreenWidth, canvasHeight : integer;
     canvasWidth: integer;
     yAxisHt: integer; // height of yaxis in pixels.
@@ -39,12 +41,17 @@ type
   public
     bitmap : TBitmap;
     constructor create;
-    procedure initGraph (wxmin, wxmax, wymin, wymax : integer; sxmin, sxmax,
-                symin, symax : integer; xScaleHeight, yScaleWidth : integer; runTime : double; stepSize : double);
+    procedure initGraph (wxmin_n, wxmax_n, wymin_n, wymax_n : integer; sxmin_n, sxmax_n,
+                symin_n, symax_n : integer; xScaleHeight, yScaleWidth : integer; runTime : double; stepSize : double);
     procedure addPoint (time: integer; newYValues : array of double;
                    plot_var: array of boolean; display : boolean; currTime:double);
     procedure resetGraph (canvas : TCanvas);
     procedure redrawGraph(canvas : TCanvas; plot_var: array of boolean; display : boolean);
+    procedure setY_valsMax(max: double);
+    procedure xConvertFactors();
+    procedure yConvertFactors();
+    function getY_valsMax(): double;
+
    end;
 
 
@@ -52,25 +59,25 @@ type
 
  constructor TPlotGraph.create;
  begin
-   endp:= 0; startp:= 1; size:= 0; sim_Ymax := 0;
+   endp:= 0; startp:= 1; size:= 0; y_valsMax := 0;
    bitmap := TBitmap.Create;
  end;
 
 
 // xscale height is the distance above the base of the graph at which the
 // x axis is drawn, therefore it is a y coordinate
-procedure TPlotGraph.initGraph (wxmin, wxmax, wymin, wymax : integer;
-               sxmin, sxmax,  symin, symax : integer;
+procedure TPlotGraph.initGraph (wxmin_n, wxmax_n, wymin_n, wymax_n : integer;
+               sxmin_n, sxmax_n,  symin_n, symax_n : integer;
                xScaleHeight, yScaleWidth : integer;
                runTime : double; stepSize : double);
 begin
   // NOTE:
   // y_vals should ideally be sized here but we don't know the size until addPoint
-
   simLength := runTime;
   step := stepSize;
-  canvasHeight := symax - symin; // Get canvas height before adjusting symax
-  canvasWidth  := sxmax - sxmin;
+  canvasHeight := symax_n - symin_n; // Get canvas height before adjusting symax
+  canvasWidth  := sxmax_n - sxmin_n;
+  self.symin := symin_n;
 
   bitmap.Width := canvasWidth;
   bitmap.Height := canvasHeight;
@@ -82,24 +89,34 @@ begin
   self.yScaleWidth := yScaleWidth;
   self.xScaleHeight := xScaleHeight;
 
-  sxmin := sxmin + yScaleWidth;   // Move the y axis to the right
-  symax := symax - xScaleHeight;  // Move the x axis *up* (note y screens coords are inverted)
-
-  yAxisHt := symax;
-  graphScreenWidth := sxmax - sxmin;  // screen coordinates !
+  self.sxmin := sxmin_n + yScaleWidth;   // Move the y axis to the right
+  self.sxmax := sxmax_n;
+  self.symax := symax_n - xScaleHeight;  // Move the x axis *up* (note y screens coords are inverted)
+  self.wymin := wymin_n; self.wymax := wymax_n;
+  self.wxmin := wxmin_n; self.wxmax := wxmax_n;
+  yAxisHt := self.symax;
+  graphScreenWidth := self.sxmax - self.sxmin;  // screen coordinates !
 
   // Conversion factors to convert world to screen coordinates
-  lsxmax := sxmax; lsxmin := sxmin;
-  a := graphScreenWidth/(wxmax - wxmin);
-  // top - bottom !
-  b := (symin - symax)/(wymax - wymin);
-  a1 := -wxmin*a + lsxmin;
-  b1 := -wymin*b + symax;
-  maxpoints := trunc(runTime/stepSize);
-  if sim_Ymax < 0 then
-     sim_Ymax := 0;    // Do not reset ...
+  self.lsxmax := self.sxmax; self.lsxmin := self.sxmin;
+  self.xConvertFactors;
+  self.yConvertFactors; // b, b1, calc ratio of screen height/ world height
+
+  self.maxpoints := trunc(runTime/stepSize);
 end;
 
+procedure TPlotGraph.yConvertFactors();
+begin
+  // top - bottom !
+  self.b := (self.symin - self.symax)/(self.wymax - self.wymin);
+  self.b1 := -self.wymin*self.b + self.symax;
+end;
+
+procedure TPlotGraph.xConvertFactors();
+begin
+  self.a := self.graphScreenWidth/(self.wxmax - self.wxmin);
+  self.a1 := -self.wxmin*a + self.lsxmin;
+end;
 
 function TPlotGraph.world_to_screen (wx, wy : double) : TIntegerArray;
 begin
@@ -212,7 +229,7 @@ begin
   divMinor := 4;
   ystart := yScaleWidth;
   xstart := x[startp];
-  yend := 10;
+  yend := round(y_valsMax);//10;    // y scale height
 
   // now draw y scale
   canvas.pen.color := clBlack;
@@ -247,7 +264,7 @@ begin
           minor := minor + minorStepSize;
           end;
       canvas.TextOut (xi-15, yi-4, floattostrf (yPosition,ffGeneral, 4, 4));
-      //canvas.TextOut (xi+5, yi-4, floattostrf (((scale/yAxisHt)*sim_Ymax),ffGeneral, 4, 4));
+      //canvas.TextOut (xi+5, yi-4, floattostrf (((scale/yAxisHt)*y_valsMax),ffGeneral, 4, 4));
       yposition := yposition + stepSize;
       //inc (scale, divMk);
     end;
@@ -262,15 +279,8 @@ var
   i, j : integer;
 begin
   // Init size of y_vals if not already done:
-  //sim_Ymax:= 10;//y_curr[0];
   if length(y_vals) <> length(newYValues) then
      setLength (y_vals, length(newYValues));
-
-  //for i := 0 to length(newYValues)-1 do
-  //  begin
-  //    if (sim_Ymax <newYValues[i]) and plot_var[i] then sim_Ymax:= newYValues[i];
-  //  end;
-
 
   // flood fill appears to be slighly quicker and eliminates the dots bug
 
@@ -292,7 +302,7 @@ begin
   x1[endp] := time;
 
   for i := 0 to Length(newYValues)-1 do
-   y_vals[i][endp] := newYValues[i]; //  round(normalizeY(newYValues[i],sim_yMax));
+   y_vals[i][endp] := newYValues[i];
 
   if display then
      begin
@@ -343,5 +353,19 @@ begin
      end;
 end;
 
+procedure TPlotGraph.setY_valsMax(max: double);
+begin
+  if max > 0 then
+    self.y_valsMax := max * 1.2 // Set to 120% of val
+  else self.y_valsMax := 10;
+  self.wymax := round(self.y_valsMax);
+  self.yConvertFactors;
+  self.yConvertFactors;
+end;
+
+function TPlotGraph.getY_valsMax(): double;
+begin
+  Result := self.y_valsMax
+end;
 
 end.

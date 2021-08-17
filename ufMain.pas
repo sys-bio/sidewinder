@@ -21,6 +21,7 @@ uses
 
 const
   SLIDERPHEIGHT = 50; // Param Sliders WebPanel height
+  DEFAULTSPECIESPLOTHT = 10; // Default y range for plotting species
 
 const
   PLOT_WIDTH_PERCENTAGE = 0.6; // This means a plot extends to 60% of the right panel width
@@ -172,7 +173,7 @@ type
     numbSliders: Integer; // Number of parameter sliders
 
     procedure InitSimResultsTable(); // Init simResultsMemo.
-    procedure addPlot(); // Add a plot
+    procedure addPlot(yMax: double); // Add a plot, yMax: largest initial val of plotted species
     procedure selectPlotSpecies(plotnumb: Integer);
     procedure addParamSlider();
     procedure SetSliderParamValues(sn, paramForSlider: Integer);
@@ -424,7 +425,7 @@ end;
 procedure TMainForm.onLineSimButtonClick(Sender: TObject);
 var
   i: Integer;
-  yScaleWidth : integer;
+  yScaleWidth, newYMax : integer;
 begin
   if MainController.isOnline = false then
     begin
@@ -448,7 +449,10 @@ begin
       for i := 0 to listOfPlots.Count - 1 do
         begin
           yScaleWidth := 16; // Gap between the left edge and y axis
-          listOfPlots[i].initGraph(0, 200, 0, 10, // The 10 is the max Y value (yend) in world coords
+          if listOfPlots[i].getY_valsMax >0 then newYMax := round(listOfPlots[i].getY_valsMax)
+          else newYMax := DEFAULTSPECIESPLOTHT;
+
+          listOfPlots[i].initGraph(0, 200, 0, newYMax, // The 10 is the max Y value (yend) in world coords
             0, self.plotsPBList[i].width, 0, self.plotsPBList[i].height,
             xscaleHeightList.Items[i], yscaleWidth, MainController.getRunTime, MainController.getStepSize);
 
@@ -961,9 +965,11 @@ procedure TMainForm.selectPlotSpecies(plotnumb: Integer);
   // Pass back to caller after closing popup:
   procedure AfterShowModal(AValue: TModalResult);
   var
-    i: Integer;
+    i: Integer; maxYVal: double; plotSp: string;
     addingPlot: Boolean;
   begin
+    maxYVal := DEFAULTSPECIESPLOTHT;  // default for plot Y max
+    plotSp := '';
     if self.plotSpecies = nil then
       self.plotSpecies := TList<TSpeciesList>.create;
     if self.plotSpecies.Count < plotnumb then
@@ -980,12 +986,24 @@ procedure TMainForm.selectPlotSpecies(plotnumb: Integer);
 
     for i := 0 to plotSpeciesForm.SpPlotCG.Items.Count - 1 do
       begin
+        plotSp := '';
         if plotSpeciesForm.SpPlotCG.checked[i] then
           begin
-            if addingPlot then
-              self.plotSpecies[plotnumb - 1].Add(plotSpeciesForm.SpPlotCG.Items[i])
+            plotSp := self.mainController.getModel.getS_names[i];
+            if self.mainController.getModel.getSBMLspecies(plotSp).isSetInitialAmount then
+            begin
+              if self.mainController.getModel.getSBMLspecies(plotSp).getInitialAmount > maxYVal then
+                maxYVal := self.mainController.getModel.getSBMLspecies(plotSp).getInitialAmount;
+            end
             else
-              self.plotSpecies[getPlotPBIndex(plotNumb)].Add(plotSpeciesForm.SpPlotCG.Items[i]);
+              if self.mainController.getModel.getSBMLspecies(plotSp).getInitialConcentration > maxYVal then
+                maxYVal := self.mainController.getModel.getSBMLspecies(plotSp).getInitialConcentration;
+
+            if addingPlot then
+              self.plotSpecies[plotnumb - 1].Add(plotSp)
+            else
+              self.plotSpecies[getPlotPBIndex(plotNumb)].Add(plotSp);
+            //  self.plotSpecies[getPlotPBIndex(plotNumb)].Add(plotSpeciesForm.SpPlotCG.Items[i]);
           end
         else
           if addingPlot then
@@ -993,7 +1011,9 @@ procedure TMainForm.selectPlotSpecies(plotnumb: Integer);
           else self.plotSpecies.Items[getPlotPBIndex(plotNumb)].Add('');
       end;
     if addingPlot then
-      self.addPlot(); // <-- Add dynamically created plot at this point
+      self.addPlot(maxYVal) // <-- Add dynamically created plot at this point
+    else
+      self.listOfPlots[getPlotPBIndex(plotNumb)].setY_ValsMax( maxYVal);
   end;
 
 // async called OnCreate for TSpeciesSWForm
@@ -1012,7 +1032,7 @@ begin
   plotSpeciesForm.ShowModal(@AfterShowModal);
 end;
 
-procedure TMainForm.addPlot(); // Add a plot
+procedure TMainForm.addPlot(yMax: double); // Add a plot
 
   procedure plotOnMouseDown(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; X, Y: Integer);
@@ -1047,7 +1067,7 @@ begin
     pixelStepList := TList<Integer>.create;
 
   self.listOfPlots.Add(TPlotGraph.create);
-
+  self.listOfPlots[self.numbPlots -1].setY_valsMax(yMax);
   self.plotsPBList.Add(TWebPaintBox.create(self.RightWPanel));
   self.plotsPBList[self.numbPlots - 1].parent := self.RightWPanel;
   self.plotsPBList[self.numbPlots - 1].OnPaint := plotsPBListPaint;
