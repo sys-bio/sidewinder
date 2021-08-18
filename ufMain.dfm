@@ -17,7 +17,7 @@ object mainForm: TmainForm
     BorderStyle = bsSingle
     ElementBodyClassName = 'card-body-10  bg-dark text-white'
     object rtLabel1: TWebLabel
-      Left = 1420
+      Left = 1533
       Top = 15
       Width = 62
       Height = 13
@@ -33,8 +33,8 @@ object mainForm: TmainForm
       WidthPercent = 100.000000000000000000
     end
     object stepSizeLabel1: TWebLabel
-      Left = 1420
-      Top = 34
+      Left = 1380
+      Top = 18
       Width = 71
       Height = 13
       Caption = 'Step size (ms):'
@@ -135,7 +135,7 @@ object mainForm: TmainForm
       OnClick = paramAddSliderBtnClick
     end
     object rtLengthEdit1: TWebEdit
-      Left = 1497
+      Left = 1601
       Top = 12
       Width = 33
       Height = 22
@@ -146,8 +146,8 @@ object mainForm: TmainForm
       WidthPercent = 100.000000000000000000
     end
     object stepSizeEdit1: TWebEdit
-      Left = 1497
-      Top = 32
+      Left = 1481
+      Top = 15
       Width = 33
       Height = 22
       ChildOrder = 5
@@ -1282,6 +1282,30 @@ object mainForm: TmainForm
           Font.Style = []
           HeightPercent = 100.000000000000000000
           ParentFont = False
+          WidthPercent = 100.000000000000000000
+        end
+        object ProductStoichLB: TWebListBox
+          Left = 18
+          Top = 135
+          Width = 121
+          Height = 62
+          ElementClassName = 'form-control'
+          ElementFont = efCSS
+          HeightPercent = 100.000000000000000000
+          ItemHeight = 13
+          ItemIndex = -1
+          WidthPercent = 100.000000000000000000
+        end
+        object ReactantStoichLB: TWebListBox
+          Left = 18
+          Top = 45
+          Width = 121
+          Height = 62
+          ElementClassName = 'form-control'
+          ElementFont = efCSS
+          HeightPercent = 100.000000000000000000
+          ItemHeight = 13
+          ItemIndex = -1
           WidthPercent = 100.000000000000000000
         end
       end

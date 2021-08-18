@@ -47,8 +47,8 @@ type
     zoomLbl: TWebLabel;
     zoomFactorLbl1: TWebLabel; // Displays simulation results
     SBMLmodelMemo: TWebMemo;
-    rtLengthEdit1: TWebEdit;
-    rtLabel1: TWebLabel;
+    rtLengthEdit1: TWebEdit;    // Not used for now.
+    rtLabel1: TWebLabel;        // Not used for now.
     stepSizeLabel1: TWebLabel;
     stepSizeEdit1: TWebEdit;
     ZoomCntrlPanel: TWebPanel;
@@ -103,6 +103,8 @@ type
     RxnStoichLabel: TWebLabel;
     StoicReactantsLabel: TWebLabel;
     StoichProductsLabel: TWebLabel;
+    ReactantStoichLB: TWebListBox;
+    ProductStoichLB: TWebListBox;
 
     procedure btnUniUniClick(Sender: TObject);
     procedure btnBiBiClick(Sender: TObject);
@@ -192,7 +194,8 @@ type
     procedure adjustRightTabWPanels(); // Adjust all right panels
                   // (node edit, rxn edit, simulation) to same width, height
     procedure updateRxnRatePanel(); // Refresh with current rxn info.
-    procedure updateRxnParamPanel();
+    procedure updateRxnParamPanel();//        "
+    procedure updateRxnStoichPanel(); //      "
     procedure setRightPanels(); // set correct panel to be visible
     procedure setUpSimulationUI(); // Set up sim related buttons, plots, etc
 
@@ -248,8 +251,8 @@ procedure TMainForm.addPlotButtonClick(Sender: TObject);
 begin
   // Make runtime, stepsize, simulation buttons visible
   self.numbPlots := self.numbPlots + 1;
-  rtLabel1.visible := true;
-  rtLengthEdit1.visible := true;
+ // rtLabel1.visible := true;  // Do not let user modify for now
+ // rtLengthEdit1.visible := true; // Do not let user modify for now
   stepSizeLabel1.visible := true;
   stepSizeEdit1.visible := true;
   self.selectPlotSpecies(self.numbPlots);
@@ -386,6 +389,7 @@ end;
 
 procedure TMainForm.editNodeIdExit(Sender: TObject);
 begin
+console.log('editNodeIdExit ');
   networkController.setNodeId(editNodeId.Text);
   networkPB1.Invalidate;
 end;
@@ -526,6 +530,7 @@ begin
 console.log('TMainForm.RxnParamComboBoxClick');
   i := self.RxnParamComboBox.ItemIndex;
   self.rxnParamEdit.text := floattostr(networkController.network.reactions[networkController.selectedEdge].state.rateParams[i].getValue);
+  self.RxnParamComboBox.invalidate;
 end;
 
 procedure TMainForm.RxnParamComboBoxEnter(Sender: TObject);
@@ -610,14 +615,14 @@ begin
   else if networkController.selectedEdge <>-1 then
     begin
       //console.log(' A reaction has been selected');
-      self.updateRxnParamPanel;
       self.WebTabSet1.ItemIndex := REACTION_TAB;
       self.RightWPanel.visible := false;
       self.RNodeEditWPanel.visible := false;
       self.RRxnEditWPanel.visible := true;
+      self.updateRxnParamPanel;
       self.updateRxnRatePanel;
-      self.RxnRatePanel.invalidate;
-
+      self.updateRxnStoichPanel;
+      self.RRxnEditWPanel.invalidate;
     end;
 
 end;
@@ -669,12 +674,14 @@ end;
 
 procedure TMainForm.editNodeConcChange(Sender: TObject);   // Do not use.
 begin
+
  // networkController.setNodeConc(editNodeConc.Text);
  // networkPB1.Invalidate;
 end;
 
 procedure TMainForm.editNodeConcExit(Sender: TObject);
 begin
+//console.log('editNodeConcExit(');
   networkController.setNodeConc(editNodeConc.Text);
   networkPB1.Invalidate;
 end;
@@ -1399,16 +1406,43 @@ begin
   self.RxnParamComboBox.clear;
   for i := 0 to networkController.network.reactions[networkController.selectedEdge].state.rateParams.count -1 do
   begin
-
-      paramTStr := networkController.network.reactions[networkController.selectedEdge].state.rateParams.Items[i].getId;
-      if paramTStr <> '' then
-      begin
-        self.RxnParamComboBox.AddItem( paramTStr,nil);
-      end;
-
+    paramTStr := networkController.network.reactions[networkController.selectedEdge].state.rateParams.Items[i].getId;
+    self.RxnParamComboBox.AddItem(networkController.network.reactions[networkController.selectedEdge].state.rateParams.Items[i].getId,nil);
   end;
   self.RxnParamComboBox.ItemIndex := 0;
   self.RxnParamComboBox.invalidate;
+end;
+
+procedure TMainForm.updateRxnStoichPanel();
+var i: integer;
+   stoichCoeff: string;
+begin
+  self.ReactantStoichLB.clear;
+  self.ProductStoichLB.clear;
+
+  for i := 0 to Length(networkController.network.reactions[networkController.selectedEdge].state.srcId)-1 do
+  begin
+    stoichCoeff := '';
+    if networkController.network.reactions[networkController.selectedEdge].state.srcId[i] <> '' then
+    begin
+      stoichCoeff := networkController.network.reactions[networkController.selectedEdge].state.srcStoich[i].toString();
+      ReactantStoichLB.Items.Add(networkController.network.reactions[networkController.selectedEdge].state.srcId[i]
+                                 +' ('+ stoichCoeff + ')');
+    end;
+
+  end;
+
+  for i := 0 to Length(networkController.network.reactions[networkController.selectedEdge].state.destId)-1 do
+  begin
+    stoichCoeff := '';
+    if networkController.network.reactions[networkController.selectedEdge].state.destId[i] <> '' then
+    begin
+      stoichCoeff := networkController.network.reactions[networkController.selectedEdge].state.destStoich[i].toString();
+      ProductStoichLB.Items.Add(networkController.network.reactions[networkController.selectedEdge].state.destId[i]
+                                 +' ('+ stoichCoeff + ')');
+    end;
+  end;
+
 end;
 
 procedure TMainForm.setUpSimulationUI();
@@ -1420,37 +1454,31 @@ begin
   begin
     if (self.plotsPBList.Count) > 0 then
     begin
-    //  for i := 0 to self.plotsPBList.Count-1 do
       for i := self.plotsPBList.Count-1 downto 0 do
       begin
         self.DeletePlot(i);
       end;
-
       self.numbPlots := 0;
-      self.WebTabSet1.ItemIndex := SIMULATION_TAB;
-      self.setRightPanels;
-      self.RightWPanel.invalidate;
     end;
+
   end;
-
-
   // delete existing param sliders.
   if self.sliderPanelAr <> nil then
   begin
     if length(self.sliderPanelAr) >0 then
     begin
       for i := length(self.sliderPanelAr) -1 downto 0 do
-     // for i := 0 to length(self.sliderPanelAr) -1 do
       begin
         self.DeleteSlider(i);
       end;
       setLength(self.sliderPanelAr, 0);
     end;
   end;
+  self.WebTabSet1.ItemIndex := SIMULATION_TAB;
+  self.setRightPanels;
+  self.RightWPanel.invalidate;
 
   mainController.resetCurrTime;
-  //mainController.stepSize := 0.1; // 100 msec
- // mainController.runTime := 500; // sec
   mainController.createModel;
   mainController.createSimulation;
 
