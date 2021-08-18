@@ -183,12 +183,6 @@ begin
   network.loadModel(modelStr); // JSON format.
 end;
 
-{procedure TController.networkUpdate(); // Notify listeners of change.
-begin
-    if Assigned(FNetworkUpdate) then
-      FNetworkUpdate(self.network);
-end;
-  }
 procedure TController.setSelectStatus;
 begin
   mStatus := sSelect;
