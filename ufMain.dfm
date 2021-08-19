@@ -826,7 +826,7 @@ object mainForm: TmainForm
         OnClick = btnAddNodeClick
       end
     end
-    object RightWPanel: TWebPanel
+    object RSimWPanel: TWebPanel
       Left = 1274
       Top = 0
       Width = 526
@@ -1233,8 +1233,8 @@ object mainForm: TmainForm
         end
       end
       object RxnSpStoichPanel: TWebPanel
-        Left = 5
-        Top = 180
+        Left = 6
+        Top = 175
         Width = 200
         Height = 200
         ElementClassName = 'card'

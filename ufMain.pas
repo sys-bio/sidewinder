@@ -75,7 +75,7 @@ type
     btnNodeOutlineColor: TWebColorPicker;
     editNodeId: TWebEdit;
     btnNodeFillColor: TWebColorPicker;
-    RightWPanel: TWebPanel;   // Holds simulation tab.
+    RSimWPanel: TWebPanel;   // Holds simulation tab.
     simResultsMemo: TWebMemo;
     plotEditLB: TWebListBox;
     SliderEditLB: TWebListBox;
@@ -606,7 +606,7 @@ begin
       pnlNodePanel.visible := true;
       self.WebTabSet1.ItemIndex := NODE_TAB;
       self.RRxnEditWPanel.visible := false;
-      self.RightWPanel.visible := false;
+      self.RSimWPanel.visible := false;
       self.RNodeEditWPanel.visible := true;
       self.RNodeEditWPanel.invalidate;
       self.WebTabSet1Click(nil); // View node edit tab
@@ -615,7 +615,7 @@ begin
     begin
       //console.log(' A reaction has been selected');
       self.WebTabSet1.ItemIndex := REACTION_TAB;
-      self.RightWPanel.visible := false;
+      self.RSimWPanel.visible := false;
       self.RNodeEditWPanel.visible := false;
       self.RRxnEditWPanel.visible := true;
       self.updateRxnParamPanel;
@@ -756,8 +756,8 @@ begin
   LeftWPanel.color := clWhite;
   self.WebTabSet1.ItemIndex := SIMULATION_TAB;
   self.RNodeEditWPanel.visible := false;
-  self.RNodeEditWPanel.ElementBodyClassName := RightWPanel.ElementBodyClassName;
-  self.RRxnEditWPanel.ElementBodyClassName := RightWPanel.ElementBodyClassName;
+  self.RNodeEditWPanel.ElementBodyClassName := RSimWPanel.ElementBodyClassName;
+  self.RRxnEditWPanel.ElementBodyClassName := RSimWPanel.ElementBodyClassName;
   self.RRxnEditWPanel.visible := false;
   self.adjustRightTabWPanels;
 
@@ -797,20 +797,20 @@ procedure TMainForm.setRightPanels();
 begin
  { if self.WebTabSet1.ItemIndex = NODE_TAB then
   begin
-    self.RightWPanel.visible := false;
+    self.RSimWPanel.visible := false;
     self.RRxnEditWPanel.visible := false;
     self.RNodeEditWPanel.visible := true;
-    self.RightWPanel.invalidate;
+    self.RSimWPanel.invalidate;
     self.RRxnEditWPanel.invalidate;
     self.RNodeEditWPanel.invalidate;
   end
   else if self.WebTabSet1.ItemIndex = REACTION_TAB then
   begin
     self.updateRxnParamPanel;
-    self.RightWPanel.visible := false;
+    self.RSimWPanel.visible := false;
     self.RRxnEditWPanel.visible := true;
     self.RNodeEditWPanel.visible := false;
-    self.RightWPanel.invalidate;
+    self.RSimWPanel.invalidate;
     self.RNodeEditWPanel.invalidate;
     self.RRxnEditWPanel.invalidate;
 
@@ -819,12 +819,12 @@ begin
   else }
    if self.WebTabSet1.ItemIndex = SIMULATION_TAB then
   begin
-    self.RightWPanel.visible := true;
+    self.RSimWPanel.visible := true;
     self.RRxnEditWPanel.visible := false;
     self.RNodeEditWPanel.visible := false;
     self.RNodeEditWPanel.invalidate;
     self.RRxnEditWPanel.invalidate;
-    self.RightWPanel.invalidate;
+    self.RSimWPanel.invalidate;
   end;
 end;
 
@@ -1071,8 +1071,8 @@ begin
 
   self.listOfPlots.Add(TPlotGraph.create);
   self.listOfPlots[self.numbPlots -1].setY_valsMax(yMax);
-  self.plotsPBList.Add(TWebPaintBox.create(self.RightWPanel));
-  self.plotsPBList[self.numbPlots - 1].parent := self.RightWPanel;
+  self.plotsPBList.Add(TWebPaintBox.create(self.RSimWPanel));
+  self.plotsPBList[self.numbPlots - 1].parent := self.RSimWPanel;
   self.plotsPBList[self.numbPlots - 1].OnPaint := plotsPBListPaint;
   self.plotsPBList[self.numbPlots - 1].OnMouseDown := plotOnMouseDown;
   self.plotsPBList[self.numbPlots - 1].Tag := plotPositionToAdd;
@@ -1080,7 +1080,7 @@ begin
 
 //  console.log('Adding plot, tag: ',self.plotsPBList[self.numbPlots - 1].Tag);
   configPbPlot(plotPositionToAdd, self.numbPlots,
-    trunc(self.RightWPanel.width * PLOT_WIDTH_PERCENTAGE), self.RightWPanel.Height, self.plotsPBList);
+    trunc(self.RSimWPanel.width * PLOT_WIDTH_PERCENTAGE), self.RSimWPanel.Height, self.plotsPBList);
 
   self.xscaleHeightList.Add( round(0.15 * self.plotsPBList[self.numbPlots - 1].Height) );
   // make %15 of total height
@@ -1142,7 +1142,7 @@ begin
           self.numbPlots := self.numbPlots - 1;
         end;
       finally
-        self.RightWPanel.Invalidate;
+        self.RSimWPanel.Invalidate;
       end;
 
     end;
@@ -1221,7 +1221,7 @@ begin
   delete(self.sliderPTBarAr, (sn), 1);
   delete(self.sliderPHighAr, (sn), 1);
   delete(self.sliderPLowAr, (sn), 1);
-  self.RightWPanel.Invalidate;
+  self.RSimWPanel.Invalidate;
 end;
 
 
@@ -1294,8 +1294,8 @@ var
   i, sliderTBarWidth, sliderPanelLeft, sliderPanelWidth: Integer;
 begin
   // Left most position of the panel that holds the slider
-  sliderPanelWidth := trunc((1 - PLOT_WIDTH_PERCENTAGE) * RightWPanel.width);
-  sliderPanelLeft := (RightWPanel.width - sliderPanelWidth) - 6;
+  sliderPanelWidth := trunc((1 - PLOT_WIDTH_PERCENTAGE) * RSimWPanel.width);
+  sliderPanelLeft := (RSimWPanel.width - sliderPanelWidth) - 6;
   // Width of the slider inside the panel
 
   i := length(self.sliderPanelAr);
@@ -1308,8 +1308,8 @@ begin
   SetLength(self.sliderPLLabelAr, i + 1);
   SetLength(self.sliderPTBLabelAr, i + 1);
 
-  self.sliderPanelAr[i] := TWebPanel.create(self.RightWPanel);
-  self.sliderPanelAr[i].parent := self.RightWPanel;
+  self.sliderPanelAr[i] := TWebPanel.create(self.RSimWPanel);
+  self.sliderPanelAr[i].parent := self.RSimWPanel;
   self.sliderPanelAr[i].OnMouseDown := SliderOnMouseDown;
 
   configPSliderPanel(i, sliderPanelLeft, sliderPanelWidth, SLIDERPHEIGHT,
@@ -1371,43 +1371,43 @@ procedure TMainForm.adjustRightTabWPanels(); // Adjust all right panels to same 
 begin
   //if self.WebTabSet1.ItemIndex = SIMULATION_TAB then
     //begin
-      self.RNodeEditWPanel.Width := self.RightWPanel.Width;
-      self.RNodeEditWPanel.Top := self.RightWPanel.Top;
-      self.RNodeEditWPanel.Height := self.RightWPanel.Height;
-      self.RNodeEditWPanel.Left := self.RightWPanel.Left;
-      self.RRxnEditWPanel.Width := self.RightWPanel.Width;
-      self.RRxnEditWPanel.Top := self.RightWPanel.Top;
-      self.RRxnEditWPanel.Height := self.RightWPanel.Height;
-      self.RRxnEditWPanel.Left := self.RightWPanel.Left;
-      self.RightWPanel.invalidate;
+      self.RNodeEditWPanel.Width := self.RSimWPanel.Width;
+      self.RNodeEditWPanel.Top := self.RSimWPanel.Top;
+      self.RNodeEditWPanel.Height := self.RSimWPanel.Height;
+      self.RNodeEditWPanel.Left := self.RSimWPanel.Left;
+      self.RRxnEditWPanel.Width := self.RSimWPanel.Width;
+      self.RRxnEditWPanel.Top := self.RSimWPanel.Top;
+      self.RRxnEditWPanel.Height := self.RSimWPanel.Height;
+      self.RRxnEditWPanel.Left := self.RSimWPanel.Left;
+      self.RSimWPanel.invalidate;
   {  end
   else if self.WebTabSet1.ItemIndex = NODE_TAB then
     begin
-      self.RightWPanel.Width := self.RNodeEditWPanel.Width;
-      self.RightWPanel.Top := self.RNodeEditWPanel.Top;
-      self.RightWPanel.Height := self.RNodeEditWPanel.Height;
-      self.RightWPanel.Left := self.RNodeEditWPanel.Left;
-      self.RightWPanel.invalidate;
-      self.RRxnEditWPanel.Width := self.RightWPanel.Width;
-      self.RRxnEditWPanel.Top := self.RightWPanel.Top;
-      self.RRxnEditWPanel.Height := self.RightWPanel.Height;
-      self.RRxnEditWPanel.Left := self.RightWPanel.Left;
+      self.RSimWPanel.Width := self.RNodeEditWPanel.Width;
+      self.RSimWPanel.Top := self.RNodeEditWPanel.Top;
+      self.RSimWPanel.Height := self.RNodeEditWPanel.Height;
+      self.RSimWPanel.Left := self.RNodeEditWPanel.Left;
+      self.RSimWPanel.invalidate;
+      self.RRxnEditWPanel.Width := self.RSimWPanel.Width;
+      self.RRxnEditWPanel.Top := self.RSimWPanel.Top;
+      self.RRxnEditWPanel.Height := self.RSimWPanel.Height;
+      self.RRxnEditWPanel.Left := self.RSimWPanel.Left;
       self.RNodeEditWPanel.invalidate;
     end
     else if self.WebTabSet1.ItemIndex = REACTION_TAB then
         begin
-          self.RightWPanel.Width := self.RRxnEditWPanel.Width;
-          self.RightWPanel.Top := self.RRxnEditWPanel.Top;
-          self.RightWPanel.Height := self.RRxnEditWPanel.Height;
-          self.RightWPanel.Left := self.RRxnEditWPanel.Left;
-          self.RNodeEditWPanel.Width := self.RightWPanel.Width;
-          self.RNodeEditWPanel.Top := self.RightWPanel.Top;
-          self.RNodeEditWPanel.Height := self.RightWPanel.Height;
-          self.RNodeEditWPanel.Left := self.RightWPanel.Left;
+          self.RSimWPanel.Width := self.RRxnEditWPanel.Width;
+          self.RSimWPanel.Top := self.RRxnEditWPanel.Top;
+          self.RSimWPanel.Height := self.RRxnEditWPanel.Height;
+          self.RSimWPanel.Left := self.RRxnEditWPanel.Left;
+          self.RNodeEditWPanel.Width := self.RSimWPanel.Width;
+          self.RNodeEditWPanel.Top := self.RSimWPanel.Top;
+          self.RNodeEditWPanel.Height := self.RSimWPanel.Height;
+          self.RNodeEditWPanel.Left := self.RSimWPanel.Left;
           self.RRxnEditWPanel.invalidate;
         end;  }
 
-  self.RightWPanel.invalidate;
+  self.RSimWPanel.invalidate;
   self.RNodeEditWPanel.invalidate;
   self.RRxnEditWPanel.invalidate;
 end;
@@ -1417,10 +1417,10 @@ begin
    self.rateLawEqLabel.Caption := networkController.network.reactions[networkController.selectedEdge].state.rateLaw;
    self.RxnRatePanel.Width := self.rateLawEqLabel.Width + self.rateLawLabel.Width + 60;
    self.RxnRatePanel.invalidate;
-   self.RightWPanel.visible := false;
+   self.RSimWPanel.visible := false;
    self.RRxnEditWPanel.visible := true;
    self.RNodeEditWPanel.visible := false;
-   self.RightWPanel.invalidate;
+   self.RSimWPanel.invalidate;
    self.RNodeEditWPanel.invalidate;
    self.RRxnEditWPanel.invalidate;
 end;
@@ -1503,7 +1503,7 @@ begin
   end;
   self.WebTabSet1.ItemIndex := SIMULATION_TAB;
   self.setRightPanels;
-  self.RightWPanel.invalidate;
+  self.RSimWPanel.invalidate;
 
   mainController.resetCurrTime;
   mainController.createModel;
