@@ -226,6 +226,7 @@ end;
 
 procedure TReactionState.saveAsJSON (reactionObject : TJSONObject);
 var speciesArray, reactantArray : TJSONArray;
+    paramArray: TJSONArray;
     i : integer;
     jso : TJSONObject;
 begin
@@ -239,14 +240,26 @@ begin
 
   jso := TJsonObject.Create();
   for i := 0 to nReactants - 1 do
-      jso.AddPair(TJsonPair.Create(srcPtr[i].state.id, TJSONValue.Create (1)));
+      jso.AddPair(TJsonPair.Create(srcPtr[i].state.id, TJSONValue.Create (srcStoich[i])));
   speciesArray.Add(jso);
 
   jso := TJsonObject.Create();
   for i := 0 to nProducts - 1 do
-      jso.AddPair(TJsonPair.Create(destPtr[i].state.id, TJSONValue.Create (1)));
+      jso.AddPair(TJsonPair.Create(destPtr[i].state.id, TJSONValue.Create (destStoich[i])));
   speciesArray.Add(jso);
 
+  // **
+  paramArray := TJSONArray.Create;
+  reactionObject.AddPair('parameters', paramArray);
+  jso := TJsonObject.Create();
+  for i := 0 to rateParams.count -1 do
+    begin
+      if rateParams[i].isSetIdAttribute then
+        jso.AddPair(TJsonPair.create(rateParams[i].getId, TJSONValue.create(rateParams[i].getValue)));
+    end;
+  paramArray.Add(jso);
+
+  reactionObject.AddPair ('rateLaw', rateLaw);
   reactionObject.AddPair ('fillColor', saveColorToJSON (fillColor));
   reactionObject.AddPair ('thickness', TJSONNumber.Create (thickness));
 end;
@@ -256,8 +269,11 @@ procedure TReactionState.loadFromJSON (obj : TJSONObject);
 var speciesObject : TJSONObject;
     speciesArray : TJSONArray;
     reactantObject : TJSONObject;
+    paramArray : TJSONArray;
+    paramObject : TJSONObject;
+    newParam : TSBMLparameter;
     pa : TJSONPair;
-    stoich : integer;
+   // stoich : integer;
     speciesName : string;
     i : integer;
 begin
@@ -271,20 +287,39 @@ begin
           begin
           pa := reactantObject.Get(i);
           srcId[i] := pa.JsonString.value;
-          stoich := trunc (strtofloat (pa.JsonValue.Value));
+          srcStoich[i] := trunc (strtofloat (pa.JsonValue.Value));
           end;
 
       reactantObject := speciesArray.Items[1] as TJSONObject;
       nProducts := reactantObject.count;
+      rateParams := TList<TSBMLparameter>.create;
       for i := 0 to nProducts - 1 do
           begin
           pa := reactantObject.Get(i);
           destId[i] := pa.JsonString.value;
-          stoich := -trunc (strtofloat (pa.JsonValue.Value));
+          destStoich[i] := trunc (strtofloat (pa.JsonValue.Value));  // stoich not negative
           end;
       end
    else
       raise Exception.Create ('No species in reaction');
+
+   if obj.Get('parameters')<> nil then
+     begin
+       paramArray := obj.Get('parameters').JsonValue as TJSONArray;
+       paramObject := paramArray.Items[0] as TJSONObject;
+       rateParams := TList<TSBMLparameter>.create;
+       for i := 0 to paramObject.count -1 do
+         begin
+         pa := paramObject.Get(i);
+         newParam := TSBMLparameter.create(pa.JsonString.value );
+         newParam.setValue( strtofloat( pa.JsonValue.value));
+         rateParams.Add(newParam);
+         end;
+     end
+   else
+     raise Exception.Create ('No parameters in reaction');
+
+   rateLaw := obj.GetJSONValue('rateLaw');
 
    fillColor := loadColorFromJSON (obj, 'fillColor');
    thickness := strtoint (obj.GetJSONValue('thickness'));
