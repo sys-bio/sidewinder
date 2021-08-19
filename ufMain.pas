@@ -47,7 +47,7 @@ type
     zoomLbl: TWebLabel;
     zoomFactorLbl1: TWebLabel; // Displays simulation results
     SBMLmodelMemo: TWebMemo;
-    rtLengthEdit1: TWebEdit;    // Not used for now.
+    rtLengthEdit1: TWebEdit;    // Run time length, Not used for now.
     rtLabel1: TWebLabel;        // Not used for now.
     stepSizeLabel1: TWebLabel;
     stepSizeEdit1: TWebEdit;
@@ -89,7 +89,7 @@ type
     SetUpSimButton: TWebButton;
     nodeConcLabel: TWebLabel;
     editNodeConc: TWebEdit;
-    WebTabSet1: TWebTabSet;
+    RPanelTabSet: TWebTabSet;
     RNodeEditWPanel: TWebPanel;
     RRxnEditWPanel: TWebPanel;
     RxnRatePanel: TWebPanel;
@@ -162,7 +162,7 @@ type
     procedure SaveSBMLButtonClick(Sender: TObject);
     procedure SetUpSimButtonClick(Sender: TObject);
     procedure editNodeConcExit(Sender: TObject);
-    procedure WebTabSet1Click(Sender: TObject);
+    procedure RPanelTabSetClick(Sender: TObject);
     procedure RxnParamComboBoxChange(Sender: TObject);
     procedure RxnParamEditChange(Sender: TObject);
     procedure RxnParamComboBoxEnter(Sender: TObject);
@@ -388,7 +388,7 @@ end;
 
 procedure TMainForm.editNodeIdExit(Sender: TObject);
 begin
-console.log('editNodeIdExit ');
+//console.log('editNodeIdExit ');
   networkController.setNodeId(editNodeId.Text);
   networkPB1.Invalidate;
 end;
@@ -467,6 +467,8 @@ begin
              pixelStepList[i] := 1;
         end;
       self.InitSimResultsTable();  // Set table of Sim results.
+      self.RPanelTabSet.ItemIndex := SIMULATION_TAB;
+      self.RPanelTabSetClick(nil);
       MainController.SetTimerEnabled(true); // Turn on web timer (Start simulation)
     end
   else
@@ -483,12 +485,11 @@ procedure TMainForm.PingSBMLLoaded(newModel:TModel);
 var
   i: Integer;
 begin
-  console.log(' TMainForm.PingSBMLLoaded');
+ // console.log(' TMainForm.PingSBMLLoaded');
   paramAddSliderBtn.visible := true;
   onLineSimButton.visible := true;
   addPlotButton.visible := true;
-  // 1. Update current slider?
-  //  2. updatePlots() <-- TODO: Check if plot species are no longer in model.
+  
 end;
 
 procedure TMainForm.plotEditLBClick(Sender: TObject);
@@ -518,7 +519,7 @@ end;
 procedure TMainForm.RxnParamComboBoxChange(Sender: TObject);  // NOT needed.
 var i: integer;
 begin
- console.log('TMainForm.RxnParamComboBoxChange');
+ //console.log('TMainForm.RxnParamComboBoxChange');
  //i := self.RxnParamComboBox.ItemIndex;
  //self.rxnParamEdit.text := floattostr(networkController.network.reactions[networkController.selectedEdge].state.rateParams[i].getValue);
 end;
@@ -526,7 +527,7 @@ end;
 procedure TMainForm.RxnParamComboBoxClick(Sender: TObject);
 var i: integer;
 begin
-console.log('TMainForm.RxnParamComboBoxClick');
+//console.log('TMainForm.RxnParamComboBoxClick');
   i := self.RxnParamComboBox.ItemIndex;
   self.rxnParamEdit.text := floattostr(networkController.network.reactions[networkController.selectedEdge].state.rateParams[i].getValue);
   self.RxnParamComboBox.invalidate;
@@ -535,7 +536,7 @@ end;
 procedure TMainForm.RxnParamComboBoxEnter(Sender: TObject);
 var i: integer;
 begin
-console.log('TMainForm.RxnParamComboBoxEnter');
+//console.log('TMainForm.RxnParamComboBoxEnter');
  // i := self.RxnParamComboBox.ItemIndex;
  // self.rxnParamEdit.text := floattostr(networkController.network.reactions[networkController.selectedEdge].state.rateParams[i].getValue);
 end;
@@ -543,7 +544,7 @@ end;
 procedure TMainForm.RxnParamComboBoxExit(Sender: TObject);
 var i: integer;
 begin
-  console.log('TMainForm.RxnParamComboBoxExit');
+ // console.log('TMainForm.RxnParamComboBoxExit');
  // self.RxnParamComboBox.invalidate;
  // i := self.RxnParamComboBox.ItemIndex;
  // self.rxnParamEdit.text := floattostr(networkController.network.reactions[networkController.selectedEdge].state.rateParams[i].getValue);
@@ -604,17 +605,17 @@ begin
       editNodeConc.Text := networkController.network.nodes
         [networkCOntroller.selectedNode].state.conc.ToString;
       pnlNodePanel.visible := true;
-      self.WebTabSet1.ItemIndex := NODE_TAB;
+      self.RPanelTabSet.ItemIndex := NODE_TAB;
       self.RRxnEditWPanel.visible := false;
       self.RSimWPanel.visible := false;
       self.RNodeEditWPanel.visible := true;
       self.RNodeEditWPanel.invalidate;
-      self.WebTabSet1Click(nil); // View node edit tab
+      self.RPanelTabSetClick(nil); // View node edit tab
     end
   else if networkController.selectedEdge <>-1 then
     begin
       //console.log(' A reaction has been selected');
-      self.WebTabSet1.ItemIndex := REACTION_TAB;
+      self.RPanelTabSet.ItemIndex := REACTION_TAB;
       self.RSimWPanel.visible := false;
       self.RNodeEditWPanel.visible := false;
       self.RRxnEditWPanel.visible := true;
@@ -622,6 +623,7 @@ begin
       self.updateRxnRatePanel;
       self.updateRxnStoichPanel;
       self.RRxnEditWPanel.invalidate;
+      self.RPanelTabSetClick(nil); // View Rxn edit tab
     end;
 
 end;
@@ -754,7 +756,7 @@ begin
   self.networkCanvas.bitmap.Height := networkPB1.Height;
   self.networkCanvas.bitmap.width := networkPB1.width;
   LeftWPanel.color := clWhite;
-  self.WebTabSet1.ItemIndex := SIMULATION_TAB;
+  self.RPanelTabSet.ItemIndex := SIMULATION_TAB;
   self.RNodeEditWPanel.visible := false;
   self.RNodeEditWPanel.ElementBodyClassName := RSimWPanel.ElementBodyClassName;
   self.RRxnEditWPanel.ElementBodyClassName := RSimWPanel.ElementBodyClassName;
@@ -787,15 +789,15 @@ begin
 end;
 
 
-procedure TMainForm.WebTabSet1Click(Sender: TObject);
+procedure TMainForm.RPanelTabSetClick(Sender: TObject);
 begin
-console.log('TMainForm.WebTabSet1Click: ',inttostr(self.WebTabSet1.ItemIndex));
+//console.log('TMainForm.WebTabSet1Click: ',inttostr(self.RPanelTabSet.ItemIndex));
  self.setRightPanels;
 end;
 
 procedure TMainForm.setRightPanels();
 begin
- { if self.WebTabSet1.ItemIndex = NODE_TAB then
+ { if self.RPanelTabSet.ItemIndex = NODE_TAB then
   begin
     self.RSimWPanel.visible := false;
     self.RRxnEditWPanel.visible := false;
@@ -804,7 +806,7 @@ begin
     self.RRxnEditWPanel.invalidate;
     self.RNodeEditWPanel.invalidate;
   end
-  else if self.WebTabSet1.ItemIndex = REACTION_TAB then
+  else if self.RPanelTabSet.ItemIndex = REACTION_TAB then
   begin
     self.updateRxnParamPanel;
     self.RSimWPanel.visible := false;
@@ -817,7 +819,7 @@ begin
     self.updateRxnRatePanel;
   end
   else }
-   if self.WebTabSet1.ItemIndex = SIMULATION_TAB then
+   if self.RPanelTabSet.ItemIndex = SIMULATION_TAB then
   begin
     self.RSimWPanel.visible := true;
     self.RRxnEditWPanel.visible := false;
@@ -872,7 +874,7 @@ procedure TMainForm.splitterMoved(Sender: TObject);
 begin
   networkCanvas.bitmap.Height := networkPB1.Height;
   networkCanvas.bitmap.width := networkPB1.width;
-  console.log('splitterMoved....');
+ // console.log('splitterMoved....');
   self.adjustRightTabWPanels; //TODO: Need to adjust right panels based on tab focus
   networkPB1.Invalidate;
 end;
@@ -1076,7 +1078,7 @@ begin
   self.plotsPBList[self.numbPlots - 1].OnPaint := plotsPBListPaint;
   self.plotsPBList[self.numbPlots - 1].OnMouseDown := plotOnMouseDown;
   self.plotsPBList[self.numbPlots - 1].Tag := plotPositionToAdd;
-  console.log('Position to add plot: ',plotPositionToAdd);
+ // console.log('Position to add plot: ',plotPositionToAdd);
 
 //  console.log('Adding plot, tag: ',self.plotsPBList[self.numbPlots - 1].Tag);
   configPbPlot(plotPositionToAdd, self.numbPlots,
@@ -1244,8 +1246,8 @@ var
       end
     else
       addingSlider := false;
-    console.log('Param index picked (chosenParam): ',
-      sliderParamForm.chosenParam);
+  //  console.log('Param index picked (chosenParam): ',
+  //    sliderParamForm.chosenParam);
     self.sliderParamAr[sNumb] := sliderParamForm.chosenParam;
     if addingSlider then
       self.addParamSlider() // <-- Add dynamically created slider
@@ -1369,7 +1371,7 @@ end;
 
 procedure TMainForm.adjustRightTabWPanels(); // Adjust all right panels to same width, height
 begin
-  //if self.WebTabSet1.ItemIndex = SIMULATION_TAB then
+  //if self.RPanelTabSet.ItemIndex = SIMULATION_TAB then
     //begin
       self.RNodeEditWPanel.Width := self.RSimWPanel.Width;
       self.RNodeEditWPanel.Top := self.RSimWPanel.Top;
@@ -1381,7 +1383,7 @@ begin
       self.RRxnEditWPanel.Left := self.RSimWPanel.Left;
       self.RSimWPanel.invalidate;
   {  end
-  else if self.WebTabSet1.ItemIndex = NODE_TAB then
+  else if self.RPanelTabSet.ItemIndex = NODE_TAB then
     begin
       self.RSimWPanel.Width := self.RNodeEditWPanel.Width;
       self.RSimWPanel.Top := self.RNodeEditWPanel.Top;
@@ -1394,7 +1396,7 @@ begin
       self.RRxnEditWPanel.Left := self.RSimWPanel.Left;
       self.RNodeEditWPanel.invalidate;
     end
-    else if self.WebTabSet1.ItemIndex = REACTION_TAB then
+    else if self.RPanelTabSet.ItemIndex = REACTION_TAB then
         begin
           self.RSimWPanel.Width := self.RRxnEditWPanel.Width;
           self.RSimWPanel.Top := self.RRxnEditWPanel.Top;
@@ -1501,12 +1503,15 @@ begin
       setLength(self.sliderPanelAr, 0);
     end;
   end;
-  self.WebTabSet1.ItemIndex := SIMULATION_TAB;
+  self.RPanelTabSet.ItemIndex := SIMULATION_TAB;
   self.setRightPanels;
   self.RSimWPanel.invalidate;
-
   mainController.resetCurrTime;
-  mainController.createModel;
+
+  if mainController.getModel = nil then
+    mainController.createModel
+  else if mainController.hasNetworkChanged then // Rebuild model
+    mainController.createModel;
   mainController.createSimulation;
 
 end;

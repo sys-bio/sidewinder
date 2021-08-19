@@ -233,7 +233,7 @@ object mainForm: TmainForm
       WidthPercent = 100.000000000000000000
       OnClick = SetUpSimButtonClick
     end
-    object WebTabSet1: TWebTabSet
+    object RPanelTabSet: TWebTabSet
       Left = 811
       Top = 10
       Width = 78
@@ -247,7 +247,7 @@ object mainForm: TmainForm
       Items.Strings = (
         'Simulator page')
       TabOrder = 12
-      OnClick = WebTabSet1Click
+      OnClick = RPanelTabSetClick
     end
   end
   object bottomWPanel: TWebPanel
