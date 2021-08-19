@@ -19,7 +19,6 @@ type
 
        public
          procedure draw (origin : TPointF; scalingFactor : double; reaction : TReaction);
-
          constructor Create (canvas : TCanvas);
    end;
 
