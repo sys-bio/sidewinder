@@ -6,3 +6,7 @@ sidewinder.dproj.local
 sidewinder.identcache
 
 
+SidewinderGroup.groupproj.local
+*.py
+math/lsoda/Sidewinder.Test.LSODA.dproj.local
+math/lsoda/Sidewinder.Test.LSODA.identcache
