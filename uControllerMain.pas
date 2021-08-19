@@ -52,7 +52,8 @@ type
     procedure SetOnline(bOnline: Boolean);
     procedure SetModelLoaded(bModelLoaded: boolean);
     function IsModelLoaded(): Boolean;
-    function IsNetworkUpdated(): Boolean;  // true: network changed, need to update model.
+   // function IsNetworkUpdated(): Boolean;  // true: network changed, need to update model.
+    function hasNetworkChanged(): Boolean;  // true: network changed, need to update model.
     procedure SetTimerEnabled(bTimer: Boolean);
     procedure SetTimerInterval(nInterval: Integer);
     procedure loadSBML(sbmlStr: String);
@@ -97,7 +98,7 @@ end;
 // Grab SBML model information when notified by model of change:
 procedure TControllerMain.SBMLLoaded();
 begin
-console.log('TControllerMain.SBMLLoaded. creating new simulation');
+//console.log('TControllerMain.SBMLLoaded. creating new simulation');
   self.modelLoaded := true;
   self.createSimulation;
   if Assigned(FSBMLUpdate) then
@@ -110,21 +111,21 @@ end;
 
 procedure TControllerMain.createModel();
 begin
-console.log('TControllerMain.createModel');
+//console.log('TControllerMain.createModel');
   if self.sbmlmodel <> nil then self.sbmlmodel.Free;
   self.sbmlmodel := TModel.create();
   self.sbmlmodel.OnPing := self.SBMLLoaded;  // Register callback function
   if self.networkUpdate then  // Create from Network
     begin
       self.sbmlmodel := self.currNetworkCtrl.createSBMLModel(self.sbmlmodel);
-      self.networkUpdate := true;
+      self.networkUpdate := false;
     end;
 
 end;
 
 procedure TControllerMain.createSimulation();
 begin
-console.log('TControllerMain.createSimulation');
+//console.log('TControllerMain.createSimulation');
   if self.runSim <> nil then
   begin
     self.runSim.Free;
@@ -212,7 +213,7 @@ function TControllerMain.IsModelLoaded(): Boolean;
 begin
   Result := self.modelLoaded;
 end;
-function TControllerMain.IsNetworkUpdated(): Boolean;
+function TControllerMain.hasNetworkChanged(): Boolean;
 begin
   Result := self.NetworkUpdate;
 end;
