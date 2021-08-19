@@ -47,7 +47,7 @@ type
                    plot_var: array of boolean; display : boolean; currTime:double);
     procedure resetGraph (canvas : TCanvas);
     procedure redrawGraph(canvas : TCanvas; plot_var: array of boolean; display : boolean);
-    procedure setY_valsMax(max: double);
+    procedure setY_valsMax(max: double); // Use to set Y scale max for plot
     procedure xConvertFactors();
     procedure yConvertFactors();
     function getY_valsMax(): double;
@@ -75,6 +75,7 @@ begin
   // y_vals should ideally be sized here but we don't know the size until addPoint
   simLength := runTime;
   step := stepSize;
+  y_valsMax := wymax_n;  // Initial val, can be adjusted later.
   canvasHeight := symax_n - symin_n; // Get canvas height before adjusting symax
   canvasWidth  := sxmax_n - sxmin_n;
   self.symin := symin_n;
@@ -92,8 +93,8 @@ begin
   self.sxmin := sxmin_n + yScaleWidth;   // Move the y axis to the right
   self.sxmax := sxmax_n;
   self.symax := symax_n - xScaleHeight;  // Move the x axis *up* (note y screens coords are inverted)
-  self.wymin := wymin_n; self.wymax := wymax_n;
-  self.wxmin := wxmin_n; self.wxmax := wxmax_n;
+  self.wymin := wymin_n; self.wymax := wymax_n; // set world coord min/max
+  self.wxmin := wxmin_n; self.wxmax := wxmax_n; //      "
   yAxisHt := self.symax;
   graphScreenWidth := self.sxmax - self.sxmin;  // screen coordinates !
 
@@ -239,7 +240,6 @@ begin
   canvas.lineto (xi, yi+1);
 
   // major division inter val = 20, minor division interval = 5
-  //yend  := ystart + yaxisHt;
   scale := ((ystart div divMk) * divMk);   // place the first division at the easliest 20th mark on the graph
   canvas.font.name := 'Courier New';
   canvas.font.Size := 8;
@@ -264,12 +264,10 @@ begin
           minor := minor + minorStepSize;
           end;
       canvas.TextOut (xi-15, yi-4, floattostrf (yPosition,ffGeneral, 4, 4));
-      //canvas.TextOut (xi+5, yi-4, floattostrf (((scale/yAxisHt)*y_valsMax),ffGeneral, 4, 4));
       yposition := yposition + stepSize;
       //inc (scale, divMk);
     end;
 end;
-
 
 // time is currentGeneration
 // newYValues cantains the Y values for the next time point
@@ -283,7 +281,6 @@ begin
      setLength (y_vals, length(newYValues));
 
   // flood fill appears to be slighly quicker and eliminates the dots bug
-
   if display then
      begin
      bitmap.canvas.brush.color := clWhite;
@@ -356,10 +353,10 @@ end;
 procedure TPlotGraph.setY_valsMax(max: double);
 begin
   if max > 0 then
-    self.y_valsMax := max * 1.2 // Set to 120% of val
+    self.y_valsMax := max
   else self.y_valsMax := 10;
+  // Update dependencies
   self.wymax := round(self.y_valsMax);
-  self.yConvertFactors;
   self.yConvertFactors;
 end;
 
