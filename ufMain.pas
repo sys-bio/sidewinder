@@ -168,7 +168,6 @@ type
     procedure RxnParamComboBoxEnter(Sender: TObject);
     procedure RxnParamComboBoxClick(Sender: TObject);
     procedure RxnParamComboBoxExit(Sender: TObject);
-    procedure editNodeConcChange(Sender: TObject);
 
   private
     numbPlots: Integer; // Number of plots displayed
@@ -672,13 +671,6 @@ begin
   networkPB1.canvas.draw(0, 0, networkCanvas.bitmap);
 end;
 
-procedure TMainForm.editNodeConcChange(Sender: TObject);   // Do not use.
-begin
-
- // networkController.setNodeConc(editNodeConc.Text);
- // networkPB1.Invalidate;
-end;
-
 procedure TMainForm.editNodeConcExit(Sender: TObject);
 begin
 //console.log('editNodeConcExit(');
@@ -880,6 +872,7 @@ procedure TMainForm.splitterMoved(Sender: TObject);
 begin
   networkCanvas.bitmap.Height := networkPB1.Height;
   networkCanvas.bitmap.width := networkPB1.width;
+  console.log('splitterMoved....');
   self.adjustRightTabWPanels; //TODO: Need to adjust right panels based on tab focus
   networkPB1.Invalidate;
 end;
@@ -975,7 +968,7 @@ procedure TMainForm.selectPlotSpecies(plotnumb: Integer);
     i: Integer; maxYVal: double; plotSp: string;
     addingPlot: Boolean;
   begin
-    maxYVal := DEFAULTSPECIESPLOTHT;  // default for plot Y max
+    maxYVal := 0;
     plotSp := '';
     if self.plotSpecies = nil then
       self.plotSpecies := TList<TSpeciesList>.create;
@@ -1017,6 +1010,9 @@ procedure TMainForm.selectPlotSpecies(plotnumb: Integer);
             self.plotSpecies.Items[plotnumb - 1].Add('')
           else self.plotSpecies.Items[getPlotPBIndex(plotNumb)].Add('');
       end;
+    if maxYVal = 0 then
+      maxYVal := DEFAULTSPECIESPLOTHT  // default for plot Y max
+    else maxYVal := MaxYVal * 2.0;  // add 100% margin
     if addingPlot then
       self.addPlot(maxYVal) // <-- Add dynamically created plot at this point
     else
@@ -1373,14 +1369,45 @@ end;
 
 procedure TMainForm.adjustRightTabWPanels(); // Adjust all right panels to same width, height
 begin
-  self.RNodeEditWPanel.Width := RightWPanel.Width;
-  self.RNodeEditWPanel.Top := RightWPanel.Top;
-  self.RNodeEditWPanel.Height := RightWPanel.Height;
-  self.RNodeEditWPanel.Left := RightWPanel.Left;
-  self.RRxnEditWPanel.Width := RightWPanel.Width;
-  self.RRxnEditWPanel.Top := RightWPanel.Top;
-  self.RRxnEditWPanel.Height := RightWPanel.Height;
-  self.RRxnEditWPanel.Left := RightWPanel.Left;
+  //if self.WebTabSet1.ItemIndex = SIMULATION_TAB then
+    //begin
+      self.RNodeEditWPanel.Width := self.RightWPanel.Width;
+      self.RNodeEditWPanel.Top := self.RightWPanel.Top;
+      self.RNodeEditWPanel.Height := self.RightWPanel.Height;
+      self.RNodeEditWPanel.Left := self.RightWPanel.Left;
+      self.RRxnEditWPanel.Width := self.RightWPanel.Width;
+      self.RRxnEditWPanel.Top := self.RightWPanel.Top;
+      self.RRxnEditWPanel.Height := self.RightWPanel.Height;
+      self.RRxnEditWPanel.Left := self.RightWPanel.Left;
+      self.RightWPanel.invalidate;
+  {  end
+  else if self.WebTabSet1.ItemIndex = NODE_TAB then
+    begin
+      self.RightWPanel.Width := self.RNodeEditWPanel.Width;
+      self.RightWPanel.Top := self.RNodeEditWPanel.Top;
+      self.RightWPanel.Height := self.RNodeEditWPanel.Height;
+      self.RightWPanel.Left := self.RNodeEditWPanel.Left;
+      self.RightWPanel.invalidate;
+      self.RRxnEditWPanel.Width := self.RightWPanel.Width;
+      self.RRxnEditWPanel.Top := self.RightWPanel.Top;
+      self.RRxnEditWPanel.Height := self.RightWPanel.Height;
+      self.RRxnEditWPanel.Left := self.RightWPanel.Left;
+      self.RNodeEditWPanel.invalidate;
+    end
+    else if self.WebTabSet1.ItemIndex = REACTION_TAB then
+        begin
+          self.RightWPanel.Width := self.RRxnEditWPanel.Width;
+          self.RightWPanel.Top := self.RRxnEditWPanel.Top;
+          self.RightWPanel.Height := self.RRxnEditWPanel.Height;
+          self.RightWPanel.Left := self.RRxnEditWPanel.Left;
+          self.RNodeEditWPanel.Width := self.RightWPanel.Width;
+          self.RNodeEditWPanel.Top := self.RightWPanel.Top;
+          self.RNodeEditWPanel.Height := self.RightWPanel.Height;
+          self.RNodeEditWPanel.Left := self.RightWPanel.Left;
+          self.RRxnEditWPanel.invalidate;
+        end;  }
+
+  self.RightWPanel.invalidate;
   self.RNodeEditWPanel.invalidate;
   self.RRxnEditWPanel.invalidate;
 end;

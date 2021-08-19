@@ -827,9 +827,9 @@ object mainForm: TmainForm
       end
     end
     object RightWPanel: TWebPanel
-      Left = 1278
+      Left = 1274
       Top = 0
-      Width = 522
+      Width = 526
       Height = 715
       ElementClassName = 'card rounded-0'
       HeightPercent = 100.000000000000000000
@@ -895,7 +895,7 @@ object mainForm: TmainForm
     object pnlCenter: TWebPanel
       Left = 137
       Top = 0
-      Width = 826
+      Width = 822
       Height = 715
       ElementClassName = 'card rounded-0'
       HeightPercent = 100.000000000000000000
@@ -906,10 +906,11 @@ object mainForm: TmainForm
       ChildOrder = 2
       ElementBodyClassName = 'card-body'
       ElementFont = efCSS
+      ExplicitWidth = 826
       object networkPB1: TWebPaintBox
         Left = 0
         Top = 0
-        Width = 808
+        Width = 804
         Height = 697
         HeightPercent = 100.000000000000000000
         WidthPercent = 100.000000000000000000
@@ -922,9 +923,10 @@ object mainForm: TmainForm
         OnMouseMove = networkPB1MouseMove
         OnMouseUp = networkPB1MouseUp
         OnMouseWheel = networkPB1MouseWheel
+        ExplicitWidth = 808
       end
       object netDrawScrollBarVert: TTMSFNCScrollBar
-        Left = 808
+        Left = 804
         Top = 0
         Width = 18
         Height = 697
@@ -965,11 +967,12 @@ object mainForm: TmainForm
         Max = 1000.000000000000000000
         PageSize = 10.000000000000000000
         OnValueChanged = netDrawScrollBarVertValueChanged
+        ExplicitLeft = 808
       end
       object netDrawScrollBarHoriz: TTMSFNCScrollBar
         Left = 0
         Top = 697
-        Width = 826
+        Width = 822
         Height = 18
         Align = alBottom
         ParentDoubleBuffered = False
@@ -1009,10 +1012,11 @@ object mainForm: TmainForm
         Max = 1000.000000000000000000
         PageSize = 10.000000000000000000
         OnValueChanged = netDrawScrollBarHorizValueChanged
+        ExplicitWidth = 826
       end
     end
     object splitter: TWebSplitter
-      Left = 963
+      Left = 959
       Top = 0
       Width = 5
       Height = 715
@@ -1022,9 +1026,10 @@ object mainForm: TmainForm
       ChildOrder = 3
       Color = clBtnFace
       OnMoved = splitterMoved
+      ExplicitLeft = 963
     end
     object RNodeEditWPanel: TWebPanel
-      Left = 1118
+      Left = 1114
       Top = 0
       Width = 160
       Height = 715
@@ -1033,11 +1038,12 @@ object mainForm: TmainForm
       WidthPercent = 100.000000000000000000
       Align = alRight
       BorderColor = clSilver
-      BorderStyle = bsSingle
+      BorderStyle = bsNone
       ChildOrder = 4
       ElementBodyClassName = 'card-body'
       ElementFont = efCSS
       Visible = False
+      ExplicitLeft = 1118
       object pnlNodePanel: TWebPanel
         Left = 8
         Top = 0
@@ -1163,13 +1169,12 @@ object mainForm: TmainForm
           HeightPercent = 100.000000000000000000
           ParentFont = False
           WidthPercent = 100.000000000000000000
-          OnChange = editNodeConcChange
           OnExit = editNodeConcExit
         end
       end
     end
     object RRxnEditWPanel: TWebPanel
-      Left = 968
+      Left = 964
       Top = 0
       Width = 150
       Height = 715
@@ -1183,6 +1188,7 @@ object mainForm: TmainForm
       ElementBodyClassName = 'card-body'
       ElementFont = efCSS
       Visible = False
+      ExplicitLeft = 968
       object RxnRatePanel: TWebPanel
         Left = 5
         Top = 60
