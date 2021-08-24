@@ -22,6 +22,9 @@ tRateLaw = class
   rateFormula: string;
   rateP: TList<TSBMLparameter>;   // RXN Rate params
   procedure generateRateLaw();
+// TODO: procedure nReactantRate(); // General one-way rxn with reactants >2
+
+// Later TODO: Reversible Reaction rate.
 
   public
   constructor create( nReact: integer; nProds: integer; reactants: array of string;
@@ -80,15 +83,31 @@ begin
   begin
     if self.rateP.Count >0 then
     begin
-      self.rateFormula := fRateVal + '* pow(' + self.reactants[0] + ', ' ;
-      self.rateFormula := self.rateFormula + self.rS[0].ToString + ')';
+      self.rateFormula := fRateVal + ' * ';
+      if self.rS[0] = 1.0 then
+        self.rateFormula := self.rateFormula + self.reactants[0]
+      else
+        begin
+          self.rateFormula := self.rateFormula + 'pow(' + self.reactants[0] + ', ' ;
+          self.rateFormula := self.rateFormula + self.rS[0].ToString + ')';
+        end;
     end;
   end
   else if (self.nR = 2) and (self.nP < 3) then
   begin
-     self.rateFormula := fRateVal + '* pow(' + self.reactants[0] + ', ' ;
-     self.rateFormula := self.rateFormula + self.rS[0].ToString + ') * pow(';
-     self.rateFormula := self.rateFormula + self.reactants[1]+ ', '+ self.rS[1].ToString +')';
+    self.rateFormula := fRateVal + ' * ';
+    if self.rS[0] = 1.0 then
+      self.rateFormula :=  self.rateFormula + self.reactants[0] + ' * '
+    else
+      begin
+        self.rateFormula := self.rateFormula + 'pow(' + self.reactants[0] + ', ' ;
+        self.rateFormula := self.rateFormula + self.rS[0].ToString + ') * ';
+      end;
+    if self.rS[1] = 1.0 then
+      self.rateFormula := self.rateFormula + self.reactants[1]
+    else
+      self.rateFormula := self.rateFormula + 'pow(' + self.reactants[1]+ ', '+ self.rS[1].ToString +')';
+
   end;
  // console.log('generateRateLaw: '+ self.rateFormula);
 end;
