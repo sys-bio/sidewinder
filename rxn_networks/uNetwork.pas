@@ -277,6 +277,7 @@ var speciesObject : TJSONObject;
    // stoich : integer;
     speciesName : string;
     i : integer;
+
 begin
    id := obj.GetJSONValue('id');
    if obj.Get ('species') <> nil then
@@ -284,6 +285,12 @@ begin
       speciesArray := obj.Get ('species').JsonValue as TJSONArray;
       reactantObject := speciesArray.Items[0] as TJSONObject;
       nReactants := reactantObject.count;
+      for i:= 0 to Length(srcId) -1 do
+        begin
+          srcId[i] := '';
+          if i < Length(srcStoich) then
+            srcStoich[i] := 0.0; // assume same size as srcId
+        end;
       for i := 0 to nReactants - 1 do
           begin
           pa := reactantObject.Get(i);
@@ -294,6 +301,12 @@ begin
       reactantObject := speciesArray.Items[1] as TJSONObject;
       nProducts := reactantObject.count;
       rateParams := TList<TSBMLparameter>.create;
+      for i:= 0 to Length(destId)-1 do
+        begin
+          destId[i] := '';
+          if i < Length(destStoich) then
+            destStoich[i] := 0.0; // assume same size as destId
+        end;
       for i := 0 to nProducts - 1 do
           begin
           pa := reactantObject.Get(i);
