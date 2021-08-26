@@ -9,8 +9,9 @@ uses System.SysUtils, Dialogs, uSimulation, uModel, uSBMLClasses, uODE_FormatUti
 type
  TUpdateSimEvent = procedure(time:double; updatedVals: array of double) of object;
  // Let listeners know of new simulation update event.
-  TUpdateModelEvent = procedure(model: TModel) of object;
- 
+  TUpdateModelEvent = procedure(model: TModel) of object; // SBML model loaded.
+  TNetworkChangeEvent = procedure() of object; // Notify network has changed, may want to update model.
+
  TControllerMain = class
   private
     sbmlText: String;
@@ -28,6 +29,7 @@ type
     ODEready: Boolean; // TRUE: ODE solver is setup.
     networkUpdate: Boolean; // Use to prevent circular update when network is changed.
     FUpdate: TUpdateSimEvent;// Send Updated Sim values (time,species amts) to listeners.
+    FNetworkChanged: TNetworkChangeEvent; // Notify listener that network has changed,
     FSBMLUpdate: TUpdateModelEvent;
     FSBMLUpdate2: TUpdateModelEvent;
     currNetworkCtrl : TController;
@@ -65,6 +67,7 @@ type
     procedure resetCurrTime();
     function getSimulation(): TSimulationJS;
     procedure networkUpdated(); // Network has changed, update model
+    property OnNetworkChange: TNetworkChangeEvent read FNetworkChanged write FNetworkChanged;
     property OnSimUpdate: TUpdateSimEvent read FUpdate write FUpdate;
     property OnSBMLUpdate: TUpdateModelEvent read FSBMLUpdate write FSBMLUpdate;
     property OnSBMLUpdate2: TUpdateModelEvent read FSBMLUpdate2 write FSBMLUpdate2;
@@ -129,10 +132,11 @@ begin
   if self.runSim <> nil then
   begin
     self.runSim.Free;
-    self.currTime := 0;
+    self.SBMLmodel.resetS_Vals();  // TODO: Move S_vals to simulator.
+    //self.currTime := 0;
     self.online := false;
   end;
-
+  self.currTime := 0;
   self.runSim := TSimulationJS.create(self.runTime, self.stepSize, self.SBMLmodel, self.solverUsed);
   self.runSim.OnUpdate := self.getVals; // register callback function.
 end;
@@ -144,11 +148,13 @@ procedure TControllerMain.UpdateVals( time: double; updatedVals: array of double
      FUpdate(time, updatedVals);
  end;
 
-  // Network has changed, notify controller
+  // Network has changed, notify any listeners
 procedure TControllerMain.networkUpdated();
 begin
   console.log('Network changed');
   self.networkUpdate := true;      // after model updated, change to false.
+  if Assigned(FNetworkChanged) then
+    FNetworkChanged();
 end;
 
 procedure TControllerMain.setODESolver();

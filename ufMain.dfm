@@ -233,22 +233,6 @@ object mainForm: TmainForm
       WidthPercent = 100.000000000000000000
       OnClick = SetUpSimButtonClick
     end
-    object RPanelTabSet: TWebTabSet
-      Left = 811
-      Top = 10
-      Width = 78
-      Height = 32
-      ElementClassName = 'nav nav-pills'
-      HeightPercent = 100.000000000000000000
-      WidthPercent = 100.000000000000000000
-      ChildOrder = 14
-      Color = clWhite
-      ItemIndex = 2
-      Items.Strings = (
-        'Simulator page')
-      TabOrder = 12
-      OnClick = RPanelTabSetClick
-    end
   end
   object bottomWPanel: TWebPanel
     Left = 0
@@ -906,7 +890,6 @@ object mainForm: TmainForm
       ChildOrder = 2
       ElementBodyClassName = 'card-body'
       ElementFont = efCSS
-      ExplicitWidth = 826
       object networkPB1: TWebPaintBox
         Left = 0
         Top = 0
@@ -923,7 +906,6 @@ object mainForm: TmainForm
         OnMouseMove = networkPB1MouseMove
         OnMouseUp = networkPB1MouseUp
         OnMouseWheel = networkPB1MouseWheel
-        ExplicitWidth = 808
       end
       object netDrawScrollBarVert: TTMSFNCScrollBar
         Left = 804
@@ -967,7 +949,6 @@ object mainForm: TmainForm
         Max = 1000.000000000000000000
         PageSize = 10.000000000000000000
         OnValueChanged = netDrawScrollBarVertValueChanged
-        ExplicitLeft = 808
       end
       object netDrawScrollBarHoriz: TTMSFNCScrollBar
         Left = 0
@@ -1012,7 +993,6 @@ object mainForm: TmainForm
         Max = 1000.000000000000000000
         PageSize = 10.000000000000000000
         OnValueChanged = netDrawScrollBarHorizValueChanged
-        ExplicitWidth = 826
       end
     end
     object splitter: TWebSplitter
@@ -1026,7 +1006,6 @@ object mainForm: TmainForm
       ChildOrder = 3
       Color = clBtnFace
       OnMoved = splitterMoved
-      ExplicitLeft = 963
     end
     object RNodeEditWPanel: TWebPanel
       Left = 1114
@@ -1043,7 +1022,6 @@ object mainForm: TmainForm
       ElementBodyClassName = 'card-body'
       ElementFont = efCSS
       Visible = False
-      ExplicitLeft = 1118
       object pnlNodePanel: TWebPanel
         Left = 8
         Top = 0
@@ -1188,7 +1166,6 @@ object mainForm: TmainForm
       ElementBodyClassName = 'card-body'
       ElementFont = efCSS
       Visible = False
-      ExplicitLeft = 968
       object RxnRatePanel: TWebPanel
         Left = 5
         Top = 60

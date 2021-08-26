@@ -32,6 +32,7 @@ type
   end;
 
   TNetworkEvent = procedure() of object; // Network has been changed.
+    // TODO: need to know if just species or rate/param vals have only changed.
 
   TParent = class (TObject)
     selected : boolean;

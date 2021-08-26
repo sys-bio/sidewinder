@@ -25,11 +25,9 @@ const
 
 const
   PLOT_WIDTH_PERCENTAGE = 0.6; // This means a plot extends to 60% of the right panel width
-  NODE_TAB = 2; REACTION_TAB = 1; SIMULATION_TAB = 0;
-
 
 type
-
+  TPanelType = ( SIMULATION_PANEL, REACTION_PANEL, NODE_PANEL );
   TMainForm = class(TWebForm)
     TopWPanel: TWebPanel;
     newNetworkBtn: TWebButton;
@@ -89,7 +87,6 @@ type
     SetUpSimButton: TWebButton;
     nodeConcLabel: TWebLabel;
     editNodeConc: TWebEdit;
-    RPanelTabSet: TWebTabSet;
     RNodeEditWPanel: TWebPanel;
     RRxnEditWPanel: TWebPanel;
     RxnRatePanel: TWebPanel;
@@ -172,23 +169,28 @@ type
   private
     numbPlots: Integer; // Number of plots displayed
     numbSliders: Integer; // Number of parameter sliders
-
+    rightPanelType: TPanelType;
+    networkUpdated: boolean; // Network has changed, update model, plots, etc when convenient.
     procedure InitSimResultsTable(); // Init simResultsMemo.
     procedure addPlot(yMax: double); // Add a plot, yMax: largest initial val of plotted species
+    procedure resetPlots();  // Reset plots for new simulation.
     procedure selectPlotSpecies(plotnumb: Integer);
-    procedure addParamSlider();
-    procedure SetSliderParamValues(sn, paramForSlider: Integer);
-    procedure selectParameter(sNumb: Integer); // Get parameter for slider
-    procedure LoadJSONFile();
+
     procedure DeletePlot(plotIndex: Integer); // Index of plot to delete
     function  getEmptyPlotPosition(): Integer;
     function  getPlotPBIndex(plotTag: integer): Integer; // Return Plot index of tag.
     procedure EditPlotList(plotn: Integer);
     procedure updatePlots(); // Go through and remove species/plots no longer in model.
+    procedure initializePlots();
+    procedure initializePlot( n: integer);
     procedure deletePlotSpecies(plotn: Integer); // Delete a species curve in a plot.
-    // delete, change plot species, other added as needed using TWebListBox.
+             // delete, change plot species, other added as needed using TWebListBox.
+    procedure addParamSlider();
+    procedure SetSliderParamValues(sn, paramForSlider: Integer);
+    procedure selectParameter(sNumb: Integer); // Get parameter for slider
+    procedure LoadJSONFile();
     procedure EditSliderList(sn: Integer);
-    // delete, change param slider as needed using TWebListBox.
+            // delete, change param slider as needed using TWebListBox.
     procedure DeleteSlider(sn: Integer);
     procedure adjustRightTabWPanels(); // Adjust all right panels
                   // (node edit, rxn edit, simulation) to same width, height
@@ -230,6 +232,7 @@ type
     function ScreenToWorld(X, Y: Double): TPointF; // Network drawing panel
     function WorldToScreen(wx: Integer): Integer; // Network drawing panel
     procedure PingSBMLLoaded(newModel:TModel); // Notify when done loading or model changes
+    procedure networkHasChanged(); // Notify when network has changed, may need to update model, plots, etc
     procedure getVals(newTime: Double; newVals: array of Double);
     // Get new values (species amt) from simulation run
 
@@ -310,17 +313,23 @@ procedure TMainForm.btnDrawClick(Sender: TObject);
 var
   n1, n2, n3, n4: TNode;
 begin
-  n1 := networkController.addNode('node1', 60, 200);
-  n2 := networkController.addNode('node2', 270, 270);
-  n3 := networkController.addNode('node3', 540, 80);
-  n4 := networkController.addNode('node4', 400, 500);
+  if length(network.getCurrentState.savedNodes) = 0 then
+  begin
+    n1 := networkController.addNode('node1', 60, 200);
+    n2 := networkController.addNode('node2', 270, 270);
+    n3 := networkController.addNode('node3', 540, 80);
+    n4 := networkController.addNode('node4', 400, 500);
 
-  networkController.addReaction('r1', n1, n2);
-  networkController.addReaction('r2', n2, n3);
-  networkController.addReaction('r3', n3, n4);
-  networkController.addReaction('r4', n4, n2);
+    networkController.addReaction('r1', n1, n2);
+    networkController.addReaction('r2', n2, n3);
+    networkController.addReaction('r3', n3, n4);
+    networkController.addReaction('r4', n4, n2);
 
-  networkPB1.Invalidate;
+    networkPB1.Invalidate;
+  end
+  else
+    showMessage('Network already exists in panel.');
+
 end;
 
 procedure TMainForm.btnIdleClick(Sender: TObject);
@@ -447,28 +456,13 @@ begin
             self.rtLengthEdit1.Text := FloatToStr(MainController.getRunTime);
           end;
       end;
-      if pixelStepList = nil then
-        pixelStepList := TList<Integer>.create;
-      for i := 0 to listOfPlots.Count - 1 do
-        begin
-          yScaleWidth := 16; // Gap between the left edge and y axis
-          if listOfPlots[i].getY_valsMax >0 then newYMax := round(listOfPlots[i].getY_valsMax)
-          else newYMax := DEFAULTSPECIESPLOTHT;
+     // self.initializePlots( );
 
-          listOfPlots[i].initGraph(0, 200, 0, newYMax, // The 10 is the max Y value (yend) in world coords
-            0, self.plotsPBList[i].width, 0, self.plotsPBList[i].height,
-            xscaleHeightList.Items[i], yscaleWidth, MainController.getRunTime, MainController.getStepSize);
+      if self.MainController.getCurrTime = 0  then
+        self.InitSimResultsTable();  // Set table of Sim results.
 
-          // Max viewable steps is PlotWebPB.width (1 pixel per step).
-          pixelStepList.Add(0);  // Default number.
-          if MainController.getRunTime / MainController.getStepSize < self.plotsPBList[i].width then
-             pixelStepList[i] := round(self.plotsPBList[i].width * MainController.getStepSize / MainController.getRunTime)
-          else
-             pixelStepList[i] := 1;
-        end;
-      self.InitSimResultsTable();  // Set table of Sim results.
-      self.RPanelTabSet.ItemIndex := SIMULATION_TAB;
-      self.RPanelTabSetClick(nil);
+      self.rightPanelType := SIMULATION_PANEL;
+      self.setRightPanels;
       MainController.SetTimerEnabled(true); // Turn on web timer (Start simulation)
     end
   else
@@ -481,6 +475,42 @@ begin
     end;
 end;
 
+procedure TMainForm.initializePlots();
+  var i: Integer;
+     // yScaleWidth, newYMax : integer;
+begin
+  for i := 0 to listOfPlots.Count - 1 do
+    begin
+      self.initializePlot(i);
+    end;
+end;
+
+procedure TMainForm.initializePlot( n: integer);
+ var yScaleWidth, newYMax : integer;
+begin
+  if pixelStepList = nil then
+    pixelStepList := TList<Integer>.create;
+  yScaleWidth := 16; // Gap between the left edge and y axis
+  if self.listOfPlots[n].getY_valsMax >0 then newYMax := round(self.listOfPlots[n].getY_valsMax)
+    else newYMax := DEFAULTSPECIESPLOTHT;
+  self.listOfPlots[n].resetGraph(self.listOfPlots[n].bitmap.canvas); // new..
+  self.listOfPlots[n].initGraph(0, 200, 0, newYMax, // The 10 is the max Y value (yend) in world coords
+        0, self.plotsPBList[n].width, 0, self.plotsPBList[n].height,
+        xscaleHeightList.Items[n], yscaleWidth, MainController.getRunTime, MainController.getStepSize);
+  self.plotsPBList[n].invalidate;
+   // Max viewable steps is PlotWebPB.width (1 pixel per step).
+  pixelStepList.Add(0);  // Default number.
+  if MainController.getRunTime / MainController.getStepSize < self.plotsPBList[n].width then
+    pixelStepList[n] := round(self.plotsPBList[n].width * MainController.getStepSize / MainController.getRunTime)
+  else
+    pixelStepList[n] := 1;
+end;
+
+procedure TMainForm.resetPlots();  // Reset plots for new simulation.
+begin
+  self.initializePlots;
+end;
+
 procedure TMainForm.PingSBMLLoaded(newModel:TModel);
 var
   i: Integer;
@@ -490,6 +520,11 @@ begin
   onLineSimButton.visible := true;
   addPlotButton.visible := true;
   
+end;
+
+procedure TMainForm.networkHasChanged();
+begin
+  self.networkUpdated := true;
 end;
 
 procedure TMainForm.plotEditLBClick(Sender: TObject);
@@ -605,17 +640,18 @@ begin
       editNodeConc.Text := networkController.network.nodes
         [networkCOntroller.selectedNode].state.conc.ToString;
       pnlNodePanel.visible := true;
-      self.RPanelTabSet.ItemIndex := NODE_TAB;
+      self.rightPanelType := NODE_PANEL;
       self.RRxnEditWPanel.visible := false;
       self.RSimWPanel.visible := false;
       self.RNodeEditWPanel.visible := true;
       self.RNodeEditWPanel.invalidate;
-      self.RPanelTabSetClick(nil); // View node edit tab
+      //self.RPanelTabSetClick(nil); // View node edit tab
+      self.setRightPanels;
     end
   else if networkController.selectedEdge <>-1 then
     begin
       //console.log(' A reaction has been selected');
-      self.RPanelTabSet.ItemIndex := REACTION_TAB;
+      self.rightPanelType := REACTION_PANEL;
       self.RSimWPanel.visible := false;
       self.RNodeEditWPanel.visible := false;
       self.RRxnEditWPanel.visible := true;
@@ -623,8 +659,14 @@ begin
       self.updateRxnRatePanel;
       self.updateRxnStoichPanel;
       self.RRxnEditWPanel.invalidate;
-      self.RPanelTabSetClick(nil); // View Rxn edit tab
-    end;
+      //self.RPanelTabSetClick(nil); // View Rxn edit tab
+      self.setRightPanels;
+    end
+    else
+      begin
+        self.rightPanelType := SIMULATION_PANEL;
+        self.setRightPanels;
+      end;
 
 end;
 
@@ -756,7 +798,8 @@ begin
   self.networkCanvas.bitmap.Height := networkPB1.Height;
   self.networkCanvas.bitmap.width := networkPB1.width;
   LeftWPanel.color := clWhite;
-  self.RPanelTabSet.ItemIndex := SIMULATION_TAB;
+  //self.RPanelTabSet.ItemIndex := SIMULATION_PANEL;
+  self.rightPanelType := SIMULATION_PANEL;
   self.RNodeEditWPanel.visible := false;
   self.RNodeEditWPanel.ElementBodyClassName := RSimWPanel.ElementBodyClassName;
   self.RRxnEditWPanel.ElementBodyClassName := RSimWPanel.ElementBodyClassName;
@@ -768,9 +811,10 @@ begin
   onLineSimButton.font.color := clred;
   onLineSimButton.caption := 'Simulation: Offline';
   self.mainController.setODEsolver;
+  self.networkUpdated := false;
   currentGeneration := 0;
   self.mainController.OnSBMLUpdate2 := self.PingSBMLLoaded;
-   // Notification of changes:
+  self.mainController.OnNetworkChange:= self.networkHasChanged;
   self.mainController.OnSimUpdate := self.getVals; // notify when new Sim results
 
 end;
@@ -797,7 +841,7 @@ end;
 
 procedure TMainForm.setRightPanels();
 begin
- { if self.RPanelTabSet.ItemIndex = NODE_TAB then
+ { if self.rightPanelType = NODE_PANEL then
   begin
     self.RSimWPanel.visible := false;
     self.RRxnEditWPanel.visible := false;
@@ -806,7 +850,7 @@ begin
     self.RRxnEditWPanel.invalidate;
     self.RNodeEditWPanel.invalidate;
   end
-  else if self.RPanelTabSet.ItemIndex = REACTION_TAB then
+  else if self.rightPanelType = REACTION_PANEL then
   begin
     self.updateRxnParamPanel;
     self.RSimWPanel.visible := false;
@@ -819,7 +863,7 @@ begin
     self.updateRxnRatePanel;
   end
   else }
-   if self.RPanelTabSet.ItemIndex = SIMULATION_TAB then
+   if self.rightPanelType = SIMULATION_PANEL then
   begin
     self.RSimWPanel.visible := true;
     self.RRxnEditWPanel.visible := false;
@@ -1078,7 +1122,6 @@ begin
   self.plotsPBList[self.numbPlots - 1].OnPaint := plotsPBListPaint;
   self.plotsPBList[self.numbPlots - 1].OnMouseDown := plotOnMouseDown;
   self.plotsPBList[self.numbPlots - 1].Tag := plotPositionToAdd;
- // console.log('Position to add plot: ',plotPositionToAdd);
 
 //  console.log('Adding plot, tag: ',self.plotsPBList[self.numbPlots - 1].Tag);
   configPbPlot(plotPositionToAdd, self.numbPlots,
@@ -1087,6 +1130,7 @@ begin
   self.xscaleHeightList.Add( round(0.15 * self.plotsPBList[self.numbPlots - 1].Height) );
   // make %15 of total height
   self.maxYValueList.Add(self.plotsPBList[self.numbPlots - 1].Height); // PaintBox dimension
+  self.initializePlot(self.numbPlots - 1);
   self.plotsPBList[self.numbPlots - 1].Invalidate;
 
 end;
@@ -1181,7 +1225,7 @@ end;
 
 procedure TMainForm.updatePlots(); // Go through and remove species/plots no longer in model.
 begin
-  // TODO
+  // TODO --> No noeed for this, just delete all plots and have user add them as necessary?
   //  EditPlotList(plotn: Integer); <-- check each plot to see if need to remove plot species.
 end;
 
@@ -1371,7 +1415,7 @@ end;
 
 procedure TMainForm.adjustRightTabWPanels(); // Adjust all right panels to same width, height
 begin
-  //if self.RPanelTabSet.ItemIndex = SIMULATION_TAB then
+  //if self.rightPanelType = SIMULATION_PANEL then
     //begin
       self.RNodeEditWPanel.Width := self.RSimWPanel.Width;
       self.RNodeEditWPanel.Top := self.RSimWPanel.Top;
@@ -1383,7 +1427,7 @@ begin
       self.RRxnEditWPanel.Left := self.RSimWPanel.Left;
       self.RSimWPanel.invalidate;
   {  end
-  else if self.RPanelTabSet.ItemIndex = NODE_TAB then
+  else if self.rightPanelType = NODE_PANEL then
     begin
       self.RSimWPanel.Width := self.RNodeEditWPanel.Width;
       self.RSimWPanel.Top := self.RNodeEditWPanel.Top;
@@ -1396,7 +1440,7 @@ begin
       self.RRxnEditWPanel.Left := self.RSimWPanel.Left;
       self.RNodeEditWPanel.invalidate;
     end
-    else if self.RPanelTabSet.ItemIndex = REACTION_TAB then
+    else if self.self.rightPanelType = REACTION_PANEL then
         begin
           self.RSimWPanel.Width := self.RRxnEditWPanel.Width;
           self.RSimWPanel.Top := self.RRxnEditWPanel.Top;
@@ -1478,42 +1522,53 @@ procedure TMainForm.setUpSimulationUI();
 var i: integer;
 begin
   self.currentGeneration := 0; // reset current x axis point (pixel)
-   // delete existing plots
-  if self.numbPlots >0 then
+  if self.networkUpdated then // TODO: do not reset plots if species or param init vals have changed.
   begin
-    if (self.plotsPBList.Count) > 0 then
+      // delete existing plots
+    if self.numbPlots >0 then
     begin
-      for i := self.plotsPBList.Count-1 downto 0 do
+      if (self.plotsPBList.Count) > 0 then
       begin
-        self.DeletePlot(i);
+        for i := self.plotsPBList.Count-1 downto 0 do
+        begin
+          self.DeletePlot(i);
+        end;
+        self.numbPlots := 0;
       end;
-      self.numbPlots := 0;
-    end;
 
-  end;
-  // delete existing param sliders.
-  if self.sliderPanelAr <> nil then
-  begin
-    if length(self.sliderPanelAr) >0 then
+    end;
+    // delete existing param sliders.
+    if self.sliderPanelAr <> nil then
     begin
-      for i := length(self.sliderPanelAr) -1 downto 0 do
+      if length(self.sliderPanelAr) >0 then
       begin
-        self.DeleteSlider(i);
+        for i := length(self.sliderPanelAr) -1 downto 0 do
+        begin
+          self.DeleteSlider(i);
+        end;
+        setLength(self.sliderPanelAr, 0);
       end;
-      setLength(self.sliderPanelAr, 0);
     end;
-  end;
-  self.RPanelTabSet.ItemIndex := SIMULATION_TAB;
-  self.setRightPanels;
-  self.RSimWPanel.invalidate;
-  mainController.resetCurrTime;
-
-  if mainController.getModel = nil then
-    mainController.createModel
-  else if mainController.hasNetworkChanged then // Rebuild model
     mainController.createModel;
-  mainController.createSimulation;
+    self.networkUpdated := false;
+    end;
 
+  self.rightPanelType := SIMULATION_PANEL;
+  self.setRightPanels;
+  //self.RSimWPanel.invalidate;
+  //mainController.resetCurrTime;
+
+  if self.mainController.getModel = nil then
+  begin
+    self.mainController.createModel;
+    self.networkUpdated := false;
+  end;
+ // else if mainController.hasNetworkChanged then // Rebuild model
+  //  mainController.createModel;
+  self.mainController.createSimulation;
+  if self.numbPlots >0 then
+    self.resetPlots();
+  self.RSimWPanel.invalidate;
 end;
 
 end.
