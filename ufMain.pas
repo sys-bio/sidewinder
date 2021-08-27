@@ -161,10 +161,10 @@ type
     procedure editNodeConcExit(Sender: TObject);
     procedure RPanelTabSetClick(Sender: TObject);
     procedure RxnParamComboBoxChange(Sender: TObject);
-    procedure RxnParamEditChange(Sender: TObject);
     procedure RxnParamComboBoxEnter(Sender: TObject);
     procedure RxnParamComboBoxClick(Sender: TObject);
     procedure RxnParamComboBoxExit(Sender: TObject);
+    procedure RxnParamEditExit(Sender: TObject);
 
   private
     numbPlots: Integer; // Number of plots displayed
@@ -457,7 +457,6 @@ begin
             self.rtLengthEdit1.Text := FloatToStr(MainController.getRunTime);
           end;
       end;
-     // self.initializePlots( );
 
       if self.MainController.getCurrTime = 0  then
         self.InitSimResultsTable();  // Set table of Sim results.
@@ -581,26 +580,27 @@ procedure TMainForm.RxnParamComboBoxExit(Sender: TObject);
 var i: integer;
 begin
  // console.log('TMainForm.RxnParamComboBoxExit');
- // self.RxnParamComboBox.invalidate;
  // i := self.RxnParamComboBox.ItemIndex;
  // self.rxnParamEdit.text := floattostr(networkController.network.reactions[networkController.selectedEdge].state.rateParams[i].getValue);
 end;
 
-procedure TMainForm.RxnParamEditChange(Sender: TObject);
+
+
+procedure TMainForm.RxnParamEditExit(Sender: TObject);
 var newVal: double;
 begin
-try
-  begin
-    newVal :=strtofloat(self.RxnParamEdit.text);
-    self.networkController.network.reactions[networkController.selectedEdge].state.rateParams[self.RxnParamComboBox.ItemIndex].setValue(newVal);
-  end;
-except
-  on Exception : EConvertError do
-  begin
+  try
+    begin
+      newVal :=strtofloat(self.RxnParamEdit.text);
+      self.networkController.network.reactions[networkController.selectedEdge].state.rateParams[self.RxnParamComboBox.ItemIndex].setValue(newVal);
+    end;
+  except
+    on Exception : EConvertError do
+    begin
     ShowMessage(Exception.Message);
     self.RxnParamEdit.text := floattostr(self.networkController.network.reactions[networkController.selectedEdge].state.rateParams[self.RxnParamComboBox.ItemIndex].getValue());
 
-  end;
+    end;
 
 end;
 

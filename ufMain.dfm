@@ -1345,7 +1345,7 @@ object mainForm: TmainForm
           ElementFont = efCSS
           HeightPercent = 100.000000000000000000
           WidthPercent = 100.000000000000000000
-          OnChange = RxnParamEditChange
+          OnExit = RxnParamEditExit
         end
       end
     end
