@@ -1098,8 +1098,10 @@ procedure TMainForm.addPlot(yMax: double); // Add a plot
   end;
 
 var plotPositionToAdd: integer; // Add plot to next empty position.
-    //newPlotPB: TWebPaintBox;
+    plotWidth: integer;
+  i: Integer;
 begin
+  plotWidth := 0;
   plotPositionToAdd := -1;
   plotPositionToAdd := self.getEmptyPlotPosition();
   if self.plotsPBList = nil then
@@ -1120,10 +1122,16 @@ begin
   self.plotsPBList[self.numbPlots - 1].OnPaint := plotsPBListPaint;
   self.plotsPBList[self.numbPlots - 1].OnMouseDown := plotOnMouseDown;
   self.plotsPBList[self.numbPlots - 1].Tag := plotPositionToAdd;
+  // Want all plots to have same width, not always the case if user deletes plot,
+  // adjust right panel width:
+  if self.numbPlots > 1 then
+    plotWidth := self.plotsPBList[0].Width + PLOT_WIDTH_OVERLAP
+  else
+    plotWidth := trunc(self.RSimWPanel.width * PLOT_WIDTH_PERCENTAGE);
 
 //  console.log('Adding plot, tag: ',self.plotsPBList[self.numbPlots - 1].Tag);
   configPbPlot(plotPositionToAdd, self.numbPlots,
-    trunc(self.RSimWPanel.width * PLOT_WIDTH_PERCENTAGE), self.RSimWPanel.Height, self.plotsPBList);
+           plotWidth, self.RSimWPanel.Height, self.plotsPBList);
 
   self.xscaleHeightList.Add( round(0.15 * self.plotsPBList[self.numbPlots - 1].Height) );
   // make %15 of total height

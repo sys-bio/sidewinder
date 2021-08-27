@@ -4,7 +4,7 @@ interface
 uses System.SysUtils, System.Classes, System.Generics.Collections,
 JS, Web, Vcl.Controls, WEBLib.ExtCtrls, WEBLib.Dialogs ;
 
-const defaultNumbPlots = 3;
+const defaultNumbPlots = 3; PLOT_WIDTH_OVERLAP = 20;
 var panelW, panelH, currPlot: integer;
 
 procedure configPbPlot(plotNumber, totalPlots : integer; plotPanelWidth, plotPanelHeight: integer; newPBplotList: TList<TWebPaintBox>);
@@ -23,7 +23,7 @@ begin
    else
       newPBplotList.Items[totalPlots-1].Height := 200;//round(panelH/3);
 
-   newPBplotList[totalPlots-1].Width := panelW - 20; // This must be a bg, without it the slider panel overlaps plot
+   newPBplotList[totalPlots-1].Width := panelW - PLOT_WIDTH_OVERLAP; // This must be a bg, without it the slider panel overlaps plot
    newPBplotList[totalPlots-1].Left := 10; // gap between the network canvas and plot
    newPBplotList[totalPlots-1].Top := 3 + newPBplotList.Items[totalPlots-1].Height*(plotNumber-1); // change to variable value based on number of existing plots.
    newPBplotList[totalPlots-1].visible := true;
