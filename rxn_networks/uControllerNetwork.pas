@@ -157,6 +157,7 @@ begin
         for j := i + 1 to alength - 1 do
           network.nodes[j - 1] := network.nodes[j];
         setLength(network.nodes, alength - 1);
+        network.networkEvent;   // notify listener that network changed.
         exit;
       end
       else
@@ -172,6 +173,8 @@ begin
       for j := i + 1 to alength - 1 do
         network.reactions[j - 1] := network.reactions[j];
       setLength(network.reactions, alength - 1);
+      selectedEdge := -1;
+      network.networkEvent;
       exit;
     end;
   end;
