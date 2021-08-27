@@ -1197,11 +1197,11 @@ object mainForm: TmainForm
         object rateLawEqLabel: TWebLabel
           Left = 85
           Top = 20
-          Width = 3
-          Height = 13
+          Width = 4
+          Height = 14
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWhite
-          Font.Height = -11
+          Font.Height = -12
           Font.Name = 'Tahoma'
           Font.Style = []
           HeightPercent = 100.000000000000000000

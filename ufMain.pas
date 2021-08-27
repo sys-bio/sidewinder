@@ -198,6 +198,7 @@ type
     procedure updateRxnParamPanel();//        "
     procedure updateRxnStoichPanel(); //      "
     procedure setRightPanels(); // set correct panel to be visible
+    procedure clearRxnNodeRightPanels(); // clear references to rxn/nodes that have been deleted.
     procedure setUpSimulationUI(); // Set up sim related buttons, plots, etc
 
   public
@@ -551,21 +552,21 @@ begin
   plotsPBList.items[plot_i - 1].canvas.draw(0, 0, listOfPlots.Items[plot_i - 1].bitmap);
 end;
 
-procedure TMainForm.RxnParamComboBoxChange(Sender: TObject);  // NOT needed.
+procedure TMainForm.RxnParamComboBoxChange(Sender: TObject);  // NOT needed. ??
 var i: integer;
 begin
  //console.log('TMainForm.RxnParamComboBoxChange');
- //i := self.RxnParamComboBox.ItemIndex;
- //self.rxnParamEdit.text := floattostr(networkController.network.reactions[networkController.selectedEdge].state.rateParams[i].getValue);
+ i := self.RxnParamComboBox.ItemIndex;
+ self.rxnParamEdit.text := floattostr(networkController.network.reactions[networkController.selectedEdge].state.rateParams[i].getValue);
 end;
 
 procedure TMainForm.RxnParamComboBoxClick(Sender: TObject);
 var i: integer;
 begin
 //console.log('TMainForm.RxnParamComboBoxClick');
-  i := self.RxnParamComboBox.ItemIndex;
-  self.rxnParamEdit.text := floattostr(networkController.network.reactions[networkController.selectedEdge].state.rateParams[i].getValue);
-  self.RxnParamComboBox.invalidate;
+ // i := self.RxnParamComboBox.ItemIndex;
+//  self.rxnParamEdit.text := floattostr(networkController.network.reactions[networkController.selectedEdge].state.rateParams[i].getValue);
+//  self.RxnParamComboBox.invalidate;
 end;
 
 procedure TMainForm.RxnParamComboBoxEnter(Sender: TObject);
@@ -613,6 +614,7 @@ begin
     begin
       networkController.prepareUndo;
       networkController.deleteSelectedItems;
+      clearRxnNodeRightPanels();  // Right panel no longer shows deleted obj
       networkPB1.Invalidate;
       exit;
     end;
@@ -645,21 +647,19 @@ begin
       self.RSimWPanel.visible := false;
       self.RNodeEditWPanel.visible := true;
       self.RNodeEditWPanel.invalidate;
-      //self.RPanelTabSetClick(nil); // View node edit tab
       self.setRightPanels;
     end
   else if networkController.selectedEdge <>-1 then
     begin
-      //console.log(' A reaction has been selected');
+     // console.log(' A reaction has been selected');
       self.rightPanelType := REACTION_PANEL;
       self.RSimWPanel.visible := false;
       self.RNodeEditWPanel.visible := false;
       self.RRxnEditWPanel.visible := true;
-      self.updateRxnParamPanel;
       self.updateRxnRatePanel;
       self.updateRxnStoichPanel;
+      self.updateRxnParamPanel;
       self.RRxnEditWPanel.invalidate;
-      //self.RPanelTabSetClick(nil); // View Rxn edit tab
       self.setRightPanels;
     end
     else
@@ -797,15 +797,13 @@ begin
   self.networkController.networkCanvas := networkCanvas;
   self.networkCanvas.bitmap.Height := networkPB1.Height;
   self.networkCanvas.bitmap.width := networkPB1.width;
-  LeftWPanel.color := clWhite;
-  //self.RPanelTabSet.ItemIndex := SIMULATION_PANEL;
+  self.LeftWPanel.color := clWhite;
   self.rightPanelType := SIMULATION_PANEL;
   self.RNodeEditWPanel.visible := false;
   self.RNodeEditWPanel.ElementBodyClassName := RSimWPanel.ElementBodyClassName;
   self.RRxnEditWPanel.ElementBodyClassName := RSimWPanel.ElementBodyClassName;
   self.RRxnEditWPanel.visible := false;
   self.adjustRightTabWPanels;
-
   self.mainController := TControllerMain.Create(self.networkController);
   self.mainController.setOnline(false);
   onLineSimButton.font.color := clred;
@@ -836,7 +834,7 @@ end;
 procedure TMainForm.RPanelTabSetClick(Sender: TObject);
 begin
 //console.log('TMainForm.WebTabSet1Click: ',inttostr(self.RPanelTabSet.ItemIndex));
- self.setRightPanels;
+ //self.setRightPanels;
 end;
 
 procedure TMainForm.setRightPanels();
@@ -1460,15 +1458,21 @@ end;
 
 procedure TMainForm.updateRxnRatePanel(); // Refresh with current rxn info.
 begin
-   self.rateLawEqLabel.Caption := networkController.network.reactions[networkController.selectedEdge].state.rateLaw;
-   self.RxnRatePanel.Width := self.rateLawEqLabel.Width + self.rateLawLabel.Width + 60;
-   self.RxnRatePanel.invalidate;
-   self.RSimWPanel.visible := false;
-   self.RRxnEditWPanel.visible := true;
-   self.RNodeEditWPanel.visible := false;
-   self.RSimWPanel.invalidate;
-   self.RNodeEditWPanel.invalidate;
-   self.RRxnEditWPanel.invalidate;
+  try
+    self.rateLawEqLabel.Caption := networkController.network.reactions[networkController.selectedEdge].state.rateLaw;
+    self.RxnRatePanel.Width := self.rateLawEqLabel.Width + self.rateLawLabel.Width + 60;
+    self.RxnRatePanel.invalidate;
+    self.RSimWPanel.visible := false;
+    self.RRxnEditWPanel.visible := true;
+    self.RNodeEditWPanel.visible := false;
+    self.RSimWPanel.invalidate;
+    self.RNodeEditWPanel.invalidate;
+    self.RRxnEditWPanel.invalidate;
+  except
+     on E: Exception do
+      Showmessage(E.message);
+  end;
+
 end;
 
 procedure TMainForm.updateRxnParamPanel();
@@ -1482,7 +1486,11 @@ begin
     paramTStr := networkController.network.reactions[networkController.selectedEdge].state.rateParams.Items[i].getId;
     self.RxnParamComboBox.AddItem(networkController.network.reactions[networkController.selectedEdge].state.rateParams.Items[i].getId,nil);
   end;
-  self.RxnParamComboBox.ItemIndex := 0;
+  if self.rxnParamComboBox.Items.count >0 then
+  begin
+    self.rxnParamEdit.text := floattostr(networkController.network.reactions[networkController.selectedEdge].state.rateParams[0].getValue);
+    self.RxnParamComboBox.ItemIndex := 0;
+  end;
   self.RxnParamComboBox.invalidate;
 end;
 
@@ -1502,7 +1510,6 @@ begin
       ReactantStoichLB.Items.Add(networkController.network.reactions[networkController.selectedEdge].state.srcId[i]
                                  +' ('+ stoichCoeff + ')');
     end;
-
   end;
 
   for i := 0 to Length(networkController.network.reactions[networkController.selectedEdge].state.destId)-1 do
@@ -1515,6 +1522,17 @@ begin
                                  +' ('+ stoichCoeff + ')');
     end;
   end;
+
+end;
+
+procedure TMainForm.clearRxnNodeRightPanels();
+// When rxn or node deleted, may need to clear Right Panel to prevent reading undefined 'state'
+begin
+    self.rateLawEqLabel.Caption := '';
+    self.RxnParamComboBox.clear;
+
+    self.rightPanelType := SIMULATION_PANEL; // Right panel no longer shows deleted obj
+    self.setRightPanels;
 
 end;
 
