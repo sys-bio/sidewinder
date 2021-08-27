@@ -62,7 +62,7 @@ end;
 
 constructor tRateLaw.create(copy: tRateLaw) overload;
 begin
-  //TODO
+  //TODO copy constructor
 end;
 
 // Currently One-way rxns, one rate constant per reaction
