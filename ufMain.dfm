@@ -906,6 +906,8 @@ object mainForm: TmainForm
         OnMouseMove = networkPB1MouseMove
         OnMouseUp = networkPB1MouseUp
         OnMouseWheel = networkPB1MouseWheel
+        ExplicitLeft = 6
+        ExplicitTop = -6
       end
       object netDrawScrollBarVert: TTMSFNCScrollBar
         Left = 804
@@ -1296,7 +1298,7 @@ object mainForm: TmainForm
         Left = 5
         Top = 416
         Width = 200
-        Height = 121
+        Height = 145
         ElementClassName = 'card'
         HeightPercent = 100.000000000000000000
         WidthPercent = 100.000000000000000000
@@ -1321,11 +1323,11 @@ object mainForm: TmainForm
           WidthPercent = 100.000000000000000000
         end
         object RxnParamComboBox: TWebComboBox
-          Left = 10
+          Left = 3
           Top = 29
           Width = 145
           Height = 21
-          ElementClassName = 'custom-select'
+          ElementClassName = 'form-select-padding-y'
           ElementFont = efCSS
           HeightPercent = 100.000000000000000000
           WidthPercent = 100.000000000000000000
@@ -1336,8 +1338,8 @@ object mainForm: TmainForm
           ItemIndex = -1
         end
         object RxnParamEdit: TWebEdit
-          Left = 20
-          Top = 75
+          Left = 18
+          Top = 91
           Width = 121
           Height = 22
           ChildOrder = 2

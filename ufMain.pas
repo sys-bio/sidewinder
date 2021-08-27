@@ -22,8 +22,7 @@ uses
 const
   SLIDERPHEIGHT = 50; // Param Sliders WebPanel height
   DEFAULTSPECIESPLOTHT = 10; // Default y range for plotting species
-
-const
+  SLIDER_RANGE_MULT = 10;  // Default range multiplier for param slider
   PLOT_WIDTH_PERCENTAGE = 0.6; // This means a plot extends to 60% of the right panel width
 
 type
@@ -171,6 +170,7 @@ type
     numbSliders: Integer; // Number of parameter sliders
     rightPanelType: TPanelType;
     networkUpdated: boolean; // Network has changed, update model, plots, etc when convenient.
+    RxnParamComboBox2: TWebComboBox;
     procedure InitSimResultsTable(); // Init simResultsMemo.
     procedure addPlot(yMax: double); // Add a plot, yMax: largest initial val of plotted species
     procedure resetPlots();  // Reset plots for new simulation.
@@ -1390,7 +1390,7 @@ var
   pVal:Double;
   pName: String;
 begin
-  rangeMult := 10; // default. 10
+  rangeMult := SLIDER_RANGE_MULT; //10; // default.
   pName :=  self.mainController.getModel.getP_Names[self.sliderParamAr[sn]];
   pVal := self.mainController.getModel.getP_Vals[self.sliderParamAr[sn]];
   self.sliderPTBLabelAr[sn].caption := pName + ': ' + FloatToStr(pVal);
@@ -1497,9 +1497,9 @@ begin
   if self.rxnParamComboBox.Items.count >0 then
   begin
     self.rxnParamEdit.text := floattostr(networkController.network.reactions[networkController.selectedEdge].state.rateParams[0].getValue);
-    self.RxnParamComboBox.ItemIndex := 0;
   end;
   self.RxnParamComboBox.invalidate;
+
 end;
 
 procedure TMainForm.updateRxnStoichPanel();
@@ -1538,10 +1538,8 @@ procedure TMainForm.clearRxnNodeRightPanels();
 begin
     self.rateLawEqLabel.Caption := '';
     self.RxnParamComboBox.clear;
-
     self.rightPanelType := SIMULATION_PANEL; // Right panel no longer shows deleted obj
     self.setRightPanels;
-
 end;
 
 procedure TMainForm.setUpSimulationUI();
