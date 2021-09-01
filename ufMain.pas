@@ -99,8 +99,6 @@ type
     RxnStoichLabel: TWebLabel;
     StoicReactantsLabel: TWebLabel;
     StoichProductsLabel: TWebLabel;
-    ReactantStoichLB: TWebListBox;
-    ProductStoichLB: TWebListBox;
 
     procedure btnUniUniClick(Sender: TObject);
     procedure btnBiBiClick(Sender: TObject);
@@ -160,7 +158,6 @@ type
     procedure editNodeConcExit(Sender: TObject);
     procedure RPanelTabSetClick(Sender: TObject);
     procedure RxnParamComboBoxChange(Sender: TObject);
-    procedure RxnParamComboBoxEnter(Sender: TObject);
     procedure RxnParamComboBoxClick(Sender: TObject);
     procedure RxnParamComboBoxExit(Sender: TObject);
     procedure RxnParamEditExit(Sender: TObject);
@@ -170,7 +167,10 @@ type
     numbSliders: Integer; // Number of parameter sliders
     rightPanelType: TPanelType;
     networkUpdated: boolean; // Network has changed, update model, plots, etc when convenient.
-    RxnParamComboBox2: TWebComboBox;
+    rxnReactStoichLabels: TList<TWebLabel>;
+    rxnReactStoichEdits: TList<TWebEdit>;
+    rxnProdStoichLabels: TList<TWebLabel>;
+    rxnProdStoichEdits: TList<TWebEdit>;
     procedure InitSimResultsTable(); // Init simResultsMemo.
     procedure addPlot(yMax: double); // Add a plot, yMax: largest initial val of plotted species
     procedure resetPlots();  // Reset plots for new simulation.
@@ -198,8 +198,10 @@ type
     procedure updateRxnParamPanel();//        "
     procedure updateRxnStoichPanel(); //      "
     procedure setRightPanels(); // set correct panel to be visible
+    procedure clearRxnStoichCoeffs(); // clear rxn stoichs when new reaction displayed.
     procedure clearRxnNodeRightPanels(); // clear references to rxn/nodes that have been deleted.
     procedure setUpSimulationUI(); // Set up sim related buttons, plots, etc
+    procedure addRxnStoichEdit(spIndex: integer; rxnReactant: boolean);
 
   public
     network: TNetwork;
@@ -568,13 +570,6 @@ begin
 //  self.RxnParamComboBox.invalidate;
 end;
 
-procedure TMainForm.RxnParamComboBoxEnter(Sender: TObject);
-var i: integer;
-begin
-//console.log('TMainForm.RxnParamComboBoxEnter');
- // i := self.RxnParamComboBox.ItemIndex;
- // self.rxnParamEdit.text := floattostr(networkController.network.reactions[networkController.selectedEdge].state.rateParams[i].getValue);
-end;
 
 procedure TMainForm.RxnParamComboBoxExit(Sender: TObject);
 var i: integer;
@@ -803,6 +798,10 @@ begin
   self.RNodeEditWPanel.ElementBodyClassName := RSimWPanel.ElementBodyClassName;
   self.RRxnEditWPanel.ElementBodyClassName := RSimWPanel.ElementBodyClassName;
   self.RRxnEditWPanel.visible := false;
+  self.rxnReactStoichLabels := TList<TWebLabel>.create;
+  self.rxnReactStoichEdits := TList<TWebEdit>.create;
+  self.rxnProdStoichLabels := TList<TWebLabel>.create;
+  self.rxnProdStoichEdits := TList<TWebEdit>.create;
   self.adjustRightTabWPanels;
   self.mainController := TControllerMain.Create(self.networkController);
   self.mainController.setOnline(false);
@@ -1504,33 +1503,142 @@ end;
 
 procedure TMainForm.updateRxnStoichPanel();
 var i: integer;
-   stoichCoeff: string;
+ //  stoichCoeff: string;
 begin
-  self.ReactantStoichLB.clear;
-  self.ProductStoichLB.clear;
-
+  self.clearRxnStoichCoeffs();
   for i := 0 to Length(networkController.network.reactions[networkController.selectedEdge].state.srcId)-1 do
   begin
-    stoichCoeff := '';
+   // stoichCoeff := '';
     if networkController.network.reactions[networkController.selectedEdge].state.srcId[i] <> '' then
     begin
-      stoichCoeff := networkController.network.reactions[networkController.selectedEdge].state.srcStoich[i].toString();
-      ReactantStoichLB.Items.Add(networkController.network.reactions[networkController.selectedEdge].state.srcId[i]
-                                 +' ('+ stoichCoeff + ')');
+     self.addRxnStoichEdit(i, true);
     end;
   end;
 
   for i := 0 to Length(networkController.network.reactions[networkController.selectedEdge].state.destId)-1 do
   begin
-    stoichCoeff := '';
+  //  stoichCoeff := '';
     if networkController.network.reactions[networkController.selectedEdge].state.destId[i] <> '' then
     begin
-      stoichCoeff := networkController.network.reactions[networkController.selectedEdge].state.destStoich[i].toString();
-      ProductStoichLB.Items.Add(networkController.network.reactions[networkController.selectedEdge].state.destId[i]
-                                 +' ('+ stoichCoeff + ')');
+      self.addRxnStoichEdit(i, false);
     end;
   end;
 
+end;
+
+procedure TMainForm.addRxnStoichEdit(spIndex: integer; rxnReactant: boolean);
+// Handle updating the stoich for each species of a rxn. May be more than one src and dest species.
+  procedure editRxnSpStoich(Sender: TObject; src: boolean);
+  var newStoich: double;
+  begin
+  //console.log('addRxnStoichEdit');
+  if Sender.classType = TWebEdit then
+   begin
+     try
+     begin
+       newStoich := strtofloat((Sender as TWebEdit).Text);
+       if src = true then
+         networkController.setReactionSpecStoich((Sender as TWebEdit).Tag, newStoich, src)
+       else
+         networkController.setReactionSpecStoich((Sender as TWebEdit).Tag, newStoich, src);
+       self.updateRxnRatePanel;
+     end;
+     except
+       on Exception: EConvertError do
+      // ShowMessage(Exception.Message);
+         ShowMessage ('Stoichiometric coefficient must be a number');
+     end;
+
+   end;
+  end;
+
+  procedure editRxnSrcStoichExit(Sender: TObject);
+  begin
+    editRxnSpStoich(Sender, true);
+  end;
+  procedure editRxnDestStoichExit(Sender: TObject);
+  begin
+    editRxnSpStoich(Sender, false);
+  end;
+// ----------------------------------------------------
+const EDITBOX_HT = 25;
+var i: integer;
+    newStoichLabel: TWebLabel;
+    newStoichEdit: TWebEdit;
+begin
+    newStoichLabel := TWebLabel.create(self.RxnSpStoichPanel);
+    newStoichLabel.parent := self.RxnSpStoichPanel;
+    newStoichLabel.Left := 20;
+    newStoichLabel.font.color := clWhite;
+    newStoichLabel.font.size := 12;
+    newStoichEdit := TWebEdit.create(self.RxnSpStoichPanel);
+    newStoichEdit.parent := self.RxnSpStoichPanel;
+    newStoichEdit.font.size := 12;
+    newStoichEdit.Left := 100;
+    newStoichEdit.Width := 50;
+    newStoichEdit.Tag := spIndex;  // species index.
+
+    if rxnReactant then
+    begin
+      if networkController.network.reactions[networkController.selectedEdge].state.srcId[spIndex] <> '' then
+      begin
+        newStoichLabel.caption := networkController.network.reactions[networkController.selectedEdge].state.srcId[spIndex];
+        newStoichLabel.top := self.StoicReactantsLabel.top + self.StoicReactantsLabel.height + round(spIndex*EDITBOX_HT);
+        rxnReactStoichLabels.add(newStoichLabel);
+        newStoichEdit.Top := self.StoicReactantsLabel.top + self.StoicReactantsLabel.height + round(spIndex*EDITBOX_HT);
+
+        newStoichEdit.onExit := editRxnSrcStoichExit;
+        newStoichEdit.Text := networkController.network.reactions[networkController.selectedEdge].state.srcStoich[spIndex].toString();
+        rxnReactStoichEdits.add(newStoichEdit);
+      end;
+    end
+    else
+    begin
+      if networkController.network.reactions[networkController.selectedEdge].state.destId[spIndex] <> '' then
+      begin
+       newStoichLabel.caption := networkController.network.reactions[networkController.selectedEdge].state.destId[spIndex];
+       newStoichLabel.top := self.StoichProductsLabel.top + self.StoichProductsLabel.height + round(spIndex*20);
+
+       rxnProdStoichLabels.add(newStoichLabel);
+       newStoichEdit.Top := self.StoichProductsLabel.top + self.StoichProductsLabel.height + round(spIndex*20);
+       newStoichEdit.onExit := editRxnDestStoichExit;
+       newStoichEdit.Text := networkController.network.reactions[networkController.selectedEdge].state.destStoich[spIndex].toString();
+       rxnProdStoichEdits.add(newStoichEdit);
+      end;
+    end;
+
+
+end;
+
+procedure TMainForm.clearRxnStoichCoeffs();
+var i: integer;
+    tempObj: TObject;
+begin
+     // Delete all of Stoich labels and edit boxes:
+    for i := self.rxnReactStoichLabels.count -1 downto 0 do
+    begin
+       tempObj := self.rxnReactStoichLabels[i];
+       tempObj.Free;
+       self.rxnReactStoichLabels.Delete(i);
+    end;
+    for i := self.rxnProdStoichLabels.count -1 downto 0 do
+    begin
+       tempObj := self.rxnProdStoichLabels[i];
+       tempObj.Free;
+       self.rxnProdStoichLabels.Delete(i);
+    end;
+     for i := self.rxnReactStoichEdits.count -1 downto 0 do
+    begin
+       tempObj := self.rxnReactStoichEdits[i];
+       tempObj.Free;
+       self.rxnReactStoichEdits.Delete(i);
+    end;
+    for i := self.rxnProdStoichEdits.count -1 downto 0 do
+    begin
+       tempObj := self.rxnProdStoichEdits[i];
+       tempObj.Free;
+       self.rxnProdStoichEdits.Delete(i);
+    end;
 end;
 
 procedure TMainForm.clearRxnNodeRightPanels();
@@ -1538,6 +1646,7 @@ procedure TMainForm.clearRxnNodeRightPanels();
 begin
     self.rateLawEqLabel.Caption := '';
     self.RxnParamComboBox.clear;
+    self.clearRxnStoichCoeffs();
     self.rightPanelType := SIMULATION_PANEL; // Right panel no longer shows deleted obj
     self.setRightPanels;
 end;

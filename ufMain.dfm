@@ -1,6 +1,6 @@
 object mainForm: TmainForm
   Width = 1800
-  Height = 860
+  Height = 880
   CSSLibrary = cssBootstrap
   OnCreate = WebFormCreate
   OnResize = WebFormResize
@@ -236,7 +236,7 @@ object mainForm: TmainForm
   end
   object bottomWPanel: TWebPanel
     Left = 0
-    Top = 775
+    Top = 795
     Width = 1800
     Height = 85
     ElementClassName = 'card border-0'
@@ -247,6 +247,7 @@ object mainForm: TmainForm
     BorderStyle = bsSingle
     ChildOrder = 4
     ElementBodyClassName = 'card-body-10  bg-dark text-white'
+    ExplicitTop = 775
     object btnRandomNetwork: TWebButton
       Left = 500
       Top = 3
@@ -450,7 +451,7 @@ object mainForm: TmainForm
     Left = 0
     Top = 60
     Width = 1800
-    Height = 715
+    Height = 735
     HeightPercent = 100.000000000000000000
     WidthPercent = 100.000000000000000000
     Align = alClient
@@ -460,11 +461,12 @@ object mainForm: TmainForm
     Color = clWhite
     ElementBodyClassName = 'card-body'
     ElementFont = efCSS
+    ExplicitHeight = 715
     object LeftWPanel: TWebPanel
       Left = 0
       Top = 0
       Width = 137
-      Height = 715
+      Height = 735
       ElementClassName = 'card rounded-0'
       HeightPercent = 100.000000000000000000
       WidthPercent = 100.000000000000000000
@@ -479,6 +481,7 @@ object mainForm: TmainForm
       Font.Name = 'Tahoma'
       Font.Style = []
       ParentFont = False
+      ExplicitHeight = 715
       object btnUniUni: TWebSpeedButton
         Left = 6
         Top = 96
@@ -814,7 +817,7 @@ object mainForm: TmainForm
       Left = 1274
       Top = 0
       Width = 526
-      Height = 715
+      Height = 735
       ElementClassName = 'card rounded-0'
       HeightPercent = 100.000000000000000000
       WidthPercent = 100.000000000000000000
@@ -824,6 +827,7 @@ object mainForm: TmainForm
       ChildOrder = 2
       ElementBodyClassName = 'card-body-shadow'
       ElementFont = efCSS
+      ExplicitHeight = 715
       object simResultsMemo: TWebMemo
         Left = 6
         Top = 544
@@ -880,7 +884,7 @@ object mainForm: TmainForm
       Left = 137
       Top = 0
       Width = 822
-      Height = 715
+      Height = 735
       ElementClassName = 'card rounded-0'
       HeightPercent = 100.000000000000000000
       WidthPercent = 100.000000000000000000
@@ -890,11 +894,12 @@ object mainForm: TmainForm
       ChildOrder = 2
       ElementBodyClassName = 'card-body'
       ElementFont = efCSS
+      ExplicitHeight = 715
       object networkPB1: TWebPaintBox
         Left = 0
         Top = 0
         Width = 804
-        Height = 697
+        Height = 717
         HeightPercent = 100.000000000000000000
         WidthPercent = 100.000000000000000000
         Align = alClient
@@ -906,14 +911,13 @@ object mainForm: TmainForm
         OnMouseMove = networkPB1MouseMove
         OnMouseUp = networkPB1MouseUp
         OnMouseWheel = networkPB1MouseWheel
-        ExplicitLeft = 6
-        ExplicitTop = -6
+        ExplicitHeight = 697
       end
       object netDrawScrollBarVert: TTMSFNCScrollBar
         Left = 804
         Top = 0
         Width = 18
-        Height = 697
+        Height = 717
         Align = alRight
         ParentDoubleBuffered = False
         Color = 15592941
@@ -951,10 +955,11 @@ object mainForm: TmainForm
         Max = 1000.000000000000000000
         PageSize = 10.000000000000000000
         OnValueChanged = netDrawScrollBarVertValueChanged
+        ExplicitHeight = 697
       end
       object netDrawScrollBarHoriz: TTMSFNCScrollBar
         Left = 0
-        Top = 697
+        Top = 717
         Width = 822
         Height = 18
         Align = alBottom
@@ -995,25 +1000,27 @@ object mainForm: TmainForm
         Max = 1000.000000000000000000
         PageSize = 10.000000000000000000
         OnValueChanged = netDrawScrollBarHorizValueChanged
+        ExplicitTop = 697
       end
     end
     object splitter: TWebSplitter
       Left = 959
       Top = 0
       Width = 5
-      Height = 715
+      Height = 735
       HeightPercent = 100.000000000000000000
       WidthPercent = 100.000000000000000000
       Align = alRight
       ChildOrder = 3
       Color = clBtnFace
       OnMoved = splitterMoved
+      ExplicitHeight = 715
     end
     object RNodeEditWPanel: TWebPanel
       Left = 1114
       Top = 0
       Width = 160
-      Height = 715
+      Height = 735
       ElementClassName = 'card'
       HeightPercent = 100.000000000000000000
       WidthPercent = 100.000000000000000000
@@ -1024,6 +1031,7 @@ object mainForm: TmainForm
       ElementBodyClassName = 'card-body'
       ElementFont = efCSS
       Visible = False
+      ExplicitHeight = 715
       object pnlNodePanel: TWebPanel
         Left = 8
         Top = 0
@@ -1157,7 +1165,7 @@ object mainForm: TmainForm
       Left = 964
       Top = 0
       Width = 150
-      Height = 715
+      Height = 735
       ElementClassName = 'card'
       HeightPercent = 100.000000000000000000
       WidthPercent = 100.000000000000000000
@@ -1168,10 +1176,11 @@ object mainForm: TmainForm
       ElementBodyClassName = 'card-body'
       ElementFont = efCSS
       Visible = False
+      ExplicitHeight = 715
       object RxnRatePanel: TWebPanel
-        Left = 5
+        Left = 4
         Top = 60
-        Width = 200
+        Width = 300
         Height = 60
         ElementClassName = 'card'
         HeightPercent = 100.000000000000000000
@@ -1182,14 +1191,14 @@ object mainForm: TmainForm
         ElementBodyClassName = 'card-body-shadow'
         ElementFont = efCSS
         object rateLawLabel: TWebLabel
-          Left = 20
+          Left = 10
           Top = 20
-          Width = 49
-          Height = 13
+          Width = 58
+          Height = 16
           Caption = 'Rate Law:'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWhite
-          Font.Height = -11
+          Font.Height = -13
           Font.Name = 'Tahoma'
           Font.Style = []
           HeightPercent = 100.000000000000000000
@@ -1200,10 +1209,10 @@ object mainForm: TmainForm
           Left = 85
           Top = 20
           Width = 4
-          Height = 14
+          Height = 16
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWhite
-          Font.Height = -12
+          Font.Height = -13
           Font.Name = 'Tahoma'
           Font.Style = []
           HeightPercent = 100.000000000000000000
@@ -1214,8 +1223,8 @@ object mainForm: TmainForm
       object RxnSpStoichPanel: TWebPanel
         Left = 6
         Top = 175
-        Width = 200
-        Height = 200
+        Width = 300
+        Height = 210
         ElementClassName = 'card'
         HeightPercent = 100.000000000000000000
         WidthPercent = 100.000000000000000000
@@ -1227,12 +1236,12 @@ object mainForm: TmainForm
         object RxnStoichLabel: TWebLabel
           Left = 10
           Top = 5
-          Width = 126
-          Height = 16
-          Caption = 'Species Stoichiometry'
+          Width = 162
+          Height = 19
+          Caption = 'Reaction Stoichiometry'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWhite
-          Font.Height = -13
+          Font.Height = -16
           Font.Name = 'Tahoma'
           Font.Style = []
           HeightPercent = 100.000000000000000000
@@ -1269,33 +1278,9 @@ object mainForm: TmainForm
           ParentFont = False
           WidthPercent = 100.000000000000000000
         end
-        object ProductStoichLB: TWebListBox
-          Left = 18
-          Top = 135
-          Width = 121
-          Height = 62
-          ElementClassName = 'form-control'
-          ElementFont = efCSS
-          HeightPercent = 100.000000000000000000
-          ItemHeight = 13
-          ItemIndex = -1
-          WidthPercent = 100.000000000000000000
-        end
-        object ReactantStoichLB: TWebListBox
-          Left = 18
-          Top = 45
-          Width = 121
-          Height = 62
-          ElementClassName = 'form-control'
-          ElementFont = efCSS
-          HeightPercent = 100.000000000000000000
-          ItemHeight = 13
-          ItemIndex = -1
-          WidthPercent = 100.000000000000000000
-        end
       end
       object RxnParamPanel: TWebPanel
-        Left = 5
+        Left = 6
         Top = 416
         Width = 200
         Height = 145
@@ -1333,7 +1318,6 @@ object mainForm: TmainForm
           WidthPercent = 100.000000000000000000
           OnChange = RxnParamComboBoxChange
           OnClick = RxnParamComboBoxClick
-          OnEnter = RxnParamComboBoxEnter
           OnExit = RxnParamComboBoxExit
           ItemIndex = -1
         end

@@ -68,6 +68,7 @@ type
     procedure setNodeId (Id : string);
     procedure setNodeConc (conc : string);
     function  addReaction(Id: string; src, dest: TNode): integer;
+    procedure setReactionSpecStoich(spIndex: integer; stoichVal: double; src: boolean);
     procedure prepareUndo;
     procedure undo;
     procedure deleteSelectedItems;
@@ -280,11 +281,46 @@ begin
   except
     on Exception: EConvertError do
      // ShowMessage(Exception.Message);
-      ShowMessage ('Conc must be a number');
+      ShowMessage ('Concentration must be a number');
   end;
   network.nodes[selectedNode].state.conc := newConc;
   network.networkEvent;
 end;
+
+procedure TController.setReactionSpecStoich(spIndex: integer; stoichVal: double; src: boolean);
+var i: integer;
+begin
+  if selectedEdge = -1 then
+    exit;
+  prepareUndo;
+  try
+    if src then
+    begin
+      if spIndex < length(network.reactions[selectedEdge].state.srcStoich) then
+      begin
+        network.reactions[selectedEdge].state.srcStoich[spIndex] := stoichVal;
+        network.networkEvent;
+      end
+      else
+        ShowMessage('Source species index too large');
+    end
+    else // destination node:
+      if spIndex < length(network.reactions[selectedEdge].state.destStoich) then
+      begin
+        network.reactions[selectedEdge].state.destStoich[spIndex] := stoichVal;
+        network.networkEvent;
+      end
+      else
+        ShowMessage('Source destination index too large');
+    network.reactions[selectedEdge].setRateRule;
+  except
+    on Exception do
+      ShowMessage('Error setting reaction Stoichiometric coefficient for a species.');
+
+  end;
+
+end;
+
 
 procedure TController.addUniUniReactionMouseDown(Sender: TObject; x, y: double);
 var
