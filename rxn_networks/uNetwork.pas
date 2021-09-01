@@ -976,15 +976,15 @@ begin
   state.id := id;
   state.srcPtr[0] := src;
   state.destPtr[0] := dest;
-  // These are used for undo and loading fro json file
+  // These are used for undo and loading from json file
   state.srcId[0] := src.state.id;
   state.destId[0] := dest.state.id;
   self.setDefaultParams;
   self.setRateRule();
 end;
 
-procedure TReaction.setDefaultParams();   // Note need to just use stoich values instead of Order of reaction
-var newRateConst,newParam: TSBMLparameter; // Get rid of Order of reaction exponent
+procedure TReaction.setDefaultParams(); // Note: need to just use stoich values of reaction
+var newRateConst,newParam: TSBMLparameter;
   i: Integer;
 begin
   newRateConst := TSBMLparameter.create(RXN_k_F+ state.id);
