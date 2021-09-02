@@ -247,7 +247,6 @@ object mainForm: TmainForm
     BorderStyle = bsSingle
     ChildOrder = 4
     ElementBodyClassName = 'card-body-10  bg-dark text-white'
-    ExplicitTop = 775
     object btnRandomNetwork: TWebButton
       Left = 500
       Top = 3
@@ -461,7 +460,6 @@ object mainForm: TmainForm
     Color = clWhite
     ElementBodyClassName = 'card-body'
     ElementFont = efCSS
-    ExplicitHeight = 715
     object LeftWPanel: TWebPanel
       Left = 0
       Top = 0
@@ -481,7 +479,6 @@ object mainForm: TmainForm
       Font.Name = 'Tahoma'
       Font.Style = []
       ParentFont = False
-      ExplicitHeight = 715
       object btnUniUni: TWebSpeedButton
         Left = 6
         Top = 96
@@ -827,7 +824,6 @@ object mainForm: TmainForm
       ChildOrder = 2
       ElementBodyClassName = 'card-body-shadow'
       ElementFont = efCSS
-      ExplicitHeight = 715
       object simResultsMemo: TWebMemo
         Left = 6
         Top = 544
@@ -894,7 +890,6 @@ object mainForm: TmainForm
       ChildOrder = 2
       ElementBodyClassName = 'card-body'
       ElementFont = efCSS
-      ExplicitHeight = 715
       object networkPB1: TWebPaintBox
         Left = 0
         Top = 0
@@ -911,7 +906,6 @@ object mainForm: TmainForm
         OnMouseMove = networkPB1MouseMove
         OnMouseUp = networkPB1MouseUp
         OnMouseWheel = networkPB1MouseWheel
-        ExplicitHeight = 697
       end
       object netDrawScrollBarVert: TTMSFNCScrollBar
         Left = 804
@@ -955,7 +949,6 @@ object mainForm: TmainForm
         Max = 1000.000000000000000000
         PageSize = 10.000000000000000000
         OnValueChanged = netDrawScrollBarVertValueChanged
-        ExplicitHeight = 697
       end
       object netDrawScrollBarHoriz: TTMSFNCScrollBar
         Left = 0
@@ -1000,7 +993,6 @@ object mainForm: TmainForm
         Max = 1000.000000000000000000
         PageSize = 10.000000000000000000
         OnValueChanged = netDrawScrollBarHorizValueChanged
-        ExplicitTop = 697
       end
     end
     object splitter: TWebSplitter
@@ -1014,7 +1006,6 @@ object mainForm: TmainForm
       ChildOrder = 3
       Color = clBtnFace
       OnMoved = splitterMoved
-      ExplicitHeight = 715
     end
     object RNodeEditWPanel: TWebPanel
       Left = 1114
@@ -1031,7 +1022,6 @@ object mainForm: TmainForm
       ElementBodyClassName = 'card-body'
       ElementFont = efCSS
       Visible = False
-      ExplicitHeight = 715
       object pnlNodePanel: TWebPanel
         Left = 8
         Top = 0
@@ -1176,7 +1166,6 @@ object mainForm: TmainForm
       ElementBodyClassName = 'card-body'
       ElementFont = efCSS
       Visible = False
-      ExplicitHeight = 715
       object RxnRatePanel: TWebPanel
         Left = 4
         Top = 60

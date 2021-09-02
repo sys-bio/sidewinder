@@ -499,6 +499,10 @@ begin
   self.listOfPlots[n].initGraph(0, 200, 0, newYMax, // The 10 is the max Y value (yend) in world coords
         0, self.plotsPBList[n].width, 0, self.plotsPBList[n].height,
         xscaleHeightList.Items[n], yscaleWidth, MainController.getRunTime, MainController.getStepSize);
+  // Display the plot:
+  uPlotActions.processScanOnePlot(0, mainController.getModel.getS_Vals,listOfPlots[n],self.plotsPBList[n], plotSpecies[n],
+           0 {self.currentGeneration} );
+
   self.plotsPBList[n].invalidate;
    // Max viewable steps is PlotWebPB.width (1 pixel per step).
   pixelStepList.Add(0);  // Default number.
