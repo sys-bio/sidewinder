@@ -10,3 +10,4 @@ SidewinderGroup.groupproj.local
 *.py
 math/lsoda/Sidewinder.Test.LSODA.dproj.local
 math/lsoda/Sidewinder.Test.LSODA.identcache
+ufMain.vlb
