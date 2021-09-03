@@ -1,7 +1,7 @@
 unit uSidewinderTypes;
 
 interface
-uses System.Generics.Collections;
+uses System.Generics.Collections, Vcl.Dialogs;
 type
   TDoubleArray = array of double;
   TIntegerArray = array of integer;
@@ -35,6 +35,9 @@ type
       function getNameAr(): array of String;
       function getValAr(): array of double;
   end;
+
+  // Utilities:
+  procedure notifyUser( msg: string );
 
 implementation
  constructor TVarNameVal.create(); overload;
@@ -146,5 +149,11 @@ implementation
    Result := valAr;
  end;
 
+
+
+ procedure notifyUser( msg: string);
+ begin
+   ShowMessage(msg);
+ end;
 
 end.

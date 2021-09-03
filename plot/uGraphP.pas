@@ -6,7 +6,8 @@ uses SysUtils, Classes, Graphics, Controls, System.Types,
      Dialogs, WEBLib.StdCtrls, WEBLib.ExtCtrls, JS, Web, uSidewinderTypes;
 
 const   MAXSIZE = 100;   // Used to set plot window width (if 1 msec step then 10 sec window.)
-        Colors: array[0..9] of integer = (clOlive, clRed, clBlue, clGreen,clBlack,
+        YAXIS_XOFFSET_TEXT = 3;  // tweak x coord for numbers on y-axis
+        COLORS: array[0..9] of integer = (clOlive, clRed, clBlue, clGreen,clBlack,
                                         clAqua, clGray,clPurple, clYellow,clFuchsia);
 type
   TDataType = array[1..MAXSIZE] of integer;
@@ -26,7 +27,7 @@ type
     graphScreenWidth, canvasHeight : integer;
     canvasWidth: integer;
     yAxisHt: integer; // height of yaxis in pixels.
-    y_Mult: array of double; // array of y axis multipliers, default is 1. NOT used currently.
+    //y_Mult: array of double; // array of y axis multipliers, default is 1. NOT used currently.
     step: double;     // step size
     simLength: double; // simulation length
     xScaleHeight : integer;
@@ -263,7 +264,8 @@ begin
           canvas.lineto (mxi+3, myi);
           minor := minor + minorStepSize;
           end;
-      canvas.TextOut (xi-15, yi-4, floattostrf (yPosition,ffGeneral, 4, 4));
+  //    canvas.TextOut (xi-15, yi-4, floattostrf (yPosition,ffGeneral, 4, 4));
+      canvas.TextOut (xi- self.yscalewidth + YAXIS_XOFFSET_TEXT, yi-4, floattostrf (yPosition,ffGeneral, 4, 4));
       yposition := yposition + stepSize;
       //inc (scale, divMk);
     end;

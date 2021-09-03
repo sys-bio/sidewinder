@@ -213,6 +213,7 @@ type
     currentGeneration: Integer; // Used by plots as current x axis point
     plotSpeciesForm: TSpeciesSWForm;
     plotSpecies: TList<TSpeciesList>; // species to graph for each plot
+    plotsPanelList: TList<TWebPanel>; // Panels in which each plot resides
     plotsPBList: TList<TWebPaintBox>; // Plot paint boxes
     listOfPlots: TList<TPlotGraph>;   // Plotting class for each plot
     xscaleHeightList: TList<Integer>;
@@ -265,8 +266,7 @@ end;
 
 procedure TMainForm.btnAboutClick(Sender: TObject);
 begin
-  Showmessage('Version 0.1');
-  //model.testModelUpdate;
+  notifyUser('Version 0.1');
 end;
 
 procedure TMainForm.btnAddNodeClick(Sender: TObject);
@@ -331,7 +331,7 @@ begin
     networkPB1.Invalidate;
   end
   else
-    showMessage('Network already exists in panel.');
+    notifyUser('Network already exists in panel.');
 
 end;
 
@@ -414,7 +414,7 @@ begin
       mainController.saveSBML(fileName);
     end
   else
-    Showmessage('Save cancelled');
+    notifyUser('Save cancelled');
 end;
 
 procedure TMainForm.SBMLloadButtonClick(Sender: TObject);
@@ -492,7 +492,8 @@ procedure TMainForm.initializePlot( n: integer);
 begin
   if pixelStepList = nil then
     pixelStepList := TList<Integer>.create;
-  yScaleWidth := 16; // Gap between the left edge and y axis
+  yScaleWidth := 30; // Gap between the left edge and y axis ( for number labels)
+       // adjust based on init max val (newYMax) ?
   if self.listOfPlots[n].getY_valsMax >0 then newYMax := round(self.listOfPlots[n].getY_valsMax)
     else newYMax := DEFAULTSPECIESPLOTHT;
   self.listOfPlots[n].resetGraph(self.listOfPlots[n].bitmap.canvas); // new..
@@ -546,7 +547,7 @@ begin
   // else ShowMessage('Canceled');
   self.plotEditLB.tag := 0;
   self.plotEditLB.visible := false;
-  self.plotEditLB.Top := 40; // default
+  self.plotEditLB.Top := 40; // default    // Need to specify correct plotPanelList
 end;
 
 procedure TMainForm.plotsPBListPaint(Sender: TObject);
@@ -596,7 +597,7 @@ begin
   except
     on Exception : EConvertError do
     begin
-    ShowMessage(Exception.Message);
+    notifyUser(Exception.Message);
     self.RxnParamEdit.text := floattostr(self.networkController.network.reactions[networkController.selectedEdge].state.rateParams[self.RxnParamComboBox.ItemIndex].getValue());
 
     end;
@@ -968,7 +969,7 @@ begin
       Application.DownloadTextFile(jstr, fileName);
     end
   else
-    Showmessage('Save cancelled');
+    notifyUser('Save cancelled');
 end;
 
 procedure TMainForm.mnuUndoClick(Sender: TObject);
@@ -989,7 +990,7 @@ begin
     networkController.loadModel(AText);
   except
     on E: Exception do
-      Showmessage(E.message);
+      notifyUser(E.message);
   end;
   networkPB1.Invalidate;
 end;
@@ -1107,6 +1108,8 @@ begin
   plotWidth := 0;
   plotPositionToAdd := -1;
   plotPositionToAdd := self.getEmptyPlotPosition();
+  if self.plotsPanelList = nil then
+    self.plotsPanelList := TList<TWebPanel>.create;
   if self.plotsPBList = nil then
     self.plotsPBList := TList<TWebPaintBox>.create;
   if self.xscaleHeightList = nil then
@@ -1120,21 +1123,27 @@ begin
 
   self.listOfPlots.Add(TPlotGraph.create);
   self.listOfPlots[self.numbPlots -1].setY_valsMax(yMax);
-  self.plotsPBList.Add(TWebPaintBox.create(self.RSimWPanel));
-  self.plotsPBList[self.numbPlots - 1].parent := self.RSimWPanel;
+  // Put plot in a TWebPanel:
+  self.plotsPanelList.Add(TWebPanel.create(self.RSimWPanel));
+  self.plotsPanelList[self.numbPlots - 1].Parent := self.RSimWPanel;
+  self.plotsPanelList[self.numbPlots - 1].Tag := plotPositionToAdd;
+  //self.plotsPBList.Add(TWebPaintBox.create(self.RSimWPanel));
+  self.plotsPBList.Add(TWebPaintBox.create(self.plotsPanelList[self.numbPlots-1]));
+  //self.plotsPBList[self.numbPlots - 1].parent := self.RSimWPanel;
+  self.plotsPBList[self.numbPlots - 1].parent := self.plotsPanelList[self.numbPlots-1];
   self.plotsPBList[self.numbPlots - 1].OnPaint := plotsPBListPaint;
   self.plotsPBList[self.numbPlots - 1].OnMouseDown := plotOnMouseDown;
   self.plotsPBList[self.numbPlots - 1].Tag := plotPositionToAdd;
   // Want all plots to have same width, not always the case if user deletes plot,
   // adjust right panel width:
   if self.numbPlots > 1 then
-    plotWidth := self.plotsPBList[0].Width + PLOT_WIDTH_OVERLAP
+    plotWidth := self.plotsPanelList[0].Width + PLOT_WIDTH_OVERLAP
   else
     plotWidth := trunc(self.RSimWPanel.width * PLOT_WIDTH_PERCENTAGE);
 
 //  console.log('Adding plot, tag: ',self.plotsPBList[self.numbPlots - 1].Tag);
   configPbPlot(plotPositionToAdd, self.numbPlots,
-           plotWidth, self.RSimWPanel.Height, self.plotsPBList);
+           plotWidth, self.RSimWPanel.Height, self.plotsPBList, self.plotsPanelList);
 
   self.xscaleHeightList.Add( round(0.15 * self.plotsPBList[self.numbPlots - 1].Height) );
   // make %15 of total height
@@ -1182,9 +1191,13 @@ begin
       try
         begin
         //console.log('Deleting plot with tag: ',self.plotsPBList[plotIndex].Tag);
+
           tempObj := self.plotsPBList[plotIndex];
           tempObj.Free;
           self.plotsPBList.Delete(plotIndex);
+          tempObj := self.plotsPanelList[plotIndex];
+          tempObj.Free;
+          self.plotsPanelList.Delete(plotIndex);
           self.xscaleHeightList.Delete(plotIndex);
           tempObj := self.listOfPLots[plotIndex];
           tempObj.Free;
@@ -1203,7 +1216,7 @@ begin
     end;
   except
      on EArgumentOutOfRangeException do
-      ShowMessage('Plot number not in array');
+      notifyUser('Error: Plot number not in array');
 
   end;
 
@@ -1218,7 +1231,8 @@ begin
   plotIndex := -1;
   plotIndex := getPlotPBIndex(plotn);
   plotXposition := 40;
-  plotYposition := self.plotsPBList[plotIndex].Top + 10;
+//  plotYposition := self.plotsPBList[plotIndex].Top + 10;
+  plotYposition := self.plotsPanelList[plotIndex].Top + 20;
   editList := TStringList.create();
   editList.Add('Change plot species.');
   editList.Add('Delete plot.');
@@ -1481,7 +1495,7 @@ begin
     self.RRxnEditWPanel.invalidate;
   except
      on E: Exception do
-      Showmessage(E.message);
+      notifyUser(E.message);
   end;
 
 end;
@@ -1550,7 +1564,7 @@ procedure TMainForm.addRxnStoichEdit(spIndex: integer; rxnReactant: boolean);
      except
        on Exception: EConvertError do
       // ShowMessage(Exception.Message);
-         ShowMessage ('Stoichiometric coefficient must be a number');
+         notifyUser ('Stoichiometric coefficient must be a number');
      end;
 
    end;
