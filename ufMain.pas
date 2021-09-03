@@ -57,7 +57,7 @@ type
     loadNetworkButton: TWebButton;
     SBMLOpenDialog: TWebOpenDialog;
     SBMLloadButton: TWebButton;
-    WebPanel2: TWebPanel;
+    WebPanel2: TWebPanel;  // ??
     LeftWPanel: TWebPanel;
     btnUniUni: TWebSpeedButton;
     btnUniBi: TWebSpeedButton;
@@ -216,6 +216,8 @@ type
     plotsPanelList: TList<TWebPanel>; // Panels in which each plot resides
     plotsPBList: TList<TWebPaintBox>; // Plot paint boxes
     listOfPlots: TList<TPlotGraph>;   // Plotting class for each plot
+    listOfPlotLegendsPB: TList<TWebPaintBox>; // Paint box to hold plot legends
+    listOfPlotLegendsBMap: TList<TBitMap>;
     xscaleHeightList: TList<Integer>;
     // This is the space reserved for the x axis labeling of each plot
     sliderParamForm: TParamSliderSForm;
@@ -235,6 +237,8 @@ type
 
     function ScreenToWorld(X, Y: Double): TPointF; // Network drawing panel
     function WorldToScreen(wx: Integer): Integer; // Network drawing panel
+    function processPlotLegendPB(plotIndex: integer; plotLegendPB: TWebPaintBox): TWebPaintBox;
+    function processPlotLegendBM(plotIndex: integer; plotLegendBitMap: TBitMap): TBitMap; // Draw plot legend
     procedure PingSBMLLoaded(newModel:TModel); // Notify when done loading or model changes
     procedure networkHasChanged(); // Notify when network has changed, may need to update model, plots, etc
     procedure getVals(newTime: Double; newVals: array of Double);
@@ -442,30 +446,40 @@ var
   i: Integer;
   yScaleWidth, newYMax : integer;
 begin
+
   if MainController.isOnline = false then
     begin
-      MainController.setOnline(true);
-      onLineSimButton.font.color := clgreen;
-      onLineSimButton.ElementClassName := 'btn btn-success btn-sm';
-      onLineSimButton.caption := 'Simulation: Online';
-      simResultsMemo.visible := true;
+      if self.networkUpdated = false then
+      begin
+        MainController.setOnline(true);
+        onLineSimButton.font.color := clgreen;
+        onLineSimButton.ElementClassName := 'btn btn-success btn-sm';
+        onLineSimButton.caption := 'Simulation: Online';
+        simResultsMemo.visible := true;
 
-      try
-        MainController.SetRunTime( strToFloat(rtLengthEdit1.Text));
-      except
-        on Exception: EConvertError do
-          begin
+     // try
+     //   MainController.SetRunTime( strToFloat(rtLengthEdit1.Text));
+     // except
+     //   on Exception: EConvertError do
+      //    begin
             MainController.SetRunTime(200); // Hard coded for now.
             self.rtLengthEdit1.Text := FloatToStr(MainController.getRunTime);
-          end;
-      end;
+       //   end;
+      //end;
 
-      if self.MainController.getCurrTime = 0  then
-        self.InitSimResultsTable();  // Set table of Sim results.
+        if self.MainController.getCurrTime = 0  then
+          self.InitSimResultsTable();  // Set table of Sim results.
 
-      self.rightPanelType := SIMULATION_PANEL;
-      self.setRightPanels;
-      MainController.SetTimerEnabled(true); // Turn on web timer (Start simulation)
+        self.rightPanelType := SIMULATION_PANEL;
+        self.setRightPanels;
+        MainController.SetTimerEnabled(true); // Turn on web timer (Start simulation)
+      end
+      else
+        begin
+          notifyUser(' Model has changed, resetting simulation');
+          self.networkUpdated := false;
+          self.setUpSimulationUI;
+        end;
     end
   else
     begin
@@ -496,7 +510,7 @@ begin
        // adjust based on init max val (newYMax) ?
   if self.listOfPlots[n].getY_valsMax >0 then newYMax := round(self.listOfPlots[n].getY_valsMax)
     else newYMax := DEFAULTSPECIESPLOTHT;
-  self.listOfPlots[n].resetGraph(self.listOfPlots[n].bitmap.canvas); // new..
+  self.listOfPlots[n].resetGraph(self.listOfPlots[n].bitmap.canvas);
   self.listOfPlots[n].initGraph(0, 200, 0, newYMax, // The 10 is the max Y value (yend) in world coords
         0, self.plotsPBList[n].width, 0, self.plotsPBList[n].height,
         xscaleHeightList.Items[n], yscaleWidth, MainController.getRunTime, MainController.getStepSize);
@@ -505,6 +519,8 @@ begin
            0 {self.currentGeneration} );
 
   self.plotsPBList[n].invalidate;
+  self.listOfPlotLegendsPB[n].Canvas.Draw(0,0,self.listOfPlotLegendsBMap[n]);
+
    // Max viewable steps is PlotWebPB.width (1 pixel per step).
   pixelStepList.Add(0);  // Default number.
   if MainController.getRunTime / MainController.getStepSize < self.plotsPBList[n].width then
@@ -1112,6 +1128,10 @@ begin
     self.plotsPanelList := TList<TWebPanel>.create;
   if self.plotsPBList = nil then
     self.plotsPBList := TList<TWebPaintBox>.create;
+  if self.listOfPlotLegendsPB = nil then
+    self.listOfPlotLegendsPB := TList<TWebPaintBox>.create;
+  if self.listOfPlotLegendsBMap = nil then
+    self.listOfPlotLegendsBMap := TList<TBitMap>.create;
   if self.xscaleHeightList = nil then
     self.xscaleHeightList := TList<Integer>.create;
   if self.listOfPlots = nil then
@@ -1127,9 +1147,7 @@ begin
   self.plotsPanelList.Add(TWebPanel.create(self.RSimWPanel));
   self.plotsPanelList[self.numbPlots - 1].Parent := self.RSimWPanel;
   self.plotsPanelList[self.numbPlots - 1].Tag := plotPositionToAdd;
-  //self.plotsPBList.Add(TWebPaintBox.create(self.RSimWPanel));
   self.plotsPBList.Add(TWebPaintBox.create(self.plotsPanelList[self.numbPlots-1]));
-  //self.plotsPBList[self.numbPlots - 1].parent := self.RSimWPanel;
   self.plotsPBList[self.numbPlots - 1].parent := self.plotsPanelList[self.numbPlots-1];
   self.plotsPBList[self.numbPlots - 1].OnPaint := plotsPBListPaint;
   self.plotsPBList[self.numbPlots - 1].OnMouseDown := plotOnMouseDown;
@@ -1148,9 +1166,56 @@ begin
   self.xscaleHeightList.Add( round(0.15 * self.plotsPBList[self.numbPlots - 1].Height) );
   // make %15 of total height
   self.maxYValueList.Add(self.plotsPBList[self.numbPlots - 1].Height); // PaintBox dimension
+
+  self.listOfPlotLegendsPB.Add(TWebPaintBox.create(self.plotsPanelList[self.numbPlots - 1]));
+  self.listOfPlotLegendsBMap.Add(TBitMap.create);
+  self.listOfPlotLegendsPB[self.numbPlots-1].Tag := plotPositionToAdd;
+  self.listOfPlotLegendsPB[self.numbPlots-1] := self.processPlotLegendPB(self.numbPlots - 1, self.listOfPlotLegendsPB[self.numbPlots-1]);
+  self.listOfPlotLegendsBMap[self.numbPlots-1] := self.processPlotLegendBM(self.numbPlots - 1, self.listOfPlotLegendsBMap[self.numbPlots-1]);
   self.initializePlot(self.numbPlots - 1);
+  for i := 0 to self.numbPlots-1 do
+    self.listOfPlotLegendsPB[i].Canvas.Draw(0,0,self.listOfPlotLegendsBMap[i]); // ? not sure why this has to be redrawn
   self.plotsPBList[self.numbPlots - 1].Invalidate;
 
+end;
+
+function TMainForm.processPlotLegendPB(plotIndex: integer; plotLegendPB: TWebPaintBox): TWebPaintBox;
+var i, speciesPlot: integer;
+begin
+  speciesPlot := 0;
+  speciesPlot := plotSpeciesForm.SpPlotCG.Items.Count; // max #, some will not be plotted.
+  plotLegendPB.parent := self.plotsPanelList[plotIndex];
+  plotLegendPB.top := 5;
+  plotLegendPB.height := 10 * speciesPlot; // each row 5 'pixels' tall
+  plotLegendPB.left := self.plotsPBList[plotIndex].width +10;
+  result := plotLegendPB;
+end;
+
+function TMainForm.processPlotLegendBM(plotIndex: integer; plotLegendBitMap: TBitMap): TBitMap;
+var i, speciesPlot: integer;
+    spName: string;
+begin
+  speciesPlot := 0;
+  speciesPlot := plotSpeciesForm.SpPlotCG.Items.Count; // max #, some will not be plotted.
+  plotLegendBitMap := TBitMap.create;
+  plotLegendBitMap.width := self.listOfPlotLegendsPB[plotIndex].width;
+  plotLegendBitMap.height := self.listOfPlotLegendsPB[plotIndex].height;
+  plotLegendBitMap.canvas.font.name := 'Courier New';
+  plotLegendBitMap.canvas.font.size := 8;
+
+  for i := 0 to speciesPlot -1 do
+    begin
+    spName := '';
+    if plotSpeciesForm.SpPlotCG.checked[i] then
+      begin
+        spName := self.mainController.getModel.getS_names[i];
+        plotLegendBitMap.canvas.pen.color := uGraphP.COLORS[i];
+        plotLegendBitMap.canvas.moveto( 2, i*10+2 );
+        plotLegendBitMap.canvas.lineto( 10, i*10+2);
+        plotLegendBitMap.canvas.TextOut( 11, i*10, spName);
+      end;
+    end;
+  result := plotLegendBitMap;
 end;
 
 function  TMainForm.getPlotPBIndex(plotTag: integer): Integer;
@@ -1191,7 +1256,12 @@ begin
       try
         begin
         //console.log('Deleting plot with tag: ',self.plotsPBList[plotIndex].Tag);
-
+          tempObj := self.listOfPlotLegendsPB[plotIndex];
+          tempObj.Free;
+          self.listOfPlotLegendsPB.Delete(plotIndex);
+          tempObj := self.listOfPlotLegendsBMap[plotIndex];
+          tempObj.Free;
+          self.listOfPlotLegendsBMap.Delete(plotIndex);
           tempObj := self.plotsPBList[plotIndex];
           tempObj.Free;
           self.plotsPBList.Delete(plotIndex);
