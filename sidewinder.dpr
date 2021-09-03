@@ -41,7 +41,8 @@ uses
   uSBMLWriter in 'sbml\uSBMLWriter.pas',
   uPlotActions in 'plot\uPlotActions.pas',
   uBuildRateLaw in 'rxn_networks\uBuildRateLaw.pas',
-  uNetworkToModel in 'rxn_networks\uNetworkToModel.pas';
+  uNetworkToModel in 'rxn_networks\uNetworkToModel.pas',
+  uPlotPanel in 'plot\uPlotPanel.pas';
 
 {$R *.res}
 
