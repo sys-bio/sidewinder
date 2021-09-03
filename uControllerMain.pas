@@ -286,7 +286,10 @@ begin
   self.writeSBMLFileName := fileName;
   // currently can have both sbml loaded from file and network model.
   if self.networkUpdate = true then
-    self.createModel;
+    begin
+      self.createModel;
+      self.networkUpdate := false;
+    end;
 
   if self.sbmlmodel <> nil then
   begin
