@@ -133,6 +133,7 @@ type
 
     procedure onLineSimButtonClick(Sender: TObject);
     procedure plotsPBListPaint(Sender: TObject);
+    procedure plotsPBListLegendPaint(Sender: TObject);
     procedure addPlotButtonClick(Sender: TObject);
     procedure paramAddSliderBtnClick(Sender: TObject);
     procedure loadNetworkButtonClick(Sender: TObject);
@@ -183,7 +184,6 @@ type
     procedure updatePlots(); // Go through and remove species/plots no longer in model.
     procedure initializePlots();
     procedure initializePlot( n: integer);
-    procedure drawPlotLegends();
     procedure deletePlotSpecies(plotn: Integer); // Delete a species curve in a plot.
              // delete, change plot species, other added as needed using TWebListBox.
     procedure addParamSlider();
@@ -210,7 +210,7 @@ type
     networkCanvas: TNetworkCanvas;
     origin: TPointF;
     fileName: string;
-    maxYValueList: TList<Integer>; // max Y screen dimension for each plot
+  //  maxYValueList: TList<Integer>; // max Y screen dimension for each plot
     currentGeneration: Integer; // Used by plots as current x axis point
     plotSpeciesForm: TSpeciesSWForm;
     plotSpecies: TList<TSpeciesList>; // species to graph for each plot
@@ -573,6 +573,14 @@ var
 begin
   plot_i := (Sender as TWebPaintBox).tag;
   plotsPBList.items[plot_i - 1].canvas.draw(0, 0, listOfPlots.Items[plot_i - 1].bitmap);
+end;
+
+procedure TMainForm.plotsPBListLegendPaint(Sender: TObject);
+var
+  plotLegend_i: Integer;
+begin
+  plotLegend_i := (Sender as TWebPaintBox).tag;
+  listOfPlotLegendsPB.items[plotLegend_i - 1].canvas.draw(0, 0, self.listOfPlotLegendsBMap[plotLegend_i-1]);
 end;
 
 procedure TMainForm.RxnParamComboBoxChange(Sender: TObject);  // NOT needed. ??
@@ -1138,8 +1146,8 @@ begin
     self.xscaleHeightList := TList<Integer>.create;
   if self.listOfPlots = nil then
     self.listOfPlots := TList<TPlotGraph>.create;
-  if self.maxYValueList = nil then
-    self.maxYValueList := TList<Integer>.create;
+ // if self.maxYValueList = nil then
+ //   self.maxYValueList := TList<Integer>.create;
   if pixelStepList = nil then
     pixelStepList := TList<Integer>.create;
 
@@ -1167,16 +1175,15 @@ begin
 
   self.xscaleHeightList.Add( round(0.15 * self.plotsPBList[self.numbPlots - 1].Height) );
   // make %15 of total height
-  self.maxYValueList.Add(self.plotsPBList[self.numbPlots - 1].Height); // PaintBox dimension
+ // self.maxYValueList.Add(self.plotsPBList[self.numbPlots - 1].Height); // PaintBox dimension
 
   self.listOfPlotLegendsPB.Add(TWebPaintBox.create(self.plotsPanelList[self.numbPlots - 1]));
   self.listOfPlotLegendsBMap.Add(TBitMap.create);
   self.listOfPlotLegendsPB[self.numbPlots-1].Tag := plotPositionToAdd;
+  self.listOfPlotLegendsPB[self.numbPlots-1].OnPaint := self.plotsPBListLegendPaint;
   self.listOfPlotLegendsPB[self.numbPlots-1] := self.processPlotLegendPB(self.numbPlots - 1, self.listOfPlotLegendsPB[self.numbPlots-1]);
   self.listOfPlotLegendsBMap[self.numbPlots-1] := self.processPlotLegendBM(self.numbPlots - 1, self.listOfPlotLegendsBMap[self.numbPlots-1]);
   self.initializePlot(self.numbPlots - 1);
-  for i := 0 to self.numbPlots-1 do
-    self.listOfPlotLegendsPB[i].Canvas.Draw(0,0,self.listOfPlotLegendsBMap[i]); // ? not sure why this has to be redrawn
   self.plotsPBList[self.numbPlots - 1].Invalidate;
 
 end;
@@ -1233,13 +1240,6 @@ begin
   end;
 end;
 
-procedure TMainForm.drawPlotLegends();
-var i: integer;
-begin
-  for i := 0 to self.numbPlots-1 do
-    self.listOfPlotLegendsPB[i].Canvas.Draw(0,0,self.listOfPlotLegendsBMap[i]);
-end;
-
 function TMainForm.getEmptyPlotPosition(): Integer;
 var i, plotPosition, totalPlots: Integer;
 
@@ -1283,7 +1283,7 @@ begin
           tempObj := self.listOfPLots[plotIndex];
           tempObj.Free;
           self.listOfPlots.Delete(plotIndex);
-          self.maxYValueList.Delete(plotIndex);
+     //     self.maxYValueList.Delete(plotIndex);
           tempObj := self.plotSpecies[plotIndex];
           tempObj.Free;
           self.plotSpecies.Delete(plotIndex);
@@ -1479,7 +1479,6 @@ begin
 
   configPSliderTBar(i, sliderPanelWidth, self.sliderPTBarAr,
     self.sliderPHLabelAr, self.sliderPLLabelAr, self.sliderPTBLabelAr);
-  self.drawPlotLegends(); // Not correct place for this?
 end;
 
 // Called when adding or updating a param slider. sn = slider number
