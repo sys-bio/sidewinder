@@ -29,7 +29,7 @@ begin
      end;
 
    plotPanelList[totalPlots-1].Width := panelW - PLOT_WIDTH_OVERLAP; // This must be a bg, without it the slider panel overlaps plot
-   plotPanelList[totalPlots-1].Left := 10; // gap between the network canvas and plot
+   plotPanelList[totalPlots-1].Left := 15; //10 gap between the network canvas and plot
    plotPanelList[totalPlots-1].Top := 3 + plotPanelList[totalPlots-1].Height*(plotNumber-1); // change to variable value based on number of existing plots.
    plotPanelList[totalPlots-1].visible := true;
    plotPanelList[totalPlots-1].invalidate;

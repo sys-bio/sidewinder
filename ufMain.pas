@@ -17,7 +17,7 @@ uses
   uSBMLClasses, uSimulation, uControllerMain,
   uODE_FormatUtility, uGraphP, Vcl.Menus, WEBLib.Menus, ufParamSelect,
   ufSpeciesSelect, uPlotLayout, uPlotActions,
-  paramSlider, uParamSliderLayout, uSidewinderTypes, WEBLib.ComCtrls;
+  {paramSlider,} uParamSliderLayout, uSidewinderTypes, WEBLib.ComCtrls;
 
 const
   SLIDERPHEIGHT = 50; // Param Sliders WebPanel height
@@ -183,6 +183,7 @@ type
     procedure updatePlots(); // Go through and remove species/plots no longer in model.
     procedure initializePlots();
     procedure initializePlot( n: integer);
+    procedure drawPlotLegends();
     procedure deletePlotSpecies(plotn: Integer); // Delete a species curve in a plot.
              // delete, change plot species, other added as needed using TWebListBox.
     procedure addParamSlider();
@@ -477,7 +478,7 @@ begin
       else
         begin
           notifyUser(' Model has changed, resetting simulation');
-          self.networkUpdated := false;
+          //self.networkUpdated := false;
           self.setUpSimulationUI;
         end;
     end
@@ -609,6 +610,7 @@ begin
     begin
       newVal :=strtofloat(self.RxnParamEdit.text);
       self.networkController.network.reactions[networkController.selectedEdge].state.rateParams[self.RxnParamComboBox.ItemIndex].setValue(newVal);
+      self.networkController.network.networkEvent;   // notify listener that network changed. TODO: Move to network class ( add add setValue to networkController)
     end;
   except
     on Exception : EConvertError do
@@ -1209,7 +1211,9 @@ begin
     if plotSpeciesForm.SpPlotCG.checked[i] then
       begin
         spName := self.mainController.getModel.getS_names[i];
-        plotLegendBitMap.canvas.pen.color := uGraphP.COLORS[i];
+        if i <10 then
+          plotLegendBitMap.canvas.pen.color := uGraphP.COLORS[i]
+        else plotLegendBitMap.canvas.pen.color := uGraphP.COLORS[i mod length(uGraphP.COLORS)];
         plotLegendBitMap.canvas.moveto( 2, i*10+2 );
         plotLegendBitMap.canvas.lineto( 10, i*10+2);
         plotLegendBitMap.canvas.TextOut( 11, i*10, spName);
@@ -1227,6 +1231,13 @@ begin
     if self.plotsPBList[i].Tag = plotTag then
       Result := i;
   end;
+end;
+
+procedure TMainForm.drawPlotLegends();
+var i: integer;
+begin
+  for i := 0 to self.numbPlots-1 do
+    self.listOfPlotLegendsPB[i].Canvas.Draw(0,0,self.listOfPlotLegendsBMap[i]);
 end;
 
 function TMainForm.getEmptyPlotPosition(): Integer;
@@ -1468,6 +1479,7 @@ begin
 
   configPSliderTBar(i, sliderPanelWidth, self.sliderPTBarAr,
     self.sliderPHLabelAr, self.sliderPLLabelAr, self.sliderPTBLabelAr);
+  self.drawPlotLegends(); // Not correct place for this?
 end;
 
 // Called when adding or updating a param slider. sn = slider number
@@ -1554,7 +1566,7 @@ end;
 procedure TMainForm.updateRxnRatePanel(); // Refresh with current rxn info.
 begin
   try
-    self.rateLawEqLabel.Caption := networkController.network.reactions[networkController.selectedEdge].state.rateLaw;
+    self.rateLawEqLabel.Caption := networkController.network.reactions[networkController.selectedEdge].state.rateLaw; // use getRateLaw instead.
     self.RxnRatePanel.Width := self.rateLawEqLabel.Width + self.rateLawLabel.Width + 60;
     self.RxnRatePanel.invalidate;
     self.RSimWPanel.visible := false;
@@ -1591,21 +1603,17 @@ end;
 
 procedure TMainForm.updateRxnStoichPanel();
 var i: integer;
- //  stoichCoeff: string;
 begin
   self.clearRxnStoichCoeffs();
   for i := 0 to Length(networkController.network.reactions[networkController.selectedEdge].state.srcId)-1 do
   begin
-   // stoichCoeff := '';
     if networkController.network.reactions[networkController.selectedEdge].state.srcId[i] <> '' then
-    begin
-     self.addRxnStoichEdit(i, true);
-    end;
+      self.addRxnStoichEdit(i, true);
+
   end;
 
   for i := 0 to Length(networkController.network.reactions[networkController.selectedEdge].state.destId)-1 do
   begin
-  //  stoichCoeff := '';
     if networkController.network.reactions[networkController.selectedEdge].state.destId[i] <> '' then
     begin
       self.addRxnStoichEdit(i, false);
@@ -1776,16 +1784,11 @@ begin
 
   self.rightPanelType := SIMULATION_PANEL;
   self.setRightPanels;
-  //self.RSimWPanel.invalidate;
-  //mainController.resetCurrTime;
-
   if self.mainController.getModel = nil then
   begin
     self.mainController.createModel;
     self.networkUpdated := false;
   end;
- // else if mainController.hasNetworkChanged then // Rebuild model
-  //  mainController.createModel;
   self.mainController.createSimulation;
   if self.numbPlots >0 then
     self.resetPlots();
