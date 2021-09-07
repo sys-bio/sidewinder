@@ -309,8 +309,7 @@ begin
          begin
          if plot_var[j] then
            begin
-           // TODO: if j > length(COLORS) then i:= j-
-           if j < Length(COLORS) then bitmap.canvas.pen.color := COLORS[j]  // assume plots <10
+           if j < Length(COLORS) then bitmap.canvas.pen.color := COLORS[j]
            else bitmap.canvas.pen.color := COLORS[1];
            drawGraph (bitmap.canvas, x1, y_vals[j], Size, startp, endp);
            end;
@@ -341,9 +340,8 @@ begin
       begin
       if plot_var[j] then
         begin
-          // TODO: if j > length(COLORS) then i:= j-
           if j<Length(COLORS) then canvas.pen.Color:= COLORS[j]
-          else canvas.pen.color := COLORS[1];  // or COLORS[j mod length(COLORS)]
+          else canvas.pen.color := COLORS[j mod length(COLORS)];
           drawGraph (canvas, x1, y_vals[j], Size, startp, endp);
         end;
       end;
