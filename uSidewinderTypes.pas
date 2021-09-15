@@ -2,6 +2,13 @@ unit uSidewinderTypes;
 
 interface
 uses System.Generics.Collections, Vcl.Dialogs;
+
+const
+  SLIDERPHEIGHT = 50; // Param Sliders WebPanel height
+  DEFAULTSPECIESPLOTHT = 10; // Default y range for plotting species
+  SLIDER_RANGE_MULT = 10;  // Default range multiplier for param slider
+  PLOT_WIDTH_PERCENTAGE = 0.6; // This means a plot extends to 60% of the right panel width
+
 type
   TDoubleArray = array of double;
   TIntegerArray = array of integer;
