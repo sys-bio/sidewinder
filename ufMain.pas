@@ -16,14 +16,14 @@ uses
   uNetworkTypes, Vcl.Imaging.pngimage, WEBLib.Lists, Vcl.Forms, uModel,
   uSBMLClasses, uSimulation, uControllerMain,
   uODE_FormatUtility, uGraphP, Vcl.Menus, WEBLib.Menus, ufParamSelect,
-  ufSpeciesSelect, uPlotLayout, uPlotActions,
+  ufSpeciesSelect, uPlotLayout, uPlotPanel,
   {paramSlider,} uParamSliderLayout, uSidewinderTypes, WEBLib.ComCtrls;
 
 const
-  SLIDERPHEIGHT = 50; // Param Sliders WebPanel height
-  DEFAULTSPECIESPLOTHT = 10; // Default y range for plotting species
-  SLIDER_RANGE_MULT = 10;  // Default range multiplier for param slider
-  PLOT_WIDTH_PERCENTAGE = 0.6; // This means a plot extends to 60% of the right panel width
+//  SLIDERPHEIGHT = 50; // Param Sliders WebPanel height
+//  DEFAULTSPECIESPLOTHT = 10; // Default y range for plotting species
+//  SLIDER_RANGE_MULT = 10;  // Default range multiplier for param slider
+//  PLOT_WIDTH_PERCENTAGE = 0.6; // This means a plot extends to 60% of the right panel width
 
 type
   TPanelType = ( SIMULATION_PANEL, REACTION_PANEL, NODE_PANEL );
@@ -132,8 +132,8 @@ type
     procedure netDrawScrollBarHorizValueChanged(Sender: TObject; Value: Double);
 
     procedure onLineSimButtonClick(Sender: TObject);
-    procedure plotsPBListPaint(Sender: TObject);
-    procedure plotsPBListLegendPaint(Sender: TObject);
+   // procedure plotsPBListPaint(Sender: TObject);
+  //  procedure plotsPBListLegendPaint(Sender: TObject);
     procedure addPlotButtonClick(Sender: TObject);
     procedure paramAddSliderBtnClick(Sender: TObject);
     procedure loadNetworkButtonClick(Sender: TObject);
@@ -214,12 +214,13 @@ type
     currentGeneration: Integer; // Used by plots as current x axis point
     plotSpeciesForm: TSpeciesSWForm;
     plotSpecies: TList<TSpeciesList>; // species to graph for each plot
-    plotsPanelList: TList<TWebPanel>; // Panels in which each plot resides
-    plotsPBList: TList<TWebPaintBox>; // Plot paint boxes
-    listOfPlots: TList<TPlotGraph>;   // Plotting class for each plot
-    listOfPlotLegendsPB: TList<TWebPaintBox>; // Paint box to hold plot legends
-    listOfPlotLegendsBMap: TList<TBitMap>;
-    xscaleHeightList: TList<Integer>;
+ //   plotsPanelList: TList<TWebPanel>; // Panels in which each plot resides
+    plotsPanelList: TList<TPlotPanel>; // Panels in which each plot resides
+  //  plotsPBList: TList<TWebPaintBox>; // Plot paint boxes
+  //  listOfPlots: TList<TPlotGraph>;   // Plotting class for each plot
+  //  listOfPlotLegendsPB: TList<TWebPaintBox>; // Paint box to hold plot legends
+  //  listOfPlotLegendsBMap: TList<TBitMap>;
+    //xscaleHeightList: TList<Integer>;
     // This is the space reserved for the x axis labeling of each plot
     sliderParamForm: TParamSliderSForm;
     // Pop up form to choose parameter for slider.
@@ -238,8 +239,8 @@ type
 
     function ScreenToWorld(X, Y: Double): TPointF; // Network drawing panel
     function WorldToScreen(wx: Integer): Integer; // Network drawing panel
-    function processPlotLegendPB(plotIndex: integer; plotLegendPB: TWebPaintBox): TWebPaintBox;
-    function processPlotLegendBM(plotIndex: integer; plotLegendBitMap: TBitMap): TBitMap; // Draw plot legend
+  //  function processPlotLegendPB(plotIndex: integer; plotLegendPB: TWebPaintBox): TWebPaintBox;
+  //  function processPlotLegendBM(plotIndex: integer; plotLegendBitMap: TBitMap): TBitMap; // Draw plot legend
     procedure PingSBMLLoaded(newModel:TModel); // Notify when done loading or model changes
     procedure networkHasChanged(); // Notify when network has changed, may need to update model, plots, etc
     procedure getVals(newTime: Double; newVals: array of Double);
@@ -249,7 +250,7 @@ type
 
 var
   mainForm: TMainForm;
-  pixelStepList: TList<Integer>; // pixel equiv of time (integration) step
+  //pixelStepList: TList<Integer>; // pixel equiv of time (integration) step
   spSelectform: TSpeciesSWForm; // display speciecs select to plot radio group
 
 implementation
@@ -458,15 +459,8 @@ begin
         onLineSimButton.caption := 'Simulation: Online';
         simResultsMemo.visible := true;
 
-     // try
-     //   MainController.SetRunTime( strToFloat(rtLengthEdit1.Text));
-     // except
-     //   on Exception: EConvertError do
-      //    begin
-            MainController.SetRunTime(200); // Hard coded for now.
-            self.rtLengthEdit1.Text := FloatToStr(MainController.getRunTime);
-       //   end;
-      //end;
+        MainController.SetRunTime(200); // Hard coded for now.
+        self.rtLengthEdit1.Text := FloatToStr(MainController.getRunTime);
 
         if self.MainController.getCurrTime = 0  then
           self.InitSimResultsTable();  // Set table of Sim results.
@@ -478,7 +472,6 @@ begin
       else
         begin
           notifyUser(' Model has changed, resetting simulation');
-          //self.networkUpdated := false;
           self.setUpSimulationUI;
         end;
     end
@@ -496,7 +489,7 @@ procedure TMainForm.initializePlots();
   var i: Integer;
      // yScaleWidth, newYMax : integer;
 begin
-  for i := 0 to listOfPlots.Count - 1 do
+  for i := 0 to plotsPanelList.Count - 1 do
     begin
       self.initializePlot(i);
     end;
@@ -505,29 +498,15 @@ end;
 procedure TMainForm.initializePlot( n: integer);
  var yScaleWidth, newYMax : integer;
 begin
-  if pixelStepList = nil then
-    pixelStepList := TList<Integer>.create;
-  yScaleWidth := 30; // Gap between the left edge and y axis ( for number labels)
-       // adjust based on init max val (newYMax) ?
-  if self.listOfPlots[n].getY_valsMax >0 then newYMax := round(self.listOfPlots[n].getY_valsMax)
-    else newYMax := DEFAULTSPECIESPLOTHT;
-  self.listOfPlots[n].resetGraph(self.listOfPlots[n].bitmap.canvas);
-  self.listOfPlots[n].initGraph(0, 200, 0, newYMax, // The 10 is the max Y value (yend) in world coords
-        0, self.plotsPBList[n].width, 0, self.plotsPBList[n].height,
-        xscaleHeightList.Items[n], yscaleWidth, MainController.getRunTime, MainController.getStepSize);
-  // Display the plot:
-  uPlotActions.processScanOnePlot(0, mainController.getModel.getS_Vals,listOfPlots[n],self.plotsPBList[n], plotSpecies[n],
-           0 {self.currentGeneration} );
+  try
+   // self.plotsPanelList[n].setPlotLegend(self.plotSpecies[n]);
+    self.plotsPanelList[n].initializePlot( MainController.getRunTime,
+                             MainController.getStepSize, self.plotSpecies[n]);
+  except
+    on E: Exception do
+      notifyUser(E.message);
+  end;
 
-  self.plotsPBList[n].invalidate;
-  self.listOfPlotLegendsPB[n].Canvas.Draw(0,0,self.listOfPlotLegendsBMap[n]);
-
-   // Max viewable steps is PlotWebPB.width (1 pixel per step).
-  pixelStepList.Add(0);  // Default number.
-  if MainController.getRunTime / MainController.getStepSize < self.plotsPBList[n].width then
-    pixelStepList[n] := round(self.plotsPBList[n].width * MainController.getStepSize / MainController.getRunTime)
-  else
-    pixelStepList[n] := 1;
 end;
 
 procedure TMainForm.resetPlots();  // Reset plots for new simulation.
@@ -567,14 +546,7 @@ begin
   self.plotEditLB.Top := 40; // default    // Need to specify correct plotPanelList
 end;
 
-procedure TMainForm.plotsPBListPaint(Sender: TObject);
-var
-  plot_i: Integer;
-begin
-  plot_i := (Sender as TWebPaintBox).tag;
-  plotsPBList.items[plot_i - 1].canvas.draw(0, 0, listOfPlots.Items[plot_i - 1].bitmap);
-end;
-
+ {
 procedure TMainForm.plotsPBListLegendPaint(Sender: TObject);
 var
   plotLegend_i: Integer;
@@ -582,7 +554,7 @@ begin
   plotLegend_i := (Sender as TWebPaintBox).tag;
   listOfPlotLegendsPB.items[plotLegend_i - 1].canvas.draw(0, 0, self.listOfPlotLegendsBMap[plotLegend_i-1]);
 end;
-
+   }
 procedure TMainForm.RxnParamComboBoxChange(Sender: TObject);  // NOT needed. ??
 var i: integer;
 begin
@@ -625,11 +597,9 @@ begin
     begin
     notifyUser(Exception.Message);
     self.RxnParamEdit.text := floattostr(self.networkController.network.reactions[networkController.selectedEdge].state.rateParams[self.RxnParamComboBox.ItemIndex].getValue());
-
     end;
 
-end;
-
+  end;
 end;
 
 procedure TMainForm.networkPB1KeyDown(Sender: TObject; var Key: Word;
@@ -743,7 +713,6 @@ end;
 
 procedure TMainForm.editNodeConcExit(Sender: TObject);
 begin
-//console.log('editNodeConcExit(');
   networkController.setNodeConc(editNodeConc.Text);
   networkPB1.Invalidate;
 end;
@@ -775,9 +744,7 @@ begin
       self.MainController.startTimer;
       self.sliderPTBLabelAr[i].caption := self.MainController.getModel.getP_Names[self.sliderParamAr[i]] + ': '
         + FloatToStr(self.MainController.getModel.getP_Vals[self.sliderParamAr[i]]);
-
     end;
-
 end;
 
 procedure TMainForm.zoomTrackBarChange(Sender: TObject);
@@ -947,10 +914,9 @@ begin
   networkCanvas.bitmap.Height := networkPB1.Height;
   networkCanvas.bitmap.width := networkPB1.width;
  // console.log('splitterMoved....');
-  self.adjustRightTabWPanels; //TODO: Need to adjust right panels based on tab focus
+  self.adjustRightTabWPanels;
   networkPB1.Invalidate;
 end;
-
 
 procedure TMainForm.stepSizeEdit1Change(Sender: TObject);
 begin
@@ -972,9 +938,11 @@ begin
     end;
   simResultsMemo.Lines.Add(dataStr);
   inc(self.currentGeneration);
-
-  uPlotActions.processScan(newTime, newVals,listOfPlots,self.plotsPBList, plotSpecies,
+  for i := 0 to plotsPanelList.count -1 do
+    begin
+       plotsPanelList[i].processOneScan(newTime, newVals,self.plotSpecies[i],
              currentGeneration );
+    end;
 
 end;
 
@@ -1077,7 +1045,6 @@ procedure TMainForm.selectPlotSpecies(plotnumb: Integer);
               self.plotSpecies[plotnumb - 1].Add(plotSp)
             else
               self.plotSpecies[getPlotPBIndex(plotNumb)].Add(plotSp);
-            //  self.plotSpecies[getPlotPBIndex(plotNumb)].Add(plotSpeciesForm.SpPlotCG.Items[i]);
           end
         else
           if addingPlot then
@@ -1090,7 +1057,7 @@ procedure TMainForm.selectPlotSpecies(plotnumb: Integer);
     if addingPlot then
       self.addPlot(maxYVal) // <-- Add dynamically created plot at this point
     else
-      self.listOfPlots[getPlotPBIndex(plotNumb)].setY_ValsMax( maxYVal);
+      self.plotsPanelList[getPlotPBIndex(plotNumb)].plotGraph.setY_ValsMax( maxYVal);
   end;
 
 // async called OnCreate for TSpeciesSWForm
@@ -1110,123 +1077,33 @@ begin
 end;
 
 procedure TMainForm.addPlot(yMax: double); // Add a plot
-
-  procedure plotOnMouseDown(Sender: TObject; Button: TMouseButton;
-    Shift: TShiftState; X, Y: Integer);
-  var
-    i: Integer; // grab plot which received event
-  begin
-    if (Button = mbRight) or (Button = mbLeft) then // Both for now.
-      begin
-        if Sender is TWebPaintBox then
-          begin
-            i := TWebPaintBox(Sender).tag;
-            // assume only plot paintboxes in right panel.
-            self.EditPlotList(i);
-          end;
-      end;
-  end;
-
 var plotPositionToAdd: integer; // Add plot to next empty position.
     plotWidth: integer;
-  i: Integer;
+ // i: Integer;
 begin
   plotWidth := 0;
   plotPositionToAdd := -1;
   plotPositionToAdd := self.getEmptyPlotPosition();
   if self.plotsPanelList = nil then
-    self.plotsPanelList := TList<TWebPanel>.create;
-  if self.plotsPBList = nil then
-    self.plotsPBList := TList<TWebPaintBox>.create;
-  if self.listOfPlotLegendsPB = nil then
-    self.listOfPlotLegendsPB := TList<TWebPaintBox>.create;
-  if self.listOfPlotLegendsBMap = nil then
-    self.listOfPlotLegendsBMap := TList<TBitMap>.create;
-  if self.xscaleHeightList = nil then
-    self.xscaleHeightList := TList<Integer>.create;
-  if self.listOfPlots = nil then
-    self.listOfPlots := TList<TPlotGraph>.create;
- // if self.maxYValueList = nil then
- //   self.maxYValueList := TList<Integer>.create;
-  if pixelStepList = nil then
-    pixelStepList := TList<Integer>.create;
-
-  self.listOfPlots.Add(TPlotGraph.create);
-  self.listOfPlots[self.numbPlots -1].setY_valsMax(yMax);
-  // Put plot in a TWebPanel:
-  self.plotsPanelList.Add(TWebPanel.create(self.RSimWPanel));
-  self.plotsPanelList[self.numbPlots - 1].Parent := self.RSimWPanel;
-  self.plotsPanelList[self.numbPlots - 1].Tag := plotPositionToAdd;
-  self.plotsPBList.Add(TWebPaintBox.create(self.plotsPanelList[self.numbPlots-1]));
-  self.plotsPBList[self.numbPlots - 1].parent := self.plotsPanelList[self.numbPlots-1];
-  self.plotsPBList[self.numbPlots - 1].OnPaint := plotsPBListPaint;
-  self.plotsPBList[self.numbPlots - 1].OnMouseDown := plotOnMouseDown;
-  self.plotsPBList[self.numbPlots - 1].Tag := plotPositionToAdd;
+    self.plotsPanelList := TList<TPlotPanel>.create;
+  self.plotsPanelList.Add(TPlotPanel.create(RSimWPanel, plotPositionToAdd, yMax,
+       self.mainController.getModel.getS_Names, self.mainController.getModel.getS_Vals));
+ 
+  // keep:
   // Want all plots to have same width, not always the case if user deletes plot,
   // adjust right panel width:
   if self.numbPlots > 1 then
-    plotWidth := self.plotsPanelList[0].Width + PLOT_WIDTH_OVERLAP
+    plotWidth := self.plotsPanelList[0].plotWPanel.Width + PLOT_WIDTH_OVERLAP
   else
     plotWidth := trunc(self.RSimWPanel.width * PLOT_WIDTH_PERCENTAGE);
 
-//  console.log('Adding plot, tag: ',self.plotsPBList[self.numbPlots - 1].Tag);
-  configPbPlot(plotPositionToAdd, self.numbPlots,
-           plotWidth, self.RSimWPanel.Height, self.plotsPBList, self.plotsPanelList);
-
-  self.xscaleHeightList.Add( round(0.15 * self.plotsPBList[self.numbPlots - 1].Height) );
-  // make %15 of total height
- // self.maxYValueList.Add(self.plotsPBList[self.numbPlots - 1].Height); // PaintBox dimension
-
-  self.listOfPlotLegendsPB.Add(TWebPaintBox.create(self.plotsPanelList[self.numbPlots - 1]));
-  self.listOfPlotLegendsBMap.Add(TBitMap.create);
-  self.listOfPlotLegendsPB[self.numbPlots-1].Tag := plotPositionToAdd;
-  self.listOfPlotLegendsPB[self.numbPlots-1].OnPaint := self.plotsPBListLegendPaint;
-  self.listOfPlotLegendsPB[self.numbPlots-1] := self.processPlotLegendPB(self.numbPlots - 1, self.listOfPlotLegendsPB[self.numbPlots-1]);
-  self.listOfPlotLegendsBMap[self.numbPlots-1] := self.processPlotLegendBM(self.numbPlots - 1, self.listOfPlotLegendsBMap[self.numbPlots-1]);
+  configPbPlot( plotPositionToAdd, self.numbPlots,
+           plotWidth, self.RSimWPanel.Height, self.plotsPanelList);
+    // end of keep
+  self.plotsPanelList[self.numbPlots-1].OnPlotUpdate := self.editPlotList;
   self.initializePlot(self.numbPlots - 1);
-  self.plotsPBList[self.numbPlots - 1].Invalidate;
+ // self.plotsPBList[self.numbPlots - 1].Invalidate;
 
-end;
-
-function TMainForm.processPlotLegendPB(plotIndex: integer; plotLegendPB: TWebPaintBox): TWebPaintBox;
-var i, speciesPlot: integer;
-begin
-  speciesPlot := 0;
-  speciesPlot := plotSpeciesForm.SpPlotCG.Items.Count; // max #, some will not be plotted.
-  plotLegendPB.parent := self.plotsPanelList[plotIndex];
-  plotLegendPB.top := 5;
-  plotLegendPB.height := 10 * speciesPlot; // each row 5 'pixels' tall
-  plotLegendPB.left := self.plotsPBList[plotIndex].width +10;
-  result := plotLegendPB;
-end;
-
-function TMainForm.processPlotLegendBM(plotIndex: integer; plotLegendBitMap: TBitMap): TBitMap;
-var i, speciesPlot: integer;
-    spName: string;
-begin
-  speciesPlot := 0;
-  speciesPlot := plotSpeciesForm.SpPlotCG.Items.Count; // max #, some will not be plotted.
-  plotLegendBitMap := TBitMap.create;
-  plotLegendBitMap.width := self.listOfPlotLegendsPB[plotIndex].width;
-  plotLegendBitMap.height := self.listOfPlotLegendsPB[plotIndex].height;
-  plotLegendBitMap.canvas.font.name := 'Courier New';
-  plotLegendBitMap.canvas.font.size := 8;
-
-  for i := 0 to speciesPlot -1 do
-    begin
-    spName := '';
-    if plotSpeciesForm.SpPlotCG.checked[i] then
-      begin
-        spName := self.mainController.getModel.getS_names[i];
-        if i <10 then
-          plotLegendBitMap.canvas.pen.color := uGraphP.COLORS[i]
-        else plotLegendBitMap.canvas.pen.color := uGraphP.COLORS[i mod length(uGraphP.COLORS)];
-        plotLegendBitMap.canvas.moveto( 2, i*10+2 );
-        plotLegendBitMap.canvas.lineto( 10, i*10+2);
-        plotLegendBitMap.canvas.TextOut( 11, i*10, spName);
-      end;
-    end;
-  result := plotLegendBitMap;
 end;
 
 function  TMainForm.getPlotPBIndex(plotTag: integer): Integer;
@@ -1235,14 +1112,13 @@ begin
   Result := -1;
   for i := 0 to self.numbPlots -1 do
   begin
-    if self.plotsPBList[i].Tag = plotTag then
+    if self.plotsPanelList[i].plotWPanel.Tag = plotTag then
       Result := i;
   end;
 end;
 
 function TMainForm.getEmptyPlotPosition(): Integer;
 var i, plotPosition, totalPlots: Integer;
-
 begin
   plotPosition := 1;
   totalPlots := self.numbPlots;
@@ -1250,7 +1126,7 @@ begin
   begin
     for i := 0 to totalPlots -2 do
     begin
-      if self.plotsPBList[i].Tag = plotPosition then
+      if self.plotsPanelList[i].plotWPanel.Tag = plotPosition then
         inc(plotPosition);
     end;
   end;
@@ -1266,41 +1142,21 @@ begin
     begin
       try
         begin
-        //console.log('Deleting plot with tag: ',self.plotsPBList[plotIndex].Tag);
-          tempObj := self.listOfPlotLegendsPB[plotIndex];
-          tempObj.Free;
-          self.listOfPlotLegendsPB.Delete(plotIndex);
-          tempObj := self.listOfPlotLegendsBMap[plotIndex];
-          tempObj.Free;
-          self.listOfPlotLegendsBMap.Delete(plotIndex);
-          tempObj := self.plotsPBList[plotIndex];
-          tempObj.Free;
-          self.plotsPBList.Delete(plotIndex);
+          self.plotsPanelList[plotIndex].Destroy;
           tempObj := self.plotsPanelList[plotIndex];
           tempObj.Free;
           self.plotsPanelList.Delete(plotIndex);
-          self.xscaleHeightList.Delete(plotIndex);
-          tempObj := self.listOfPLots[plotIndex];
-          tempObj.Free;
-          self.listOfPlots.Delete(plotIndex);
-     //     self.maxYValueList.Delete(plotIndex);
-          tempObj := self.plotSpecies[plotIndex];
-          tempObj.Free;
           self.plotSpecies.Delete(plotIndex);
-          pixelStepList.Delete(plotIndex);
           self.numbPlots := self.numbPlots - 1;
         end;
       finally
         self.RSimWPanel.Invalidate;
       end;
-
     end;
   except
      on EArgumentOutOfRangeException do
       notifyUser('Error: Plot number not in array');
-
   end;
-
 end;
 
 procedure TMainForm.EditPlotList(plotn: Integer);
@@ -1312,8 +1168,7 @@ begin
   plotIndex := -1;
   plotIndex := getPlotPBIndex(plotn);
   plotXposition := 40;
-//  plotYposition := self.plotsPBList[plotIndex].Top + 10;
-  plotYposition := self.plotsPanelList[plotIndex].Top + 20;
+  plotYposition := self.plotsPanelList[plotIndex].plotWPanel.Top + 20;
   editList := TStringList.create();
   editList.Add('Change plot species.');
   editList.Add('Delete plot.');
@@ -1701,8 +1556,6 @@ begin
        rxnProdStoichEdits.add(newStoichEdit);
       end;
     end;
-
-
 end;
 
 procedure TMainForm.clearRxnStoichCoeffs();
@@ -1755,9 +1608,9 @@ begin
       // delete existing plots
     if self.numbPlots >0 then
     begin
-      if (self.plotsPBList.Count) > 0 then
+      if (self.plotsPanelList.Count) > 0 then
       begin
-        for i := self.plotsPBList.Count-1 downto 0 do
+        for i := self.plotsPanelList.Count-1 downto 0 do
         begin
           self.DeletePlot(i);
         end;
