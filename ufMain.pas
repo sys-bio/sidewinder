@@ -12,7 +12,7 @@ uses
   uControllerNetwork, uNetworkCanvas, uNetwork, Vcl.TMSFNCTypes, Vcl.TMSFNCUtils,
   Vcl.TMSFNCGraphics,
   Vcl.TMSFNCGraphicsTypes, Vcl.TMSFNCCustomControl, Vcl.TMSFNCScrollBar,
-  Vcl.TMSFNCButton, Vcl.TMSFNCToolBar,
+ { Vcl.TMSFNCButton, Vcl.TMSFNCToolBar,}
   uNetworkTypes, Vcl.Imaging.pngimage, WEBLib.Lists, Vcl.Forms, uModel,
   uSBMLClasses, uSimulation, uControllerMain,
   uODE_FormatUtility, uGraphP, Vcl.Menus, WEBLib.Menus, ufParamSelect,
@@ -582,7 +582,6 @@ begin
 end;
 
 
-
 procedure TMainForm.RxnParamEditExit(Sender: TObject);
 var newVal: double;
 begin
@@ -911,8 +910,14 @@ end;
 
 procedure TMainForm.splitterMoved(Sender: TObject);
 begin
+  if self.rightPanelType = NODE_PANEL then
+    begin
+      // := self.RNodeEditWPanel.Width;
+    end;
   networkCanvas.bitmap.Height := networkPB1.Height;
-  networkCanvas.bitmap.width := networkPB1.width;
+  networkCanvas.bitmap.width := networkPB1.Width;
+
+  console.log('****splitter moved, networkPB1, height: ',networkPB1.Height,', width: ',networkPB1.Width);
  // console.log('splitterMoved....');
   self.adjustRightTabWPanels;
   networkPB1.Invalidate;
@@ -1376,6 +1381,7 @@ procedure TMainForm.adjustRightTabWPanels(); // Adjust all right panels to same 
 begin
   //if self.rightPanelType = SIMULATION_PANEL then
     //begin
+    console.log('splitter moved, RSimWPanel, height: ',networkPB1.Height,', width: ',self.RSimWPanel.Width);
       self.RNodeEditWPanel.Width := self.RSimWPanel.Width;
       self.RNodeEditWPanel.Top := self.RSimWPanel.Top;
       self.RNodeEditWPanel.Height := self.RSimWPanel.Height;
@@ -1385,6 +1391,9 @@ begin
       self.RRxnEditWPanel.Height := self.RSimWPanel.Height;
       self.RRxnEditWPanel.Left := self.RSimWPanel.Left;
       self.RSimWPanel.invalidate;
+  console.log('After: splitter moved, RSimWPanel, height: ',self.RSimWPanel.Height,', width: ',self.RSimWPanel.Width);
+   console.log('splitter moved, RNodeEditWPanel, height: ',self.RNodeEditWPanel.Height,', width: ',self.RNodeEditWPanel.Width);
+
   {  end
   else if self.rightPanelType = NODE_PANEL then
     begin
