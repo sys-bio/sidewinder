@@ -1,5 +1,5 @@
 unit uPlotActions;
- // May want to fold this in with uPlotLayout
+ // NOT NEEDED:  this is in with uPlotLayout
 interface
 
 uses System.Generics.Collections, WEBLib.ExtCtrls, uGraphP, uModel, uSidewinderTypes;
@@ -24,7 +24,7 @@ begin
 end;
 
 
-procedure processScanOnePlot( t_new: Double; y_new: array of Double; plot: TPlotGraph;
+procedure processScanOnePlot( t_new: Double; y_new: array of Double; plot: TPlotGraph;    // move to uPlotPanel
                plotPB: TWebPaintBox; plotSpecies: TSpeciesList;
                currentGeneration: Integer );
 var i: integer;
