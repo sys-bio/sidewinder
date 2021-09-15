@@ -67,6 +67,7 @@ type
 
    function getS_Names(): array of String;
    function getS_Vals(): array of Double;
+   function getS_initVals(): array of double;
    procedure resetS_Vals();   // reset with species initial vals. Move this to Simulation class.
    function getP_Names(): array of String;
    function getP_Vals(): array of Double;
@@ -351,6 +352,11 @@ end;
 procedure TModel.resetS_Vals(); //TODO: move S_Vals to simulator
 begin
   self.s_Vals := self.s_NameValAr.getValAr();
+end;
+
+function TModel.getS_initVals(): array of double;
+begin
+  Result := self.s_NameValAr.getValAr();
 end;
 
 procedure TModel.fillParameterArray();
