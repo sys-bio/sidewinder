@@ -157,7 +157,6 @@
         <DCCReference Include="model\uModel.pas"/>
         <DCCReference Include="sbml\uSBMLReader.pas"/>
         <DCCReference Include="sbml\uSBMLWriter.pas"/>
-        <DCCReference Include="plot\uPlotActions.pas"/>
         <DCCReference Include="rxn_networks\uBuildRateLaw.pas"/>
         <DCCReference Include="rxn_networks\uNetworkToModel.pas"/>
         <DCCReference Include="plot\uPlotPanel.pas"/>
