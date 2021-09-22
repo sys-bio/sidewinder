@@ -183,15 +183,21 @@ implementation
 
    procedure TPlotPanel.setPlotLegend(plotSpeciesList: TSpeciesList);
    begin
-     self.processPlotLegendPB(plotSpeciesList.count);
      self.processPlotLegendBM( plotSpeciesList );
+     self.processPlotLegendPB(plotSpeciesList.count);
      self.plotLegendPB.Invalidate;
    end;
 
   procedure TPlotPanel.processPlotLegendPB(pSpCount: integer);
   begin
     try
-      self.plotLegendBMap := TBitMap.create; // Why does it need to be created here and not in processPlotLegendBM ?
+      // Check if plotLegendBM created:
+      if not Assigned(self.plotLegendBMap)then
+      begin
+        console.log(' plot legend bitmap not created yet');
+        self.plotLegendBMap := TBitMap.create;
+      end;
+
       self.plotLegendPB.Tag := self.plotPosition;
       self.plotLegendPB.OnPaint := self.plotLegendPBOnPaint;
       self.plotLegendPB.parent := plotWPanel;
@@ -219,7 +225,7 @@ implementation
     for i := 0 to species -1 do
       if pSList[i] <> '' then inc(plotSp);
 
-    //self.plotLegendBMap := TBitMap.create;
+    self.plotLegendBMap := TBitMap.create;
     self.plotLegendBMap.width := self.plotLegendPB.width;
     self.plotLegendBMap.height := self.plotLegendPB.height;
     self.plotLegendBMap.canvas.font.name := 'Courier New';
