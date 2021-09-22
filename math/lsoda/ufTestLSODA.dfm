@@ -6,8 +6,8 @@ object Form1: TForm1
     Left = 56
     Top = 48
     Width = 129
-    Height = 33
-    Caption = 'Start LSODA Unit Test'
+    Height = 57
+    Caption = 'Start LSODA Unit Test. Use Browser console for results'
     HeightPercent = 100.000000000000000000
     WidthPercent = 100.000000000000000000
     OnClick = StartLSODATestButtonClick
