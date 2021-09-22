@@ -12,18 +12,13 @@ uses
   uControllerNetwork, uNetworkCanvas, uNetwork, Vcl.TMSFNCTypes, Vcl.TMSFNCUtils,
   Vcl.TMSFNCGraphics,
   Vcl.TMSFNCGraphicsTypes, Vcl.TMSFNCCustomControl, Vcl.TMSFNCScrollBar,
- { Vcl.TMSFNCButton, Vcl.TMSFNCToolBar,}
   uNetworkTypes, Vcl.Imaging.pngimage, WEBLib.Lists, Vcl.Forms, uModel,
   uSBMLClasses, uSimulation, uControllerMain,
   uODE_FormatUtility, uGraphP, Vcl.Menus, WEBLib.Menus, ufParamSelect,
-  ufSpeciesSelect, uPlotLayout, uPlotPanel,
-  {paramSlider,} uParamSliderLayout, uSidewinderTypes, WEBLib.ComCtrls;
+  ufSpeciesSelect, uPlotPanel,
+  uParamSliderLayout, uSidewinderTypes, WEBLib.ComCtrls;
 
-const
-//  SLIDERPHEIGHT = 50; // Param Sliders WebPanel height
-//  DEFAULTSPECIESPLOTHT = 10; // Default y range for plotting species
-//  SLIDER_RANGE_MULT = 10;  // Default range multiplier for param slider
-//  PLOT_WIDTH_PERCENTAGE = 0.6; // This means a plot extends to 60% of the right panel width
+const EDITBOX_HT = 25;
 
 type
   TPanelType = ( SIMULATION_PANEL, REACTION_PANEL, NODE_PANEL );
@@ -72,8 +67,7 @@ type
     btnNodeOutlineColor: TWebColorPicker;
     editNodeId: TWebEdit;
     btnNodeFillColor: TWebColorPicker;
-    RSimWPanel: TWebPanel;   // Holds simulation tab.
-    simResultsMemo: TWebMemo;
+    RSimWPanel: TWebPanel;
     plotEditLB: TWebListBox;
     SliderEditLB: TWebListBox;
     pnlCenter: TWebPanel;
@@ -99,6 +93,10 @@ type
     RxnStoichLabel: TWebLabel;
     StoicReactantsLabel: TWebLabel;
     StoichProductsLabel: TWebLabel;
+    pnlPlotContainer: TWebPanel;
+    simResultsMemo: TWebMemo;
+    WebSplitter1: TWebSplitter;
+    pnlSliderContainer: TWebPanel;
 
     procedure btnUniUniClick(Sender: TObject);
     procedure btnBiBiClick(Sender: TObject);
@@ -162,6 +160,7 @@ type
     procedure RxnParamComboBoxClick(Sender: TObject);
     procedure RxnParamComboBoxExit(Sender: TObject);
     procedure RxnParamEditExit(Sender: TObject);
+    procedure WebSplitter1Moved(Sender: TObject);
 
   private
     numbPlots: Integer; // Number of plots displayed
@@ -181,7 +180,7 @@ type
     function  getEmptyPlotPosition(): Integer;
     function  getPlotPBIndex(plotTag: integer): Integer; // Return Plot index of tag.
     procedure EditPlotList(plotn: Integer);
-    procedure updatePlots(); // Go through and remove species/plots no longer in model.
+    procedure updatePlots(); // Go through and remove species/plots no longer in model. needed ?
     procedure initializePlots();
     procedure initializePlot( n: integer);
     procedure deletePlotSpecies(plotn: Integer); // Delete a species curve in a plot.
@@ -210,18 +209,10 @@ type
     networkCanvas: TNetworkCanvas;
     origin: TPointF;
     fileName: string;
-  //  maxYValueList: TList<Integer>; // max Y screen dimension for each plot
     currentGeneration: Integer; // Used by plots as current x axis point
     plotSpeciesForm: TSpeciesSWForm;
     plotSpecies: TList<TSpeciesList>; // species to graph for each plot
- //   plotsPanelList: TList<TWebPanel>; // Panels in which each plot resides
     plotsPanelList: TList<TPlotPanel>; // Panels in which each plot resides
-  //  plotsPBList: TList<TWebPaintBox>; // Plot paint boxes
-  //  listOfPlots: TList<TPlotGraph>;   // Plotting class for each plot
-  //  listOfPlotLegendsPB: TList<TWebPaintBox>; // Paint box to hold plot legends
-  //  listOfPlotLegendsBMap: TList<TBitMap>;
-    //xscaleHeightList: TList<Integer>;
-    // This is the space reserved for the x axis labeling of each plot
     sliderParamForm: TParamSliderSForm;
     // Pop up form to choose parameter for slider.
     sliderParamAr: array of Integer;
@@ -239,9 +230,7 @@ type
 
     function ScreenToWorld(X, Y: Double): TPointF; // Network drawing panel
     function WorldToScreen(wx: Integer): Integer; // Network drawing panel
-  //  function processPlotLegendPB(plotIndex: integer; plotLegendPB: TWebPaintBox): TWebPaintBox;
-  //  function processPlotLegendBM(plotIndex: integer; plotLegendBitMap: TBitMap): TBitMap; // Draw plot legend
-    procedure PingSBMLLoaded(newModel:TModel); // Notify when done loading or model changes
+     procedure PingSBMLLoaded(newModel:TModel); // Notify when done loading or model changes
     procedure networkHasChanged(); // Notify when network has changed, may need to update model, plots, etc
     procedure getVals(newTime: Double; newVals: array of Double);
     // Get new values (species amt) from simulation run
@@ -250,7 +239,6 @@ type
 
 var
   mainForm: TMainForm;
-  //pixelStepList: TList<Integer>; // pixel equiv of time (integration) step
   spSelectform: TSpeciesSWForm; // display speciecs select to plot radio group
 
 implementation
@@ -333,7 +321,6 @@ begin
     networkController.addReaction('r2', n2, n3);
     networkController.addReaction('r3', n3, n4);
     networkController.addReaction('r4', n4, n2);
-
     networkPB1.Invalidate;
   end
   else
@@ -499,7 +486,6 @@ procedure TMainForm.initializePlot( n: integer);
  var yScaleWidth, newYMax : integer;
 begin
   try
-   // self.plotsPanelList[n].setPlotLegend(self.plotSpecies[n]);
     self.plotsPanelList[n].initializePlot( MainController.getRunTime,
                              MainController.getStepSize, self.plotSpecies[n]);
   except
@@ -546,15 +532,6 @@ begin
   self.plotEditLB.Top := 40; // default    // Need to specify correct plotPanelList
 end;
 
- {
-procedure TMainForm.plotsPBListLegendPaint(Sender: TObject);
-var
-  plotLegend_i: Integer;
-begin
-  plotLegend_i := (Sender as TWebPaintBox).tag;
-  listOfPlotLegendsPB.items[plotLegend_i - 1].canvas.draw(0, 0, self.listOfPlotLegendsBMap[plotLegend_i-1]);
-end;
-   }
 procedure TMainForm.RxnParamComboBoxChange(Sender: TObject);  // NOT needed. ??
 var i: integer;
 begin
@@ -827,6 +804,11 @@ begin
 end;
 
 
+procedure TMainForm.WebSplitter1Moved(Sender: TObject);
+begin
+// TODO adjust plots width
+end;
+
 procedure TMainForm.RPanelTabSetClick(Sender: TObject);
 begin
 //console.log('TMainForm.WebTabSet1Click: ',inttostr(self.RPanelTabSet.ItemIndex));
@@ -1084,32 +1066,36 @@ end;
 procedure TMainForm.addPlot(yMax: double); // Add a plot
 var plotPositionToAdd: integer; // Add plot to next empty position.
     plotWidth: integer;
- // i: Integer;
+    newHeight: integer; i: Integer;
 begin
   plotWidth := 0;
   plotPositionToAdd := -1;
   plotPositionToAdd := self.getEmptyPlotPosition();
   if self.plotsPanelList = nil then
     self.plotsPanelList := TList<TPlotPanel>.create;
-  self.plotsPanelList.Add(TPlotPanel.create(RSimWPanel, plotPositionToAdd, yMax,
+  self.plotsPanelList.Add(TPlotPanel.create(pnlPlotContainer, plotPositionToAdd, yMax,
        self.mainController.getModel.getS_Names, self.mainController.getModel.getS_Vals));
- 
-  // keep:
+
   // Want all plots to have same width, not always the case if user deletes plot,
   // adjust right panel width:
-  if self.numbPlots > 1 then
-    plotWidth := self.plotsPanelList[0].plotWPanel.Width + PLOT_WIDTH_OVERLAP
-  else
-    plotWidth := trunc(self.RSimWPanel.width * PLOT_WIDTH_PERCENTAGE);
+ // if self.numbPlots > 1 then
+ // begin
+ //    plotWidth := self.plotsPanelList[0].plotWPanel.Width;
+ //    self.plotsPanelList[self.numbPlots - 1].setPlotWidth(plotWidth);
+ // end;
 
-  configPbPlot( plotPositionToAdd, self.numbPlots,
-           plotWidth, self.RSimWPanel.Height, self.plotsPanelList);
-    // end of keep
-  self.plotsPanelList[self.numbPlots-1].OnPlotUpdate := self.editPlotList;
-  self.initializePlot(self.numbPlots - 1);
- // self.plotsPBList[self.numbPlots - 1].Invalidate;
+  newHeight := 200;  // default
+  if self.numbPlots > DEFAULT_NUMB_PLOTS then
+  begin
+    newHeight := round(self.pnlPlotContainer.Height/self.numbPlots);
+    for i := 0 to self.numbPlots - 1 do
+      self.plotsPanelList[i].adjustPlotHeights(self.numbPlots, newHeight);
 
-end;
+  end;
+
+  self.plotsPanelList[self.numbPlots - 1].OnPlotUpdate := self.editPlotList;
+  self.initializePlot (self.numbPlots - 1);
+ end;
 
 function  TMainForm.getPlotPBIndex(plotTag: integer): Integer;
 var i: integer;
@@ -1304,8 +1290,8 @@ var
   i, sliderTBarWidth, sliderPanelLeft, sliderPanelWidth: Integer;
 begin
   // Left most position of the panel that holds the slider
-  sliderPanelWidth := trunc((1 - PLOT_WIDTH_PERCENTAGE) * RSimWPanel.width);
-  sliderPanelLeft := (RSimWPanel.width - sliderPanelWidth) - 6;
+  sliderPanelWidth := trunc((1 - PLOT_WIDTH_PERCENTAGE) * self.pnlSliderContainer.width); // TODO FIX panel name
+  sliderPanelLeft := (self.pnlSliderContainer.Width - sliderPanelWidth) - 6;
   // Width of the slider inside the panel
 
   i := length(self.sliderPanelAr);
@@ -1318,8 +1304,8 @@ begin
   SetLength(self.sliderPLLabelAr, i + 1);
   SetLength(self.sliderPTBLabelAr, i + 1);
 
-  self.sliderPanelAr[i] := TWebPanel.create(self.RSimWPanel);
-  self.sliderPanelAr[i].parent := self.RSimWPanel;
+  self.sliderPanelAr[i] := TWebPanel.create(self.pnlSliderContainer);
+  self.sliderPanelAr[i].parent := self.pnlSliderContainer;
   self.sliderPanelAr[i].OnMouseDown := SliderOnMouseDown;
 
   configPSliderPanel(i, sliderPanelLeft, sliderPanelWidth, SLIDERPHEIGHT,
@@ -1520,7 +1506,7 @@ procedure TMainForm.addRxnStoichEdit(spIndex: integer; rxnReactant: boolean);
     editRxnSpStoich(Sender, false);
   end;
 // ----------------------------------------------------
-const EDITBOX_HT = 25;
+//const EDITBOX_HT = 25;
 var i: integer;
     newStoichLabel: TWebLabel;
     newStoichEdit: TWebEdit;

@@ -4,28 +4,26 @@ interface
 uses SysUtils, Classes, Graphics, Controls, System.Types, System.Generics.Collections,
      Dialogs, WEBLib.StdCtrls, WEBLib.ExtCtrls, WEBLib.Forms, JS, Web, uSidewinderTypes,
      ufSpeciesSelect, uGraphP;
-//const DEFAULT_NUMB_PLOTS = 3; PLOT_WIDTH_OVERLAP = 30;
+const DEFAULT_NUMB_PLOTS = 3; PLOT_WIDTH_OVERLAP = 30; LEGEND_WIDTH = 50;
 type
  TPlotMouseEvent = procedure(plotPosition: integer) of object; // mouse clicked while over plot
 
 TPlotPanel = class
 private
   parentWP: TWebPanel;
-  plotLegendPB: TWebPaintBox;
+  plotLegendPB: TWebPaintBox; // parent is plotWPanel
   plotLegendBMap: TBitMap;
   plotSpNames: array of String; // names of species to plot
   plotInitVals: array of double; // Init values of plot species.
   xScaleHeight: integer; // Space reserved for the x axis labeling of plot
   maxYValue: double;  // largest y val for plot
   plotPosition: integer;
-  //maxYValueInt: integer; // largest height for plotPB not needed.
   pixelStep: integer; // pixel equiv of time (integration) step
-  plotWidth: integer;
   EUpdatePlot: TPlotMouseEvent;  // notify listener when plot needs to be edited
 
 public
   plotWPanel: TWebPanel; // Panel that contains the plotPB and LegendPB
-  plotPB: TWebPaintBox;
+  plotPB: TWebPaintBox;  // parent is plotWPanel
   plotGraph: TPlotGraph;
   constructor create(parentContainer: TWebPanel; newPlotPosition: integer;
               maxY: double; spNames: array of string; initVals: array of double);
@@ -33,7 +31,7 @@ public
   function getPlotPosition(): integer;
   procedure setMaxYValue( newVal: double);
   function getMaxYValue(): double;
-  procedure setPlotWidth(width: integer);
+  procedure setPlotWidth({newWidth: integer});
   procedure plotPBOnPaint(sender: TObject);
   procedure plotPBOnMouseDown(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; X, Y: Integer);
@@ -42,9 +40,13 @@ public
   function getXScaleHeight(): integer;
   procedure setXScaleHeight( newHeight: integer);
   procedure setPlotLegend(plotSpeciesList: TSpeciesList);
+  function getPlotLegendPB(): TWebPaintBox;
+  function getParentContainer(): TWebPanel;
   procedure processPlotLegendPB(pSpCount: integer);
   procedure processPlotLegendBM( pSList: TSpeciesList);
-  procedure editPlot();
+  procedure editPlot();   // Notify listener that user clicked plot
+  procedure configPbPlot( {totalPlots: integer});
+  procedure adjustPlotHeights(totalPlots: integer; newHeight: integer);
   procedure initializePlot(runTime: double; stepSize: double; plotSpeciesList: TSpeciesList);
   procedure processOneScan( t_new: Double; y_new: array of Double;
                         plotSpecies: TSpeciesList; currentGeneration: Integer );
@@ -55,23 +57,22 @@ end;
 implementation
   constructor TPlotPanel.create(parentContainer: TWebPanel; newPlotPosition: integer;
           maxY: double; spNames: array of string; initVals: array of double);
-  begin            //ufMain.addPlot()
+  begin
     self.maxYValue := maxY;
     self.plotPosition := newPlotPosition;
     self.parentWP := parentContainer;
     self.plotGraph := TPlotGraph.create;
     self.plotGraph.setY_valsMax(maxY);
-  // Put plot in a TWebPanel:
-    self.plotSpNames := spNames;
-    self.plotInitVals := initVals;
+    self.plotSpNames := spNames;   // List of all possible species
+    self.plotInitVals := initVals; // Species init vals to scale plot
     self.plotWPanel := TWebPanel.create(parentContainer);
     self.plotWPanel.Parent := parentContainer;
+    self.plotWPanel.Anchors := [akLeft,akRight,akTop];
     self.plotWPanel.Tag := plotPosition;
-    self.plotPB := TWebPaintBox.create(self.plotWPanel);
-    self.plotPB.parent := self.plotWPanel;
-    self.plotPB.OnPaint := plotPBOnPaint;
-    self.plotPB.OnMouseDown := self.plotPBOnMouseDown;
-    self.plotPB.Tag := plotPosition;
+    self.plotWPanel.Width := self.parentWP.Width;
+    self.plotWPanel.Height := 200;//round(panelH/3);
+    self.plotWPanel.Left := 10; //10 gap between the network canvas and plot
+    self.plotWPanel.Top := 4 + self.plotWPanel.Height*(self.plotPosition-1); // change to variable value based on number of existing plots.
 
   end;
 
@@ -87,21 +88,35 @@ implementation
   procedure TPlotPanel.initializePlot(runTime: double; stepSize: double; plotSpeciesList: TSpeciesList );
   var yScaleWidth, newYMax : integer;
   begin
+    self.plotPB := TWebPaintBox.create(self.plotWPanel);
+    self.plotPB.parent := self.plotWPanel;
+   // self.plotPB.Anchors := [akLeft,akRight,akTop];
+
+    self.plotPB.Tag := self.plotPosition;
+    self.plotPB.Height := self.plotWPanel.Height - 10;
+    self.plotLegendPB := TWebPaintBox.create(plotWPanel);
+    self.plotLegendPB.parent := plotWPanel;
+    self.setPlotWidth();
     if self.pixelStep < 0 then
       self.pixelStep := 0;
     self.xscaleHeight := round(0.15 * self.plotPB.Height);// make x-axis %15 of total height
     yScaleWidth := 30; // Gap between the left edge and y axis ( for number labels)
-
+    self.plotPB.OnPaint := plotPBOnPaint;
+    self.plotPB.OnMouseDown := self.plotPBOnMouseDown;
     if self.plotGraph.getY_valsMax >0 then newYMax := round(self.plotGraph.getY_valsMax)
       else newYMax := DEFAULTSPECIESPLOTHT;
     self.plotGraph.resetGraph(self.plotGraph.bitmap.canvas);
+    self.setPlotLegend(plotSpeciesList);
+   // self.plotPB.Width := self.plotWPanel.Width - LEGEND_WIDTH;{- 80}; // This must be a bg, without it the slider panel overlaps plot
+    //self.plotPB.Left := 5; // gap between the plotPanel canvas and plot
+
     self.plotGraph.initGraph(0, 200, 0, newYMax, 0, self.plotPB.width, 0, self.plotPB.height,
         self.xscaleHeight, yscaleWidth, runTime, stepSize);
-    self.setPlotLegend(plotSpeciesList);
 
-  // Display the plot:
+    // Display the plot:
     self.processOneScan(0, self.plotInitVals, plotSpeciesList, 0 );
-
+    self.plotWPanel.visible := true;  // ?? onpaint cause canvas error
+    self.plotPB.visible := true;
    // Max viewable steps is PlotWebPB.width (1 pixel per step).
     self.pixelStep := 0;  // Default number.
     if runTime / stepSize < self.plotPB.width then
@@ -119,10 +134,10 @@ implementation
     if plot_i = self.plotPB.tag then           // necessary?
     begin
       console.log('TPlotPanel.plotPBOnPaint, tag: ', plot_i);
-       self.plotPB.canvas.draw(0, 0, self.plotGraph.bitmap);
-     //  if self.plotLegendPB <> nil then   ... no effect
-     //    if self.plotLegendBMap <> nil then
-     //      self.plotLegendPBOnPaint(sender);
+      if self.plotGraph <> nil then
+        if self.plotGraph.bitmap <> nil then
+          self.plotPB.canvas.draw(0, 0, self.plotGraph.bitmap);
+
     end;
   end;
 
@@ -130,8 +145,11 @@ implementation
   var  plot_i: Integer;
   begin
     plot_i := (Sender as TWebPaintBox).tag;
-    console.log('TPlotPanel.plotLegendPBOnPaint, tag: ', plot_i);
-    self.plotLegendPB.canvas.Draw(0, 0, self.plotLegendBMap);
+    if plot_i = self.plotLegendPB.tag then
+    begin
+      console.log('TPlotPanel.plotLegendPBOnPaint, tag: ', plot_i);
+      self.plotLegendPB.canvas.Draw(0, 0, self.plotLegendBMap);
+    end;
   end;
 
 
@@ -152,19 +170,15 @@ implementation
       end;
   end;
 
-
-  //procedure TPlotPanel.plotLegendPBOnMouseDown(sender: TObject);
-
   procedure TPlotPanel.editPlot();  // needed ???
   var plotXposition, plotYposition: Integer;
       plotIndex: Integer;
       editList: TStringList;
   begin
-   // notify listenres that plot is to be edited.
+   // notify listener that plot is to be edited.
     if Assigned(EUpdatePlot) then
      EUpdatePlot(self.plotPosition);
   end;
-
 
 
    procedure TPlotPanel.setPlotLegend(plotSpeciesList: TSpeciesList);
@@ -174,18 +188,22 @@ implementation
    end;
 
   procedure TPlotPanel.processPlotLegendPB(pSpCount: integer);
-  var species: integer;
   begin
-    species := 0;
-    species := pSpCount; // max #, some will not be plotted.
-    self.plotLegendPB := TWebPaintBox.create(self.parentWP);
-    self.plotLegendBMap := TBitMap.create;
-    self.plotLegendPB.Tag := self.plotPosition;
-    self.plotLegendPB.OnPaint := self.plotLegendPBOnPaint;
-    self.plotLegendPB.parent := self.parentWP;
-    self.plotLegendPB.top := 10;
-    self.plotLegendPB.height := 10 * species; // each row 10 'pixels' tall
-    self.plotLegendPB.left := self.plotPB.width +30;
+    try
+      self.plotLegendBMap := TBitMap.create;
+      self.plotLegendPB.Tag := self.plotPosition;
+      self.plotLegendPB.OnPaint := self.plotLegendPBOnPaint;
+      self.plotLegendPB.parent := plotWPanel;
+      self.plotLegendPB.top := 10;
+      self.plotLegendPB.height := 10 * pSpCount; // each row 10 'pixels' tall
+      self.plotLegendPB.left := self.plotPB.width +5;
+      if self.plotWPanel.Width > LEGEND_WIDTH then
+        self.plotLegendPB.width := LEGEND_WIDTH
+      else self.plotLegendPB.Width := round(self.plotWPanel.Width *0.1); // 10%
+    except
+     on E: Exception do
+      notifyUser(E.message);
+    end;
 
   end;
 
@@ -194,6 +212,7 @@ implementation
   var i, j, species, plotSp: integer;
     spName: string;
   begin
+    j := 0;
     species := 0; plotSp := 0;
     species := pSList.Count; // max #, some will not be plotted.
     for i := 0 to species -1 do
@@ -214,9 +233,9 @@ implementation
           if i <10 then
             self.plotLegendBMap.canvas.pen.color := uGraphP.COLORS[i]
           else self.plotLegendBMap.canvas.pen.color := uGraphP.COLORS[i mod length(uGraphP.COLORS)];
-          self.plotLegendBMap.canvas.moveto( 2, j*10+2 );
-          self.plotLegendBMap.canvas.lineto( 10, j*10+2);
-          self.plotLegendBMap.canvas.TextOut( 11, j*10, spName);
+          self.plotLegendBMap.canvas.moveto( 2, j*10+3 );
+          self.plotLegendBMap.canvas.lineto( 10, j*10+3);
+          self.plotLegendBMap.canvas.TextOut( 12, j*10, spName);
           inc(j);
         end;
       end;
@@ -225,8 +244,7 @@ implementation
 
 
   procedure TPlotPanel.processOneScan( t_new: Double; y_new: array of Double;
-              { plotPB: TWebPaintBox;} plotSpecies: TSpeciesList;
-               currentGeneration: Integer );
+               plotSpecies: TSpeciesList; currentGeneration: Integer );
   var i: integer;
     plot_y: array of boolean;
   begin
@@ -242,39 +260,55 @@ implementation
     self.plotGraph.addPoint(currentGeneration, y_new,  plot_y, true, t_new);
     self.plotPB.Canvas.draw (0, 0, self.plotGraph.bitmap);
 
-
   end;
 
 
- { procedure TPlotPanel.setPlotWP();
+  procedure TPlotPanel.configPbPlot();
+begin
+   self.plotWPanel.Left := 10; //10 gap between the network canvas and plot
+   self.plotWPanel.Top := 3 + self.plotWPanel.Height*(self.plotPosition-1); // change to variable value based on number of existing plots.
+   self.plotWPanel.visible := true;  // ?? onpaint cause canvas error
+   // self.plotPB.Width := self.plotWPanel.Width - LEGEND_WIDTH;{- 80}; // This must be a bg, without it the slider panel overlaps plot
+   self.plotPB.Left := 5; // gap between the plotPanel canvas and plot
+   self.plotPB.Top := 5; // change to variable value based on number of existing plots.
+   self.plotPB.visible := true;
+
+end;
+
+  procedure TPlotPanel.adjustPlotHeights(totalPlots: integer; newHeight: integer);
   begin
-    // TODO
+    if totalPlots > DEFAULT_NUMB_PLOTS then
+    begin
+      self.plotWPanel.Height:= newHeight;
+      self.plotWPanel.Top:= 5 + self.plotPB.Height*(self.plotPosition);
+      self.plotPB.Height := self.plotWPanel.Width;
+      self.plotLegendPB.Height := self.plotPB.Height;
+      self.plotWPanel.invalidate;
+      self.plotPB.invalidate;  // Redraw as height and top have changed....
+      self.plotLegendPB.Invalidate
+    end
+
+   else
+     begin
+      self.plotWPanel.Height := newHeight; //200;//round(panelH/3);
+      self.plotPB.Height := self.plotWPanel.Height - 50;
+      self.plotLegendPB.Height := self.plotPB.Height;
+     end;
   end;
-  function TPlotPanel.getPlotWP(): TWebPanel;
+
+  function TPlotPanel.getPlotLegendPB(): TWebPaintBox;
   begin
-    // TODO
-  end;      }
-
-  //procedure TPlotPanel.setPlotPB();
-  //begin
-    // TODO
-  //end;
-
-
-
- { procedure TPlotPanel.setPlotGraph();
-  begin
-    // TODO
-  end;     }
-
-  {function TPlotPanel.getPlotGraph(): TPlotGraph;
-  begin
-    // TODO
-  end;  }
+    Result := self.plotLegendPB;
+  end;
 
   function TPlotPanel.getPlotPosition(): integer;
   begin
     Result := self.plotPosition;
+  end;
+
+  function TPlotPanel.getParentContainer(): TWebPanel;
+  begin
+    Result := self.parentWP;
   end;
 
   procedure TPlotPanel.setMaxYValue( newVal: double);
@@ -287,9 +321,21 @@ implementation
     // TODO
   end;
 
-  procedure TPlotPanel.setPlotWidth(width: integer);
+  // Adjust plot PB and legend PB based on new plotWPanel.Width
+  procedure TPlotPanel.setPlotWidth({newWidth: integer});
   begin
-    // TODO
+
+    if self.plotWPanel.width > LEGEND_WIDTH then
+    begin
+      self.plotLegendPB.width := LEGEND_WIDTH;
+      self.plotPB.Width := self.plotWPanel.width - LEGEND_WIDTH;
+    end
+    else
+      begin
+        self.plotLegendPB.Width := round(self.plotWPanel.Width *0.1); // 10%
+        self.plotPB.Width := self.plotWPanel.width - self.plotLegendPB.Width;
+      end;
+
   end;
 
   function TPlotPanel.getXScaleHeight(): integer;

@@ -80,7 +80,7 @@ object mainForm: TmainForm
       OnClick = mnuSaveClick
     end
     object onLineSimButton: TWebButton
-      Left = 941
+      Left = 830
       Top = 10
       Width = 120
       Height = 25
@@ -99,7 +99,7 @@ object mainForm: TmainForm
       OnClick = onLineSimButtonClick
     end
     object addPlotButton: TWebButton
-      Left = 1088
+      Left = 973
       Top = 10
       Width = 96
       Height = 25
@@ -113,7 +113,7 @@ object mainForm: TmainForm
       OnClick = addPlotButtonClick
     end
     object paramAddSliderBtn: TWebButton
-      Left = 1214
+      Left = 1090
       Top = 10
       Width = 135
       Height = 25
@@ -248,7 +248,7 @@ object mainForm: TmainForm
     ChildOrder = 4
     ElementBodyClassName = 'card-body-10  bg-dark text-white'
     object btnRandomNetwork: TWebButton
-      Left = 500
+      Left = 404
       Top = 3
       Width = 116
       Height = 25
@@ -259,8 +259,8 @@ object mainForm: TmainForm
       OnClick = btnRandomNetworkClick
     end
     object btnAutoLayout: TWebButton
-      Left = 500
-      Top = 49
+      Left = 404
+      Top = 57
       Width = 116
       Height = 25
       Caption = 'Auto Layout'
@@ -272,7 +272,7 @@ object mainForm: TmainForm
       OnClick = btnAutoLayoutClick
     end
     object btnSampleLayout: TWebButton
-      Left = 632
+      Left = 552
       Top = 24
       Width = 145
       Height = 25
@@ -285,7 +285,7 @@ object mainForm: TmainForm
       OnClick = btnDrawClick
     end
     object btnAbout: TWebButton
-      Left = 1029
+      Left = 908
       Top = 24
       Width = 96
       Height = 25
@@ -298,7 +298,7 @@ object mainForm: TmainForm
       OnClick = btnAboutClick
     end
     object btnCenter: TWebButton
-      Left = 376
+      Left = 272
       Top = 24
       Width = 96
       Height = 25
@@ -390,8 +390,8 @@ object mainForm: TmainForm
       end
     end
     object SBMLmodelMemo: TWebMemo
-      Left = 1256
-      Top = 3
+      Left = 1026
+      Top = 0
       Width = 313
       Height = 82
       AutoSize = False
@@ -404,7 +404,7 @@ object mainForm: TmainForm
       WidthPercent = 100.000000000000000000
     end
     object ZoomCntrlPanel: TWebPanel
-      Left = 830
+      Left = 726
       Top = 3
       Width = 147
       Height = 79
@@ -485,6 +485,7 @@ object mainForm: TmainForm
         Width = 120
         Height = 36
         Hint = 'Add Uni-Uni reaction'
+        Color = clNone
         ElementClassName = 'btn btn-primary'
         Glyph.Data = {
           0954506E67496D61676589504E470D0A1A0A0000000D494844520000002C0000
@@ -540,6 +541,7 @@ object mainForm: TmainForm
         Width = 120
         Height = 36
         Hint = 'Add Uni-Bi reaction'
+        Color = clNone
         ElementClassName = 'btn btn-primary'
         Glyph.Data = {
           0954506E67496D61676589504E470D0A1A0A0000000D49484452000000460000
@@ -595,6 +597,7 @@ object mainForm: TmainForm
         Width = 120
         Height = 36
         Hint = 'Add Bi-Uni reaction'
+        Color = clNone
         ElementClassName = 'btn btn-primary'
         Glyph.Data = {
           0954506E67496D61676589504E470D0A1A0A0000000D494844520000004A0000
@@ -652,6 +655,7 @@ object mainForm: TmainForm
         Width = 120
         Height = 36
         Hint = 'Add Bi-Bi reaction'
+        Color = clNone
         ElementClassName = 'btn btn-primary'
         Glyph.Data = {
           0954506E67496D61676589504E470D0A1A0A0000000D49484452000000500000
@@ -711,6 +715,7 @@ object mainForm: TmainForm
         Width = 120
         Height = 36
         Hint = 'Select Mode'
+        Color = clNone
         ElementClassName = 'btn btn-primary'
         Glyph.Data = {
           0954506E67496D61676589504E470D0A1A0A0000000D49484452000000140000
@@ -763,6 +768,7 @@ object mainForm: TmainForm
         Width = 120
         Height = 36
         Hint = 'Add Node'
+        Color = clNone
         ElementClassName = 'btn btn-primary'
         Glyph.Data = {
           0954506E67496D61676589504E470D0A1A0A0000000D494844520000001A0000
@@ -824,25 +830,11 @@ object mainForm: TmainForm
       ChildOrder = 2
       ElementBodyClassName = 'card-body-shadow'
       ElementFont = efCSS
-      object simResultsMemo: TWebMemo
-        Left = 6
-        Top = 544
-        Width = 513
-        Height = 165
-        AutoSize = False
-        ElementClassName = 'form-control'
-        ElementFont = efCSS
-        HeightPercent = 100.000000000000000000
-        Lines.Strings = (
-          'simResultsMemo')
-        SelLength = 0
-        SelStart = 0
-        Visible = False
-        WidthPercent = 100.000000000000000000
-      end
+      ExplicitLeft = 1242
+      ExplicitTop = -17
       object plotEditLB: TWebListBox
-        Left = 64
-        Top = 216
+        Left = 88
+        Top = 463
         Width = 140
         Height = 75
         Color = clWhite
@@ -862,8 +854,8 @@ object mainForm: TmainForm
         OnClick = plotEditLBClick
       end
       object SliderEditLB: TWebListBox
-        Left = 191
-        Top = 216
+        Left = 263
+        Top = 473
         Width = 165
         Height = 65
         ElementClassName = 'form-control bg-dark form-control-sm text-white'
@@ -874,6 +866,73 @@ object mainForm: TmainForm
         Visible = False
         WidthPercent = 100.000000000000000000
         OnClick = SliderEditLBClick
+      end
+      object pnlPlotContainer: TWebPanel
+        Left = 0
+        Top = 0
+        Width = 257
+        Height = 735
+        ElementClassName = 'card'
+        HeightPercent = 100.000000000000000000
+        WidthPercent = 100.000000000000000000
+        Align = alLeft
+        BorderColor = clSilver
+        BorderStyle = bsSingle
+        Caption = 'pnlPlotContainer'
+        ChildOrder = 3
+        ElementBodyClassName = 'card-body'
+        ElementFont = efCSS
+        ExplicitTop = 6
+        object simResultsMemo: TWebMemo
+          Left = 0
+          Top = 596
+          Width = 257
+          Height = 139
+          Align = alBottom
+          AutoSize = False
+          ElementClassName = 'form-control'
+          ElementFont = efCSS
+          HeightPercent = 100.000000000000000000
+          Lines.Strings = (
+            'simResultsMemo')
+          SelLength = 0
+          SelStart = 0
+          Visible = False
+          WidthPercent = 100.000000000000000000
+          ExplicitLeft = -43
+          ExplicitTop = 35
+          ExplicitWidth = 369
+        end
+      end
+      object WebSplitter1: TWebSplitter
+        Left = 257
+        Top = 0
+        Width = 5
+        Height = 735
+        HeightPercent = 100.000000000000000000
+        WidthPercent = 100.000000000000000000
+        Align = alLeft
+        ChildOrder = 3
+        Color = clBtnFace
+        OnMoved = WebSplitter1Moved
+      end
+      object pnlSliderContainer: TWebPanel
+        Left = 262
+        Top = 0
+        Width = 264
+        Height = 735
+        ElementClassName = 'card'
+        HeightPercent = 100.000000000000000000
+        WidthPercent = 100.000000000000000000
+        Align = alClient
+        BorderColor = clSilver
+        BorderStyle = bsSingle
+        Caption = 'pnlSliderContainer'
+        ChildOrder = 4
+        ElementBodyClassName = 'card-body'
+        ElementFont = efCSS
+        ExplicitLeft = 263
+        ExplicitTop = -6
       end
     end
     object pnlCenter: TWebPanel
@@ -1022,6 +1081,8 @@ object mainForm: TmainForm
       ElementBodyClassName = 'card-body'
       ElementFont = efCSS
       Visible = False
+      ExplicitLeft = 1115
+      ExplicitTop = 6
       object pnlNodePanel: TWebPanel
         Left = 8
         Top = 0
@@ -1166,19 +1227,25 @@ object mainForm: TmainForm
       ElementBodyClassName = 'card-body'
       ElementFont = efCSS
       Visible = False
+      ExplicitLeft = 965
+      ExplicitTop = -6
       object RxnRatePanel: TWebPanel
-        Left = 4
-        Top = 60
-        Width = 300
+        Left = 0
+        Top = 0
+        Width = 150
         Height = 60
         ElementClassName = 'card'
         HeightPercent = 100.000000000000000000
         WidthPercent = 100.000000000000000000
+        Align = alTop
         BorderColor = clSilver
         BorderStyle = bsSingle
         ChildOrder = 2
         ElementBodyClassName = 'card-body-shadow'
         ElementFont = efCSS
+        ExplicitLeft = 1
+        ExplicitTop = 6
+        ExplicitWidth = 300
         object rateLawLabel: TWebLabel
           Left = 10
           Top = 20
@@ -1210,18 +1277,20 @@ object mainForm: TmainForm
         end
       end
       object RxnSpStoichPanel: TWebPanel
-        Left = 6
-        Top = 175
-        Width = 300
+        Left = 0
+        Top = 60
+        Width = 150
         Height = 210
         ElementClassName = 'card'
         HeightPercent = 100.000000000000000000
         WidthPercent = 100.000000000000000000
+        Align = alTop
         BorderColor = clSilver
         BorderStyle = bsSingle
         ChildOrder = 1
         ElementBodyClassName = 'card-body-shadow'
         ElementFont = efCSS
+        ExplicitLeft = -3
         object RxnStoichLabel: TWebLabel
           Left = 10
           Top = 5
@@ -1269,18 +1338,21 @@ object mainForm: TmainForm
         end
       end
       object RxnParamPanel: TWebPanel
-        Left = 6
-        Top = 416
-        Width = 200
+        Left = 0
+        Top = 270
+        Width = 150
         Height = 145
         ElementClassName = 'card'
         HeightPercent = 100.000000000000000000
         WidthPercent = 100.000000000000000000
+        Align = alTop
         BorderColor = clSilver
         BorderStyle = bsSingle
         ChildOrder = 2
         ElementBodyClassName = 'card-body-shadow'
         ElementFont = efCSS
+        ExplicitLeft = -6
+        ExplicitTop = 358
         object RxnParamLabel: TWebLabel
           Left = 10
           Top = 10
@@ -1311,9 +1383,9 @@ object mainForm: TmainForm
           ItemIndex = -1
         end
         object RxnParamEdit: TWebEdit
-          Left = 18
+          Left = 6
           Top = 91
-          Width = 121
+          Width = 138
           Height = 22
           ChildOrder = 2
           ElementClassName = 'form-control'
@@ -1328,8 +1400,8 @@ object mainForm: TmainForm
   object NetworkJSONOpenDialog: TWebOpenDialog
     OnChange = NetworkJSONOpenDialogChange
     OnGetFileAsText = NetworkJSONOpenDialogGetFileAsText
-    Left = 1152
-    Top = 794
+    Left = 1160
+    Top = 714
   end
   object SBMLOpenDialog: TWebOpenDialog
     OnChange = SBMLOpenDialogChange
