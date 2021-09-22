@@ -230,7 +230,7 @@ type
 
     function ScreenToWorld(X, Y: Double): TPointF; // Network drawing panel
     function WorldToScreen(wx: Integer): Integer; // Network drawing panel
-     procedure PingSBMLLoaded(newModel:TModel); // Notify when done loading or model changes
+    procedure PingSBMLLoaded(newModel:TModel); // Notify when done loading or model changes
     procedure networkHasChanged(); // Notify when network has changed, may need to update model, plots, etc
     procedure getVals(newTime: Double; newVals: array of Double);
     // Get new values (species amt) from simulation run
@@ -1044,7 +1044,11 @@ procedure TMainForm.selectPlotSpecies(plotnumb: Integer);
     if addingPlot then
       self.addPlot(maxYVal) // <-- Add dynamically created plot at this point
     else
-      self.plotsPanelList[getPlotPBIndex(plotNumb)].plotGraph.setY_ValsMax( maxYVal);
+      begin
+        self.plotsPanelList[getPlotPBIndex(plotNumb)].plotGraph.setY_ValsMax( maxYVal);
+        // Update plot legend:
+         self.plotsPanelList[getPlotPBIndex(plotNumb)].setPlotLegend(self.plotSpecies.Items[getPlotPBIndex(plotNumb)]);
+      end;
   end;
 
 // async called OnCreate for TSpeciesSWForm

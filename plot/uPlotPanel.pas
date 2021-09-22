@@ -88,6 +88,7 @@ implementation
   procedure TPlotPanel.initializePlot(runTime: double; stepSize: double; plotSpeciesList: TSpeciesList );
   var yScaleWidth, newYMax : integer;
   begin
+  //console.log( 'TPlotPanel.initializePlot');
     self.plotPB := TWebPaintBox.create(self.plotWPanel);
     self.plotPB.parent := self.plotWPanel;
    // self.plotPB.Anchors := [akLeft,akRight,akTop];
@@ -95,7 +96,7 @@ implementation
     self.plotPB.Tag := self.plotPosition;
     self.plotPB.Height := self.plotWPanel.Height - 10;
     self.plotLegendPB := TWebPaintBox.create(plotWPanel);
-    self.plotLegendPB.parent := plotWPanel;
+    self.plotLegendPB.parent := self.plotWPanel;
     self.setPlotWidth();
     if self.pixelStep < 0 then
       self.pixelStep := 0;
@@ -123,7 +124,6 @@ implementation
       self.pixelStep := round(self.plotPB.width * stepSize / runTime)
     else
       self.pixelStep := 1;
-    self.plotLegendPB.Invalidate;
   end;
 
   procedure TPlotPanel.plotPBOnPaint(sender: TObject);
@@ -133,7 +133,7 @@ implementation
     plot_i := (Sender as TWebPaintBox).tag;
     if plot_i = self.plotPB.tag then           // necessary?
     begin
-      console.log('TPlotPanel.plotPBOnPaint, tag: ', plot_i);
+      //console.log('TPlotPanel.plotPBOnPaint, tag: ', plot_i);
       if self.plotGraph <> nil then
         if self.plotGraph.bitmap <> nil then
           self.plotPB.canvas.draw(0, 0, self.plotGraph.bitmap);
@@ -147,7 +147,7 @@ implementation
     plot_i := (Sender as TWebPaintBox).tag;
     if plot_i = self.plotLegendPB.tag then
     begin
-      console.log('TPlotPanel.plotLegendPBOnPaint, tag: ', plot_i);
+     // console.log('TPlotPanel.plotLegendPBOnPaint, tag: ', plot_i);
       self.plotLegendPB.canvas.Draw(0, 0, self.plotLegendBMap);
     end;
   end;
@@ -185,12 +185,13 @@ implementation
    begin
      self.processPlotLegendPB(plotSpeciesList.count);
      self.processPlotLegendBM( plotSpeciesList );
+     self.plotLegendPB.Invalidate;
    end;
 
   procedure TPlotPanel.processPlotLegendPB(pSpCount: integer);
   begin
     try
-      self.plotLegendBMap := TBitMap.create;
+      self.plotLegendBMap := TBitMap.create; // Why does it need to be created here and not in processPlotLegendBM ?
       self.plotLegendPB.Tag := self.plotPosition;
       self.plotLegendPB.OnPaint := self.plotLegendPBOnPaint;
       self.plotLegendPB.parent := plotWPanel;
@@ -218,7 +219,7 @@ implementation
     for i := 0 to species -1 do
       if pSList[i] <> '' then inc(plotSp);
 
-    self.plotLegendBMap := TBitMap.create;
+    //self.plotLegendBMap := TBitMap.create;
     self.plotLegendBMap.width := self.plotLegendPB.width;
     self.plotLegendBMap.height := self.plotLegendPB.height;
     self.plotLegendBMap.canvas.font.name := 'Courier New';
