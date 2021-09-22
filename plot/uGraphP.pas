@@ -19,7 +19,7 @@ type
     wxmin, wxmax, wymin, wymax : integer;  // world coord min/max, wymax is integer of y_valsMax
     sxmin, sxmax,  symin, symax : integer; // screen coord min/max
     a, b, a1, b1 : single;
-    maxpoints : integer;
+   // maxpoints : integer;   // Currently not used
     lsxmin, lsxmax : integer;
     x1: TDataType;
     y_vals : array of TDouble_MAXSIZE_Array;
@@ -29,10 +29,10 @@ type
     yAxisHt: integer; // height of yaxis in pixels.
     //y_Mult: array of double; // array of y axis multipliers, default is 1. NOT used currently.
     step: double;     // step size
-    simLength: double; // simulation length
+    //simLength: double; // simulation length , not used
     xScaleHeight : integer;
     yScaleWidth: integer; // new
-    paintBox : TWebPaintBox;
+   // paintBox : TWebPaintBox;
     procedure drawGraph (canvas : TCanvas; x : TDataType;  y : TDouble_MAXSIZE_Array; size, startp, endp : integer);
     procedure change_xorigin (wxmin, wxmax : integer);
     procedure draw_x_axis (const x : TDataType; canvas : TCanvas; currTime: double);
@@ -43,7 +43,7 @@ type
     bitmap : TBitmap;
     constructor create;
     procedure initGraph (wxmin_n, wxmax_n, wymin_n, wymax_n : integer; sxmin_n, sxmax_n,
-                symin_n, symax_n : integer; xScaleHeight, yScaleWidth : integer; runTime : double; stepSize : double);
+                symin_n, symax_n : integer; xScaleHeight, yScaleWidth : integer; {runTime : double;} stepSize : double);
     procedure addPoint (time: integer; newYValues : array of double;
                    plot_var: array of boolean; display : boolean; currTime:double);
     procedure resetGraph (canvas : TCanvas);
@@ -70,11 +70,11 @@ type
 procedure TPlotGraph.initGraph (wxmin_n, wxmax_n, wymin_n, wymax_n : integer;
                sxmin_n, sxmax_n,  symin_n, symax_n : integer;
                xScaleHeight, yScaleWidth : integer;
-               runTime : double; stepSize : double);
+               {runTime : double;} stepSize : double);
 begin
   // NOTE:
   // y_vals should ideally be sized here but we don't know the size until addPoint
-  simLength := runTime;
+  // simLength := runTime; not used
   step := stepSize;
   y_valsMax := wymax_n;  // Initial val, can be adjusted later.
   canvasHeight := symax_n - symin_n; // Get canvas height before adjusting symax
@@ -104,7 +104,7 @@ begin
   self.xConvertFactors;
   self.yConvertFactors; // b, b1, calc ratio of screen height/ world height
 
-  self.maxpoints := trunc(runTime/stepSize);
+ // self.maxpoints := trunc(runTime/stepSize);
 end;
 
 procedure TPlotGraph.yConvertFactors();
