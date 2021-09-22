@@ -95,7 +95,7 @@ type
     StoichProductsLabel: TWebLabel;
     pnlPlotContainer: TWebPanel;
     simResultsMemo: TWebMemo;
-    WebSplitter1: TWebSplitter;
+    SplitterPlotSlider: TWebSplitter;
     pnlSliderContainer: TWebPanel;
 
     procedure btnUniUniClick(Sender: TObject);
@@ -130,8 +130,6 @@ type
     procedure netDrawScrollBarHorizValueChanged(Sender: TObject; Value: Double);
 
     procedure onLineSimButtonClick(Sender: TObject);
-   // procedure plotsPBListPaint(Sender: TObject);
-  //  procedure plotsPBListLegendPaint(Sender: TObject);
     procedure addPlotButtonClick(Sender: TObject);
     procedure paramAddSliderBtnClick(Sender: TObject);
     procedure loadNetworkButtonClick(Sender: TObject);
@@ -160,7 +158,7 @@ type
     procedure RxnParamComboBoxClick(Sender: TObject);
     procedure RxnParamComboBoxExit(Sender: TObject);
     procedure RxnParamEditExit(Sender: TObject);
-    procedure WebSplitter1Moved(Sender: TObject);
+    procedure SplitterPlotSliderMoved(Sender: TObject);
 
   private
     numbPlots: Integer; // Number of plots displayed
@@ -171,6 +169,7 @@ type
     rxnReactStoichEdits: TList<TWebEdit>;
     rxnProdStoichLabels: TList<TWebLabel>;
     rxnProdStoichEdits: TList<TWebEdit>;
+    currentVals: array of Double;  // Currently not used
     procedure InitSimResultsTable(); // Init simResultsMemo.
     procedure addPlot(yMax: double); // Add a plot, yMax: largest initial val of plotted species
     procedure resetPlots();  // Reset plots for new simulation.
@@ -804,9 +803,25 @@ begin
 end;
 
 
-procedure TMainForm.WebSplitter1Moved(Sender: TObject);
+procedure TMainForm.SplitterPlotSliderMoved(Sender: TObject);
+var i: integer;
 begin
-// TODO adjust plots width
+ if assigned(self.plotsPanelList) then
+ begin
+   if self.plotsPanelList.count >0 then
+   begin
+     //console.log(' PlotWPanel width: ', plotsPanelList[0].plotWPanel.width, 'plot PB width: ', plotsPanelList[0].plotPB.width);
+     //console.log(' Plotbitmap width: ', plotsPanelList[0].plotGraph.bitmap.width);
+     for i := 0 to self.plotsPanelList.count -1 do
+       begin
+          plotsPanelList[i].setPlotPBWidth();
+          plotsPanelList[i].initializePlot( MainController.getRunTime,
+                             MainController.getStepSize, self.plotSpecies[i]);
+          self.plotsPanelList[i].setPlotLegend(self.plotSpecies[i]);
+       end;
+   end;
+ end;
+
 end;
 
 procedure TMainForm.RPanelTabSetClick(Sender: TObject);
@@ -917,6 +932,7 @@ var
   i: Integer;
 begin
   // Update table of data;
+  self.currentVals := newVals;
   dataStr := '';
   dataStr := floatToStrf(newTime, ffFixed, 4, 4) + ', ';
   for i := 0 to length(newVals) - 1 do

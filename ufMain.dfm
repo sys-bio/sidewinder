@@ -904,7 +904,7 @@ object mainForm: TmainForm
           ExplicitWidth = 369
         end
       end
-      object WebSplitter1: TWebSplitter
+      object SplitterPlotSlider: TWebSplitter
         Left = 257
         Top = 0
         Width = 5
@@ -914,7 +914,7 @@ object mainForm: TmainForm
         Align = alLeft
         ChildOrder = 3
         Color = clBtnFace
-        OnMoved = WebSplitter1Moved
+        OnMoved = SplitterPlotSliderMoved
       end
       object pnlSliderContainer: TWebPanel
         Left = 262
