@@ -1108,13 +1108,16 @@ begin
   if self.numbPlots > DEFAULT_NUMB_PLOTS then
   begin
     newHeight := round(self.pnlPlotContainer.Height/self.numbPlots);
-    for i := 0 to self.numbPlots - 1 do
-      self.plotsPanelList[i].adjustPlotHeights(self.numbPlots, newHeight);
-
   end;
 
   self.plotsPanelList[self.numbPlots - 1].OnPlotUpdate := self.editPlotList;
   self.initializePlot (self.numbPlots - 1);
+  if self.numbPlots > DEFAULT_NUMB_PLOTS then
+  begin  // Adjust plots to new height:
+    for i := 0 to self.numbPlots - 1 do
+      self.plotsPanelList[i].adjustPlotHeight(self.numbPlots, newHeight);
+
+  end;
  end;
 
 function  TMainForm.getPlotPBIndex(plotTag: integer): Integer;

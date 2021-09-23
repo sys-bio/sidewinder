@@ -6,6 +6,7 @@ uses SysUtils, Classes, Graphics, Controls, System.Types, System.Generics.Collec
      uGraphP;
 const DEFAULT_NUMB_PLOTS = 3; PLOT_WIDTH_OVERLAP = 30; LEGEND_WIDTH = 60;
       YSCALEWIDTH = 30; // Gap between the left edge and y axis ( for number labels)
+      XSCALE_RATIO = 0.15; // Ratio of x axis labels to height of plot.
 type
  TPlotMouseEvent = procedure(plotPosition: integer) of object; // mouse clicked while over plot
 
@@ -18,7 +19,9 @@ private
   plotInitVals: array of double; // Init values of plot species.
   xScaleHeight: integer; // Space reserved for the x axis labeling of plot
   maxYValue: double;  // largest y val for plot
+  yMax: integer;  // largest y 'pixel' val for plot.
   plotPosition: integer;
+  stepSize: double;
   pixelStep: integer; // pixel equiv of time (integration) step
   EUpdatePlot: TPlotMouseEvent;  // notify listener when plot needs to be edited
 
@@ -40,7 +43,7 @@ public
   procedure plotLegendPBOnPaint(sender: TObject);
   //procedure plotLegendPBOnMouseDown(sender: TObject);  not needed yet.
   function getXScaleHeight(): integer;
-  procedure setXScaleHeight( newHeight: integer);
+  procedure setXScaleHeight( fractionHeight: double);
   procedure setPlotLegend(plotSpeciesList: TSpeciesList);
   function getPlotLegendPB(): TWebPaintBox;
   function getParentContainer(): TWebPanel;
@@ -48,8 +51,8 @@ public
   procedure processPlotLegendBM( pSList: TSpeciesList);
   procedure editPlot();   // Notify listener that user clicked plot
   procedure configPbPlot( {totalPlots: integer});
-  procedure adjustPlotHeights(totalPlots: integer; newHeight: integer);
-  procedure initializePlot(runTime: double; stepSize: double; plotSpeciesList: TSpeciesList);
+  procedure adjustPlotHeight(totalPlots: integer; newHeight: integer);
+  procedure initializePlot(runTime: double; newStepSize: double; plotSpeciesList: TSpeciesList);
   procedure processOneScan( t_new: Double; y_new: array of Double;
                         plotSpecies: TSpeciesList; currentGeneration: Integer );
   property OnPlotUpdate: TPlotMouseEvent read EUpdatePlot write EUpdatePlot;
@@ -61,6 +64,7 @@ implementation
           maxY: double; spNames: array of string; initVals: array of double);
   begin
     self.maxYValue := maxY;
+    self.stepSize := 0;
     self.plotPosition := newPlotPosition;
     self.parentWP := parentContainer;
     self.plotGraph := TPlotGraph.create;
@@ -88,14 +92,13 @@ implementation
     self.plotWPanel.free;
 
   end;
-  procedure TPlotPanel.initializePlot(runTime: double; stepSize: double; plotSpeciesList: TSpeciesList );
-  var {yScaleWidth,} newYMax : integer;
+  procedure TPlotPanel.initializePlot(runTime: double; newStepSize: double; plotSpeciesList: TSpeciesList );
+  var newYMax : integer;
   begin
   //console.log( 'TPlotPanel.initializePlot');
-    //self.plotPB := TWebPaintBox.create(self.plotWPanel);
-    //self.plotPB.parent := self.plotWPanel;
-   // self.plotPB.Anchors := [akLeft,akRight,akTop];
 
+   // self.plotPB.Anchors := [akLeft,akRight,akTop];
+    self.stepSize := newStepSize;
     self.plotPB.Tag := self.plotPosition;
     self.plotPB.Height := self.plotWPanel.Height - 10;
     self.plotLegendPB := TWebPaintBox.create(plotWPanel);
@@ -103,16 +106,15 @@ implementation
     self.setPlotWidth();
     if self.pixelStep < 0 then
       self.pixelStep := 0;
-    self.xscaleHeight := round(0.15 * self.plotPB.Height);// make x-axis %15 of total height
-   // yScaleWidth := 30; // Gap between the left edge and y axis ( for number labels)
+    //self.xscaleHeight := round(0.15 * self.plotPB.Height);// make x-axis %15 of total height
+    self.setXScaleHeight(XSCALE_RATIO); // make x-axis %15 of total height
     self.plotPB.OnPaint := plotPBOnPaint;
     self.plotPB.OnMouseDown := self.plotPBOnMouseDown;
     if self.plotGraph.getY_valsMax >0 then newYMax := round(self.plotGraph.getY_valsMax)
       else newYMax := DEFAULTSPECIESPLOTHT;
+    self.yMax := newYMax;
     self.plotGraph.resetGraph(self.plotGraph.bitmap.canvas);
     self.setPlotLegend(plotSpeciesList);
-   // self.plotPB.Width := self.plotWPanel.Width - LEGEND_WIDTH;{- 80}; // This must be a bg, without it the slider panel overlaps plot
-    //self.plotPB.Left := 5; // gap between the plotPanel canvas and plot
 
     self.plotGraph.initGraph(0, 200, 0, newYMax, 0, self.plotPB.width, 0, self.plotPB.height,
         self.xscaleHeight,  YSCALEWIDTH, {runTime,} stepSize);
@@ -278,32 +280,28 @@ begin
    self.plotWPanel.Left := 10; //10 gap between the network canvas and plot
    self.plotWPanel.Top := 3 + self.plotWPanel.Height*(self.plotPosition-1); // change to variable value based on number of existing plots.
    self.plotWPanel.visible := true;  // ?? onpaint cause canvas error
-   // self.plotPB.Width := self.plotWPanel.Width - LEGEND_WIDTH;{- 80}; // This must be a bg, without it the slider panel overlaps plot
    self.plotPB.Left := 5; // gap between the plotPanel canvas and plot
    self.plotPB.Top := 5; // change to variable value based on number of existing plots.
    self.plotPB.visible := true;
 
 end;
 
-  procedure TPlotPanel.adjustPlotHeights(totalPlots: integer; newHeight: integer);
+  procedure TPlotPanel.adjustPlotHeight(totalPlots: integer; newHeight: integer);
   begin
     if totalPlots > DEFAULT_NUMB_PLOTS then
     begin
       self.plotWPanel.Height:= newHeight;
-      self.plotWPanel.Top:= 5 + self.plotPB.Height*(self.plotPosition);
-      self.plotPB.Height := self.plotWPanel.Width;
+      self.plotWPanel.Top:= 3 + self.plotWPanel.Height*(self.plotPosition-1);
+      self.plotPB.Height := self.plotWPanel.Height - 10;
+      self.setXScaleHeight(XSCALE_RATIO);
       self.plotLegendPB.Height := self.plotPB.Height;
+      self.plotGraph.initGraph(0, 200, 0, self.yMax, 0, self.plotPB.width, 0, self.plotPB.height,
+        self.xscaleHeight,  YSCALEWIDTH, self.stepSize);
       self.plotWPanel.invalidate;
       self.plotPB.invalidate;  // Redraw as height and top have changed....
       self.plotLegendPB.Invalidate
-    end
+    end;
 
-   else
-     begin
-      self.plotWPanel.Height := newHeight; //200;//round(panelH/3);
-      self.plotPB.Height := self.plotWPanel.Height - 50;
-      self.plotLegendPB.Height := self.plotPB.Height;
-     end;
   end;
 
   function TPlotPanel.getPlotLegendPB(): TWebPaintBox;
@@ -364,12 +362,12 @@ end;
 
   function TPlotPanel.getXScaleHeight(): integer;
   begin
-    // TODO
+
   end;
 
-  procedure TPlotPanel.setXScaleHeight(newHeight: integer);
+  procedure TPlotPanel.setXScaleHeight(fractionHeight: double);
   begin
-    // TODO
+    self.xScaleHeight := round(fractionHeight * self.plotPB.Height);// make x-axis %15 of total height
   end;
 
 
