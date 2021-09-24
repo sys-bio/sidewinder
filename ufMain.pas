@@ -216,7 +216,7 @@ type
     // Pop up form to choose parameter for slider.
     sliderParamAr: array of Integer;
     // holds parameter array index of parameter (p_vals) for each slider
-    sliderPanelAr: array of TWebPanel; // Holds parameter sliders
+    pnlSliderAr: array of TWebPanel; // Holds parameter sliders
     sliderPHighAr: array of Double; // High value for parameter slider
     sliderPLowAr: array of Double; // Low value for parameter slider
     sliderPTBarAr: array of TWebTrackBar;
@@ -811,7 +811,6 @@ begin
    if self.plotsPanelList.count >0 then
    begin
      //console.log(' PlotWPanel width: ', plotsPanelList[0].plotWPanel.width, 'plot PB width: ', plotsPanelList[0].plotPB.width);
-     //console.log(' Plotbitmap width: ', plotsPanelList[0].plotGraph.bitmap.width);
      for i := 0 to self.plotsPanelList.count -1 do
        begin
           plotsPanelList[i].setPlotPBWidth();
@@ -821,6 +820,17 @@ begin
        end;
    end;
  end;
+ // param sliders:
+ if assigned(self.pnlSliderAr) then
+   begin
+     for i := 0 to Length(self.pnlSliderAr) - 1 do
+     begin
+       configPSliderPanel(i, 0, self.pnlSliderContainer.width, SLIDERPHEIGHT,
+                         self.pnlSliderAr);
+       configPSliderTBar(i, self.pnlSliderContainer.width, self.sliderPTBarAr,
+             self.sliderPHLabelAr, self.sliderPLLabelAr, self.sliderPTBLabelAr);
+     end;
+   end;
 
 end;
 
@@ -1214,7 +1224,7 @@ var
   editList: TStringList;
 begin
   sliderXposition := 350;
-  sliderYposition := self.sliderPanelAr[sn].Top + 10;
+  sliderYposition := self.pnlSliderAr[sn].Top + 10;
   editList := TStringList.create();
   editList.Add('Change slider parameter.');
   editList.Add('Delete slider.');
@@ -1232,8 +1242,8 @@ end;
 procedure TMainForm.DeleteSlider(sn: Integer);
 begin
   // console.log('Delete Slider: slider #: ',sn);
-  self.sliderPanelAr[sn].free;
-  delete(self.sliderPanelAr, (sn), 1);
+  self.pnlSliderAr[sn].free;
+  delete(self.pnlSliderAr, (sn), 1);
   delete(self.sliderPHLabelAr, (sn), 1);
   delete(self.sliderPLLabelAr, (sn), 1);
   delete(self.sliderPTBLabelAr, (sn), 1);
@@ -1313,13 +1323,16 @@ var
   i, sliderTBarWidth, sliderPanelLeft, sliderPanelWidth: Integer;
 begin
   // Left most position of the panel that holds the slider
-  sliderPanelWidth := trunc((1 - PLOT_WIDTH_PERCENTAGE) * self.pnlSliderContainer.width); // TODO FIX panel name
-  sliderPanelLeft := (self.pnlSliderContainer.Width - sliderPanelWidth) - 6;
+  //sliderPanelWidth := trunc((1 - PLOT_WIDTH_PERCENTAGE) * self.pnlSliderContainer.width); // TODO FIX panel name
+  sliderPanelWidth :=  self.pnlSliderContainer.width;
+  //sliderPanelLeft := (self.pnlSliderContainer.Width - sliderPanelWidth) - 6;
+  sliderPanelLeft := 0;    // not used anymore, just set to default
+
   // Width of the slider inside the panel
 
-  i := length(self.sliderPanelAr);
+  i := length(self.pnlSliderAr);
   // array index for current slider to be added.
-  SetLength(self.sliderPanelAr, i + 1);
+  SetLength(self.pnlSliderAr, i + 1);
   SetLength(self.sliderPHighAr, i + 1);
   SetLength(self.sliderPLowAr, i + 1);
   SetLength(self.sliderPTBarAr, i + 1);
@@ -1327,23 +1340,23 @@ begin
   SetLength(self.sliderPLLabelAr, i + 1);
   SetLength(self.sliderPTBLabelAr, i + 1);
 
-  self.sliderPanelAr[i] := TWebPanel.create(self.pnlSliderContainer);
-  self.sliderPanelAr[i].parent := self.pnlSliderContainer;
-  self.sliderPanelAr[i].OnMouseDown := SliderOnMouseDown;
+  self.pnlSliderAr[i] := TWebPanel.create(self.pnlSliderContainer);
+  self.pnlSliderAr[i].parent := self.pnlSliderContainer;
+  self.pnlSliderAr[i].OnMouseDown := SliderOnMouseDown;
 
   configPSliderPanel(i, sliderPanelLeft, sliderPanelWidth, SLIDERPHEIGHT,
-    self.sliderPanelAr);
+    self.pnlSliderAr);
 
-  self.sliderPanelAr[i].tag := i; // keep track of slider index number.
-  self.sliderPTBarAr[i] := TWebTrackBar.create(self.sliderPanelAr[i]);
-  self.sliderPTBarAr[i].parent := self.sliderPanelAr[i];
+  self.pnlSliderAr[i].tag := i; // keep track of slider index number.
+  self.sliderPTBarAr[i] := TWebTrackBar.create(self.pnlSliderAr[i]);
+  self.sliderPTBarAr[i].parent := self.pnlSliderAr[i];
   self.sliderPTBarAr[i].OnChange := self.ParamSliderOnChange;
-  self.sliderPHLabelAr[i] := TWebLabel.create(self.sliderPanelAr[i]);
-  self.sliderPHLabelAr[i].parent := self.sliderPanelAr[i];
-  self.sliderPLLabelAr[i] := TWebLabel.create(self.sliderPanelAr[i]);
-  self.sliderPLLabelAr[i].parent := self.sliderPanelAr[i];
-  self.sliderPTBLabelAr[i] := TWebLabel.create(self.sliderPanelAr[i]);
-  self.sliderPTBLabelAr[i].parent := self.sliderPanelAr[i];
+  self.sliderPHLabelAr[i] := TWebLabel.create(self.pnlSliderAr[i]);
+  self.sliderPHLabelAr[i].parent := self.pnlSliderAr[i];
+  self.sliderPLLabelAr[i] := TWebLabel.create(self.pnlSliderAr[i]);
+  self.sliderPLLabelAr[i].parent := self.pnlSliderAr[i];
+  self.sliderPTBLabelAr[i] := TWebLabel.create(self.pnlSliderAr[i]);
+  self.sliderPTBLabelAr[i].parent := self.pnlSliderAr[i];
   self.SetSliderParamValues(i, self.sliderParamAr[i]);
 
   configPSliderTBar(i, sliderPanelWidth, self.sliderPTBarAr,
@@ -1637,15 +1650,15 @@ begin
 
     end;
     // delete existing param sliders.
-    if self.sliderPanelAr <> nil then
+    if self.pnlSliderAr <> nil then
     begin
-      if length(self.sliderPanelAr) >0 then
+      if length(self.pnlSliderAr) >0 then
       begin
-        for i := length(self.sliderPanelAr) -1 downto 0 do
+        for i := length(self.pnlSliderAr) -1 downto 0 do
         begin
           self.DeleteSlider(i);
         end;
-        setLength(self.sliderPanelAr, 0);
+        setLength(self.pnlSliderAr, 0);
       end;
     end;
     mainController.createModel;
