@@ -15,6 +15,7 @@ implementation
 procedure configPSliderPanel(sliderNumber, sPLeft, sliderPanelWidth, sliderPanelHeight: integer;
   newSPanelAr: array of TWebPanel);
   begin
+   newSPanelAr[sliderNumber].Anchors := [akLeft,akRight,akTop];
    newSPanelAr[sliderNumber].visible := true;
    newSPanelAr[sliderNumber].Top := sliderPanelHeight*sliderNumber + 3;
    newSPanelAr[sliderNumber].Left := sPLeft;
