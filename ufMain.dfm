@@ -830,8 +830,6 @@ object mainForm: TmainForm
       ChildOrder = 2
       ElementBodyClassName = 'card-body-shadow'
       ElementFont = efCSS
-      ExplicitLeft = 1242
-      ExplicitTop = -17
       object plotEditLB: TWebListBox
         Left = 88
         Top = 463
@@ -882,7 +880,6 @@ object mainForm: TmainForm
         ChildOrder = 3
         ElementBodyClassName = 'card-body'
         ElementFont = efCSS
-        ExplicitTop = 6
         object simResultsMemo: TWebMemo
           Left = 0
           Top = 596
@@ -899,9 +896,6 @@ object mainForm: TmainForm
           SelStart = 0
           Visible = False
           WidthPercent = 100.000000000000000000
-          ExplicitLeft = -43
-          ExplicitTop = 35
-          ExplicitWidth = 369
         end
       end
       object SplitterPlotSlider: TWebSplitter
@@ -931,8 +925,6 @@ object mainForm: TmainForm
         ChildOrder = 4
         ElementBodyClassName = 'card-body'
         ElementFont = efCSS
-        ExplicitLeft = 263
-        ExplicitTop = -6
       end
     end
     object pnlCenter: TWebPanel
@@ -1081,8 +1073,6 @@ object mainForm: TmainForm
       ElementBodyClassName = 'card-body'
       ElementFont = efCSS
       Visible = False
-      ExplicitLeft = 1115
-      ExplicitTop = 6
       object pnlNodePanel: TWebPanel
         Left = 8
         Top = 0
@@ -1227,8 +1217,6 @@ object mainForm: TmainForm
       ElementBodyClassName = 'card-body'
       ElementFont = efCSS
       Visible = False
-      ExplicitLeft = 965
-      ExplicitTop = -6
       object RxnRatePanel: TWebPanel
         Left = 0
         Top = 0
@@ -1243,9 +1231,6 @@ object mainForm: TmainForm
         ChildOrder = 2
         ElementBodyClassName = 'card-body-shadow'
         ElementFont = efCSS
-        ExplicitLeft = 1
-        ExplicitTop = 6
-        ExplicitWidth = 300
         object rateLawLabel: TWebLabel
           Left = 10
           Top = 20
@@ -1290,7 +1275,6 @@ object mainForm: TmainForm
         ChildOrder = 1
         ElementBodyClassName = 'card-body-shadow'
         ElementFont = efCSS
-        ExplicitLeft = -3
         object RxnStoichLabel: TWebLabel
           Left = 10
           Top = 5
@@ -1351,8 +1335,6 @@ object mainForm: TmainForm
         ChildOrder = 2
         ElementBodyClassName = 'card-body-shadow'
         ElementFont = efCSS
-        ExplicitLeft = -6
-        ExplicitTop = 358
         object RxnParamLabel: TWebLabel
           Left = 10
           Top = 10
