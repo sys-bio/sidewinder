@@ -1,19 +1,20 @@
 object SpeciesSWForm: TSpeciesSWForm
   Top = 20
-  Width = 204
+  Width = 200
   Height = 145
   CSSLibrary = cssBootstrap
   ElementClassName = ' bg-dark border border-dark'
+  ShowClose = False
   OnCreate = plotFormCreate
   OnShow = WebFormShow
   object okButton1: TWebButton
-    Left = 128
-    Top = 24
-    Width = 52
-    Height = 24
-    Anchors = [akTop]
+    Left = 153
+    Top = 0
+    Width = 40
+    Height = 25
+    Anchors = [akTop, akRight]
     Caption = 'OK'
-    ChildOrder = 2
+    ChildOrder = 1
     ElementClassName = 'btn btn-primary btn-sm'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText

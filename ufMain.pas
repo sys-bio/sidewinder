@@ -972,8 +972,7 @@ begin
   networkCanvas.bitmap.Height := networkPB1.Height;
   networkCanvas.bitmap.width := networkPB1.Width;
 
-  console.log('****splitter moved, networkPB1, height: ',networkPB1.Height,', width: ',networkPB1.Width);
- // console.log('splitterMoved....');
+ // console.log('****splitter moved, networkPB1, height: ',networkPB1.Height,', width: ',networkPB1.Width);
   self.adjustRightTabWPanels;
   networkPB1.Invalidate;
 end;
@@ -1138,6 +1137,7 @@ procedure TMainForm.selectPlotSpecies(plotnumb: Integer);
 begin
   fPlotSpecies := TSpeciesSWForm.CreateNew(@AfterCreate);
   fPlotSpecies.Popup := true;
+  fPlotSpecies.ShowClose := false;
   fPlotSpecies.PopupOpacity := 0.3;
   fPlotSpecies.Border := fbDialogSizeable;
   fPlotSpecies.caption := 'Species to plot:';
@@ -1345,6 +1345,7 @@ begin
   fSliderParameter := TParamSliderSForm.CreateNew(@AfterCreate);
   fSliderParameter.Popup := true;
   fSliderParameter.PopupOpacity := 0.3;
+  fSliderParameter.ShowClose := false;
   fSliderParameter.Border := fbDialogSizeable;
   fSliderParameter.caption := 'Parameter for slider:';
   //fSliderParameter.Close :=

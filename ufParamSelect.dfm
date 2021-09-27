@@ -8,13 +8,17 @@ object ParamSliderSForm: TParamSliderSForm
   Font.Name = 'Tahoma'
   Font.Style = []
   ParentFont = False
+  ShowClose = False
+  OnClose = WebFormClose
   OnCreate = WebFormCreate
   OnShow = WebFormShow
   object OkButton1: TWebButton
-    Left = 152
-    Top = 3
-    Width = 58
-    Height = 22
+    Left = 180
+    Top = 20
+    Width = 40
+    Height = 25
+    Anchors = [akTop, akRight]
+    BiDiMode = bdRightToLeft
     Caption = 'OK'
     ChildOrder = 1
     ElementClassName = 'btn btn-primary btn-sm'

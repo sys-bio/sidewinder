@@ -15,6 +15,8 @@ type
     procedure OkButton1Click(Sender: TObject);
     procedure WebFormCreate(Sender: TObject);
     procedure paramRGChange(Sender: TObject);
+    //procedure WebFormExit(Sender: TObject);
+    procedure WebFormClose(Sender: TObject; var Action: TCloseAction);
   private
     { Private declarations }
   public
@@ -38,10 +40,19 @@ begin
   chosenParam:=  paramRG.ItemIndex;
 end;
 
+procedure TParamSliderSForm.WebFormClose(Sender: TObject;
+// User presses 'x' in upper right corner
+  var Action: TCloseAction);
+begin
+  console.log( '... TParamSliderSForm.WebFormClose');
+end;
+
 procedure TParamSliderSForm.WebFormCreate(Sender: TObject);
 begin
 // needed?
 end;
+
+
 
 procedure TParamSliderSForm.WebFormShow(Sender: TObject);
 begin

@@ -45,7 +45,6 @@ end;
 procedure TSpeciesSWForm.plotFormCreate(Sender: TObject);
 begin
   //console.log('Species select form created');
-
 end;
 
 
