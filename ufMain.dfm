@@ -98,8 +98,8 @@ object mainForm: TmainForm
       WidthPercent = 100.000000000000000000
       OnClick = onLineSimButtonClick
     end
-    object addPlotButton: TWebButton
-      Left = 973
+    object btnAddPlot: TWebButton
+      Left = 974
       Top = 10
       Width = 96
       Height = 25
@@ -110,9 +110,9 @@ object mainForm: TmainForm
       HeightPercent = 100.000000000000000000
       Visible = False
       WidthPercent = 100.000000000000000000
-      OnClick = addPlotButtonClick
+      OnClick = btnAddPlotClick
     end
-    object paramAddSliderBtn: TWebButton
+    object btnParamAddSlider: TWebButton
       Left = 1090
       Top = 10
       Width = 135
@@ -132,7 +132,7 @@ object mainForm: TmainForm
       ShowHint = True
       Visible = False
       WidthPercent = 100.000000000000000000
-      OnClick = paramAddSliderBtnClick
+      OnClick = btnParamAddSliderClick
     end
     object rtLengthEdit1: TWebEdit
       Left = 1601
@@ -200,7 +200,7 @@ object mainForm: TmainForm
       OnClick = btnSimpleClick
     end
     object SaveSBMLButton: TWebButton
-      Left = 544
+      Left = 536
       Top = 10
       Width = 96
       Height = 32
@@ -876,7 +876,6 @@ object mainForm: TmainForm
         Align = alLeft
         BorderColor = clSilver
         BorderStyle = bsSingle
-        Caption = 'pnlPlotContainer'
         ChildOrder = 3
         ElementBodyClassName = 'card-body'
         ElementFont = efCSS
@@ -896,6 +895,8 @@ object mainForm: TmainForm
           SelStart = 0
           Visible = False
           WidthPercent = 100.000000000000000000
+          ExplicitLeft = -1
+          ExplicitTop = 590
         end
       end
       object SplitterPlotSlider: TWebSplitter
@@ -921,10 +922,99 @@ object mainForm: TmainForm
         Align = alClient
         BorderColor = clSilver
         BorderStyle = bsSingle
-        Caption = 'pnlSliderContainer'
         ChildOrder = 4
         ElementBodyClassName = 'card-body'
         ElementFont = efCSS
+        ExplicitLeft = 263
+        ExplicitTop = -6
+        DesignSize = (
+          264
+          735)
+        object pnlSimResultsFile: TWebPanel
+          Left = 24
+          Top = 656
+          Width = 205
+          Height = 73
+          ElementClassName = 'card'
+          HeightPercent = 100.000000000000000000
+          WidthPercent = 100.000000000000000000
+          Anchors = [akLeft, akBottom]
+          BorderColor = clSilver
+          BorderStyle = bsSingle
+          Caption = 'pnlSimResultsFile'
+          ElementBodyClassName = 'card-body-shadow'
+          ElementFont = efCSS
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -13
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          ParentFont = False
+          ShowCaption = False
+          object lblFileName: TWebLabel
+            Left = 16
+            Top = 45
+            Width = 61
+            Height = 16
+            Caption = 'File name:'
+            ElementFont = efCSS
+            Font.Charset = DEFAULT_CHARSET
+            Font.Color = clWindowText
+            Font.Height = -13
+            Font.Name = 'Tahoma'
+            Font.Style = []
+            HeightStyle = ssAuto
+            HeightPercent = 100.000000000000000000
+            ParentFont = False
+            WidthPercent = 100.000000000000000000
+          end
+          object lblSimDataFileName: TWebLabel
+            Left = 71
+            Top = 45
+            Width = 4
+            Height = 16
+            ElementFont = efCSS
+            Font.Charset = DEFAULT_CHARSET
+            Font.Color = clWindowText
+            Font.Height = -13
+            Font.Name = 'Tahoma'
+            Font.Style = []
+            HeightStyle = ssAuto
+            HeightPercent = 100.000000000000000000
+            ParentFont = False
+            WidthPercent = 100.000000000000000000
+          end
+          object btnSaveSimResults: TWebButton
+            Left = 16
+            Top = 9
+            Width = 96
+            Height = 25
+            Hint = 'Save Simulation results to file'
+            Caption = 'Save results'
+            ElementClassName = 'btn btn-primary btn-sm'
+            ElementFont = efCSS
+            HeightStyle = ssAuto
+            HeightPercent = 100.000000000000000000
+            ShowHint = True
+            WidthPercent = 100.000000000000000000
+            OnClick = btnSaveSimResultsClick
+          end
+          object btnStopSimSave: TWebButton
+            Left = 118
+            Top = 9
+            Width = 60
+            Height = 25
+            Caption = 'Stop'
+            ChildOrder = 3
+            ElementClassName = 'btn btn-primary btn-sm'
+            ElementFont = efCSS
+            HeightStyle = ssAuto
+            HeightPercent = 100.000000000000000000
+            Visible = False
+            WidthPercent = 100.000000000000000000
+            OnClick = btnStopSimSaveClick
+          end
+        end
       end
     end
     object pnlCenter: TWebPanel

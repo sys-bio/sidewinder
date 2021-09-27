@@ -46,8 +46,8 @@ type
     ZoomCntrlPanel: TWebPanel;
     zoomCtlLabel: TWebLabel;
     zoomTrackBar: TWebTrackBar;
-    addPlotButton: TWebButton;
-    paramAddSliderBtn: TWebButton;
+    btnAddPlot: TWebButton;
+    btnParamAddSlider: TWebButton;
     NetworkJSONOpenDialog: TWebOpenDialog;
     loadNetworkButton: TWebButton;
     SBMLOpenDialog: TWebOpenDialog;
@@ -97,6 +97,11 @@ type
     simResultsMemo: TWebMemo;
     SplitterPlotSlider: TWebSplitter;
     pnlSliderContainer: TWebPanel;
+    pnlSimResultsFile: TWebPanel;
+    btnSaveSimResults: TWebButton;
+    lblFileName: TWebLabel;
+    lblSimDataFileName: TWebLabel;
+    btnStopSimSave: TWebButton;
 
     procedure btnUniUniClick(Sender: TObject);
     procedure btnBiBiClick(Sender: TObject);
@@ -130,8 +135,8 @@ type
     procedure netDrawScrollBarHorizValueChanged(Sender: TObject; Value: Double);
 
     procedure onLineSimButtonClick(Sender: TObject);
-    procedure addPlotButtonClick(Sender: TObject);
-    procedure paramAddSliderBtnClick(Sender: TObject);
+    procedure btnAddPlotClick(Sender: TObject);
+    procedure btnParamAddSliderClick(Sender: TObject);
     procedure loadNetworkButtonClick(Sender: TObject);
     procedure NetworkJSONOpenDialogChange(Sender: TObject);
     procedure NetworkJSONOpenDialogGetFileAsText(Sender: TObject;
@@ -159,6 +164,8 @@ type
     procedure RxnParamComboBoxExit(Sender: TObject);
     procedure RxnParamEditExit(Sender: TObject);
     procedure SplitterPlotSliderMoved(Sender: TObject);
+    procedure btnSaveSimResultsClick(Sender: TObject);
+    procedure btnStopSimSaveClick(Sender: TObject);
 
   private
     numbPlots: Integer; // Number of plots displayed
@@ -169,6 +176,7 @@ type
     rxnReactStoichEdits: TList<TWebEdit>;
     rxnProdStoichLabels: TList<TWebLabel>;
     rxnProdStoichEdits: TList<TWebEdit>;
+    saveSimResults: boolean;
     currentVals: array of Double;  // Currently not used
     procedure InitSimResultsTable(); // Init simResultsMemo.
     procedure addPlot(yMax: double); // Add a plot, yMax: largest initial val of plotted species
@@ -209,11 +217,10 @@ type
     origin: TPointF;
     fileName: string;
     currentGeneration: Integer; // Used by plots as current x axis point
-    plotSpeciesForm: TSpeciesSWForm;
+    fPlotSpecies: TSpeciesSWForm;
     plotSpecies: TList<TSpeciesList>; // species to graph for each plot
     plotsPanelList: TList<TPlotPanel>; // Panels in which each plot resides
-    sliderParamForm: TParamSliderSForm;
-    // Pop up form to choose parameter for slider.
+    fSliderParameter: TParamSliderSForm;// Pop up form to choose parameter for slider.
     sliderParamAr: array of Integer;
     // holds parameter array index of parameter (p_vals) for each slider
     pnlSliderAr: array of TWebPanel; // Holds parameter sliders
@@ -246,7 +253,7 @@ implementation
 
 Uses uGraphUtils, uCreateNetworks, uLayout, uTestModel;
 
-procedure TMainForm.addPlotButtonClick(Sender: TObject);
+procedure TMainForm.btnAddPlotClick(Sender: TObject);
 begin
   // Make runtime, stepsize, simulation buttons visible
   self.numbPlots := self.numbPlots + 1;
@@ -370,6 +377,31 @@ begin
   networkPB1.Invalidate;
 end;
 
+procedure TMainForm.btnSaveSimResultsClick(Sender: TObject);
+var defaultName: string;
+begin
+  defaultName := 'simRun.txt';
+  if self.lblSimDataFileName.Caption <> '' then
+    defaultName := self.lblSimDataFileName.Caption;
+  if self.saveSimResults = false then
+    self.saveSimResults := true;
+
+ fileName := InputBox('Save simulation results to the downloads directory',
+    'Enter File Name:', defaultName);
+  if fileName <> '' then
+    begin
+      self.lblSimDataFileName.visible := true;
+      self.lblSimDataFileName.Caption := fileName;
+      self.saveSimResults := true;
+      self.btnStopSimSave.Visible := true;
+    end
+  else
+    begin
+      notifyUser('Save cancelled');
+      self.saveSimResults := false;
+    end;
+end;
+
 procedure TMainForm.btnSimpleClick(Sender: TObject);
 var s : string;
 begin
@@ -378,6 +410,13 @@ begin
   SBMLmodelMemo.visible := true;
   self.MainController.loadSBML(s);
  end;
+
+procedure TMainForm.btnStopSimSaveClick(Sender: TObject);
+begin
+  self.saveSimResults := false;
+  self.btnStopSimSave.Visible := false;
+  self.lblSimDataFileName.visible := false;
+end;
 
 procedure TMainForm.btnUniBiClick(Sender: TObject);
 begin
@@ -468,6 +507,10 @@ begin
       onLineSimButton.font.color := clred;
       onLineSimButton.ElementClassName := 'btn btn-danger btn-sm';
       onLineSimButton.caption := 'Simulation: Offline';
+      if self.saveSimResults then
+      begin
+        self.mainController.writeSimData(self.lblSimDataFileName.Caption, self.simResultsMemo.Lines);
+      end;
     end;
 end;
 
@@ -504,9 +547,9 @@ var
   i: Integer;
 begin
  // console.log(' TMainForm.PingSBMLLoaded');
-  paramAddSliderBtn.visible := true;
+  btnParamAddSlider.visible := true;
   onLineSimButton.visible := true;
-  addPlotButton.visible := true;
+  btnAddPlot.visible := true;
   
 end;
 
@@ -692,7 +735,7 @@ begin
   networkPB1.Invalidate;
 end;
 
-procedure TMainForm.paramAddSliderBtnClick(Sender: TObject);
+procedure TMainForm.btnParamAddSliderClick(Sender: TObject);
 var
   i: Integer;
 begin
@@ -782,6 +825,7 @@ begin
   onLineSimButton.caption := 'Simulation: Offline';
   self.mainController.setODEsolver;
   self.networkUpdated := false;
+  self.saveSimResults := false;
   currentGeneration := 0;
   self.mainController.OnSBMLUpdate2 := self.PingSBMLLoaded;
   self.mainController.OnNetworkChange:= self.networkHasChanged;
@@ -897,6 +941,10 @@ begin
       simRTStr := simRTStr + ', ' + self.mainController.getModel.getS_Names()[i];
     end;
   simResultsMemo.Lines.Add(simRTStr);
+  //for i := 0 to simResultsMemo.Lines.count -1 do
+  //  begin
+  //   console.log( '***** sim results:  ', simResultsMemo.Lines[i]);
+  //  end;
 end;
 
 procedure TMainForm.SliderEditLBClick(Sender: TObject);
@@ -947,7 +995,10 @@ begin
   dataStr := floatToStrf(newTime, ffFixed, 4, 4) + ', ';
   for i := 0 to length(newVals) - 1 do
     begin
-      dataStr := dataStr + floatToStrf(newVals[i], ffExponent, 6, 2) + ', ';
+      if i = length(newVals)-1 then
+        dataStr := dataStr + floatToStrf(newVals[i], ffExponent, 6, 2)
+      else
+        dataStr := dataStr + floatToStrf(newVals[i], ffExponent, 6, 2) + ', ';
     end;
   simResultsMemo.Lines.Add(dataStr);
   inc(self.currentGeneration);
@@ -1039,10 +1090,10 @@ procedure TMainForm.selectPlotSpecies(plotnumb: Integer);
         self.plotSpecies.Items[getPlotPBIndex(plotNumb)].Clear;
       end;
 
-    for i := 0 to plotSpeciesForm.SpPlotCG.Items.Count - 1 do
+    for i := 0 to fPlotSpecies.SpPlotCG.Items.Count - 1 do
       begin
         plotSp := '';
-        if plotSpeciesForm.SpPlotCG.checked[i] then
+        if fPlotSpecies.SpPlotCG.checked[i] then
           begin
             plotSp := self.mainController.getModel.getS_names[i];
             if self.mainController.getModel.getSBMLspecies(plotSp).isSetInitialAmount then
@@ -1085,12 +1136,12 @@ procedure TMainForm.selectPlotSpecies(plotnumb: Integer);
   end;
 
 begin
-  plotSpeciesForm := TSpeciesSWForm.CreateNew(@AfterCreate);
-  plotSpeciesForm.Popup := true;
-  plotSpeciesForm.PopupOpacity := 0.3;
-  plotSpeciesForm.Border := fbDialogSizeable;
-  plotSpeciesForm.caption := 'Species to plot:';
-  plotSpeciesForm.ShowModal(@AfterShowModal);
+  fPlotSpecies := TSpeciesSWForm.CreateNew(@AfterCreate);
+  fPlotSpecies.Popup := true;
+  fPlotSpecies.PopupOpacity := 0.3;
+  fPlotSpecies.Border := fbDialogSizeable;
+  fPlotSpecies.caption := 'Species to plot:';
+  fPlotSpecies.ShowModal(@AfterShowModal);
 end;
 
 procedure TMainForm.addPlot(yMax: double); // Add a plot
@@ -1274,8 +1325,8 @@ var
     else
       addingSlider := false;
   //  console.log('Param index picked (chosenParam): ',
-  //    sliderParamForm.chosenParam);
-    self.sliderParamAr[sNumb] := sliderParamForm.chosenParam;
+  //    fSliderParameter.chosenParam);
+    self.sliderParamAr[sNumb] := fSliderParameter.chosenParam;
     if addingSlider then
       self.addParamSlider() // <-- Add dynamically created slider
     else
@@ -1291,12 +1342,13 @@ var
   end;
 
 begin
-  sliderParamForm := TParamSliderSForm.CreateNew(@AfterCreate);
-  sliderParamForm.Popup := true;
-  sliderParamForm.PopupOpacity := 0.3;
-  sliderParamForm.Border := fbDialogSizeable;
-  sliderParamForm.caption := 'Parameter for slider:';
-  sliderParamForm.ShowModal(@AfterShowModal);
+  fSliderParameter := TParamSliderSForm.CreateNew(@AfterCreate);
+  fSliderParameter.Popup := true;
+  fSliderParameter.PopupOpacity := 0.3;
+  fSliderParameter.Border := fbDialogSizeable;
+  fSliderParameter.caption := 'Parameter for slider:';
+  //fSliderParameter.Close :=
+  fSliderParameter.ShowModal(@AfterShowModal);
 end;
 
 procedure TMainForm.addParamSlider();

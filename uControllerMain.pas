@@ -2,9 +2,9 @@ unit uControllerMain;
 
 interface
 
-uses System.SysUtils, Dialogs, uSimulation, uModel, uSBMLClasses, uODE_FormatUtility,
-     WebLib.Forms, Web, uSBMLReader, uControllerNetwork, uSBMLWriter,
-     uNetwork, uSidewinderTypes;
+uses System.SysUtils, System.Classes, Dialogs, uSimulation, uModel, uSBMLClasses,
+     uODE_FormatUtility, WebLib.Forms, Web, uSBMLReader, uControllerNetwork,
+     uSBMLWriter, uNetwork, uSidewinderTypes;
 
 type
  TUpdateSimEvent = procedure(time:double; updatedVals: array of double) of object;
@@ -34,9 +34,9 @@ type
     FSBMLUpdate2: TUpdateModelEvent;
     currNetworkCtrl : TController;
 
-
   public
     paramUpdated: Boolean; // true if a parameter val has been updated.
+
     constructor Create(networkCtrl: TController);
     procedure createModel(); // Instatiate TModel and attach listener
     procedure createSimulation();
@@ -65,6 +65,7 @@ type
     procedure stopTimer();
     procedure startTimer();
     procedure resetCurrTime();
+    procedure writeSimData(fileName: string; data: TStrings);
     function getSimulation(): TSimulationJS;
     procedure networkUpdated(); // Network has changed, update model
     property OnNetworkChange: TNetworkChangeEvent read FNetworkChanged write FNetworkChanged;
@@ -133,7 +134,6 @@ begin
   begin
     self.runSim.Free;
     self.SBMLmodel.resetS_Vals();  // TODO: Move S_vals to simulator.
-    //self.currTime := 0;
     self.online := false;
   end;
   self.currTime := 0;
@@ -308,5 +308,27 @@ procedure TControllerMain.changeParameterVal(pos: Integer; newVal: Double);
 begin
   self.sbmlmodel.changeParamVal(pos, newVal);
 end;
+
+
+procedure TControllerMain.writeSimData(fileName: string; data: TStrings);
+var simData: string;
+    i: integer;
+begin
+  simData := '';
+  for i := 0 to data.count -1 do
+    begin
+     // console.log( '***** sim results:  ', data[i]);
+      simData := simData + data[i] + sLineBreak;
+    end;
+  console.log( ' end of results');
+   try
+     Application.DownloadTextFile(simData, fileName);
+   except
+       on E: Exception do
+          notifyUser(E.message);
+   end;
+
+end;
+
 
 end.
