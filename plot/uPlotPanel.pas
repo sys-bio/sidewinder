@@ -207,7 +207,8 @@ implementation
       self.plotLegendPB.OnPaint := self.plotLegendPBOnPaint;
       self.plotLegendPB.parent := plotWPanel;
       self.plotLegendPB.top := 10;
-      self.plotLegendPB.height := 10 * pSpCount; // each row 10 'pixels' tall
+     // self.plotLegendPB.height := 10 * pSpCount; // each row 10 'pixels' tall
+     self.plotLegendPB.height := self.plotPB.height;
       self.plotLegendPB.left := self.plotPB.width +5;
       if self.plotWPanel.Width > LEGEND_WIDTH then
         self.plotLegendPB.width := LEGEND_WIDTH
