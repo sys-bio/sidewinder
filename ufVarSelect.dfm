@@ -1,4 +1,4 @@
-object SpeciesSWForm: TSpeciesSWForm
+object VarSelectForm: TVarSelectForm
   Top = 20
   Width = 200
   Height = 145
@@ -8,7 +8,7 @@ object SpeciesSWForm: TSpeciesSWForm
   OnCreate = plotFormCreate
   OnShow = WebFormShow
   object okButton1: TWebButton
-    Left = 153
+    Left = 145
     Top = 0
     Width = 40
     Height = 25
@@ -29,7 +29,7 @@ object SpeciesSWForm: TSpeciesSWForm
   object SpPlotCG: TWebCheckGroup
     Left = 8
     Top = 30
-    Width = 114
+    Width = 140
     Height = 91
     HeightPercent = 100.000000000000000000
     WidthPercent = 100.000000000000000000

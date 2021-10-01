@@ -1,4 +1,4 @@
-unit ufSpeciesSelect;
+unit ufVarSelect;
 
 // Contains a plot
 
@@ -10,7 +10,7 @@ uses
   WEBLib.StdCtrls, Types, VCL.TMSFNCTypes, VCL.TMSFNCUtils, VCL.TMSFNCGraphics, VCL.TMSFNCGraphicsTypes;
 
 type
-  TSpeciesSWForm = class(TWebForm)
+  TVarSelectForm = class(TWebForm)
     okButton1: TWebButton;
     SpPlotCG: TWebCheckGroup;
 
@@ -24,7 +24,7 @@ type
   public
     { Public declarations }
      speciesList: array of String;
-     PlotWForm: TSpeciesSWForm;
+     PlotWForm: TVarSelectForm;
      procedure fillSpeciesCG();
   end;
 
@@ -34,7 +34,7 @@ implementation
 
 
 // Close Plot:
-procedure TSpeciesSWForm.okButton1Click(Sender: TObject);
+procedure TVarSelectForm.okButton1Click(Sender: TObject);
 var lForm: TWebForm;
 begin
   lForm := TWebForm((Sender as TWebButton).Parent);
@@ -42,27 +42,28 @@ begin
   lForm.Free;
 end;
 
-procedure TSpeciesSWForm.plotFormCreate(Sender: TObject);
+procedure TVarSelectForm.plotFormCreate(Sender: TObject);
 begin
   //console.log('Species select form created');
 end;
 
 
-procedure TSpeciesSWForm.SpPlotCGCheckClick(Sender: TObject; AIndex: Integer);
+procedure TVarSelectForm.SpPlotCGCheckClick(Sender: TObject; AIndex: Integer);
 begin
 // TODO ??
 end;
 
-procedure TSpeciesSWForm.WebFormShow(Sender: TObject);
+procedure TVarSelectForm.WebFormShow(Sender: TObject);
 var i : integer;
 begin
   for i := 0 to length(speciesList)-1 do
-      SpPlotCG.Checked[i] := True;
-  //console.log ('Setting check box');
+    if length(speciesList) <10 then
+      SpPlotCG.Checked[i] := True
+    else SpPlotCG.Checked[i] := false;
 end;
 
 
-procedure TSpeciesSWForm.fillSpeciesCG();
+procedure TVarSelectForm.fillSpeciesCG();
 var i : integer;
 begin
   // Adjust checkgroup height as List may not fit with default height
