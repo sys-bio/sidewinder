@@ -895,8 +895,6 @@ object mainForm: TmainForm
           SelStart = 0
           Visible = False
           WidthPercent = 100.000000000000000000
-          ExplicitLeft = -1
-          ExplicitTop = 590
         end
       end
       object SplitterPlotSlider: TWebSplitter
@@ -925,8 +923,6 @@ object mainForm: TmainForm
         ChildOrder = 4
         ElementBodyClassName = 'card-body'
         ElementFont = efCSS
-        ExplicitLeft = 263
-        ExplicitTop = -6
         DesignSize = (
           264
           735)

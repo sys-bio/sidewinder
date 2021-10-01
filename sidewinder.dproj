@@ -138,17 +138,12 @@
         <DCCReference Include="simulator\uODE_FormatUtility.pas"/>
         <DCCReference Include="simulator\uSimulation.pas"/>
         <DCCReference Include="plot\uGraphP.pas"/>
-        <DCCReference Include="ufSpeciesSelect.pas">
-            <Form>SpeciesSWForm</Form>
+        <DCCReference Include="ufVarSelect.pas">
+            <Form>VarSelectForm</Form>
             <FormType>dfm</FormType>
             <DesignClass>TWebForm</DesignClass>
         </DCCReference>
         <DCCReference Include="plot\uPlotLayout.pas"/>
-        <DCCReference Include="ufParamSelect.pas">
-            <Form>Form1</Form>
-            <FormType>dfm</FormType>
-            <DesignClass>TWebForm</DesignClass>
-        </DCCReference>
         <DCCReference Include="uParamSliderLayout.pas"/>
         <DCCReference Include="uSidewinderTypes.pas"/>
         <DCCReference Include="uTestModel.pas"/>

@@ -14,8 +14,7 @@ uses
   Vcl.TMSFNCGraphicsTypes, Vcl.TMSFNCCustomControl, Vcl.TMSFNCScrollBar,
   uNetworkTypes, Vcl.Imaging.pngimage, WEBLib.Lists, Vcl.Forms, uModel,
   uSBMLClasses, uSimulation, uControllerMain,
-  uODE_FormatUtility, uGraphP, Vcl.Menus, WEBLib.Menus, ufParamSelect,
-  ufSpeciesSelect, uPlotPanel,
+  uODE_FormatUtility, uGraphP, Vcl.Menus, WEBLib.Menus, ufVarSelect, uPlotPanel,
   uParamSliderLayout, uSidewinderTypes, WEBLib.ComCtrls;
 
 const EDITBOX_HT = 25;
@@ -186,6 +185,7 @@ type
     procedure DeletePlot(plotIndex: Integer); // Index of plot to delete
     function  getEmptyPlotPosition(): Integer;
     function  getPlotPBIndex(plotTag: integer): Integer; // Return Plot index of tag.
+    function  getSliderIndex(sliderTag: integer): Integer;
     procedure EditPlotList(plotn: Integer);
     procedure updatePlots(); // Go through and remove species/plots no longer in model. needed ?
     procedure initializePlots();
@@ -198,7 +198,7 @@ type
     procedure LoadJSONFile();
     procedure EditSliderList(sn: Integer);
             // delete, change param slider as needed using TWebListBox.
-    procedure DeleteSlider(sn: Integer);
+    procedure DeleteSlider(sn: Integer); // sn: slider index
     procedure adjustRightTabWPanels(); // Adjust all right panels
                   // (node edit, rxn edit, simulation) to same width, height
     procedure updateRxnRatePanel(); // Refresh with current rxn info.
@@ -217,10 +217,11 @@ type
     origin: TPointF;
     fileName: string;
     currentGeneration: Integer; // Used by plots as current x axis point
-    fPlotSpecies: TSpeciesSWForm;
+    fPlotSpecies: TVarSelectForm;
     plotSpecies: TList<TSpeciesList>; // species to graph for each plot
     plotsPanelList: TList<TPlotPanel>; // Panels in which each plot resides
-    fSliderParameter: TParamSliderSForm;// Pop up form to choose parameter for slider.
+ //   fSliderParameter: TParamSliderSForm;// Pop up form to choose parameter for slider.
+    fSliderParameter: TVarSelectForm;// Pop up form to choose parameter for slider.
     sliderParamAr: array of Integer;
     // holds parameter array index of parameter (p_vals) for each slider
     pnlSliderAr: array of TWebPanel; // Holds parameter sliders
@@ -245,7 +246,7 @@ type
 
 var
   mainForm: TMainForm;
-  spSelectform: TSpeciesSWForm; // display speciecs select to plot radio group
+  spSelectform: TVarSelectForm; // display speciecs select to plot radio group
 
 implementation
 
@@ -516,7 +517,6 @@ end;
 
 procedure TMainForm.initializePlots();
   var i: Integer;
-     // yScaleWidth, newYMax : integer;
 begin
   for i := 0 to plotsPanelList.Count - 1 do
     begin
@@ -665,7 +665,6 @@ begin
     end
   else if networkController.selectedEdge <>-1 then
     begin
-     // console.log(' A reaction has been selected');
       self.rightPanelType := REACTION_PANEL;
       self.RSimWPanel.visible := false;
       self.RNodeEditWPanel.visible := false;
@@ -739,7 +738,7 @@ procedure TMainForm.btnParamAddSliderClick(Sender: TObject);
 var
   i: Integer;
 begin
-  // TODO: Check if already 5 sliders, if so then showmessage( 'Only 5 parameter sliders allowed, edit existing one');
+  // TODO: Check if already 10 sliders, if so then showmessage( 'Only 10 parameter sliders allowed, edit existing one');
   self.selectParameter(length(sliderParamAr));
 end;
 
@@ -941,34 +940,31 @@ begin
       simRTStr := simRTStr + ', ' + self.mainController.getModel.getS_Names()[i];
     end;
   simResultsMemo.Lines.Add(simRTStr);
-  //for i := 0 to simResultsMemo.Lines.count -1 do
-  //  begin
-  //   console.log( '***** sim results:  ', simResultsMemo.Lines[i]);
-  //  end;
+ 
 end;
 
 procedure TMainForm.SliderEditLBClick(Sender: TObject);
 begin
   if self.SliderEditLB.ItemIndex = 0 then // change param for slider
     begin
-      self.selectParameter(self.SliderEditLB.tag);
+      self.selectParameter(getSliderIndex(self.SliderEditLB.tag));
     end;
   if self.SliderEditLB.ItemIndex = 1 then // delete slider
     begin
-      self.DeleteSlider(self.SliderEditLB.tag);
+      self.DeleteSlider(getSliderIndex(self.SliderEditLB.tag));
     end;
   // else ShowMessage('Cancel');
-  self.SliderEditLB.tag := 0;
+  self.SliderEditLB.tag := -1;
   self.SliderEditLB.visible := false;
   self.SliderEditLB.Top := 40; // default
 end;
 
 procedure TMainForm.splitterMoved(Sender: TObject);
 begin
-  if self.rightPanelType = NODE_PANEL then
+  {if self.rightPanelType = NODE_PANEL then
     begin
       // := self.RNodeEditWPanel.Width;
-    end;
+    end;   }
   networkCanvas.bitmap.Height := networkPB1.Height;
   networkCanvas.bitmap.width := networkPB1.Width;
 
@@ -1127,15 +1123,15 @@ procedure TMainForm.selectPlotSpecies(plotnumb: Integer);
       end;
   end;
 
-// async called OnCreate for TSpeciesSWForm
+// async called OnCreate for TVarSelectForm
   procedure AfterCreate(AForm: TObject);
   begin
-    (AForm as TSpeciesSWForm).speciesList := self.mainController.getModel.getS_names;
-    (AForm as TSpeciesSWForm).fillSpeciesCG();
+    (AForm as TVarSelectForm).speciesList := self.mainController.getModel.getS_names;
+    (AForm as TVarSelectForm).fillSpeciesCG();
   end;
 
 begin
-  fPlotSpecies := TSpeciesSWForm.CreateNew(@AfterCreate);
+  fPlotSpecies := TVarSelectForm.CreateNew(@AfterCreate);
   fPlotSpecies.Popup := true;
   fPlotSpecies.ShowClose := false;
   fPlotSpecies.PopupOpacity := 0.3;
@@ -1156,14 +1152,6 @@ begin
     self.plotsPanelList := TList<TPlotPanel>.create;
   self.plotsPanelList.Add(TPlotPanel.create(pnlPlotContainer, plotPositionToAdd, yMax,
        self.mainController.getModel.getS_Names, self.mainController.getModel.getS_Vals));
-
-  // Want all plots to have same width, not always the case if user deletes plot,
-  // adjust right panel width:
- // if self.numbPlots > 1 then
- // begin
- //    plotWidth := self.plotsPanelList[0].plotWPanel.Width;
- //    self.plotsPanelList[self.numbPlots - 1].setPlotWidth(plotWidth);
- // end;
 
   newHeight := 200;  // default
   if self.numbPlots > DEFAULT_NUMB_PLOTS then
@@ -1192,6 +1180,18 @@ begin
   end;
 end;
 
+function  TMainForm.getSliderIndex(sliderTag: integer): Integer;
+var i: integer;
+begin
+  Result := -1;
+  for i := 0 to length(self.pnlSliderAr) -1 do
+  begin
+    if self.pnlSliderAr[i].Tag = sliderTag then
+      Result := i;
+  end;
+end;
+
+
 function TMainForm.getEmptyPlotPosition(): Integer;
 var i, plotPosition, totalPlots: Integer;
 begin
@@ -1209,6 +1209,23 @@ begin
   Result := plotPosition;
 end;
 
+
+{function TMainForm.getEmptySliderPosition(): Integer;
+var i, sliderPosition, totalSliders: Integer;
+begin
+  sliderPosition := 0;
+  totalSliders := self.numbSliders;
+  if self.numbSliders >1 then
+  begin
+    for i := 0 to totalSliders -2 do
+    begin
+      if self.plotsPanelList[i].plotWPanel.Tag = sliderPosition then
+        inc(sliderPosition);
+    end;
+  end;
+
+  Result := sliderPosition;
+end;  }
 
 procedure TMainForm.DeletePlot(plotIndex: Integer);
 var tempObj: TObject;
@@ -1269,7 +1286,7 @@ begin
 end;
 
 procedure TMainForm.EditSliderList(sn: Integer);
-// delete, change param slider as needed.
+// delete, change param slider as needed. sn is slider index
 var
   sliderXposition, sliderYposition: Integer;
   editList: TStringList;
@@ -1290,7 +1307,7 @@ begin
 end;
 
 // TODO still more cleanup .. reorder sliders if middle one deleted ?
-procedure TMainForm.DeleteSlider(sn: Integer);
+procedure TMainForm.DeleteSlider(sn: Integer); // sn: slider index
 begin
   // console.log('Delete Slider: slider #: ',sn);
   self.pnlSliderAr[sn].free;
@@ -1306,53 +1323,71 @@ end;
 
 
 // Select parameter to use for slider
-procedure TMainForm.selectParameter(sNumb: Integer);
+procedure TMainForm.selectParameter(sNumb: Integer); // snumb is slider index
 var
   paramIndex: Integer; // param chosen in radiogroup
   // Pass back to caller after closing popup:
   procedure AfterShowModal(AValue: TModalResult);
   var
-    i, pSliderNumb: Integer;
+    i, sliderNumb:Integer;
     addingSlider: Boolean;
+    sliderP: string;
   begin
-    if length(self.sliderParamAr) < (sNumb + 1) then
+    addingSlider := false;
+    sliderNumb := 0;
+    sliderP := '';
+    if length(self.sliderParamAr) < (sNumb +1) then
       begin
-        pSliderNumb := length(self.sliderParamAr); // same as self.numbParams
-        // Add a slider
+        // Add a plot with species list
         addingSlider := true;
-        SetLength(self.sliderParamAr, pSliderNumb + 1);
+
       end
     else
-      addingSlider := false;
-  //  console.log('Param index picked (chosenParam): ',
-  //    fSliderParameter.chosenParam);
-    self.sliderParamAr[sNumb] := fSliderParameter.chosenParam;
-    if addingSlider then
-      self.addParamSlider() // <-- Add dynamically created slider
-    else
-      self.SetSliderParamValues(sNumb, self.sliderParamAr[sNumb]);
-    // update slider with new parameter.
+      begin    // Changing species to plot, so clear out old entries:
+        addingSlider := false;
+        self.sliderParamAr[getSliderIndex(sNumb)] := -1; // Clear slider position, not needed here ?
+      end;
+
+    for i := 0 to fSliderParameter.SpPlotCG.Items.Count - 1 do
+      begin
+        sliderP := '';
+        if fSliderParameter.SpPlotCG.checked[i] then
+          begin
+            if addingSlider then
+              SetLength(self.sliderParamAr, (sliderNumb + 1));    // add a slider
+            sliderP := self.mainController.getModel.getP_names[i];   // needed?
+            self.sliderParamAr[sliderNumb] := i; // assign param indexto slider
+            self.addParamSlider(); // <-- Add dynamically created slider
+            inc(sliderNumb);
+          end;
+
+      end;
+
+
   end;
 
 // async called OnCreate for TParamSliderSForm
   procedure AfterCreate(AForm: TObject);
   begin
-    (AForm as TParamSliderSForm).paramList := self.mainController.getModel.getP_Names;
-    (AForm as TParamSliderSForm).fillParamRG();
+    (AForm as TVarSelectForm).speciesList := self.mainController.getModel.getP_Names;
+    (AForm as TVarSelectForm).fillSpeciesCG();
   end;
 
 begin
-  fSliderParameter := TParamSliderSForm.CreateNew(@AfterCreate);
+  fSliderParameter := TVarSelectForm.CreateNew(@AfterCreate);
   fSliderParameter.Popup := true;
-  fSliderParameter.PopupOpacity := 0.3;
   fSliderParameter.ShowClose := false;
+  fSliderParameter.PopupOpacity := 0.3;
   fSliderParameter.Border := fbDialogSizeable;
-  fSliderParameter.caption := 'Parameter for slider:';
-  //fSliderParameter.Close :=
+  fSliderParameter.caption := 'Pick parameters for sliders:';
   fSliderParameter.ShowModal(@AfterShowModal);
+
 end;
 
-procedure TMainForm.addParamSlider();
+
+// *******************************************************
+
+procedure TMainForm.addParamSlider(); // assume slider index is at last position, otherwise it is just an edit.
 // default TBar range: 0 to initVal*10
   procedure SliderOnMouseDown(Sender: TObject; Button: TMouseButton;
     Shift: TShiftState; X, Y: Integer);
@@ -1376,9 +1411,7 @@ var
   i, sliderTBarWidth, sliderPanelLeft, sliderPanelWidth: Integer;
 begin
   // Left most position of the panel that holds the slider
-  //sliderPanelWidth := trunc((1 - PLOT_WIDTH_PERCENTAGE) * self.pnlSliderContainer.width); // TODO FIX panel name
   sliderPanelWidth :=  self.pnlSliderContainer.width;
-  //sliderPanelLeft := (self.pnlSliderContainer.Width - sliderPanelWidth) - 6;
   sliderPanelLeft := 0;    // not used anymore, just set to default
 
   // Width of the slider inside the panel
@@ -1401,6 +1434,7 @@ begin
     self.pnlSliderAr);
 
   self.pnlSliderAr[i].tag := i; // keep track of slider index number.
+  //self.pnlSliderAr[i].tag := i + 1 ; // keep track of slider position number.
   self.sliderPTBarAr[i] := TWebTrackBar.create(self.pnlSliderAr[i]);
   self.sliderPTBarAr[i].parent := self.pnlSliderAr[i];
   self.sliderPTBarAr[i].OnChange := self.ParamSliderOnChange;
@@ -1565,7 +1599,6 @@ procedure TMainForm.addRxnStoichEdit(spIndex: integer; rxnReactant: boolean);
   procedure editRxnSpStoich(Sender: TObject; src: boolean);
   var newStoich: double;
   begin
-  //console.log('addRxnStoichEdit');
   if Sender.classType = TWebEdit then
    begin
      try
@@ -1579,7 +1612,6 @@ procedure TMainForm.addRxnStoichEdit(spIndex: integer; rxnReactant: boolean);
      end;
      except
        on Exception: EConvertError do
-      // ShowMessage(Exception.Message);
          notifyUser ('Stoichiometric coefficient must be a number');
      end;
 
@@ -1595,7 +1627,6 @@ procedure TMainForm.addRxnStoichEdit(spIndex: integer; rxnReactant: boolean);
     editRxnSpStoich(Sender, false);
   end;
 // ----------------------------------------------------
-//const EDITBOX_HT = 25;
 var i: integer;
     newStoichLabel: TWebLabel;
     newStoichEdit: TWebEdit;
