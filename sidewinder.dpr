@@ -40,7 +40,8 @@ uses
   uSBMLWriter in 'sbml\uSBMLWriter.pas',
   uBuildRateLaw in 'rxn_networks\uBuildRateLaw.pas',
   uNetworkToModel in 'rxn_networks\uNetworkToModel.pas',
-  uPlotPanel in 'plot\uPlotPanel.pas';
+  uPlotPanel in 'plot\uPlotPanel.pas',
+  uSBMLClasses.Layout in 'sbml\uSBMLClasses.Layout.pas';
 
 {$R *.res}
 

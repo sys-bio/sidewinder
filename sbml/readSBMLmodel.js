@@ -7,7 +7,18 @@
 class ProcessSBML {
  constructor( libSBMLModel ){
    this.model = libSBMLModel; // Model from libSBML doc.getModel()
+   if(this.model.getNumPlugins() >0) {
+     this.SBMLLayOut = this.model.findPlugin('layout');
+     if(this.SBMLLayOut == undefined) {
+       console.log('No layout plugin');
+       }
+     else {
+       this.newLayoutPlug = this.SBMLLayOut.asLayout();
+       this.numLayouts = this.newLayoutPlug.getNumLayouts();
+     }
+   }
  }
+
  getNumbers(tModela) { //  class TModel
    tModela.numSpecies = this.model.getNumSpecies();
    tModela.numParams = this.model.getNumParameters();
@@ -15,6 +26,8 @@ class ProcessSBML {
    tModela.numEvents = this.model.getNumEvents();
    tModela.numRules = this.model.getNumRules();
    tModela.numbPlugins = this.model.getNumPlugins();
+   console.log('Number of plugins: ', this.model.getNumPlugins());
+
   //tModela.numFuncDefs = model.numFunctionDefinitions(); call wrong?? need to chk if exists first?
    tModela.annotationStr = this.model.getNotesString();
    return tModela;
@@ -159,5 +172,236 @@ getRules(tModela, tRule) {
     }
     return tModela;
   }
+
+    // tLayout: TSBMLLayout,   assume only one layout for now.
+    // tDims: TSBMLLayoutDimensions, tPt: TSBMLLayoutPoint, etc...
+  getLayout(tLayout, tDims, tPt, tBBox,
+            tLineSeg, tCubicB, tCurve, tCompGlyph, tGraphObj, tGenObj,
+            tSpGlyph, tSpRefGlyph, tRxnGlyph, tTextGlyph) {
+    var i;
+  
+    console.log( 'Numb of layouts: ', this.numLayouts);
+    for(i=0; i< this.numLayouts; i++) {
+
+      const aLayout = this.newLayoutPlug.getLayout(i);
+      const dims = aLayout.getDimensions()
+ //     console.log(' Dims: height: ', dims.getHeight());
+      tDims = this.assignDims(tDims, dims);
+      tLayout.setDims(tDims); // assume NO depth.
+      tLayout = this.getCompGlyphs(tLayout, aLayout, tDims, tPt, tBBox, tCompGlyph );
+      tLayout = this.getSpeciesGlyphs(tLayout, aLayout, tDims, tPt, tBBox, tSpGlyph);
+      tLayout = this.getRxnGlyphs(tLayout, aLayout, tDims, tPt, tBBox, tLineSeg,
+                    tCubicB, tCurve, tSpRefGlyph, tRxnGlyph);
+      tLayout = this.getTextGlyphs(tLayout, aLayout, tDims, tPt, tBBox, tGraphObj, tTextGlyph )
+    }
+
+    return tLayout;
+  }
+
+   assignDims(tDims, readDims)
+   {
+     if(readDims.isSetIdAttribute()) {tDims.setId(readDims.getId());}
+     else {tDims.setId('');}
+     tDims.setWidth(readDims.getWidth());
+     tDims.setHeight(readDims.getHeight());
+     if(readDims.getDepth() == undefined){ tDims.setDepth(0);}
+     else { tDims.setDepth(readDims.getDepth()); }
+     return tDims;
+   }
+
+   assignPoint( tPt, readPt)
+   {
+     if(readPt.isSetIdAttribute()){ tPt.setId(readPt.getId());}
+     else {tPt.setId('');}
+     tPt.setX(readPt.x());
+     tPt.setY(readPt.y());
+     if(readPt.z() == undefined) {
+       tPt.unSetZFlag(); tPt.setZ(-1);
+     }
+     else {tPt.setZ(readPt.z());}
+     tPt.setZ(readPt.z());
+     return tPt;
+   }
+
+   assignBBox(tBBox, readBBox, tDims, tPt)
+   {
+     tBBox.setId(readBBox.getId());
+     tDims.setWidth(0);
+     tDims.setHeight(0);
+     tDims.setDepth(0);
+     tDims = this.assignDims(tDims, readBBox.getDimensions()); //readBBox is libsbmljs object
+     tBBox.setDims(tDims);
+     tBBox.setPoint(this.assignPoint(tPt, readBBox.getPosition()));
+     return tBBox;
+   }
+
+   assignLineSegment(tLineSeg, readLineSeg, tPt)
+   {
+     if(readLineSeg.isSetIdAttribute()) { tLineSeg.setId(readLineSeg.getId()); }
+     else { tLineSeg.setId(''); }
+     tPt = this.assignPoint(tPt, readLineSeg.getStart());
+     tLineSeg.setStartPt(tPt);
+     tPt = this.assignPoint(tPt, readLineSeg.getEnd());
+     tLineSeg.setEndPt(tPt);
+     return tLineSeg;
+   }
+
+   assignCubicB(tCubicB, readCubicB, tPt)
+   {
+     if(readCubicB.isSetIdAttribute()) { tCubicB.setId(readCubicB.getId()); }
+     else { tCubicB.setId(''); }
+     tPt = this.assignPoint(tPt, readCubicB.getBasePoint1());
+     tCubicB.setBasePt1(this.assignPoint(tPt, readCubicB.getBasePoint1()));
+     tPt = this.assignPoint(tPt, readCubicB.getBasePoint2());
+     tCubicB.setBasePt2(this.assignPoint(tPt, readCubicB.getBasePoint2()));
+     tPt = this.assignPoint(tPt, readCubicB.getStart());
+     tCubicB.setStart(tPt);
+     tPt = this.assignPoint(tPt, readCubicB.getEnd());
+     tCubicB.setEnd(this.assignPoint(tPt, readCubicB.getEnd()));
+     return tCubicB;
+   }
+
+   getCompGlyphs(nLayout, sbmlLayout, sbmlDims, sbmlPt, sbmlBBox, sbmlCompGlyph )
+   {
+     var i;
+     for(i=0; i< sbmlLayout.getNumCompartmentGlyphs(); i++) {
+       const curComp = sbmlLayout.getCompartmentGlyph(i);
+       sbmlCompGlyph.setId(curComp.getId());
+       if( curComp.isSetCompartmentId()) {
+         sbmlCompGlyph.setCompId(curComp.getCompartmentId());
+       }
+       else { sbmlCompGlyph.setCompId('');}
+       if( curComp.isSetOrder()) {
+         sbmlCompGlyph.setOrder(curComp.getOrder());
+       }
+       sbmlBBox = this.assignBBox(sbmlBBox, curComp.getBoundingBox(),sbmlDims, sbmlPt);
+       sbmlCompGlyph.setBoundingBox(sbmlBBox);
+       nLayout.addCompGlyph(sbmlCompGlyph);
+     }
+     return nLayout;
+   }
+
+   getSpeciesGlyphs(nLayout, sbmlLayout, sbmlDims, sbmlPt, sbmlBBox, sbmlSpGlyph)
+   {
+     var i;
+     for(i = 0; i< sbmlLayout.getNumSpeciesGlyphs(); i++) {
+       const curSpGlyph = sbmlLayout.getSpeciesGlyph(i);
+       sbmlSpGlyph.setId(curSpGlyph.getId());
+       if(curSpGlyph.isSetSpeciesId()) {
+         sbmlSpGlyph.setSpeciesId(curSpGlyph.getSpeciesId());
+       }
+       else { sbmlSpGlyph.setSpeciesId('');}
+       sbmlBBox = this.assignBBox(sbmlBBox, curSpGlyph.getBoundingBox(),sbmlDims, sbmlPt);
+       sbmlSpGlyph.setBoundingBox(sbmlBBox);
+       nLayout.addSpGlyph(sbmlSpGlyph);
+     }
+     return nLayout;
+   }
+
+   getRxnGlyphs(nLayout, readLayout, sbmlDims, sbmlPt, sbmlBBox, sbmlLineSeg,
+                    sbmlCubicB, sbmlCurve, sbmlSpRefGlyph, sbmlRxnGlyph)
+   {
+     var i, j, k;
+     for(i=0; i< readLayout.getNumReactionGlyphs(); i++)
+     {
+       const curRxnGlyph = readLayout.getReactionGlyph(i);
+       sbmlRxnGlyph.clear();
+       if(curRxnGlyph.isSetReactionId()) {sbmlRxnGlyph.setReactionId(curRxnGlyph.getReactionId()); }
+       else { sbmlRxnGlyph.setReactionId(''); }
+       // Grab reaction curve if exists.....
+       if(curRxnGlyph.isSetCurve()) {
+         const curCurve = curRxnGlyph.getCurve();
+         if(curCurve.isSetIdAttribute()) { sbmlCurve.setCurveId(curCurve.getId()); }
+         else { sbmlCurve.setCurveId(''); }
+         console.log(' curve segments: ', curCurve.getNumCurveSegments());
+         for(k=0; k< curCurve.getNumCurveSegments(); k++) {
+           const curCurveSeg = curCurve.getCurveSegment(k);
+           if(curCurveSeg.isCubicBezier()){
+             console.log('Bezier curve ** ');
+             sbmlCubicB = this.assignCubicB(sbmlCubicB, curCurveSeg.asCubicBezier(), sbmlPt);
+             sbmlCurve.addCubicBezier(sbmlCubicB);
+           }
+           else {  // line segment:
+             sbmlLineSeg = this.assignLineSegment(sbmlLineSeg, curCurveSeg, sbmlPt);
+             sbmlCurve.addLineSegment(sbmlLineSeg);
+           }
+         }
+         sbmlRxnGlyph.setCurve(sbmlCurve);
+       }
+
+       for(j=0; j< curRxnGlyph.getNumSpeciesReferenceGlyphs(); j++)
+       {
+         sbmlCurve.clear();
+         const curSpRefGlyph = curRxnGlyph.getSpeciesReferenceGlyph(j);
+         if(curSpRefGlyph.isSetSpeciesGlyphId()) {
+           sbmlSpRefGlyph.setSpeciesGlyphId(curSpRefGlyph.getSpeciesGlyphId()); }
+         else { curSpRefGlyph.setSpeciesGlyphId(''); }
+         if(curSpRefGlyph.isSetSpeciesReferenceId()) {
+           sbmlSpRefGlyph.setSpeciesRefId(curSpRefGlyph.getSpeciesReferenceId()); }
+         else { curSpRefGlyph.setSpeciesRefId('');}
+         if(curSpRefGlyph.isSetRole() ){
+           sbmlSpRefGlyph.setRole(curSpRefGlyph.getRoleString()); }
+         else {sbmlSpRefGlyph.setRole('undefined'); }
+         const curCurve = curSpRefGlyph.getCurve();
+         if(curCurve.isSetIdAttribute()) { sbmlCurve.setCurveId(curCurve.getId()); }
+         else { sbmlCurve.setCurveId(''); }
+         console.log(' curve segments: ', curCurve.getNumCurveSegments());
+         for(k=0; k< curCurve.getNumCurveSegments(); k++) {
+           const curCurveSeg = curCurve.getCurveSegment(k);
+           if(curCurveSeg.isCubicBezier()){
+             console.log('Bezier curve ** ');
+             sbmlCubicB = this.assignCubicB(sbmlCubicB, curCurveSeg.asCubicBezier(), sbmlPt);
+             sbmlCurve.addCubicBezier(sbmlCubicB);
+           }
+           else {  // line segment:
+             sbmlLineSeg = this.assignLineSegment(sbmlLineSeg, curCurveSeg, sbmlPt);
+             sbmlCurve.addLineSegment(sbmlLineSeg);
+           }
+         }
+         sbmlSpRefGlyph.setCurve(sbmlCurve);
+         if(curSpRefGlyph.getBoundingBox() != null ) {
+           sbmlBBox = this.assignBBox(sbmlBBox,curSpRefGlyph.getBoundingBox(),sbmlDims, sbmlPt);
+           sbmlSpRefGlyph.setBoundingBox(sbmlBBox);
+         }
+         sbmlRxnGlyph.addSpeciesRefGlyph(sbmlSpRefGlyph);
+       }
+
+       nLayout.addRxnGlyph(sbmlRxnGlyph);
+     }
+
+     return nLayout;
+   }
+
+   getTextGlyphs(nLayout, readLayout, sbmlDims, sbmlPt, sbmlBBox, sbmlGraphObj, sbmlTextGlyph )
+   {
+     var i;
+     console.log('Number of text glyphs: ', readLayout.getNumTextGlyphs());
+
+     for( i=0; i< readLayout.getNumTextGlyphs(); i++)
+     {
+       const curTextGlyph = readLayout.getTextGlyph(i);
+       if(curTextGlyph.isSetIdAttribute()) {
+         sbmlTextGlyph.setId(curTextGlyph.getId());
+       }
+       else { sbmlTextGlyph.setId(''); }
+       if(curTextGlyph.isSetText()) {
+         sbmlTextGlyph.setText(curTextGlyph.getText());
+       }
+       else { sbmlTextGlyph.setText(''); }
+       if( curTextGlyph.isSetOriginOfTextId() ) {
+         sbmlTextGlyph.setOriginOfText(curTextGlyph.getOriginOfTextId());
+       }
+       else { sbmlTextGlyph.setOriginOfText(''); }
+       if(curTextGlyph.isSetGraphicalObjectId()) {
+         sbmlBBox = this.assignBBox(sbmlBBox, curTextGlyph.getBoundingBox(), sbmlDims, sbmlPt);
+         sbmlTextGlyph.setBoundingBox(sbmlBBox);
+       }
+       nLayout.addTextGlyph(sbmlTextGlyph);
+       sbmlTextGlyph.clear();
+
+     }
+
+     return nLayout;
+   }
 
  }

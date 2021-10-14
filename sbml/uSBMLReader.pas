@@ -1,7 +1,7 @@
 unit uSBMLReader;
 
 interface
-uses Web, JS,  uSBMLClasses, uSBMLClasses.rule, uModel;
+uses Web, JS,  uSBMLClasses, uSBMLClasses.rule, uModel, uSBMLClasses.Layout;
 
 type
   TSBMLLoadedEvent = procedure(model: TModel) of object;  // Notify when done loading
@@ -27,6 +27,21 @@ implementation
     jsParam: TJSObject;
     newRule: TSBMLRule;
     jsRule: TJSObject;
+    newLayout: TSBMLLayout; jsLayout: TJSObject;
+    newDims: TSBMLLayoutDims; jsDims: TJSObject;
+    newPt: TSBMLLayoutPoint; jsPt: TJSObject;
+    newBBox: TSBMLLayoutBoundingBox; jsBBox: TJSObject;
+    newLineSeg: TSBMLLayoutLineSegment;  jsLineSeg: TJSObject;
+    newCubicB: TSBMLLayoutCubicBezier; jsCubicB: TJSObject;
+    newCurve: TSBMLLayoutCurve; jsCurve: TJSObject;
+    newGraphObj: TSBMLLayoutGraphicalObject; jsGraphObj: TJSObject;
+    newGenObj: TSBMLLayoutGeneralGlyph; jsGenObj: TJSObject;
+    newCompGlyph: TSBMLLayoutCompartmentGlyph; jsCompGlyph: TJSObject;
+    newSpGlyph: TSBMLLayoutSpeciesGlyph; jsSpGlyph: TJSObject;
+    newSpRefGlyph: TSBMLLayoutSpeciesReferenceGlyph; jsSpRefGlyph: TJSObject;
+    newRxnGlyph: TSBMLLayoutReactionGlyph; jsRxnGlyph: TJSObject;
+    newTextGlyph: TSBMLLayoutTextGlyph; jsTextGlyph: TJSObject;
+
   begin
     newSpecies:= TSBMLSpecies.create(); // a new species
     jsSpecies:= JS.ToObject(newSpecies);
@@ -36,7 +51,23 @@ implementation
     jsParam:= JS.ToObject(newParam);
     newRule:= TSBMLRule.create;
     jsRule:= JS.ToObject(newRule);
-
+    // Layout variables:
+    newLayout := TSBMLLayout.create;
+    jsLayout := JS.toObject(newLayout);
+    newDims := TSBMLLayoutDims.create; jsDims := JS.toObject(newDims);
+    newPt := TSBMLLayoutPoint.create; jsPt := JS.toObject(newPt);
+    newBBox := TSBMLLayoutBoundingBox.create; jsBBox := JS.toObject(newBBox);
+    newLineSeg := TSBMLLayoutLineSegment.create; jsLineSeg := JS.toObject(newLineSeg);
+    newCubicB := TSBMLLayoutCubicBezier.create; jsCubicB := JS.toObject(newCubicB);
+    newCurve := TSBMLLayoutCurve.create; jsCurve := JS.toObject(newCurve);
+    newGraphObj := TSBMLLayoutGraphicalObject.create; jsGraphObj := JS.toObject(newGraphObj);
+    newGenObj := TSBMLLayoutGeneralGlyph.create; jsGenObj := JS.toObject(newGenObj);
+    newCompGlyph := TSBMLLayoutCompartmentGlyph.create; jsCompGlyph := JS.toObject(newCompGlyph);
+    newSpGlyph := TSBMLLayoutSpeciesGlyph.create; jsSpGlyph := JS.toObject(newSpGlyph);
+    newSpRefGlyph := TSBMLLayoutSpeciesReferenceGlyph.create;
+    jsSpRefGlyph := JS.toObject(newSpRefGlyph);
+    newRxnGlyph := TSBMLLayoutReactionGlyph.create; jsRxnGlyph := JS.toObject(newRxnGlyph);
+    newTextGlyph := TSBMLLayoutTextGlyph.create; jsTextGlyph := JS.toObject(newTextGlyph);
   asm;   // javascript
 
   try {
@@ -48,6 +79,18 @@ implementation
   // read with no errors .. TODO: Chk for errors
       const model = doc.getModel();
       const moreReading = new ProcessSBML(model);
+
+      if(model.getNumPlugins() >0) {
+        if(model.findPlugin('layout') != undefined) {
+        // Load layout information for model:
+          jsLayout = moreReading.getLayout(jsLayout, jsDims, jsPt, jsBBox,
+            jsLineSeg, jsCubicB, jsCurve, jsCompGlyph, jsGraphObj, jsGenObj,
+            jsSpGlyph, jsSpRefGlyph, jsRxnGlyph, jsTextGlyph );
+          newModel.setSBMLLayout(jsLayout);
+
+        }
+      }
+
 
       newModel = moreReading.getNumbers(newModel);
       newModel = moreReading.getRules(newModel,jsRule);
@@ -67,6 +110,15 @@ implementation
          const doc = reader.readSBMLFromString(SBMLtext);
          const model = doc.getModel();
          const moreReading = new ProcessSBML(model);
+         if(model.getNumPlugins() >0) {
+           if(model.findPlugin('layout') != undefined) {
+        // Load layout information for model:
+             newLayout = moreReading.getLayout(newLayout, jsDims, jsPt, jsBBox,
+               jsLineSeg, jsCubicB, jsCurve, jsCompGlyph, jsGraphObj, jsGenObj,
+               jsSpGlyph, jsSpRefGlyph, jsRxnGlyph, jsTextGlyph );
+
+           }
+         }
          newModel = moreReading.getNumbers(newModel);
          newModel = moreReading.getRules(newModel,jsRule);
          newModel = moreReading.getSpecies(newModel, jsSpecies );
