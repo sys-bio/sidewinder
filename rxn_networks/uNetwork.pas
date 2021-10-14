@@ -133,6 +133,7 @@ type
        function    unScale (x : double) : double;
 
        procedure   loadModel (modelStr : string);
+       // procedure loadSBMLModel (model: TModel);
        function    convertToJSON : string;
        function    overNode (x, y : double; var node : TNode) : boolean; overload;
        function    overNode (x, y : double; var index : integer) : TNode; overload;
