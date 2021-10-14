@@ -129,10 +129,13 @@ class GenerateSBMLModel {
        //for(j=0; j<rxnKineticLaw.getNumParameters(); j++) // Do not add params for kinetic law
        newKineticLaw.setFormula(rxnKineticLaw.getFormula());
 
-
      }
 
    }
+ }   // createReactions()
+
+ createLayout() {
+
  }
 
 }
