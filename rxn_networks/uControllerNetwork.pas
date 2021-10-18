@@ -52,10 +52,11 @@ type
     mouseDownPressed: boolean;
 
     networkCanvas : TNetworkCanvas;
-  
-    //sbmlModel: TModel;
+
+
   public
     procedure loadModel(modelStr: string);
+    procedure loadSBMLModel(newSBMLmodel: TModel);
     procedure setAddNodeStatus;
     procedure setAddUniUniReaction;
     procedure setAddUniBiReaction;
@@ -185,6 +186,11 @@ end;
 procedure TController.loadModel(modelStr: string);
 begin
   network.loadModel(modelStr); // JSON format.
+end;
+
+procedure TController.loadSBMLModel(newSBMLModel: TModel);
+begin
+  network.loadSBMLModel(newSBMLModel);
 end;
 
 procedure TController.setSelectStatus;
@@ -635,11 +641,11 @@ end;
 procedure TController.SBMLUpdated(updatedModel: TModel);
 begin
   // TODO : update Network to reflect updated model.
-   // Note: need to check that infinite loop created with
+   // Note: may need to check that infinite loop created with
    //    network update causes model to update which causes network to update ...
   if updatedModel.getSpeciesNumb >0 then
     console.log('Network: TController.SBMLUpdate, First species: ',updatedModel.getSBMLSpecies(0).getID);
-
+  self.loadSBMLModel(updatedModel);
 end;
 
 

@@ -14,7 +14,8 @@ interface
 
 
 Uses SysUtils, Classes, Types, libthreejs, WEBLib.Graphics, Math, WEBLib.Utils,
-     WEBLib.JSON, Web, System.Generics.Collections, uNetworkTypes, uBuildRateLaw, uSBMLClasses;
+     WEBLib.JSON, Web, System.Generics.Collections, uNetworkTypes, uBuildRateLaw,
+     uSBMLClasses, uModel, uSBMLClasses.Layout;
 
 const
   // The following constant is the distance between the outer
@@ -58,6 +59,7 @@ type
 
        procedure saveAsJSON (nodeObject : TJSONObject);
        procedure loadFromJSON (obj : TJSONObject);
+       procedure loadFromSBML (obj : TSBMLLayoutSpeciesGlyph; initVal: double);
   end;
 
   TNode = class (TParent)
@@ -96,6 +98,8 @@ type
 
        procedure saveAsJSON (reactionObject : TJSONObject);
        procedure loadFromJSON (obj : TJSONObject);
+       procedure loadFromSBML (glyphRxn : TSBMLLayoutReactionGlyph;
+                  modelRxn: SBMLReaction; paramAr: array of TSBMLparameter);
   end;
 
   TReaction = class (TParent)
@@ -133,7 +137,7 @@ type
        function    unScale (x : double) : double;
 
        procedure   loadModel (modelStr : string);
-       // procedure loadSBMLModel (model: TModel);
+       procedure   loadSBMLModel (model: TModel);
        function    convertToJSON : string;
        function    overNode (x, y : double; var node : TNode) : boolean; overload;
        function    overNode (x, y : double; var index : integer) : TNode; overload;
@@ -225,6 +229,19 @@ begin
    outlineThickness := strtoint (obj.GetJsonValue ('outlineThickness'));
 end;
 
+procedure TNodeState.loadFromSBML (obj : TSBMLLayoutSpeciesGlyph; initVal: double);
+begin
+  id := obj.getSpeciesId;
+  conc := initVal;
+  x := obj.getBoundingBox().getPoint().getX;
+  y := obj.getBoundingBox().getPoint().getY;
+  h := obj.getBoundingBox().getDims().getHeight;
+  w := obj.getBoundingBox().getDims().getWidth;
+  // default values, Currently no sbml Render package used:
+  fillColor := RGB(255,204,153);// clWebPeachPuff;
+  outlineColor := RGB(255,102,0);
+  outlineThickness := 3;
+end;
 
 procedure TReactionState.saveAsJSON (reactionObject : TJSONObject);
 var speciesArray, reactantArray : TJSONArray;
@@ -341,6 +358,80 @@ begin
 end;
 
 
+procedure TReactionState.loadFromSBML (glyphRxn : TSBMLLayoutReactionGlyph;
+            modelRxn: SBMLReaction; paramAr: array of TSBMLparameter);
+var  newParam : TSBMLparameter;
+     speciesName : string;
+     i, j : integer;
+begin
+  id := modelRxn.getId;
+  rateParams := TList<TSBMLparameter>.create;
+  for i := 0 to Length(destStoich) -1 do
+     destStoich[i] := 0.0; // Initialize array
+  for i := 0 to Length(srcStoich) -1 do
+     srcStoich[i] := 0.0; // Initialize array
+
+  // get reactants:
+  nReactants := modelRxn.getNumReactants;
+  for i := 0 to modelRxn.getNumReactants - 1 do
+    begin
+      srcId[i] := modelRxn.getReactant(i).getSpecies;
+      srcStoich[i] := modelRxn.getReactant(i).getStoichiometry;
+    end;
+    // get products:
+  nProducts := modelRxn.getNumProducts;
+  for i := 0 to modelRxn.getNumProducts - 1 do
+    begin
+      destId[i] := modelRxn.getProduct(i).getSpecies;
+      destStoich[i] := modelRxn.getProduct(i).getStoichiometry;
+    end;
+    // For now,  just grab all parameters, not just ones used in reactions:
+    // Grab parameters that are used in reaction:
+
+      for j := 0 to Length(paramAr) - 1 do
+      begin
+       // console.log('param: ',modelRxn.getKineticLaw.getParameter(i),', model param: ',paramAr[j].getId);
+          rateParams.Add(paramAr[j]);
+      end;
+
+ //   end;
+  rateLaw := modelRxn.getKineticLaw.getFormula;
+  fillColor := clWebLightSteelBlue;
+  thickness := DEFAULT_REACTION_THICKNESS;
+
+  // arc center: order of assignment:
+  //  1.  grab BasePoint 1 of cubicBez if exists
+  //  2.  grap 1st line segment, start point if exists
+  //  3.  Grab bounding box center point.
+  arcCenter.x := 20; arcCenter.y := 20; // default, need something else here.
+  if glyphRxn.getCurve <> nil then
+    begin
+      if glyphRxn.getCurve.getNumCubicBeziers > 0 then
+      begin
+        arcCenter.x := glyphRxn.getCurve.getCubicBezier(0).getBasePoint1.getX;
+        arcCenter.y := glyphRxn.getCurve.getCubicBezier(0).getBasePoint1.gety;
+      end
+      else
+      begin
+        if glyphRxn.getCurve.getNumCurveSegments > 0 then
+          begin
+            arcCenter.x := glyphRxn.getCurve.getLineSegment(0).getStartPt.getX;
+            arcCenter.y := glyphRxn.getCurve.getLineSegment(0).getStartPt.getY;
+          end;
+
+      end;
+    end
+    else
+    begin
+      if glyphRxn.boundingBoxIsSet then
+      begin
+        arcCenter.x := glyphRxn.getBoundingBox.getPoint.getX;
+        arcCenter.Y := glyphRxn.getBoundingBox.getPoint.getY;
+      end;
+    end;
+
+end;
+
 procedure AddJSONHeader (obj : TJSONObject);
 begin
 
@@ -427,6 +518,89 @@ begin
      self.networkEvent; // Notify listener
 end;
 
+procedure TNetwork.loadSBMLModel (model : TModel);
+var i, j, k, l: integer;
+   modelLayout: TSBMLLayout;
+   speciesGlyph: TSBMLLayoutSpeciesGlyph;
+   reactionGlyph: TSBMLLayoutReactionGlyph;
+   reactionGlyphId: string; // name of reaction, used to find reaction details.
+   spAr: array of string;
+   initVal: double;
+   node : TNode;
+   reaction : TReaction;
+   nodeState : TNodeState;
+   reactionState: TReactionState;
+begin
+  modelLayout := model.getSBMLLayout;
+  // Do not get layout dimensions? not really necessary?
+
+ // Load nodes: ( currently only species )
+ // TextGlyphs typically are labels for nodes (they are ignored).
+  if modelLayout <> nil then
+  begin
+
+
+    for i := 0 to modelLayout.getNumSpGlyphs - 1 do
+      begin
+        initVal := 0;
+        spAr := model.getS_Names;
+
+        speciesGlyph := modelLayout.getSpGlyph(i);
+        for j := 0 to Length(spAr) -1 do
+        begin
+         // console.log('loadSBMLModel, species: ',spAr[j],', spglyph: ',speciesGlyph.getSpeciesId);
+          if spAr[j] = speciesGlyph.getSpeciesId then
+          begin
+            initVal := model.getS_initVals[j];
+          end;
+
+        end;
+        nodeState.loadFromSBML (speciesGlyph, initVal);
+        addNode (nodeState);
+      end;
+
+   // load reactions:
+    for i := 0 to modelLayout.getNumRxnGlyph - 1 do
+      begin
+        reactionGlyph := modelLayout.getRxnGlyph(i);
+        reactionGlyphId := reactionGlyph.getReactionId;
+        for j := 0 to model.getNumReactions - 1do
+          begin
+            if reactionGlyphId = model.getReaction(j).getID then
+            begin
+
+              reactionState.loadFromSBML (reactionGlyph, model.getReaction(j), model.getSBMLparameterAr);
+              reaction := addReaction (reactionState);
+             // Set the node pointers based on the node Ids
+              for k := 0 to reaction.state.nReactants - 1 do
+                for l := 0 to length (nodes) - 1 do
+                  begin
+                    if nodes[l].state.id = reaction.state.srcId[k] then
+                      begin
+                        reaction.state.srcPtr[k] := nodes[l];
+                        break;
+                      end;
+                  end;
+
+              for k := 0 to reaction.state.nProducts - 1 do
+                for l := 0 to length (nodes) - 1 do
+                  if nodes[l].state.id = reaction.state.destId[k] then
+                    begin
+                      reaction.state.destPtr[k] := nodes[l];
+                      break;
+                    end;
+            end;
+
+             // ************************
+          end;
+
+      end;
+  end;
+
+  // TODO: else generate new layout for sbml model.
+
+  //  self.networkEvent; // Notify listener, needed?
+end;
 
 function  TNetwork.convertToJSON : string;
 var JSONRoot, headerObj, modelId, nodeObject, reactionObject : TJSONObject;
