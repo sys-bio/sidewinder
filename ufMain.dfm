@@ -1317,9 +1317,11 @@ object mainForm: TmainForm
         ChildOrder = 2
         ElementBodyClassName = 'card-body-shadow'
         ElementFont = efCSS
+        ExplicitLeft = 1
+        ExplicitTop = -1
         object rateLawLabel: TWebLabel
-          Left = 10
-          Top = 20
+          Left = 6
+          Top = 28
           Width = 58
           Height = 16
           Caption = 'Rate Law:'
@@ -1334,7 +1336,7 @@ object mainForm: TmainForm
         end
         object rateLawEqLabel: TWebLabel
           Left = 85
-          Top = 20
+          Top = 28
           Width = 4
           Height = 16
           Font.Charset = DEFAULT_CHARSET
@@ -1342,6 +1344,38 @@ object mainForm: TmainForm
           Font.Height = -13
           Font.Name = 'Tahoma'
           Font.Style = []
+          HeightPercent = 100.000000000000000000
+          ParentFont = False
+          WidthPercent = 100.000000000000000000
+        end
+        object lblRxnId: TWebLabel
+          Left = 6
+          Top = 6
+          Width = 70
+          Height = 16
+          Caption = 'Reaction ID:'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWhite
+          Font.Height = -13
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          HeightStyle = ssAuto
+          HeightPercent = 100.000000000000000000
+          ParentFont = False
+          WidthPercent = 100.000000000000000000
+        end
+        object lblRxnIdString: TWebLabel
+          Left = 90
+          Top = 6
+          Width = 4
+          Height = 16
+          Caption = ' '
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWhite
+          Font.Height = -13
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          HeightStyle = ssAuto
           HeightPercent = 100.000000000000000000
           ParentFont = False
           WidthPercent = 100.000000000000000000

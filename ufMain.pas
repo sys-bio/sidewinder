@@ -101,6 +101,8 @@ type
     lblFileName: TWebLabel;
     lblSimDataFileName: TWebLabel;
     btnStopSimSave: TWebButton;
+    lblRxnId: TWebLabel;
+    lblRxnIdString: TWebLabel;
 
     procedure btnUniUniClick(Sender: TObject);
     procedure btnBiBiClick(Sender: TObject);
@@ -1539,6 +1541,7 @@ procedure TMainForm.updateRxnRatePanel(); // Refresh with current rxn info.
 begin
   try
     self.rateLawEqLabel.Caption := networkController.network.reactions[networkController.selectedEdge].state.rateLaw; // use getRateLaw instead.
+    self.lblRxnIdString.Caption := networkController.network.reactions[networkController.selectedEdge].state.id;
     self.RxnRatePanel.Width := self.rateLawEqLabel.Width + self.rateLawLabel.Width + 60;
     self.RxnRatePanel.invalidate;
     self.RSimWPanel.visible := false;
