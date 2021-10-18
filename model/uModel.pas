@@ -46,7 +46,8 @@ type
    procedure setNumReactions (rnxNumb : integer); // TODO, remove, just increment as rxn added.
    function  getNumReactions : integer;
    procedure addSBMLReaction(rxnid:String; prods: array of String; prodStoich: array of double;
-        reactants: array of String; reactantsStoich: array of double; kinetic: String; newReverse: boolean); overload;
+             reactants: array of String; reactantsStoich: array of double;
+             kineticLaw: String; newReverse: boolean); overload;
    procedure addSBMLReaction(newReaction: SBMLReaction); overload;
    function  getParamNumb(): integer;
    function  getSBMLparameter(i:integer): TSBMLparameter;
@@ -123,9 +124,7 @@ procedure TModel.SBML_UpdateEvent();
      FPing();
    if Assigned(FPing2) then
      FPing2();
-  // if Assigned(FPing3) then
-   //  FPing3();
-    console.log('TModel.SBML_UpdateEvent: SBML_UpdateEvent: Model has been updated....');
+   //  console.log('TModel.SBML_UpdateEvent: SBML_UpdateEvent: Model has been updated....');
  end;
 
  procedure TModel.setAnnotationStr(annotate:String);
@@ -140,7 +139,8 @@ procedure TModel.SBML_UpdateEvent();
  end;
 
  procedure TModel.addSBMLReaction(rxnid:String; prods: array of String; prodStoich: array of double;
-        reactants: array of String; reactantsStoich: array of double; kinetic: String; newReverse: boolean);
+         reactants: array of String; reactantsStoich: array of double;
+         kineticLaw: String; newReverse: boolean) overload;
  var
    newRxn: SBMLReaction;
    len: integer;
@@ -149,7 +149,7 @@ procedure TModel.SBML_UpdateEvent();
    paramArray: array of String;
  begin
    setlength(p, Length(prods));
-   paramArray:= ['nothing', 'empty'];
+   paramArray:= ['nothing', 'empty']; // Local Parameter values, not used for now.
    for I := 0 to Length(prods)-1 do
    begin
      p[I]:= TSBMLSpeciesReference.create(prods[I] + rxnid,prodStoich[I]);
@@ -166,9 +166,9 @@ procedure TModel.SBML_UpdateEvent();
 
    newRxn:= SBMLReaction.create(rxnid, p, r);
    newRxn.setReversible(newReverse);
-   newRxn.kineticLawStr:= kinetic;   // Get rid of.....?
+   newRxn.kineticLawStr:= kineticLaw;   // Get rid of.....?
    //newId: String; newFormula: String; paramArr: array of String
-   newRxn.setKineticLaw(SBMLkineticLaw.create('dummy', kinetic,paramArray));
+   newRxn.setKineticLaw(SBMLkineticLaw.create('dummy', kineticLaw ,paramArray));
    len:= Length(SBMLreactions);
    SetLength(SBMLreactions,len+1);    // Add new reaction to array
    sbmlreactions[len]:= newRxn;
@@ -484,7 +484,7 @@ end;
 procedure TModel.changeParamVal(pos: Integer; newVal: Double);
 begin
   self.p_Vals[pos] := newVal;
-  console.log('TModel.changeParamVal, pos: ',pos,', Value: ',newVal);
+ // console.log('TModel.changeParamVal, pos: ',pos,', Value: ',newVal);
   // Other viewers update ?
 
 end;
