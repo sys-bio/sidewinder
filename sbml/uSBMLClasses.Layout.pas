@@ -1235,7 +1235,7 @@ var
 
   procedure TSBMLLayout.addCompGlyph(newCompG: TSBMLLayoutCompartmentGlyph);
   begin
-    self.compartmentGlyphList.Add(newCompG);
+    self.compartmentGlyphList.Add(TSBMLLayoutCompartmentGlyph.create(newCompG));
   end;
   function TSBMLLayout.getNumCompGlyphs(): integer;
   begin
@@ -1263,7 +1263,7 @@ var
 
   procedure TSBMLLayout.addRxnGlyph(newRxnG: TSBMLLayoutReactionGlyph);
   begin
-    self.reactionGlyphList.Add(newRxnG);
+    self.reactionGlyphList.Add(TSBMLLayoutReactionGlyph.create(newRxnG));
   end;
 
   function TSBMLLayout.getNumRxnGlyph(): integer;

@@ -206,14 +206,7 @@ type
 
   function getNumReactants(): integer;
   function getNumProducts(): integer;
- {
-  procedure addReactant(spec: TSBMLSpeciesReference);
-  procedure addProduct(spec: TSBMLSpeciesReference);
-  function createReactant(): TSBMLSpeciesReference;
-  function createProduct(): TSBMLSpeciesReference;
-  function removeReactant(n:integer): TSBMLSpeciesReference;
-  function removeProduct(n:integer): TSBMLSpeciesReference;
-  function createKineticLaw():SBMLkineticlaw;}
+ 
   function getKineticLaw(): SBMLkineticlaw;
   procedure setKineticLaw(law: SBMLkineticlaw);
   function isSetKineticLaw(): boolean;

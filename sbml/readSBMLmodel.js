@@ -165,7 +165,7 @@ getRules(tModela, tRule) {
       if (this.model.getReaction(i).isSetReversible()) {
         rxnReversible = this.model.getReaction(i).getReversible(); }
       else { rxnReversible = true; } // level 2 default is true
-      const newKineticLaw = this.model.getReaction(i).getKineticLaw();
+    
    //console.log('--> kinetic law: ',this.model.getReaction(i).getKineticLaw().getFormula());
       tModela.addSBMLReaction(this.model.getReaction(i).getId(), products, prodStoich,
                               reactants, reactStoich, kineticForm, rxnReversible);
@@ -305,7 +305,7 @@ getRules(tModela, tRule) {
      for(i=0; i< readLayout.getNumReactionGlyphs(); i++)
      {
        const curRxnGlyph = readLayout.getReactionGlyph(i);
-       sbmlRxnGlyph.clear();
+    //   sbmlRxnGlyph.clear();
        if(curRxnGlyph.isSetReactionId()) {sbmlRxnGlyph.setReactionId(curRxnGlyph.getReactionId()); }
        else { sbmlRxnGlyph.setReactionId(''); }
        // Grab reaction curve if exists.....
@@ -367,6 +367,7 @@ getRules(tModela, tRule) {
        }
 
        nLayout.addRxnGlyph(sbmlRxnGlyph);
+       sbmlRxnGlyph.clear();
      }
 
      return nLayout;
