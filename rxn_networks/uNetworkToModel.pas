@@ -10,7 +10,7 @@ private
   model: TModel;
   layout: TSBMLLayout;
   network: TNetwork;
-  savingModel: boolean;  // true: model being saved to file, so add layout to file
+ // savingModel: boolean;  // true: model being saved to file, so add layout to file
   procedure setSpecies;
   //procedure setParameters; // Currently done in setReactions as all params in rxn equations
   procedure setReactions;
@@ -19,8 +19,8 @@ private
 public
   constructor create(newModel: TModel; newNetwork: TNetwork);
   function getModel:TModel;
-  procedure setSavingModelFlag(newVal: boolean);
-  function isSavingModel(): boolean;
+ // procedure setSavingModelFlag(newVal: boolean);
+ // function isSavingModel(): boolean;
  // procedure setModel(newModel: TModel);
  // procedure setNetwork(newNetwork: TNetwork);   // TODO
 
@@ -36,10 +36,10 @@ begin
   self.setCompartments;
   self.setSpecies;
   self.setReactions;
-  self.savingModel := false;
+ // self.savingModel := false;
 
 end;
-
+{
 procedure TNetworkToModel.setSavingModelFlag(newVal: boolean);
 begin
   self.savingModel := newVal;
@@ -50,7 +50,7 @@ function TNetworkToModel.isSavingModel(): boolean;
 begin
   Result := self.savingModel;
 end;
-
+ }
 
 procedure TNetworkToModel.setCompartments;
 var newComp: TSBMLcompartment;
@@ -179,7 +179,8 @@ begin
     for j := 0 to (self.network.reactions[i].state.rateParams.count -1) do
     begin
       newLaw.addParameter(self.network.reactions[i].state.rateParams[j].getId);
-      self.model.addSBMLParameter(self.network.reactions[i].state.rateParams[j]);
+      if not self.model.isParameterIdinList(self.network.reactions[i].state.rateParams[j].getId) then
+        self.model.addSBMLParameter(self.network.reactions[i].state.rateParams[j]);
     end;
     newLaw.setFormula(self.network.reactions[i].state.rateLaw);
     newReaction.setKineticLaw(newLaw);
@@ -192,7 +193,7 @@ end;
 
 function TNetworkToModel.getModel: TModel;
 begin
-  if savingModel then  self.model.setSBMLLayout(self.layout);
+ // if savingModel then  self.model.setSBMLLayout(self.layout);
 
   Result := self.model;
 end;
