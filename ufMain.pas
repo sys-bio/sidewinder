@@ -211,6 +211,7 @@ type
     procedure clearRxnNodeRightPanels(); // clear references to rxn/nodes that have been deleted.
     procedure setUpSimulationUI(); // Set up sim related buttons, plots, etc
     procedure addRxnStoichEdit(spIndex: integer; rxnReactant: boolean);
+    procedure refreshPlotAndSliderPanels();
 
   public
     network: TNetwork;
@@ -856,9 +857,15 @@ end;
 
 
 procedure TMainForm.SplitterPlotSliderMoved(Sender: TObject);
+
+begin
+  self.refreshPlotAndSliderPanels();
+end;
+
+procedure TMainForm.refreshPlotAndSliderPanels();
 var i: integer;
 begin
- if assigned(self.plotsPanelList) then
+  if assigned(self.plotsPanelList) then
  begin
    if self.plotsPanelList.count >0 then
    begin
@@ -970,14 +977,11 @@ end;
 
 procedure TMainForm.splitterMoved(Sender: TObject);
 begin
-  {if self.rightPanelType = NODE_PANEL then
-    begin
-      // := self.RNodeEditWPanel.Width;
-    end;   }
   networkCanvas.bitmap.Height := networkPB1.Height;
   networkCanvas.bitmap.width := networkPB1.Width;
-
  // console.log('****splitter moved, networkPB1, height: ',networkPB1.Height,', width: ',networkPB1.Width);
+  self.refreshPlotAndSliderPanels;
+
   self.adjustRightTabWPanels;
   networkPB1.Invalidate;
 end;
@@ -1130,6 +1134,8 @@ procedure TMainForm.selectPlotSpecies(plotnumb: Integer);
         // Update plot legend:
          self.plotsPanelList[getPlotPBIndex(plotNumb)].setPlotLegend(self.plotSpecies.Items[getPlotPBIndex(plotNumb)]);
       end;
+
+    self.refreshPlotAndSliderPanels;
   end;
 
 // async called OnCreate for TVarSelectForm

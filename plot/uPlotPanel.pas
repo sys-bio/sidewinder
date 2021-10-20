@@ -4,7 +4,7 @@ interface
 uses SysUtils, Classes, Graphics, Controls, System.Types, System.Generics.Collections,
      Dialogs, WEBLib.StdCtrls, WEBLib.ExtCtrls, WEBLib.Forms, JS, Web, uSidewinderTypes,
      uGraphP;
-const DEFAULT_NUMB_PLOTS = 3; PLOT_WIDTH_OVERLAP = 30; LEGEND_WIDTH = 60;
+const DEFAULT_NUMB_PLOTS = 3; PLOT_WIDTH_OVERLAP = 30; LEGEND_WIDTH = 80;
       YSCALEWIDTH = 30; // Gap between the left edge and y axis ( for number labels)
       XSCALE_RATIO = 0.15; // Ratio of x axis labels to height of plot.
 type
@@ -117,7 +117,7 @@ implementation
     self.setPlotLegend(plotSpeciesList);
 
     self.plotGraph.initGraph(0, 200, 0, newYMax, 0, self.plotPB.width, 0, self.plotPB.height,
-        self.xscaleHeight,  YSCALEWIDTH, {runTime,} stepSize);
+             self.xscaleHeight,  YSCALEWIDTH , stepSize);
 
     // Display the plot:
     self.processOneScan(0, self.plotInitVals, plotSpeciesList, 0 );

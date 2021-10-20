@@ -6,7 +6,7 @@ uses SysUtils, Classes, Graphics, Controls, System.Types,
      Dialogs, WEBLib.StdCtrls, WEBLib.ExtCtrls, JS, Web, uSidewinderTypes;
 
 const   MAXSIZE = 100;   // Used to set plot window width (if 1 msec step then 10 sec window.)
-        YAXIS_XOFFSET_TEXT = 3;  // tweak x coord for numbers on y-axis
+        YAXIS_XOFFSET_TEXT = 5;//3;  // tweak x coord for numbers on y-axis
         COLORS: array[0..9] of integer = (clOlive, clRed, clBlue, clGreen,clBlack,
                                         clAqua, clGray,clPurple, clYellow,clFuchsia);
 type
