@@ -33,6 +33,7 @@ type
   end;
 
   TNetworkEvent = procedure() of object; // Network has been changed.
+  TAutoLayoutEvent = procedure() of object; // Network needs autot layout
     // TODO: need to know if just species or rate/param vals have only changed.
 
   TParent = class (TObject)
@@ -126,7 +127,10 @@ type
 
   TNetwork = class (TObject)
     private
+      procedure buildNetworkFromSBMLLayout(model: TModel); // model has SBML layout described
+      procedure autoBuildNetworkFromSBML(model: TModel); // No SBML layout, build own layout
       FNetworkEvent: TNetworkEvent;
+      FAutoLayoutEvent: TAutoLayoutEvent;
     public
        id : string;
        nodes : TListOfNodes;
@@ -166,7 +170,9 @@ type
        function    getCurrentState : TNetworkSavedState;
        procedure   loadState (networkState : TNetworkSavedState);
        property OnNetworkEvent: TNetworkEvent read FNetworkEvent write FNetworkEvent;
+       property OnAutoLayoutEvent: TAutoLayoutEvent read FAutoLayoutEvent write FAutoLayoutEvent;
        procedure networkEvent(); // Notify listener that Network has changed.
+       procedure autoLayoutEvent(); // Notify listener that Network layout needs to be configured.
        constructor Create (id : string);
   end;
 
@@ -400,27 +406,30 @@ begin
   thickness := DEFAULT_REACTION_THICKNESS;
 
   // arc center: order of assignment:
-  //  1.  grab BasePoint 1 of cubicBez if exists
-  //  2.  grap 1st line segment, start point if exists
-  //  3.  Grab bounding box center point.
-  arcCenter.x := 20; arcCenter.y := 20; // default, need something else here.
-  if glyphRxn.getCurve <> nil then
-    begin
-      if glyphRxn.getCurve.getNumCubicBeziers > 0 then
+  //  1.  default, if no layout info available.
+  //  2.  grab BasePoint 1 of cubicBez if exists
+  //  3.  grap 1st line segment, start point if exists
+  //  4.  Grab bounding box center point.
+  arcCenter.x := 20; arcCenter.y := 20; // default, need something else here?
+  if glyphRxn <> nil then  // check if any layout info available
+  begin
+    if glyphRxn.getCurve <> nil then
       begin
-        arcCenter.x := glyphRxn.getCurve.getCubicBezier(0).getBasePoint1.getX;
-        arcCenter.y := glyphRxn.getCurve.getCubicBezier(0).getBasePoint1.gety;
-      end
-      else
-      begin
-        if glyphRxn.getCurve.getNumCurveSegments > 0 then
-          begin
-            arcCenter.x := glyphRxn.getCurve.getLineSegment(0).getStartPt.getX;
-            arcCenter.y := glyphRxn.getCurve.getLineSegment(0).getStartPt.getY;
-          end;
+        if glyphRxn.getCurve.getNumCubicBeziers > 0 then
+        begin
+          arcCenter.x := glyphRxn.getCurve.getCubicBezier(0).getBasePoint1.getX;
+          arcCenter.y := glyphRxn.getCurve.getCubicBezier(0).getBasePoint1.gety;
+        end
+        else
+        begin
+          if glyphRxn.getCurve.getNumCurveSegments > 0 then
+            begin
+              arcCenter.x := glyphRxn.getCurve.getLineSegment(0).getStartPt.getX;
+              arcCenter.y := glyphRxn.getCurve.getLineSegment(0).getStartPt.getY;
+            end;
 
-      end;
-    end
+        end;
+      end
     else
     begin
       if glyphRxn.boundingBoxIsSet then
@@ -429,6 +438,7 @@ begin
         arcCenter.Y := glyphRxn.getBoundingBox.getPoint.getY;
       end;
     end;
+  end;
 
 end;
 
@@ -448,6 +458,12 @@ procedure TNetwork.networkEvent();
 begin
   if Assigned(FNetworkEvent) then
     FNetworkEvent();
+end;
+
+procedure TNetwork.autoLayoutEvent();
+begin
+  if Assigned(self.FAutoLayoutEvent) then
+    self.FAutoLayoutEvent();
 end;
 
 procedure TNetwork.loadModel (modelStr : string);
@@ -519,6 +535,23 @@ begin
 end;
 
 procedure TNetwork.loadSBMLModel (model : TModel);
+var
+   layoutAvailable: boolean;  // SBML model layout available?
+begin
+  layoutAvailable := false;
+ // TextGlyphs typically are labels for nodes (they are ignored).
+  if model.getSBMLLayout <> nil then
+    begin
+      layoutAvailable := true;
+      self.buildNetworkFromSBMLLayout(model);
+    end
+  else self.autoBuildNetworkFromSBML(model);
+
+  if not layoutAvailable then self.autoLayoutEvent(); // Generate layout
+ //   fruchterman_reingold(self, networkPB1.width, networkPB1.Height, 600, nil);
+end;
+
+procedure TNetwork.buildNetworkFromSBMLLayout(model: TModel);
 var i, j, k, l: integer;
    modelLayout: TSBMLLayout;
    speciesGlyph: TSBMLLayoutSpeciesGlyph;
@@ -531,14 +564,9 @@ var i, j, k, l: integer;
    nodeState : TNodeState;
    reactionState: TReactionState;
 begin
-  modelLayout := model.getSBMLLayout;
-  // Do not get layout dimensions? not really necessary?
-
- // Load nodes: ( currently only species )
- // TextGlyphs typically are labels for nodes (they are ignored).
-  if modelLayout <> nil then
-  begin
-
+    modelLayout := model.getSBMLLayout;
+    // Do not get layout dimensions? not really necessary?
+    // if needed then need to set NetworkPB to width and height.
 
     for i := 0 to modelLayout.getNumSpGlyphs - 1 do
       begin
@@ -593,14 +621,65 @@ begin
 
              // ************************
           end;
+      end;
+end;
+
+
+procedure TNetwork.autoBuildNetworkFromSBML(model: TModel);
+ var i, j, k, l: integer;
+   spAr: array of string;
+   initVal: double;
+   node : TNode;
+   reaction : TReaction;
+   nodeState : TNodeState;
+   reactionState: TReactionState;
+ begin
+    spAr := model.getS_Names;
+    for j := 0 to Length(spAr) -1 do
+      begin
+        nodeState.id := spAr[j];
+        nodeState.conc := model.getS_initVals[j];
+        nodeState.x := 20 + j; // default values
+        nodeState.y := 60 + j; //   "
+        nodeState.w := 60;     //   "
+        nodeState.h := 40;     //   "
+        nodeState.fillColor := RGB(255,204,153);// clWebPeachPuff;
+        nodeState.outlineColor := RGB(255,102,0);
+        nodeState.outlineThickness := 3;
+        self.addNode(nodeState);
 
       end;
-  end;
 
-  // TODO: else generate new layout for sbml model.
+   // load reactions:
 
-  //  self.networkEvent; // Notify listener, needed?
-end;
+        for j := 0 to model.getNumReactions - 1do
+          begin
+            reactionState.loadFromSBML (nil, model.getReaction(j),
+                                       model.getSBMLparameterAr);
+            reaction := addReaction (reactionState);
+             // Set the node pointers based on the node Ids
+            for k := 0 to reaction.state.nReactants - 1 do
+              for l := 0 to length (nodes) - 1 do
+                begin
+                  if nodes[l].state.id = reaction.state.srcId[k] then
+                    begin
+                      reaction.state.srcPtr[k] := nodes[l];
+                      break;
+                    end;
+                end;
+
+            for k := 0 to reaction.state.nProducts - 1 do
+              for l := 0 to length (nodes) - 1 do
+                if nodes[l].state.id = reaction.state.destId[k] then
+                  begin
+                    reaction.state.destPtr[k] := nodes[l];
+                    break;
+                  end;
+
+
+          end;
+
+ end;
 
 function  TNetwork.convertToJSON : string;
 var JSONRoot, headerObj, modelId, nodeObject, reactionObject : TJSONObject;
@@ -709,6 +788,7 @@ begin
   for i := 0 to length (networkState.savedNodes) - 1 do
       begin
       nodes[i] := TNode.Create;
+     // console.log('loadstate: dy,height: ', nodes[i].dy, ' dx:: ',nodes[i].dx);
       nodes[i].state := networkState.savedNodes[i];
       end;
 
@@ -760,6 +840,8 @@ function TNetwork.addNode (id : string; x, y : double) : TNode;
 begin
   setlength (nodes, length (nodes) + 1);
   nodes[length (nodes)-1] := TNode.create (id);
+  //console.log('Node dx: ', nodes[length(nodes) -1].dx, ', dy: ',nodes[length(nodes) -1].dy);
+  //console.log('Node h: ', nodes[length(nodes) -1].state.h, ', width: ',nodes[length(nodes) -1].state.w);
   result := nodes[length (nodes)-1];
   result.state.x := x; result.state.y := y;
   result.state.Id := Id;

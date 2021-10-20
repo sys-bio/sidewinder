@@ -242,6 +242,7 @@ type
     procedure PingSBMLLoaded(newModel:TModel); // Notify when done loading or model changes
     procedure networkHasChanged(); // Notify when network has changed, may need to update model, plots, etc
     procedure getVals(newTime: Double; newVals: array of Double);
+    procedure generateAutoLayout(); // network needs a new layout generated ( fruchterman_reingold)
     // Get new values (species amt) from simulation run
 
   end;
@@ -280,6 +281,11 @@ end;
 procedure TMainForm.btnAutoLayoutClick(Sender: TObject);
 begin
   // showmessage (inttostr (networkPB1.Width) + ', ' + inttostr (networkPB1.Width));
+   self.generateAutoLayout;
+end;
+
+procedure TMainForm.generateAutoLayout;
+begin
   fruchterman_reingold(network, networkPB1.width, networkPB1.Height, 600, nil);
   network.centerNetwork(networkPB1.width, networkPB1.Height);
   networkPB1.Invalidate;
@@ -325,7 +331,7 @@ begin
     n2 := networkController.addNode('node2', 270, 270);
     n3 := networkController.addNode('node3', 540, 80);
     n4 := networkController.addNode('node4', 400, 500);
-
+    console.log('btndrawclick: dy,height: ', n1.dy, ' dx:: ',n1.dx);
     networkController.addReaction('r1', n1, n2);
     networkController.addReaction('r2', n2, n3);
     networkController.addReaction('r3', n3, n4);
@@ -831,6 +837,7 @@ begin
   self.mainController.OnSBMLUpdate2 := self.PingSBMLLoaded;
   self.mainController.OnNetworkChange:= self.networkHasChanged;
   self.mainController.OnSimUpdate := self.getVals; // notify when new Sim results
+  self.network.OnAutoLayoutEvent := self.generateAutoLayout;
 
 end;
 

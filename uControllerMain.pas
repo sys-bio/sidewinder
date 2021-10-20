@@ -26,6 +26,7 @@ type
     pixelStepAr: array of Integer; // pixel equiv of time (integration) step
     currTime: Double;
     online: Boolean; // Simulation running
+    saveSBMLFlag: Boolean;
     ODEready: Boolean; // TRUE: ODE solver is setup.
     networkUpdate: Boolean; // Use to prevent circular update when network is changed.
     FUpdate: TUpdateSimEvent;// Send Updated Sim values (time,species amts) to listeners.
@@ -88,6 +89,7 @@ begin
   self.runTime := 500; // sec
   self.online := false;
   self.networkUpdate := false;
+  self.saveSBMLFlag := false;
   self.createModel;
   self.currNetworkCtrl := networkCtrl;
   self.OnSBMLUpdate := networkCtrl.SBMLUpdated;
@@ -105,10 +107,12 @@ begin
 //console.log('TControllerMain.SBMLLoaded. creating new simulation');
   self.modelLoaded := true;
   self.createSimulation;
+
   if Assigned(FSBMLUpdate) then
-     FSBMLUpdate(self.sbmlmodel);
-   if Assigned(FSBMLUpdate2) then
-     FSBMLUpdate2(self.sbmlmodel);
+    FSBMLUpdate(self.sbmlmodel);
+
+  if Assigned(FSBMLUpdate2) then
+    FSBMLUpdate2(self.sbmlmodel);
 
 
 end;
@@ -121,7 +125,8 @@ begin
   self.sbmlmodel.OnPing := self.SBMLLoaded;  // Register callback function
   if self.networkUpdate then  // Create from Network
     begin
-      self.sbmlmodel := self.currNetworkCtrl.createSBMLModel(self.sbmlmodel);
+      self.sbmlmodel := self.currNetworkCtrl.createSBMLModel(self.sbmlmodel, self.saveSBMLFlag);
+      self.sbmlmodel.SBML_UpdateEvent; // Notify listeners
       self.networkUpdate := false;
     end;
 
@@ -284,6 +289,7 @@ procedure TControllerMain.saveSBML(fileName: String);
 var writerSBML: TSBMLWriter;
 begin
   self.writeSBMLFileName := fileName;
+  self.saveSBMLFlag := true;
   // currently can have both sbml loaded from file and network model.
   if self.networkUpdate = true then
     begin
@@ -297,6 +303,7 @@ begin
     writerSBML.OnNotify := self.modelWritten;
     writerSBML.buildSBMLString(self.sbmlmodel);
   end;
+  self.saveSBMLFlag := false;
 end;
 
 procedure TControllerMain.modelWritten(modelStr: String);

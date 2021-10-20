@@ -582,6 +582,10 @@ implementation
   constructor TSBMLLayoutCubicBezier.create() overload;
   begin
     self.id := '';
+    self.startPt := TSBMLLayoutPoint.create(0,0);
+    self.endPt := TSBMLLayoutPoint.create(0,0);
+    self.basePt1 := TSBMLLayoutPoint.create(0,0);
+    self.basePt2 := TSBMLLayoutPoint.create(0,0);
 
   end;
   constructor TSBMLLayoutCubicBezier.create(bp1: TSBMLLayoutPoint; bp2: TSBMLLayoutPoint;
@@ -902,7 +906,8 @@ var
     self.specGlyphId := cpy.getSpeciesGlyphId;
     self.specRefId := cpy.getSpeciesRefId;
     self.role := cpy.getRole;
-    self.curve := TSBMLLayoutCurve.create(cpy.getCurve);
+    if cpy.getCurve <> nil then
+      self.curve := TSBMLLayoutCurve.create(cpy.getCurve);
   end;
 
   function TSBMLLayoutSpeciesReferenceGlyph.getSpeciesGlyphId(): string;

@@ -79,7 +79,7 @@ type
     procedure OnMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; x, y: double);
     procedure OnMouseMove(Sender: TObject; Shift: TShiftState; x, y: double);
     procedure OnMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; x, y: double);
-    function createSBMLModel(currentModel: TModel): TModel; // Build SBML model based on current Network
+    function createSBMLModel(currentModel: TModel; saveSBML: boolean): TModel; // Build SBML model based on current Network
     procedure SBMLUpdated(updatedModel: TModel);
 
     constructor Create(network: TNetwork);
@@ -629,23 +629,25 @@ begin
   end;
 end;
 
-function TController.createSBMLModel(currentModel: TModel): TModel;
+function TController.createSBMLModel(currentModel: TModel; saveSBML: boolean): TModel;
 var builder: TNetworkToModel;
 begin
   builder := TNetworkToModel.create(currentModel, network);
-  currentModel.SBML_UpdateEvent; // Notify listeners
+  builder.setSavingModelFlag(saveSBML); // false: do update SBML layout
   Result := builder.getModel();
 
 end;
 
 procedure TController.SBMLUpdated(updatedModel: TModel);
 begin
-  // TODO : update Network to reflect updated model.
-   // Note: may need to check that infinite loop created with
-   //    network update causes model to update which causes network to update ...
+ //  update Network to reflect updated model.
+   
+  if length(network.nodes) < 1 then  // Only update network if loaded from file.
+  begin
   if updatedModel.getSpeciesNumb >0 then
     console.log('Network: TController.SBMLUpdate, First species: ',updatedModel.getSBMLSpecies(0).getID);
   self.loadSBMLModel(updatedModel);
+  end;
 end;
 
 
