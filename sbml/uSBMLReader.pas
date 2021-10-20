@@ -83,11 +83,14 @@ implementation
       if(model.getNumPlugins() >0) {
         if(model.findPlugin('layout') != undefined) {
         // Load layout information for model:
-          jsLayout = moreReading.getLayout(jsLayout, jsDims, jsPt, jsBBox,
-            jsLineSeg, jsCubicB, jsCurve, jsCompGlyph, jsGraphObj, jsGenObj,
-            jsSpGlyph, jsSpRefGlyph, jsRxnGlyph, jsTextGlyph );
-          newModel.setSBMLLayout(jsLayout);
-
+          if( moreReading.numLayouts >0) {
+            jsLayout = moreReading.getLayout(jsLayout, jsDims, jsPt, jsBBox,
+              jsLineSeg, jsCubicB, jsCurve, jsCompGlyph, jsGraphObj, jsGenObj,
+              jsSpGlyph, jsSpRefGlyph, jsRxnGlyph, jsTextGlyph );
+            if( jsLayout != undefined) {  // another chk
+              newModel.setSBMLLayout(jsLayout);
+            }
+          }
         }
       }
 
