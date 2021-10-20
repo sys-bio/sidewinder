@@ -175,7 +175,7 @@ procedure TModel.SBML_UpdateEvent();
    inc(self.numReactions);
  end;
 
- procedure TModel.addSBMLReaction(newReaction: SBMLReaction); overload;
+ procedure TModel.addSBMLReaction(newReaction: SBMLReaction) overload;
  var len: integer;
  begin
    len:= Length(self.sbmlreactions);
