@@ -14,7 +14,7 @@ type
    private
     errors, numReactions: integer;  // SBML reading errors, number of rxns in model.
     numbPlugins: integer; // Not used
-    numSpecies, numParams, numCompartments: integer; // number of species,params,comps in model
+    numSpecies,{ numParams,} numCompartments: integer; // number of species,comps in model
     numEvents, numRules, numFuncDefs: integer;  // Currently not used.
     annotationStr: String;    // optional
     sbmlreactions: array of SBMLReaction; // list of reactions
@@ -49,10 +49,11 @@ type
              reactants: array of String; reactantsStoich: array of double;
              kineticLaw: String; newReverse: boolean); overload;
    procedure addSBMLReaction(newReaction: SBMLReaction); overload;
-   function  getParamNumb(): integer;
+   function  getParamNumb(): integer;  // Number of parameters in model.
    function  getSBMLparameter(i:integer): TSBMLparameter;
    function  getSBMLparameterAr(): array of TSBMLparameter;
    procedure addSBMLparameter(newParam: TSBMLparameter);
+   function  isParameterIdinList(id: string): boolean;
    function  getSBMLmodelRules():array of TSBMLrule;
    procedure addSBMLrule( newR: TSBMLrule);
    function  getSpeciesNumb(): integer;
@@ -96,7 +97,7 @@ constructor TModel.create();
 begin
     errors:=0;
     numReactions:= 0;
-    numSpecies:= 0; numParams:= 0; numCompartments:= 0;
+    numSpecies:= 0; numCompartments:= 0;
     numEvents:= 0; numRules:= 0; numFuncDefs:=0;
     modelRules:= nil;
     modelId := '';
@@ -293,7 +294,7 @@ procedure TModel.SBML_UpdateEvent();
 
  function TModel.getParamNumb(): integer;
  begin
-   Result:= numParams;
+   Result:= length(self.modelParams);
  end;
  function TModel.getSBMLparameter(i:integer): TSBMLparameter;
  begin
@@ -311,6 +312,19 @@ procedure TModel.SBML_UpdateEvent();
   modelParams[len]:= TSBMLparameter.create(newParam);
   if newParam.isSetName() then console.log('addSBMLparameter: ',newParam.getname());
 
+ end;
+
+ function  TModel.isParameterIdinList(id: string): boolean;
+ var i: integer;
+     found: boolean;
+ begin
+   found := false;
+   for i := 0 to self.getParamNumb - 1 do
+      begin
+         if self.getSBMLparameter(i).getId = id then
+           found := true;
+      end;
+   Result := found;
  end;
 
  procedure TModel.addSBMLrule( newR: TSBMLrule);
