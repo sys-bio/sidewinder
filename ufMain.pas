@@ -555,9 +555,9 @@ var
   i: Integer;
 begin
  // console.log(' TMainForm.PingSBMLLoaded');
-  btnParamAddSlider.visible := true;
-  onLineSimButton.visible := true;
-  btnAddPlot.visible := true;
+//  btnParamAddSlider.visible := true;
+//  onLineSimButton.visible := true;
+//  btnAddPlot.visible := true;
   
 end;
 
@@ -1285,13 +1285,13 @@ end;
 
 procedure TMainForm.updatePlots(); // Go through and remove species/plots no longer in model.
 begin
-  // TODO --> No noeed for this, just delete all plots and have user add them as necessary?
-  //  EditPlotList(plotn: Integer); <-- check each plot to see if need to remove plot species.
+  // , just delete all plots and have user add them as necessary
+  //  No need for this: EditPlotList(plotn: Integer);
 end;
 
 procedure TMainForm.deletePlotSpecies(plotn: Integer); // Delete a species curve in a plot.
 begin
-  // TODO: Just delete plot, get new list of species from user and create new plot.
+  // Not needed: Just delete plot, get new list of species from user and create new plot.
 end;
 
 procedure TMainForm.EditSliderList(sn: Integer);
@@ -1492,7 +1492,9 @@ end;
 procedure TMainForm.SetUpSimButtonClick(Sender: TObject);
 begin
   self.setUpSimulationUI(); // Clear out old plots, simulation, parameter sliders for new sim.
-
+  btnParamAddSlider.visible := true;
+  onLineSimButton.visible := true;
+  btnAddPlot.visible := true;
 end;
 
 procedure TMainForm.adjustRightTabWPanels(); // Adjust all right panels to same width, height

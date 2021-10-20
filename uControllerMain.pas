@@ -19,6 +19,7 @@ type
     writeSBMLFileName: String;
     numbRxns: Integer;
     modelLoaded: Boolean;
+   // sbmlFileLoaded: Boolean; // true if sbml file and model just loaded
     solverUsed: ODEsolver;
     runTime: Double; // Total runtime of simulation (sec)
     runSim: TSimulationJS;
@@ -84,6 +85,7 @@ constructor TControllerMain.Create(networkCtrl: TController);
 begin
   self.sbmlText := '';
   self.modelLoaded := false;
+ // self.sbmlFileLoaded := false;
   self.resetCurrTime;
   self.stepSize := 0.1; // 100 msec
   self.runTime := 500; // sec
@@ -104,7 +106,7 @@ end;
 // Grab SBML model information when notified by model of change:
 procedure TControllerMain.SBMLLoaded();
 begin
-//console.log('TControllerMain.SBMLLoaded. creating new simulation');
+  console.log('TControllerMain.SBMLLoaded. creating new simulation');
   self.modelLoaded := true;
   self.createSimulation;
 
@@ -113,8 +115,6 @@ begin
 
   if Assigned(FSBMLUpdate2) then
     FSBMLUpdate2(self.sbmlmodel);
-
-
 end;
 
 procedure TControllerMain.createModel();
@@ -125,7 +125,7 @@ begin
   self.sbmlmodel.OnPing := self.SBMLLoaded;  // Register callback function
   if self.networkUpdate then  // Create from Network
     begin
-      self.sbmlmodel := self.currNetworkCtrl.createSBMLModel(self.sbmlmodel, self.saveSBMLFlag);
+      self.sbmlmodel := self.currNetworkCtrl.createSBMLModel(self.sbmlmodel);
       self.sbmlmodel.SBML_UpdateEvent; // Notify listeners
       self.networkUpdate := false;
     end;
@@ -280,6 +280,7 @@ begin
   if sbmlText <> '' then
   begin
     SBMLReader := TSBMLRead.create(sbmlmodel, self.sbmlText );// Process text with libsbml.js
+   // self.sbmlFileLoaded := true;
   end
   else showMessage ('SBML text empty.');
 

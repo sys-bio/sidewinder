@@ -79,7 +79,7 @@ type
     procedure OnMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; x, y: double);
     procedure OnMouseMove(Sender: TObject; Shift: TShiftState; x, y: double);
     procedure OnMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; x, y: double);
-    function createSBMLModel(currentModel: TModel; saveSBML: boolean): TModel; // Build SBML model based on current Network
+    function createSBMLModel(currentModel: TModel): TModel; // Build SBML model based on current Network
     procedure SBMLUpdated(updatedModel: TModel);
 
     constructor Create(network: TNetwork);
@@ -629,11 +629,10 @@ begin
   end;
 end;
 
-function TController.createSBMLModel(currentModel: TModel; saveSBML: boolean): TModel;
+function TController.createSBMLModel(currentModel: TModel): TModel;
 var builder: TNetworkToModel;
 begin
   builder := TNetworkToModel.create(currentModel, network);
-  builder.setSavingModelFlag(saveSBML); // false: do update SBML layout
   Result := builder.getModel();
 
 end;
