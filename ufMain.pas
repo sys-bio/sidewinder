@@ -475,6 +475,7 @@ begin
   SBMLmodelMemo.Lines.Text := AText;
   SBMLmodelMemo.visible := true;
   // Check if sbmlmodel already created, if so, destroy before creating ?
+
   self.MainController.loadSBML(AText);
 end;
 
@@ -489,9 +490,9 @@ begin
       if self.networkUpdated = false then
       begin
         MainController.setOnline(true);
-        onLineSimButton.font.color := clgreen;
+        onLineSimButton.font.color := clred;
         onLineSimButton.ElementClassName := 'btn btn-success btn-sm';
-        onLineSimButton.caption := 'Simulation: Online';
+        onLineSimButton.caption := 'Simulation: Pause';
         simResultsMemo.visible := true;
 
         MainController.SetRunTime(200); // Hard coded for now.
@@ -514,9 +515,9 @@ begin
     begin
       MainController.setOnline(false);
       MainController.SetTimerEnabled(false); // Turn off web timer (Stop simulation)
-      onLineSimButton.font.color := clred;
+      onLineSimButton.font.color := clgreen;
       onLineSimButton.ElementClassName := 'btn btn-danger btn-sm';
-      onLineSimButton.caption := 'Simulation: Offline';
+      onLineSimButton.caption := 'Simulation: Play';
       if self.saveSimResults then
       begin
         self.mainController.writeSimData(self.lblSimDataFileName.Caption, self.simResultsMemo.Lines);
@@ -806,8 +807,11 @@ procedure TMainForm.WebFormCreate(Sender: TObject);
 begin
   self.numbPlots := 0;
   self.numbSliders := 0;
-  self.zoomTrackBar.left := 20;
+  self.zoomTrackBar.left := 20; //20;
   self.zoomTrackBar.Position := 10;
+  self.netDrawScrollBarHoriz.Value := networkPB1.Width/2; // need to fiddle with this?
+  self.netDrawScrollBarVert.Value := networkPB1.Height/2;
+
   origin.X := 0.0;
   origin.Y := 0.0;
   self.network := TNetwork.create('testNetwork');
@@ -829,8 +833,8 @@ begin
   self.adjustRightTabWPanels;
   self.mainController := TControllerMain.Create(self.networkController);
   self.mainController.setOnline(false);
-  onLineSimButton.font.color := clred;
-  onLineSimButton.caption := 'Simulation: Offline';
+  onLineSimButton.font.color := clgreen;
+  onLineSimButton.caption := 'Simulation: Play';
   self.mainController.setODEsolver;
   self.networkUpdated := false;
   self.saveSimResults := false;

@@ -84,7 +84,7 @@ object mainForm: TmainForm
       Top = 10
       Width = 120
       Height = 25
-      Caption = 'Simulation: Offline'
+      Caption = 'Simulation: Play'
       ChildOrder = 5
       ElementClassName = 'btn btn-danger btn-sm'
       Font.Charset = DEFAULT_CHARSET
@@ -440,7 +440,7 @@ object mainForm: TmainForm
         ChildOrder = 1
         Max = 100
         Min = 0
-        Position = 1
+        Position = 50
         Role = ''
         OnChange = zoomTrackBarChange
       end
@@ -1317,8 +1317,6 @@ object mainForm: TmainForm
         ChildOrder = 2
         ElementBodyClassName = 'card-body-shadow'
         ElementFont = efCSS
-        ExplicitLeft = 1
-        ExplicitTop = -1
         object rateLawLabel: TWebLabel
           Left = 6
           Top = 28
