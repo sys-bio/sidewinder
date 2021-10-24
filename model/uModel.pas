@@ -65,7 +65,8 @@ type
    function  getSBMLdynamicSpeciesAr(): array of TSBMLSpecies;  // return species that are not a bc or amt (not conc) is constant.
    function  getCompNumb(): integer;
    function  getSBMLcompartmentsArr(): array of TSBMLcompartment;
-   function  getSBMLcompartment(i:integer): TSBMLcompartment;
+   function  getSBMLcompartment(i:integer): TSBMLcompartment overload;
+   function  getSBMLcompartment(compId: string): TSBMLcompartment overload;
    procedure addSBMLcompartment(newComp: TSBMLcompartment);
    procedure setSBMLLayout(newLayout: TSBMLLayout);
    function  getSBMLLayout(): TSBMLLayout;
@@ -275,9 +276,22 @@ procedure TModel.SBML_UpdateEvent();
  begin
    Result := self.modelComps;
  end;
- function TModel.getSBMLcompartment(i:integer): TSBMLcompartment;
+ function TModel.getSBMLcompartment(i:integer): TSBMLcompartment overload;
  begin
    Result:= modelComps[i];
+ end;
+
+ function TModel.getSBMLcompartment(compId: string): TSBMLcompartment overload;
+ var i: integer;
+     foundComp: TSBMLCompartment;
+ begin
+   foundComp := nil;
+   for i := 0 to Length(self.modelComps) -1 do
+     begin
+       if self.modelComps[i].getID = compId then
+       foundComp := self.modelComps[i];
+     end;
+   Result := foundComp;
  end;
 
  function TModel.getCompNumb(): integer;
