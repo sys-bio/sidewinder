@@ -99,8 +99,8 @@ type
 
        procedure saveAsJSON (reactionObject : TJSONObject);
        procedure loadFromJSON (obj : TJSONObject);
-       procedure loadFromSBML (glyphRxn : TSBMLLayoutReactionGlyph;
-                  modelRxn: SBMLReaction; paramAr: array of TSBMLparameter);
+       procedure loadFromSBML (glyphRxn : TSBMLLayoutReactionGlyph; modelRxn: SBMLReaction;
+                            paramAr: array of TSBMLparameter; compAr: array of TSBMLcompartment);
   end;
 
   TReaction = class (TParent)
@@ -153,6 +153,7 @@ type
        function    addNode (id : string; x, y : double) : TNode; overload;
        function    addNode (id : string; x, y, w, h : double) : TNode; overload;
        function    addNode (state : TNodeState): TNode; overload;
+       function    buildNullNodeState(rxnId: string): TNodeState; // used to add null node for one species rxn
 
        procedure   computeUniUniCoords (reaction : TReaction; srcNode, destNode : TNode);
        procedure   computeAnyToAnyCoordinates (reaction : TReaction; sourceNodes, destNodes : array of TNode);
@@ -365,7 +366,7 @@ end;
 
 
 procedure TReactionState.loadFromSBML (glyphRxn : TSBMLLayoutReactionGlyph;
-            modelRxn: SBMLReaction; paramAr: array of TSBMLparameter);
+            modelRxn: SBMLReaction; paramAr: array of TSBMLparameter; compAr: array of TSBMLcompartment);
 var  newParam : TSBMLparameter;
      speciesName : string;
      i, j : integer;
@@ -394,11 +395,22 @@ begin
     // For now,  just grab all parameters, not just ones used in reactions:
     // Grab parameters that are used in reaction:
 
-      for j := 0 to Length(paramAr) - 1 do
-      begin
-       // console.log('param: ',modelRxn.getKineticLaw.getParameter(i),', model param: ',paramAr[j].getId);
-          rateParams.Add(paramAr[j]);
-      end;
+  for j := 0 to Length(paramAr) - 1 do
+    begin
+     // console.log('param: ',modelRxn.getKineticLaw.getParameter(i),', model param: ',paramAr[j].getId);
+      rateParams.Add(paramAr[j]);
+    end;
+  // Currently just add all compartments as params:
+  for i := 0 to Length(compAr) -1 do
+    begin
+      newParam := TSBMLparameter.create(compAr[i].getId);
+      if compAr[i].isSetSize then
+        newParam.setValue(compAr[i].getSize)
+      else
+        newParam.setValue(compAr[i].getVolume);
+      rateParams.Add(newParam);
+    end;
+
 
  //   end;
   rateLaw := modelRxn.getKineticLaw.getFormula;
@@ -466,7 +478,7 @@ begin
     self.FAutoLayoutEvent();
 end;
 
-procedure TNetwork.loadModel (modelStr : string);
+procedure TNetwork.loadModel (modelStr : string);  // JSON string
 var JSONRoot, JSONValue1, JSONNodeArray, JSONReactionArray : TJSONValue;
     node : TNode;
     reaction : TReaction;
@@ -597,7 +609,8 @@ begin
             if reactionGlyphId = model.getReaction(j).getID then
             begin
 
-              reactionState.loadFromSBML (reactionGlyph, model.getReaction(j), model.getSBMLparameterAr);
+              reactionState.loadFromSBML (reactionGlyph, model.getReaction(j),
+                   model.getSBMLparameterAr, model.getSBMLcompartmentsArr());
               reaction := addReaction (reactionState);
              // Set the node pointers based on the node Ids
               for k := 0 to reaction.state.nReactants - 1 do
@@ -626,7 +639,7 @@ end;
 
 
 procedure TNetwork.autoBuildNetworkFromSBML(model: TModel);
- var i, j, k, l: integer;
+ var i, j, k, l, index: integer;
    spAr: array of string;
    initVal: double;
    node : TNode;
@@ -652,33 +665,97 @@ procedure TNetwork.autoBuildNetworkFromSBML(model: TModel);
 
    // load reactions:
 
-        for j := 0 to model.getNumReactions - 1do
+        for j := 0 to model.getNumReactions - 1 do
           begin
-            reactionState.loadFromSBML (nil, model.getReaction(j),
-                                       model.getSBMLparameterAr);
+            reactionState.loadFromSBML (nil, model.getReaction(j), model.getSBMLparameterAr,
+                                 model.getSBMLcompartmentsArr());
             reaction := addReaction (reactionState);
+
              // Set the node pointers based on the node Ids
-            for k := 0 to reaction.state.nReactants - 1 do
-              for l := 0 to length (nodes) - 1 do
+            if reaction.state.nReactants < 1 then
+            begin
+              nodeState := buildNullNodeState(reaction.state.id);
+              if self.findNode(nodeState.id, index) then
                 begin
-                  if nodes[l].state.id = reaction.state.srcId[k] then
+                  reaction.state.srcId[0] := self.nodes[index].state.id;
+                  reaction.state.srcPtr[0] := self.nodes[index];
+                end
+              else
+                begin
+                  self.addNode(nodeState);
+                  reaction.state.srcId[0] := nodeState.id;
+                  if self.findNode(nodeState.id, index) then
+                    reaction.state.srcPtr[0] := self.nodes[index]
+                  else
                     begin
-                      reaction.state.srcPtr[k] := nodes[l];
-                      break;
+                      reaction.state.srcPtr[0] := nil;
+                      console.log('null node id not found!');
                     end;
                 end;
 
-            for k := 0 to reaction.state.nProducts - 1 do
-              for l := 0 to length (nodes) - 1 do
-                if nodes[l].state.id = reaction.state.destId[k] then
+            end
+            else
+            begin
+              for k := 0 to reaction.state.nReactants - 1 do
+                for l := 0 to length (nodes) - 1 do
                   begin
-                    reaction.state.destPtr[k] := nodes[l];
-                    break;
+                    if nodes[l].state.id = reaction.state.srcId[k] then
+                      begin
+                        reaction.state.srcPtr[k] := nodes[l];
+                        break;
+                      end;
                   end;
+            end;
 
+            if reaction.state.nProducts < 1 then
+            begin
+               nodeState := buildNullNodeState(reaction.state.id);
+              if self.findNode(nodeState.id, index) then
+                begin
+                  reaction.state.destId[0] := self.nodes[index].state.id;
+                  reaction.state.destPtr[0] := self.nodes[index];
+                end
+              else
+                begin
+                  self.addNode(nodeState);
+                  reaction.state.destId[0] := nodeState.id;
+                  if self.findNode(nodeState.id, index) then
+                    reaction.state.destPtr[0] := self.nodes[index]
+                  else
+                    begin
+                      reaction.state.destPtr[0] := nil;
+                      console.log('dest null node id not found!');
+                    end;
+                end;
+            end
+            else
+            begin
+              for k := 0 to reaction.state.nProducts - 1 do
+                for l := 0 to length (nodes) - 1 do
+                  if nodes[l].state.id = reaction.state.destId[k] then
+                    begin
+                      reaction.state.destPtr[k] := nodes[l];
+                      break;
+                    end;
+            end;
 
           end;
 
+ end;
+
+ function TNetwork.buildNullNodeState(rxnId: String): TNodeState;
+ var nodeState: TNodeState;
+ begin
+   nodeState.id := rxnId + '_Null';
+   nodeState.conc := 0.0;
+   nodeState.x := 20 ; // default values
+   nodeState.y := 60 ; //   "
+   nodeState.w := 60;  //   "
+   nodeState.h := 40;  //   "
+   nodeState.fillColor := clSilver;
+   nodeState.outlineColor := RGB(255,102,0);
+   nodeState.outlineThickness := 3;
+   result := nodeState;
  end;
 
 function  TNetwork.convertToJSON : string;
@@ -1069,6 +1146,7 @@ begin
  for i := 0 to length (nodes) - 1 do
       nodes[i].Free;
   setLength (nodes, 0);
+  self.networkEvent;
 end;
 
 
