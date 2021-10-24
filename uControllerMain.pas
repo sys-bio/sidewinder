@@ -279,6 +279,7 @@ begin
   sbmlText := sbmlStr; // store the sbml model as text.
   if sbmlText <> '' then
   begin
+    self.currNetworkCtrl.network.clear; // clear out old network;
     SBMLReader := TSBMLRead.create(sbmlmodel, self.sbmlText );// Process text with libsbml.js
    // self.sbmlFileLoaded := true;
   end
