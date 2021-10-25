@@ -153,7 +153,7 @@ type
        function    addNode (id : string; x, y : double) : TNode; overload;
        function    addNode (id : string; x, y, w, h : double) : TNode; overload;
        function    addNode (state : TNodeState): TNode; overload;
-       function    buildNullNodeState(rxnId: string): TNodeState; // used to add null node for one species rxn
+       function    buildNullNodeState(rxnId: string; num: integer): TNodeState; // used to add null node for one species rxn
 
        procedure   computeUniUniCoords (reaction : TReaction; srcNode, destNode : TNode);
        procedure   computeAnyToAnyCoordinates (reaction : TReaction; sourceNodes, destNodes : array of TNode);
@@ -374,27 +374,31 @@ begin
   id := modelRxn.getId;
   rateParams := TList<TSBMLparameter>.create;
   for i := 0 to Length(destStoich) -1 do
-     destStoich[i] := 0.0; // Initialize array
+     self.destStoich[i] := 0.0; // Initialize array
   for i := 0 to Length(srcStoich) -1 do
-     srcStoich[i] := 0.0; // Initialize array
-
+     self.srcStoich[i] := 0.0; // Initialize array
+  self.nReactants := modelRxn.getNumReactants;
   // get reactants:
-  nReactants := modelRxn.getNumReactants;
+  for i := 0 to Length(srcId) -1 do
+    srcId[i] := '';
   for i := 0 to modelRxn.getNumReactants - 1 do
     begin
+      srcId[i] := '';
       srcId[i] := modelRxn.getReactant(i).getSpecies;
       srcStoich[i] := modelRxn.getReactant(i).getStoichiometry;
     end;
     // get products:
   nProducts := modelRxn.getNumProducts;
+  for i := 0 to Length(destId) -1 do
+    destId[i] := '';
   for i := 0 to modelRxn.getNumProducts - 1 do
     begin
       destId[i] := modelRxn.getProduct(i).getSpecies;
       destStoich[i] := modelRxn.getProduct(i).getStoichiometry;
     end;
+
     // For now,  just grab all parameters, not just ones used in reactions:
     // Grab parameters that are used in reaction:
-
   for j := 0 to Length(paramAr) - 1 do
     begin
      // console.log('param: ',modelRxn.getKineticLaw.getParameter(i),', model param: ',paramAr[j].getId);
@@ -411,8 +415,6 @@ begin
       rateParams.Add(newParam);
     end;
 
-
- //   end;
   rateLaw := modelRxn.getKineticLaw.getFormula;
   fillColor := clWebLightSteelBlue;
   thickness := DEFAULT_REACTION_THICKNESS;
@@ -548,19 +550,16 @@ end;
 
 procedure TNetwork.loadSBMLModel (model : TModel);
 var
-   layoutAvailable: boolean;  // SBML model layout available?
+  // layoutAvailable: boolean;  // SBML model layout available?
 begin
-  layoutAvailable := false;
+ // layoutAvailable := false;
  // TextGlyphs typically are labels for nodes (they are ignored).
   if model.getSBMLLayout <> nil then
     begin
-      layoutAvailable := true;
+   //   layoutAvailable := true;
       self.buildNetworkFromSBMLLayout(model);
     end
   else self.autoBuildNetworkFromSBML(model);
-
-  if not layoutAvailable then self.autoLayoutEvent(); // Generate layout
- //   fruchterman_reingold(self, networkPB1.width, networkPB1.Height, 600, nil);
 end;
 
 procedure TNetwork.buildNetworkFromSBMLLayout(model: TModel);
@@ -579,12 +578,10 @@ begin
     modelLayout := model.getSBMLLayout;
     // Do not get layout dimensions? not really necessary?
     // if needed then need to set NetworkPB to width and height.
-
     for i := 0 to modelLayout.getNumSpGlyphs - 1 do
       begin
         initVal := 0;
         spAr := model.getS_Names;
-
         speciesGlyph := modelLayout.getSpGlyph(i);
         for j := 0 to Length(spAr) -1 do
         begin
@@ -604,11 +601,10 @@ begin
       begin
         reactionGlyph := modelLayout.getRxnGlyph(i);
         reactionGlyphId := reactionGlyph.getReactionId;
-        for j := 0 to model.getNumReactions - 1do
+        for j := 0 to model.getNumReactions - 1 do
           begin
             if reactionGlyphId = model.getReaction(j).getID then
             begin
-
               reactionState.loadFromSBML (reactionGlyph, model.getReaction(j),
                    model.getSBMLparameterAr, model.getSBMLcompartmentsArr());
               reaction := addReaction (reactionState);
@@ -664,92 +660,95 @@ procedure TNetwork.autoBuildNetworkFromSBML(model: TModel);
       end;
 
    // load reactions:
+    for j := 0 to model.getNumReactions - 1 do
+        begin
+          reactionState.loadFromSBML (nil, model.getReaction(j), model.getSBMLparameterAr,
+                                model.getSBMLcompartmentsArr());
 
-        for j := 0 to model.getNumReactions - 1 do
-          begin
-            reactionState.loadFromSBML (nil, model.getReaction(j), model.getSBMLparameterAr,
-                                 model.getSBMLcompartmentsArr());
-            reaction := addReaction (reactionState);
-
+          reaction := addReaction (reactionState);
+          reaction.state.arcCenter.x := 20 + j*2;
+          reaction.state.arcCenter.y := 22 + j*2;
              // Set the node pointers based on the node Ids
-            if reaction.state.nReactants < 1 then
-            begin
-              nodeState := buildNullNodeState(reaction.state.id);
-              if self.findNode(nodeState.id, index) then
-                begin
-                  reaction.state.srcId[0] := self.nodes[index].state.id;
-                  reaction.state.srcPtr[0] := self.nodes[index];
-                end
-              else
-                begin
-                  self.addNode(nodeState);
-                  reaction.state.srcId[0] := nodeState.id;
-                  if self.findNode(nodeState.id, index) then
-                    reaction.state.srcPtr[0] := self.nodes[index]
-                  else
-                    begin
-                      reaction.state.srcPtr[0] := nil;
-                      console.log('null node id not found!');
-                    end;
-                end;
-
-            end
+          if reaction.state.nReactants < 1 then
+          begin
+            nodeState := buildNullNodeState(reaction.state.id, j);
+            if self.findNode(nodeState.id, index) then
+              begin
+                // fill in rest of reactionstate:
+                reaction.state.srcId[0] := self.nodes[index].state.id;
+                reaction.state.srcPtr[0] := self.nodes[index];
+              end
             else
-            begin
-              for k := 0 to reaction.state.nReactants - 1 do
-                for l := 0 to length (nodes) - 1 do
+              begin
+                self.addNode(nodeState);
+                reaction.state.srcId[0] := nodeState.id;
+                if self.findNode(nodeState.id, index) then
+                  reaction.state.srcPtr[0] := self.nodes[index]
+                else
                   begin
-                    if nodes[l].state.id = reaction.state.srcId[k] then
-                      begin
-                        reaction.state.srcPtr[k] := nodes[l];
-                        break;
-                      end;
+                    reaction.state.srcPtr[0] := nil;
+                    console.log('null node id not found!');
                   end;
-            end;
-
-            if reaction.state.nProducts < 1 then
-            begin
-               nodeState := buildNullNodeState(reaction.state.id);
-              if self.findNode(nodeState.id, index) then
+              end;
+            reaction.state.nReactants := 1; // add null node.
+          end
+          else
+          begin
+            for k := 0 to reaction.state.nReactants - 1 do
+              for l := 0 to length (nodes) - 1 do
                 begin
-                  reaction.state.destId[0] := self.nodes[index].state.id;
-                  reaction.state.destPtr[0] := self.nodes[index];
-                end
-              else
-                begin
-                  self.addNode(nodeState);
-                  reaction.state.destId[0] := nodeState.id;
-                  if self.findNode(nodeState.id, index) then
-                    reaction.state.destPtr[0] := self.nodes[index]
-                  else
+                  if nodes[l].state.id = reaction.state.srcId[k] then
                     begin
-                      reaction.state.destPtr[0] := nil;
-                      console.log('dest null node id not found!');
-                    end;
-                end;
-            end
-            else
-            begin
-              for k := 0 to reaction.state.nProducts - 1 do
-                for l := 0 to length (nodes) - 1 do
-                  if nodes[l].state.id = reaction.state.destId[k] then
-                    begin
-                      reaction.state.destPtr[k] := nodes[l];
+                      reaction.state.srcPtr[k] := nodes[l];
                       break;
                     end;
-            end;
-
+                end;
           end;
 
+          if reaction.state.nProducts < 1 then
+          begin
+            nodeState := buildNullNodeState(reaction.state.id, j);
+            if self.findNode(nodeState.id, index) then
+              begin
+                reaction.state.destId[0] := self.nodes[index].state.id;
+                reaction.state.destPtr[0] := self.nodes[index];
+              end
+            else
+              begin
+                self.addNode(nodeState);
+                reaction.state.destId[0] := nodeState.id;
+                if self.findNode(nodeState.id, index) then
+                  reaction.state.destPtr[0] := self.nodes[index]
+                else
+                  begin
+                    reaction.state.destPtr[0] := nil;
+                    console.log('dest null node id not found!');
+                  end;
+              end;
+            reaction.state.nProducts := 1;  // add null node.
+          end
+          else
+          begin
+            for k := 0 to reaction.state.nProducts - 1 do
+              for l := 0 to length (nodes) - 1 do
+                if nodes[l].state.id = reaction.state.destId[k] then
+                  begin
+                    reaction.state.destPtr[k] := nodes[l];
+                    break;
+                  end;
+          end;
+
+        end;
+     self.autoLayoutEvent(); // Generate layout
  end;
 
- function TNetwork.buildNullNodeState(rxnId: String): TNodeState;
+ function TNetwork.buildNullNodeState(rxnId: String; num: integer): TNodeState;
  var nodeState: TNodeState;
  begin
    nodeState.id := rxnId + '_Null';
    nodeState.conc := 0.0;
-   nodeState.x := 20 ; // default values
-   nodeState.y := 60 ; //   "
+   nodeState.x := 22 + 2*num ; // default values
+   nodeState.y := 62 + 2*num; //   "
    nodeState.w := 60;  //   "
    nodeState.h := 40;  //   "
    nodeState.fillColor := clSilver;

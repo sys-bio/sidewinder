@@ -1127,6 +1127,17 @@ procedure TMainForm.selectPlotSpecies(plotnumb: Integer);
             self.plotSpecies.Items[plotnumb - 1].Add('')
           else self.plotSpecies.Items[getPlotPBIndex(plotNumb)].Add('');
       end;
+
+    for i := 0 to Length(self.mainController.getModel.getSBMLspeciesAr) -1 do
+    begin
+      if fPlotSpecies.SpPlotCG.Items.Count < (i +1) then
+      begin
+        if addingPlot then
+            self.plotSpecies.Items[plotnumb - 1].Add('')
+        else self.plotSpecies.Items[getPlotPBIndex(plotNumb)].Add('');
+      end;
+    end;
+
     if maxYVal = 0 then
       maxYVal := DEFAULTSPECIESPLOTHT  // default for plot Y max
     else maxYVal := MaxYVal * 2.0;  // add 100% margin
@@ -1144,8 +1155,29 @@ procedure TMainForm.selectPlotSpecies(plotnumb: Integer);
 
 // async called OnCreate for TVarSelectForm
   procedure AfterCreate(AForm: TObject);
+  var i, lgth: integer;
+     strList: array of String;
+     curStr: string;
   begin
-    (AForm as TVarSelectForm).speciesList := self.mainController.getModel.getS_names;
+    lgth := 0;
+    for i := 0 to Length(self.mainController.getModel.getSBMLspeciesAr) -1 do
+    begin
+      curStr := '';
+      if self.mainController.getModel.getSBMLspecies(i).isSetIdAttribute then
+         curStr := self.mainController.getModel.getSBMLspecies(i).getID
+      else curStr := self.mainController.getModel.getSBMLspecies(i).getName;
+
+      if not curStr.Contains('Null') then
+        begin
+          lgth := Length(strList);
+          setLength(strList, lgth + 1);
+          strList[lgth] := curStr;
+        end;
+    end;
+
+
+   // (AForm as TVarSelectForm).speciesList := self.mainController.getModel.getS_names;
+    (AForm as TVarSelectForm).speciesList := strList;
     (AForm as TVarSelectForm).fillSpeciesCG();
   end;
 
@@ -1172,7 +1204,7 @@ begin
   self.plotsPanelList.Add(TPlotPanel.create(pnlPlotContainer, plotPositionToAdd, yMax,
        self.mainController.getModel.getS_Names, self.mainController.getModel.getS_Vals));
 
-  newHeight := 200;  // default
+  newHeight := 400; //200;  // default
   if self.numbPlots > DEFAULT_NUMB_PLOTS then
   begin
     newHeight := round(self.pnlPlotContainer.Height/self.numbPlots);
