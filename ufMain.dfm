@@ -1247,7 +1247,7 @@ object mainForm: TmainForm
         object editNodeId: TWebEdit
           Left = 10
           Top = 22
-          Width = 95
+          Width = 136
           Height = 22
           ChildOrder = 4
           ElementClassName = 'form-control'
@@ -1393,6 +1393,7 @@ object mainForm: TmainForm
         ChildOrder = 1
         ElementBodyClassName = 'card-body-shadow'
         ElementFont = efCSS
+        Visible = False
         object RxnStoichLabel: TWebLabel
           Left = 10
           Top = 5
