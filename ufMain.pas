@@ -241,9 +241,9 @@ type
     function ScreenToWorld(X, Y: Double): TPointF; // Network drawing panel
     function WorldToScreen(wx: Integer): Integer; // Network drawing panel
     procedure PingSBMLLoaded(newModel:TModel); // Notify when done loading or model changes
-    procedure networkHasChanged(); // Notify when network has changed, may need to update model, plots, etc
+    procedure networkHasChanged(sender: TObject); // Notify when network has changed, may need to update model, plots, etc
     procedure getVals(newTime: Double; newVals: array of Double);
-    procedure generateAutoLayout(); // network needs a new layout generated ( fruchterman_reingold)
+    procedure generateAutoLayout(sender: TObject); // network needs a new layout generated ( fruchterman_reingold)
     // Get new values (species amt) from simulation run
 
   end;
@@ -282,10 +282,10 @@ end;
 procedure TMainForm.btnAutoLayoutClick(Sender: TObject);
 begin
   // showmessage (inttostr (networkPB1.Width) + ', ' + inttostr (networkPB1.Width));
-   self.generateAutoLayout;
+   self.generateAutoLayout(nil);
 end;
 
-procedure TMainForm.generateAutoLayout;
+procedure TMainForm.generateAutoLayout(sender: TObject);
 begin
   fruchterman_reingold(network, networkPB1.width, networkPB1.Height, 600, nil);
   network.centerNetwork(networkPB1.width, networkPB1.Height);
@@ -563,7 +563,7 @@ begin
   
 end;
 
-procedure TMainForm.networkHasChanged();
+procedure TMainForm.networkHasChanged(sender: TObject);
 begin
   self.networkUpdated := true;
 end;
@@ -618,7 +618,7 @@ begin
     begin
       newVal :=strtofloat(self.RxnParamEdit.text);
       self.networkController.network.reactions[networkController.selectedEdge].state.rateParams[self.RxnParamComboBox.ItemIndex].setValue(newVal);
-      self.networkController.network.networkEvent;   // notify listener that network changed. TODO: Move to network class ( add add setValue to networkController)
+      self.networkController.network.networkEvent(nil);   // notify listener that network changed. TODO: Move to network class ( add add setValue to networkController)
     end;
   except
     on Exception : EConvertError do

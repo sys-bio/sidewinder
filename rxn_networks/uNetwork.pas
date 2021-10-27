@@ -32,8 +32,8 @@ type
       color : int32;
   end;
 
-  TNetworkEvent = procedure() of object; // Network has been changed.
-  TAutoLayoutEvent = procedure() of object; // Network needs autot layout
+  TNetworkEvent = procedure(sender: TObject) of object; // Network has been changed.
+  TAutoLayoutEvent = procedure(sender: TObject) of object; // Network needs autot layout
     // TODO: need to know if just species or rate/param vals have only changed.
 
   TParent = class (TObject)
@@ -172,8 +172,8 @@ type
        procedure   loadState (networkState : TNetworkSavedState);
        property OnNetworkEvent: TNetworkEvent read FNetworkEvent write FNetworkEvent;
        property OnAutoLayoutEvent: TAutoLayoutEvent read FAutoLayoutEvent write FAutoLayoutEvent;
-       procedure networkEvent(); // Notify listener that Network has changed.
-       procedure autoLayoutEvent(); // Notify listener that Network layout needs to be configured.
+       procedure networkEvent(sender: TObject); // Notify listener that Network has changed.
+       procedure autoLayoutEvent(sender: TObject); // Notify listener that Network layout needs to be configured.
        constructor Create (id : string);
   end;
 
@@ -468,16 +468,16 @@ begin
   self.id := id;
 end;
 
-procedure TNetwork.networkEvent();
+procedure TNetwork.networkEvent(sender: TObject);
 begin
   if Assigned(FNetworkEvent) then
-    FNetworkEvent();
+    FNetworkEvent(sender);
 end;
 
-procedure TNetwork.autoLayoutEvent();
+procedure TNetwork.autoLayoutEvent(sender: TObject);
 begin
   if Assigned(self.FAutoLayoutEvent) then
-    self.FAutoLayoutEvent();
+    self.FAutoLayoutEvent(sender);
 end;
 
 procedure TNetwork.loadModel (modelStr : string);  // JSON string
@@ -545,7 +545,7 @@ begin
                     end;
           end;
      end;
-     self.networkEvent; // Notify listener
+     self.networkEvent(nil); // Notify listener
 end;
 
 procedure TNetwork.loadSBMLModel (model : TModel);
@@ -739,7 +739,7 @@ procedure TNetwork.autoBuildNetworkFromSBML(model: TModel);
           end;
 
         end;
-     self.autoLayoutEvent(); // Generate layout
+     self.autoLayoutEvent(nil); // Generate layout
  end;
 
  function TNetwork.buildNullNodeState(rxnId: String; num: integer): TNodeState;
@@ -921,7 +921,7 @@ begin
   result := nodes[length (nodes)-1];
   result.state.x := x; result.state.y := y;
   result.state.Id := Id;
-  self.networkEvent; // Notify listener
+  self.networkEvent(nil); // Notify listener
 end;
 
 
@@ -933,7 +933,7 @@ begin
   result.state.x := x; result.state.y := y;
   result.state.h := h; result.state.w := w;
   result.state.Id := Id;
-  self.networkEvent; // Notify listener
+  self.networkEvent(nil); // Notify listener
 end;
 
 
@@ -943,7 +943,7 @@ begin
   nodes[length (nodes)-1] := TNode.create (id);
   result := nodes[length (nodes)-1];
   result.state := state;
-  self.networkEvent; // Notify listener
+  self.networkEvent(nil); // Notify listener
 end;
 
 
@@ -952,7 +952,7 @@ begin
   setlength (nodes, length (nodes) + 1);
   nodes[length (nodes)-1] := TNode.create (id);
   result := nodes[length (nodes)-1];
-  self.networkEvent; // Notify listener
+  self.networkEvent(nil); // Notify listener
 
 end;
 
@@ -962,7 +962,7 @@ begin
   setlength (reactions, length (reactions) + 1);
   reactions[length (reactions)-1] := TReaction.create (id, src, dest);
   result := length (reactions) - 1;
-  self.networkEvent; // Notify listener
+  self.networkEvent(nil); // Notify listener
 end;
 
 
@@ -972,7 +972,7 @@ begin
   reactions[length (reactions)-1] := TReaction.create;
   result := reactions[length (reactions)-1];
   result.state := state;
-  self.networkEvent; // Notify listener
+  self.networkEvent(nil); // Notify listener
 end;
 
 
@@ -981,7 +981,7 @@ begin
   setlength (reactions, length (reactions) + 1);
   reactions[length (reactions)-1] := reaction;
   result := length (reactions);
-  self.networkEvent; // Notify listener
+  self.networkEvent(nil); // Notify listener
 end;
 
 
@@ -1046,7 +1046,7 @@ begin
     newReaction.setDefaultParams;
     newReaction.setRateRule;
   end;
-  self.networkEvent; // Notify listener
+  self.networkEvent(nil); // Notify listener
   result := newReaction;
 end;
 
@@ -1145,7 +1145,7 @@ begin
  for i := 0 to length (nodes) - 1 do
       nodes[i].Free;
   setLength (nodes, 0);
-  self.networkEvent;
+  self.networkEvent(nil);
 end;
 
 

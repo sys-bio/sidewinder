@@ -10,7 +10,7 @@ type
  TUpdateSimEvent = procedure(time:double; updatedVals: array of double) of object;
  // Let listeners know of new simulation update event.
   TUpdateModelEvent = procedure(model: TModel) of object; // SBML model loaded.
-  TNetworkChangeEvent = procedure() of object; // Notify network has changed, may want to update model.
+  TNetworkChangeEvent = procedure(sender: TObject) of object; // Notify network has changed, may want to update model.
 
  TControllerMain = class
   private
@@ -69,7 +69,7 @@ type
     procedure resetCurrTime();
     procedure writeSimData(fileName: string; data: TStrings);
     function getSimulation(): TSimulationJS;
-    procedure networkUpdated(); // Network has changed, update model
+    procedure networkUpdated(sender: TObject); // Network has changed, update model
     property OnNetworkChange: TNetworkChangeEvent read FNetworkChanged write FNetworkChanged;
     property OnSimUpdate: TUpdateSimEvent read FUpdate write FUpdate;
     property OnSBMLUpdate: TUpdateModelEvent read FSBMLUpdate write FSBMLUpdate;
@@ -154,12 +154,12 @@ procedure TControllerMain.UpdateVals( time: double; updatedVals: array of double
  end;
 
   // Network has changed, notify any listeners
-procedure TControllerMain.networkUpdated();
+procedure TControllerMain.networkUpdated(sender: TObject);
 begin
   console.log('Network changed');
   self.networkUpdate := true;      // after model updated, change to false.
   if Assigned(FNetworkChanged) then
-    FNetworkChanged();
+    FNetworkChanged(sender);
 end;
 
 procedure TControllerMain.setODESolver();

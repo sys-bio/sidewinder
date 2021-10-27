@@ -159,7 +159,7 @@ begin
         for j := i + 1 to alength - 1 do
           network.nodes[j - 1] := network.nodes[j];
         setLength(network.nodes, alength - 1);
-        network.networkEvent;   // notify listener that network changed.
+        network.networkEvent(nil);   // notify listener that network changed.
         exit;
       end
       else
@@ -176,7 +176,7 @@ begin
         network.reactions[j - 1] := network.reactions[j];
       setLength(network.reactions, alength - 1);
       selectedEdge := -1;
-      network.networkEvent;
+      network.networkEvent(nil);
       exit;
     end;
   end;
@@ -271,7 +271,7 @@ begin
   network.nodes[selectedNode].state.id := Id;
   // Update reactions that have this node:
   network.updateReactions(network.nodes[selectedNode]);
-  network.networkEvent;
+  network.networkEvent(nil);
 end;
 
 procedure TController.setNodeConc (conc : string);
@@ -290,7 +290,7 @@ begin
       ShowMessage ('Concentration must be a number');
   end;
   network.nodes[selectedNode].state.conc := newConc;
-  network.networkEvent;
+  network.networkEvent(nil);
 end;
 
 procedure TController.setReactionSpecStoich(spIndex: integer; stoichVal: double; src: boolean);
@@ -305,7 +305,7 @@ begin
       if spIndex < length(network.reactions[selectedEdge].state.srcStoich) then
       begin
         network.reactions[selectedEdge].state.srcStoich[spIndex] := stoichVal;
-        network.networkEvent;
+        network.networkEvent(nil);
       end
       else
         ShowMessage('Source species index too large');
@@ -314,7 +314,7 @@ begin
       if spIndex < length(network.reactions[selectedEdge].state.destStoich) then
       begin
         network.reactions[selectedEdge].state.destStoich[spIndex] := stoichVal;
-        network.networkEvent;
+        network.networkEvent(nil);
       end
       else
         ShowMessage('Source destination index too large');
