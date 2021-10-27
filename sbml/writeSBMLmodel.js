@@ -4,26 +4,44 @@
 class GenerateSBMLModel {
  constructor( libSBML, newModel ){
    this.writer = new libSBML.SBMLWriter();
+  // const newLayoutExtension = new libSBML.LayoutExtension();// cannot construct a LayoutExtension, no constructor in IDL
+  // const newLayoutModelPlugin = new libSBML.LayoutModelPlugin();//cannot construct a LayoutModelPlugin, no constructor in IDL
+
+   //this.myLayout = new libsbml.Layout(); //cannot construct a Layout, no constructor in IDL
+  // const test = libsbml.LayoutExtension().getXmlnsL3V1V1();// cannot construct a LayoutExtension, no constructor in IDL
    this.sbmlDoc = new libsbml.SBMLDocument();
    this.modelStr = "";
    this.rxnModel = newModel; // TModel
    this.libSBMLmodel = null;
  }
  buildModel() { // TModel
-   const modelName = "Chemical Reaction"; // Not saved ?
+   const modelName = "Chemical Reaction";
    this.libSBMLmodel = this.sbmlDoc.createModel();
-   this.libSBMLmodel.setId(modelName);
+   this.libSBMLmodel.setId(modelName);  // Not saved ?
+   this.newLayoutPlugIn = this.libSBMLmodel.getPlugin('layout');//returns ptr to 0 since no layout associated with model.
+
+   if(this.sbmlDoc.getLevel() == 3) {
+     this.sbmlDoc.enablePackage(this.sbmlDoc.LayoutExtension().getXmlnsL3V1V1()  , 'layout', true);
+   }
+
    this.createCompartments();
    this.createParameters();
    this.createSpecies();
    this.createRules();
    this.createReactions();
+   const modelLayout = this.rxnModel.getSBMLLayout();
+   if( modelLayout != undefined) {
+        // Build SBML layout, add to SBML model
+   }
+
  }
+
  getSBMLString() {
    var sbmlStr = "";
    sbmlStr = this.writer.writeSBMLToString(this.sbmlDoc);
    return sbmlStr;
  }
+
  createCompartments() {
    var i;
    const rxnComps = this.rxnModel.getSBMLcompartmentsArr();
