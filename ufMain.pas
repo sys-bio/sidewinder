@@ -1204,7 +1204,7 @@ begin
   self.plotsPanelList.Add(TPlotPanel.create(pnlPlotContainer, plotPositionToAdd, yMax,
        self.mainController.getModel.getS_Names, self.mainController.getModel.getS_Vals));
 
-  newHeight := 400; //200;  // default
+  newHeight := 200; //200;  // default
   if self.numbPlots > DEFAULT_NUMB_PLOTS then
   begin
     newHeight := round(self.pnlPlotContainer.Height/self.numbPlots);
