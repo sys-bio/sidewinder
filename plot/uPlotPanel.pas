@@ -246,6 +246,7 @@ implementation
           if i <10 then
             self.plotLegendBMap.canvas.pen.color := uGraphP.COLORS[i]
           else self.plotLegendBMap.canvas.pen.color := uGraphP.COLORS[i mod length(uGraphP.COLORS)];
+          self.plotLegendBMap.canvas.pen.Width := 3;
           self.plotLegendBMap.canvas.moveto( 2, j*10+3 );
           self.plotLegendBMap.canvas.lineto( 10, j*10+3);
           self.plotLegendBMap.canvas.TextOut( 12, j*10, spName);
