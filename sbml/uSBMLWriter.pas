@@ -29,7 +29,7 @@ implementation
  begin
    self.sbmlStr := '';
    self.sbmlModel := model;
-  // console.log('In TSBMLWriter.create ');
+
   asm;   // javascript
    try  {
 
