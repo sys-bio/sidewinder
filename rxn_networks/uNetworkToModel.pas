@@ -19,6 +19,7 @@ private
 public
   constructor create(newModel: TModel; newNetwork: TNetwork);
   function getModel:TModel;
+  function getLayout(): TSBMLLayout;
  // procedure setSavingModelFlag(newVal: boolean);
  // function isSavingModel(): boolean;
  // procedure setModel(newModel: TModel);
@@ -36,6 +37,7 @@ begin
   self.setCompartments;
   self.setSpecies;
   self.setReactions;
+  self.model.setSBMLLayout(self.layout);
  // self.savingModel := false;
 
 end;
@@ -198,6 +200,9 @@ begin
   Result := self.model;
 end;
 
-
+function TNetworkToModel.getLayout(): TSBMLLayout;
+begin
+  Result := self.layout;
+end;
 
 end.

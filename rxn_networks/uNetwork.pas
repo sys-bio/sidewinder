@@ -549,14 +549,10 @@ begin
 end;
 
 procedure TNetwork.loadSBMLModel (model : TModel);
-var
-  // layoutAvailable: boolean;  // SBML model layout available?
 begin
- // layoutAvailable := false;
  // TextGlyphs typically are labels for nodes (they are ignored).
-  if model.getSBMLLayout <> nil then
+  if (model.getSBMLLayout <> nil) and (model.getSBMLLayout.getNumSpGlyphs >0) then
     begin
-   //   layoutAvailable := true;
       self.buildNetworkFromSBMLLayout(model);
     end
   else self.autoBuildNetworkFromSBML(model);
@@ -597,7 +593,7 @@ begin
       end;
 
    // load reactions:
-    for i := 0 to modelLayout.getNumRxnGlyph - 1 do
+    for i := 0 to modelLayout.getNumRxnGlyphs - 1 do
       begin
         reactionGlyph := modelLayout.getRxnGlyph(i);
         reactionGlyphId := reactionGlyph.getReactionId;

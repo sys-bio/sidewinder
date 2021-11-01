@@ -9,6 +9,7 @@ class ProcessSBML {
    this.model = libSBMLModel; // Model from libSBML doc.getModel()
    if(this.model.getNumPlugins() >0) {
      this.SBMLLayOut = this.model.findPlugin('layout');
+
      if(this.SBMLLayOut == undefined) {
        console.log('No layout plugin');
        }
