@@ -23,7 +23,7 @@ type
     modelParams: array of TSBMLparameter;
     modelRules: array of TSBMLRule;  // optional
     modelId: String; // optional model name
-    modelLayout: TSbmlLayout;
+    modelLayout: TSBMLLayout;
 
     // Arrays of Double used by ODE integrator, keep array of strings for mapping:
     s_Vals: array of Double; // Changes, one to one correlation: s_Vals[n] <=> s_Names[n]
@@ -49,6 +49,8 @@ type
              reactants: array of String; reactantsStoich: array of double;
              kineticLaw: String; newReverse: boolean); overload;
    procedure addSBMLReaction(newReaction: SBMLReaction); overload;
+   function  getModelId(): string;
+   procedure setModelId(newId: string);
    function  getParamNumb(): integer;  // Number of parameters in model.
    function  getSBMLparameter(i:integer): TSBMLparameter;
    function  getSBMLparameterAr(): array of TSBMLparameter;
@@ -199,6 +201,16 @@ procedure TModel.SBML_UpdateEvent();
    end
    else Result := nil;
 
+ end;
+
+ function  TModel.getModelId(): string;
+ begin
+   Result := self.modelId;
+ end;
+
+ procedure TModel.setModelId(newId: string);
+ begin
+   self.modelId := newId;
  end;
 
  function TModel.getSpeciesNumb(): integer;
