@@ -205,6 +205,7 @@ type
    specRefId: string;  // id of species reference used in reaction
    role: string;       // optional, default is 'undefined'
    curve: TSBMLLayoutCurve;  // optionally use use in place of bounding box
+   curveFlag: boolean;
  public
    constructor create() overload;
    constructor create(newSpRefId: string) overload;
@@ -219,6 +220,7 @@ type
    procedure setRole(newRole: string);
    procedure setCurve(newCurve: TSBMLLayoutCurve);
    function getCurve(): TSBMLLayoutCurve;
+   function isCurveSet(): boolean;
 
  end;
 
@@ -227,6 +229,7 @@ type
    rxnId: string;  // id of reaction
    speciesRefGlyphList: TList<TSBMLLayoutSpeciesReferenceGlyph>;
    curve: TSBMLLayoutCurve;
+   curveFlag: boolean;
  public
    constructor create(newRxnId: string) overload;
    constructor create(cpy: TSBMLLayoutReactionGlyph) overload;
@@ -239,6 +242,7 @@ type
    function deleteSpeciesRefGlyph(index: integer): boolean;
    procedure setCurve(newCurve: TSBMLLayoutCurve);
    function getCurve(): TSBMLLayoutCurve;
+   function isCurveSet(): boolean;
  end;
 
  // spec 3.12
@@ -297,7 +301,7 @@ type
    function getCompGlyph(index: integer): TSBMLLayoutCompartmentGlyph;
    function deleteCompGlyph(index: integer): boolean;
    procedure addRxnGlyph(newRxnG: TSBMLLayoutReactionGlyph);
-   function getNumRxnGlyph(): integer;
+   function getNumRxnGlyphs(): integer;
    function getRxnGlyph(index: integer): TSBMLLayoutReactionGlyph;
    function deleteRxnGlyph(index: integer): boolean;
    procedure addTextGlyph(newTextG: TSBMLLayoutTextGlyph);
@@ -888,6 +892,7 @@ var
     self.specRefId := '';
     self.role := 'undefined';
     self.curve := nil;
+    self.curveFlag := false;
   end;
 
   constructor TSBMLLayoutSpeciesReferenceGlyph.create(newSpRefId: string);
@@ -897,6 +902,7 @@ var
     self.specRefId := newSpRefId;
     self.role := 'undefined';
     self.curve := nil;
+    self.curveFlag := false;
   end;
 
   constructor TSBMLLayoutSpeciesReferenceGlyph.create(cpy: TSBMLLayoutSpeciesReferenceGlyph);
@@ -906,8 +912,12 @@ var
     self.specGlyphId := cpy.getSpeciesGlyphId;
     self.specRefId := cpy.getSpeciesRefId;
     self.role := cpy.getRole;
-    if cpy.getCurve <> nil then
+    if cpy.isCurveSet then
+    begin
       self.curve := TSBMLLayoutCurve.create(cpy.getCurve);
+      self.curveFlag := true;
+    end
+    else self.curveFlag := false;
   end;
 
   function TSBMLLayoutSpeciesReferenceGlyph.getSpeciesGlyphId(): string;
@@ -934,9 +944,15 @@ var
   begin
     self.role := newRole; //TODO: chk if valid role.
   end;
+
+  function TSBMLLayoutSpeciesReferenceGlyph.isCurveSet(): boolean;
+  begin
+    Result := self.curveFlag;
+  end;
   procedure TSBMLLayoutSpeciesReferenceGlyph.setCurve(newCurve: TSBMLLayoutCurve);
   begin
     self.curve := TSBMLLayoutCurve.create(newCurve);
+    self.curveFlag := true;
   end;
   function TSBMLLayoutSpeciesReferenceGlyph.getCurve(): TSBMLLayoutCurve;
   begin
@@ -947,6 +963,7 @@ var
   begin
     inherited create('reactionGlyph');
     self.rxnId := rxnId;
+    self.curveFlag := false;
     self.speciesRefGlyphList := TList<TSBMLLayoutSpeciesReferenceGlyph>.create;
   end;
 
@@ -955,8 +972,13 @@ var
   i: Integer;
   begin
     self.rxnId := cpy.getReactionId;
-    if cpy.getCurve <> nil then
-      self.curve := TSBMLLayoutCurve.create(cpy.getCurve);
+    if cpy.isCurveSet then
+      begin
+        self.curve := TSBMLLayoutCurve.create(cpy.getCurve);
+        self.curveFlag := true;
+      end
+    else self.curveFlag := false;
+
     self.speciesRefGlyphList := TList<TSBMLLayoutSpeciesReferenceGlyph>.create;
     for i := 0 to cpy.getNumSpeciesRefGlyphs -1 do
       begin
@@ -1024,9 +1046,14 @@ var
     Result := success;
   end;
 
+  function TSBMLLayoutReactionGlyph.isCurveSet(): boolean;
+  begin
+    Result := self.curveFlag;
+  end;
   procedure TSBMLLayoutReactionGlyph.setCurve(newCurve: TSBMLLayoutCurve);
   begin
     self.curve := TSBMLLayoutCurve.create(newCurve);
+    self.curveFlag := true;
   end;
   function TSBMLLayoutReactionGlyph.getCurve(): TSBMLLayoutCurve;
   begin
@@ -1108,7 +1135,7 @@ var
         self.speciesGlyphList.Add(TSBMLLayoutSpeciesGlyph.create(cpy.getSpGlyph(i)));
       end;
     self.reactionGlyphList := TList<TSBMLLayoutReactionGlyph>.create;
-    for i := 0 to cpy.getNumRxnGlyph - 1 do
+    for i := 0 to cpy.getNumRxnGlyphs - 1 do
       begin
         self.reactionGlyphList.Add(TSBMLLayoutReactionGlyph.create(cpy.getRxnGlyph(i)));
       end;
@@ -1271,7 +1298,7 @@ var
     self.reactionGlyphList.Add(TSBMLLayoutReactionGlyph.create(newRxnG));
   end;
 
-  function TSBMLLayout.getNumRxnGlyph(): integer;
+  function TSBMLLayout.getNumRxnGlyphs(): integer;
   begin
     Result := self.reactionGlyphList.Count;
   end;
