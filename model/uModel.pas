@@ -34,7 +34,7 @@ type
     p_NameValAr: TVarNameValAr;// Holds current param name/value, changes, Includes compartments and boundary species.
     FPing: TPingEvent;// Used to send sbml info to listener once asynchronous read done.
     FPing2: TPingEvent;// Used to send sbml info to listener once asynchronous read done.
-   // FPing3: TPingEvent;// Used to send sbml info to listener once asynchronous read done.
+
     procedure fillSpeciesArray();
     procedure fillParameterArray();
 
