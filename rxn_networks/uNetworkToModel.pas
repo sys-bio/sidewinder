@@ -1,7 +1,8 @@
 unit uNetworkToModel;
  // *** Currently only one-way reactions.
 interface
-uses Web, JS, uModel, uSBMLClasses, uNetwork, uSBMLClasses.Layout;
+uses Web, JS, uModel, uSBMLClasses, uNetwork, uSBMLClasses.Layout,
+   uSidewinderTypes;
 
 const DEFAULT_COMP = 'unit_compartment';
 type
@@ -10,18 +11,17 @@ private
   model: TModel;
   layout: TSBMLLayout;
   network: TNetwork;
- // savingModel: boolean;  // true: model being saved to file, so add layout to file
   procedure setSpecies;
   //procedure setParameters; // Currently done in setReactions as all params in rxn equations
   procedure setReactions;
   procedure setCompartments; // Currently only one, unit compartment
  
 public
-  constructor create(newModel: TModel; newNetwork: TNetwork);
+  constructor create(newModel: TModel; newNetwork: TNetwork;
+                     layoutWidth, layoutHeight: integer);
   function getModel:TModel;
   function getLayout(): TSBMLLayout;
- // procedure setSavingModelFlag(newVal: boolean);
- // function isSavingModel(): boolean;
+
  // procedure setModel(newModel: TModel);
  // procedure setNetwork(newNetwork: TNetwork);   // TODO
 
@@ -29,30 +29,20 @@ end;
 
 implementation
 
-constructor TNetworkToModel.create(newModel: TModel; newNetwork: TNetwork);
+constructor TNetworkToModel.create( newModel: TModel; newNetwork: TNetwork;
+                                    layoutWidth, layoutHeight: integer );
 begin
   self.model := newModel;
   self.layout := TSBMLLayout.create();
+  self.layout.setDims( TSBMLLayoutDims.create(layoutWidth, layoutHeight) );
+  self.layout.setId(newNetwork.id);
   self.network := newNetwork;
   self.setCompartments;
   self.setSpecies;
   self.setReactions;
   self.model.setSBMLLayout(self.layout);
- // self.savingModel := false;
 
 end;
-{
-procedure TNetworkToModel.setSavingModelFlag(newVal: boolean);
-begin
-  self.savingModel := newVal;
-end;
-
-
-function TNetworkToModel.isSavingModel(): boolean;
-begin
-  Result := self.savingModel;
-end;
- }
 
 procedure TNetworkToModel.setCompartments;
 var newComp: TSBMLcompartment;
@@ -89,7 +79,8 @@ begin
     self.layout.addSpGlyph(newSpGlyph);
     newTextGlyph := TSBMLLayoutTextGlyph.create();
     newTextGlyph.setText(nodes[i].state.id);
-    newTextGlyph.setId('txt');
+    newTextGlyph.setId('txtGlyph' + nodes[i].state.id);
+    newTextGlyph.setGraphicalObjId(newSpGlyph.getId);
     newTextGlyph.setBoundingBox(TSBMLLayoutBoundingBox.create(newLayoutPt,newDims));
     self.layout.addTextGlyph(newTextGlyph);
 
@@ -97,7 +88,10 @@ begin
 end;
 
 procedure TNetworkToModel.setReactions;
-var i, j, k: integer;
+// Currently: Rxn lines are used, no bezier curves (once bezier curve is implimented
+//            then need to change). One line from node to arc center. another line
+//            from arc center to next node, etc ...
+var i, j, k, index: integer;
    newSpecReacts: array of TSBMLSpeciesReference;
    newSpecProds: array of TSBMLSpeciesReference;
    newSpRefId: string;
@@ -106,24 +100,29 @@ var i, j, k: integer;
    newReaction: SBMLReaction;
    newRxnGlyph: TSBMLLayoutReactionGlyph;
    newSpRefGlyph: TSBMLLayoutSpeciesReferenceGlyph;
-   newLayoutPt: TSBMLLayoutPoint;
+   newRxnCenterPt: TSBMLLayoutPoint;
    newDims: TSBMLLayoutDims;
-   newCurve: TSBMLLayoutCurve;
+   newRxnCurve: TSBMLLayoutCurve;
    newLineSeg: TSBMLLayoutLineSegment;
    newCubicBezier: TSBMLLayoutCubicBezier;
+   spRefCenter: TSBMLLayoutPoint;
 
 begin
   for i := 0 to Length(self.network.reactions)-1 do
   begin
+
     newRxnGlyph := TSBMLLayoutReactionGlyph.create(self.network.reactions[i].state.id);
-    newCurve := TSBMLLayoutCurve.create;
-    newLayoutPt := TSBMLLayoutPoint.create(self.network.reactions[i].state.arcCenter.x,
+    newRxnCurve := TSBMLLayoutCurve.create;
+    newRxnCenterPt := TSBMLLayoutPoint.create(self.network.reactions[i].state.arcCenter.x,
                                           self.network.reactions[i].state.arcCenter.y);
-     // add reaction center to cubic bezier as base point 1, 2:
-    newCubicBezier := TSBMLLayoutCubicBezier.create();
-    newCubicBezier.setBasePt1(newLayoutPt);
-    newCubicBezier.setBasePt2(newLayoutPt);
-    newCurve.addCubicBezier(newCubicBezier);
+    // add reaction center to cubic bezier as start, end pt, base point 1, 2:
+    // future, once Cubic Bezier implimented.
+    {newCubicBezier := TSBMLLayoutCubicBezier.create();
+    newCubicBezier.setStart(st);
+    newCubicBezier.setEnd(end)
+    newCubicBezier.setBasePt1(pt1);
+    newCubicBezier.setBasePt2(pt2);
+    newRxnCurve.addCubicBezier(newCubicBezier);  }
 
     setLength(newSpecReacts,0);
     setLength(newSpecProds,0);
@@ -140,9 +139,18 @@ begin
         newSpRefGlyph := TSBMLLayoutSpeciesReferenceGlyph.create(newSpRefId);
         newSpRefGlyph.setSpeciesGlyphId(self.network.reactions[i].state.srcId[j]);
         newSpRefGlyph.setRole('substrate');
-        newDims := TSBMLLayoutDims.create(0,0);
-        newLayoutPt := TSBMLLayoutPoint.create(0,0);
-        newSpRefGlyph.setBoundingBox(TSBMLLayoutBoundingBox.create(newLayoutPt, newDims));
+        newDims := TSBMLLayoutDims.create(0,0); // Do not need boundingBox, use curve
+        if self.network.findNode( self.network.reactions[i].state.srcId[j], index ) then
+        begin
+          spRefCenter := TSBMLLayoutPoint.create(self.network.nodes[index].state.x,
+                                             self.network.nodes[index].state.y );
+          newLineSeg := TSBMLLayoutLineSegment.create(newRxnCenterPt, spRefCenter);
+          newRxnCurve.addLineSegment(newLineSeg);
+        end
+        else notifyUser('Node id not found: ' + self.network.reactions[i].state.srcId[j] );
+        spRefCenter := TSBMLLayoutPoint.create(0,0);
+        newSpRefGlyph.setBoundingBox(TSBMLLayoutBoundingBox.create(spRefCenter, newDims));
+
         newRxnGlyph.addSpeciesRefGlyph(newSpRefGlyph);
 
         newSpecReacts[k] := TSBMLSpeciesReference.create(newSpRefId,
@@ -159,14 +167,25 @@ begin
 
       if self.network.reactions[i].state.destId[j] <> '' then
       begin
+        index := -1;
         setLength(newSpecProds, k+1);
         newSpRefId := self.network.reactions[i].state.destId[j] + self.network.reactions[i].state.id;
         newSpRefGlyph := TSBMLLayoutSpeciesReferenceGlyph.create(newSpRefId);
         newSpRefGlyph.setSpeciesGlyphId(self.network.reactions[i].state.destId[j]);
         newSpRefGlyph.setRole('product');
         newDims := TSBMLLayoutDims.create(0,0);
-        newLayoutPt := TSBMLLayoutPoint.create(0,0);
-        newSpRefGlyph.setBoundingBox(TSBMLLayoutBoundingBox.create(newLayoutPt, newDims));
+        if self.network.findNode( self.network.reactions[i].state.destId[j], index ) then
+        begin
+          spRefCenter := TSBMLLayoutPoint.create(self.network.nodes[index].state.x,
+                                             self.network.nodes[index].state.y );
+          newLineSeg := TSBMLLayoutLineSegment.create(newRxnCenterPt, spRefCenter);
+          newLineSeg.setId('line_' + self.network.reactions[i].state.destId[j] +
+                   self.network.reactions[i].state.id );
+          newRxnCurve.addLineSegment(newLineSeg);
+        end
+        else notifyUser('Node id not found: ' + self.network.reactions[i].state.destId[j] );
+        spRefCenter := TSBMLLayoutPoint.create(0,0);
+        newSpRefGlyph.setBoundingBox(TSBMLLayoutBoundingBox.create(spRefCenter, newDims));
         newRxnGlyph.addSpeciesRefGlyph(newSpRefGlyph);
 
         newSpecProds[k] := TSBMLSpeciesReference.create(newSpRefId,
@@ -188,6 +207,7 @@ begin
     newReaction.setKineticLaw(newLaw);
     newReaction.setCompartment(DEFAULT_COMP);
     self.model.addSBMLReaction(newReaction);
+    newRxnGlyph.setCurve(newRxnCurve);
     self.layout.addRxnGlyph(newRxnGlyph);
   end;
 
