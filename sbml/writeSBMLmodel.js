@@ -3,23 +3,21 @@
  //   libSBML is loaded module from libsbml.js
 class GenerateSBMLModel {
  constructor( curLibSBML, newModel ){
-   this.libSBML = curLibSBML;
+   this.libSBML = curLibSBML;    // loaded libsbmljs
    this.writer = new this.libSBML.SBMLWriter();
    this.sbmlDoc = new this.libSBML.SBMLDocument(3,2);
-  // this.sbmlDoc.enablePackage('layout', false);   // trying htis.
    this.modelStr = "";
    this.rxnModel = newModel; // TModel
-   this.libSBMLmodel = null;
+   this.libSBMLmodel = null; // libSBMLjs model
  }
  buildModel() { // TModel
    const modelName = this.rxnModel.getModelId();
    this.libSBMLmodel = this.sbmlDoc.createModel();
    this.libSBMLmodel.setId(modelName);  // Not saved ?
-
-  // if(this.sbmlDoc.getLevel() == 3) {
    this.sbmlDoc.enablePackage(this.libSBML.LayoutExtension.prototype.getXmlnsL3V1V1(), 'layout', true);
+   this.sbmlDoc.setPackageRequired('layout', false);  // layout does not affect model math
    this.sbmlDoc.enablePackage(this.libSBML.RenderExtension.prototype.getXmlnsL3V1V1(), 'render', true);
-  // }
+   this.sbmlDoc.setPackageRequired('render', false);
 
    const lPlugin = this.libSBML.castObject(this.libSBMLmodel.findPlugin("layout"), libsbml.LayoutModelPlugin);
    this.libSBMLlayout = lPlugin.createLayout();// create new libsbml layout to be populated by this.rxnModel.
@@ -35,6 +33,7 @@ class GenerateSBMLModel {
    this.modelLayout = this.rxnModel.getSBMLLayout();
    if( this.modelLayout != undefined) {
         // Build SBML layout, add to SBML model
+   console.log( 'layout id: ', modelName + this.modelLayout.getId() );
      this.libSBMLlayout.setId(modelName + this.modelLayout.getId());
      this.createLayout();
    }
@@ -149,7 +148,7 @@ class GenerateSBMLModel {
        const newKineticLaw = newReaction.createKineticLaw();
        newKineticLaw.setId(rxnKineticLaw.getId());
        if(rxnKineticLaw.isNameFlagSet()){newKineticLaw.setName(rxnKineticLaw.getName());}
-       //for(j=0; j<rxnKineticLaw.getNumParameters(); j++) // Do not add params for kinetic law
+       //for(j=0; j<rxnKineticLaw.getNumParameters(); j++) // Do not add local params for kinetic law
        newKineticLaw.setFormula(rxnKineticLaw.getFormula());
 
      }
@@ -158,6 +157,9 @@ class GenerateSBMLModel {
  }   // createReactions()
 
  createLayout() {
+   const sbmlLayoutDims = this.libSBMLlayout.getDimensions();
+   sbmlLayoutDims.setWidth( this.modelLayout.getDims().getWidth() );
+   sbmlLayoutDims.setHeight( this.modelLayout.getDims().getHeight() );
    this.createCompartmentGlyphs();
    this.createSpeciesGlyphs();
    this.createReactionGlyphs();
@@ -171,7 +173,7 @@ class GenerateSBMLModel {
    sbmlBBDims.setWidth(bBox.getDims().getWidth());
    sbmlBBDims.setHeight(bBox.getDims().getHeight());
 console.log('process BBox, width x height: ', sbmlBBox.getDimensions().getWidth(),sbmlBBox.getDimensions().getHeight() );
-   sbmlBBox.setX(bBox.getPoint().getX()); // sets x coord in speciesglyph bbox center.
+   sbmlBBox.setX(bBox.getPoint().getX()); // sets x coord in species glyph bbox center.
    sbmlBBox.setY(bBox.getPoint().getY()); // assume no Z
 
  }
@@ -231,12 +233,9 @@ console.log('process BBox, width x height: ', sbmlBBox.getDimensions().getWidth(
      const sbmlBBDims = sbmlBBox.getDimensions();   // pointer to speciesGlyph bounding box dims
      sbmlBBDims.setWidth(curBBox.getDims().getWidth());
      sbmlBBDims.setHeight(curBBox.getDims().getHeight());
-     console.log('BBox, width x height: ', sbmlBBox.getDimensions().getWidth(),sbmlBBox.getDimensions().getHeight() );
-  //   sbmlBBox.setDimensions(sbmlBBDims);   // not needed
+//     console.log('BBox, width x height: ', sbmlBBox.getDimensions().getWidth(),sbmlBBox.getDimensions().getHeight() );
      sbmlBBox.setX(curBBox.getPoint().getX()); // sets x coord in speciesglyph bbox center.
      sbmlBBox.setY(curBBox.getPoint().getY()); // assume no Z
-  //   sbmlSpGlyph.setBoundingBox(sbmlBBox);   // <-- Not needed
-
    }
  }
 
@@ -246,14 +245,16 @@ console.log('process BBox, width x height: ', sbmlBBox.getDimensions().getWidth(
      const curRxnGlyph = this.modelLayout.getRxnGlyph(i);
      const sbmlRxnGlyph = this.libSBMLlayout.createReactionGlyph();
      sbmlRxnGlyph.setReactionId( curRxnGlyph.getReactionId() );
+     sbmlRxnGlyph.setId( curRxnGlyph.getId() );
      var j;
      for( j=0; j < curRxnGlyph.getNumSpeciesRefGlyphs(); j++ ) {
        const curSpRefGlyph = curRxnGlyph.getSpeciesRefGlyph(j);
        const sbmlSpRefGlyph = this.libSBMLlayout.createSpeciesReferenceGlyph();
        sbmlSpRefGlyph.setSpeciesGlyphId( curSpRefGlyph.getSpeciesGlyphId() );
        sbmlSpRefGlyph.setSpeciesReferenceId( curSpRefGlyph.getSpeciesRefId() );
+       // sbmlSpRefGlyph.setRole( curSpRefGlyph.getRole() );  NOT used,
+         // need to convert to SpeciesReferenceRole_t enum
        sbmlSpRefGlyph.setId( curSpRefGlyph.getId() );
-       // TODO: set role
 
        if( curSpRefGlyph.isCurveSet() ) {
          const curCurve = curSpRefGlyph.getCurve;
@@ -291,7 +292,7 @@ console.log('process BBox, width x height: ', sbmlBBox.getDimensions().getWidth(
        }
        if( curCurve.getNumCurveSegments() >0 ) {
          var k;
-         for( k=0; k < curve.getNumCurveSegments(); k++ ) {
+         for( k=0; k < curCurve.getNumCurveSegments(); k++ ) {
            const sbmlLineSeg = sbmlRxnGlyph.createLineSegment();
            this.processLineSeg( curCurve.getLineSegment(k), sbmlLineSeg );
          }
@@ -308,7 +309,7 @@ console.log('process BBox, width x height: ', sbmlBBox.getDimensions().getWidth(
      const sbmlTextGlyph = this.libSBMLlayout.createTextGlyph();
      sbmlTextGlyph.setText( curTextGlyph.getText() );
      sbmlTextGlyph.setOriginOfTextId( curTextGlyph.getOriginOfText() );
-     sbmlTextGlyph.setGraphicalObjectId( curTextGlyph.getOriginOfText() ); // same as OriginOfText for now.
+     sbmlTextGlyph.setGraphicalObjectId( curTextGlyph.getGraphicalObjId() );
      sbmlTextGlyph.setId( curTextGlyph.getId() );
      const curBBox = curTextGlyph.getBoundingBox();
      const sbmlBBox = sbmlTextGlyph.getBoundingBox();
