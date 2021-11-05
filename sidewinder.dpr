@@ -41,7 +41,9 @@ uses
   uBuildRateLaw in 'rxn_networks\uBuildRateLaw.pas',
   uNetworkToModel in 'rxn_networks\uNetworkToModel.pas',
   uPlotPanel in 'plot\uPlotPanel.pas',
-  uSBMLClasses.Layout in 'sbml\uSBMLClasses.Layout.pas';
+  uSBMLClasses.Layout in 'sbml\uSBMLClasses.Layout.pas',
+  uASTNode in 'math\uASTNode.pas',
+  uSBML.Classes.Render in 'sbml\uSBML.Classes.Render.pas';
 
 {$R *.res}
 

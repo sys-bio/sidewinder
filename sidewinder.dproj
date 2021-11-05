@@ -156,6 +156,8 @@
         <DCCReference Include="rxn_networks\uNetworkToModel.pas"/>
         <DCCReference Include="plot\uPlotPanel.pas"/>
         <DCCReference Include="sbml\uSBMLClasses.Layout.pas"/>
+        <DCCReference Include="math\uASTNode.pas"/>
+        <DCCReference Include="sbml\uSBML.Classes.Render.pas"/>
         <None Include="index.html"/>
         <None Include="sbml\libsbml.js"/>
         <None Include="sbml\libsbml.wasm"/>
