@@ -15,7 +15,7 @@ class ProcessSBML {
        }
      else {
        this.newLayoutPlug = this.SBMLLayOut.asLayout();
-       this.numLayouts = this.newLayoutPlug.getNumLayouts();
+       this.numLayouts = this.newLayoutPlug.getNumLayouts(); // why does it report 2 if only one?
      }
    }
  }
@@ -176,17 +176,19 @@ getRules(tModela, tRule) {
 
     // tLayout: TSBMLLayout,   assume only one layout for now.
     // tDims: TSBMLLayoutDimensions, tPt: TSBMLLayoutPoint, etc...
+    // create these blank objects ahead of time, so do not have to create them here.
   getLayout(tLayout, tDims, tPt, tBBox,
             tLineSeg, tCubicB, tCurve, tCompGlyph, tGraphObj, tGenObj,
             tSpGlyph, tSpRefGlyph, tRxnGlyph, tTextGlyph) {
     var i;
   
     console.log( 'Numb of layouts: ', this.numLayouts);
-    for(i=0; i< this.numLayouts; i++) {
 
+   // for(i=0; i< this.numLayouts; i++) {
+    for(i=0; i< 1; i++) { // cap at one for now, numLayouts reports 2 when there is one.
+      console.log(' Getting next layout #: ', i);
       const aLayout = this.newLayoutPlug.getLayout(i);
       const dims = aLayout.getDimensions()
- //     console.log(' Dims: height: ', dims.getHeight());
       tDims = this.assignDims(tDims, dims);
       tLayout.setDims(tDims); // assume NO depth.
       tLayout = this.getCompGlyphs(tLayout, aLayout, tDims, tPt, tBBox, tCompGlyph );
@@ -226,6 +228,7 @@ getRules(tModela, tRule) {
 
    assignBBox(tBBox, readBBox, tDims, tPt)
    {
+   //  console.log('ProcessSBML: assignBBox(), tBBox: ', tBBox );
      tBBox.setId(readBBox.getId());
      tDims.setWidth(0);
      tDims.setHeight(0);
@@ -275,6 +278,7 @@ getRules(tModela, tRule) {
        if( curComp.isSetOrder()) {
          sbmlCompGlyph.setOrder(curComp.getOrder());
        }
+    //   console.log('getCompGlyphs, assignBBox() call.');
        sbmlBBox = this.assignBBox(sbmlBBox, curComp.getBoundingBox(),sbmlDims, sbmlPt);
        sbmlCompGlyph.setBoundingBox(sbmlBBox);
        nLayout.addCompGlyph(sbmlCompGlyph);
@@ -292,6 +296,7 @@ getRules(tModela, tRule) {
          sbmlSpGlyph.setSpeciesId(curSpGlyph.getSpeciesId());
        }
        else { sbmlSpGlyph.setSpeciesId('');}
+     //  console.log('getSpeciesGlyphs, assignBBox() call.');
        sbmlBBox = this.assignBBox(sbmlBBox, curSpGlyph.getBoundingBox(),sbmlDims, sbmlPt);
        sbmlSpGlyph.setBoundingBox(sbmlBBox);
        nLayout.addSpGlyph(sbmlSpGlyph);
@@ -314,11 +319,11 @@ getRules(tModela, tRule) {
          const curCurve = curRxnGlyph.getCurve();
          if(curCurve.isSetIdAttribute()) { sbmlCurve.setCurveId(curCurve.getId()); }
          else { sbmlCurve.setCurveId(''); }
-         console.log(' curve segments: ', curCurve.getNumCurveSegments());
+     //    console.log(' curve segments: ', curCurve.getNumCurveSegments());
          for(k=0; k< curCurve.getNumCurveSegments(); k++) {
            const curCurveSeg = curCurve.getCurveSegment(k);
            if(curCurveSeg.isCubicBezier()){
-             console.log('Bezier curve ** ');
+       //      console.log('Bezier curve ** ');
              sbmlCubicB = this.assignCubicB(sbmlCubicB, curCurveSeg.asCubicBezier(), sbmlPt);
              sbmlCurve.addCubicBezier(sbmlCubicB);
            }
@@ -346,11 +351,11 @@ getRules(tModela, tRule) {
          const curCurve = curSpRefGlyph.getCurve();
          if(curCurve.isSetIdAttribute()) { sbmlCurve.setCurveId(curCurve.getId()); }
          else { sbmlCurve.setCurveId(''); }
-         console.log(' curve segments: ', curCurve.getNumCurveSegments());
+     //    console.log(' curve segments: ', curCurve.getNumCurveSegments());
          for(k=0; k< curCurve.getNumCurveSegments(); k++) {
            const curCurveSeg = curCurve.getCurveSegment(k);
            if(curCurveSeg.isCubicBezier()){
-             console.log('Bezier curve ** ');
+        //     console.log('Bezier curve ** ');
              sbmlCubicB = this.assignCubicB(sbmlCubicB, curCurveSeg.asCubicBezier(), sbmlPt);
              sbmlCurve.addCubicBezier(sbmlCubicB);
            }
@@ -361,6 +366,7 @@ getRules(tModela, tRule) {
          }
          sbmlSpRefGlyph.setCurve(sbmlCurve);
          if(curSpRefGlyph.getBoundingBox() != null ) {
+    //     console.log('spRefGlyphs, assignBBox() call.');
            sbmlBBox = this.assignBBox(sbmlBBox,curSpRefGlyph.getBoundingBox(),sbmlDims, sbmlPt);
            sbmlSpRefGlyph.setBoundingBox(sbmlBBox);
          }
@@ -377,7 +383,7 @@ getRules(tModela, tRule) {
    getTextGlyphs(nLayout, readLayout, sbmlDims, sbmlPt, sbmlBBox, sbmlGraphObj, sbmlTextGlyph )
    {
      var i;
-     console.log('Number of text glyphs: ', readLayout.getNumTextGlyphs());
+ //    console.log('Number of text glyphs: ', readLayout.getNumTextGlyphs());
 
      for( i=0; i< readLayout.getNumTextGlyphs(); i++)
      {
@@ -395,6 +401,8 @@ getRules(tModela, tRule) {
        }
        else { sbmlTextGlyph.setOriginOfText(''); }
        if(curTextGlyph.isSetGraphicalObjectId()) {
+         sbmlTextGlyph.setGraphicalObjId( curTextGlyph.getGraphicalObjectId() );
+    //   console.log('getTextGlyphs, assignBBox() call.');
          sbmlBBox = this.assignBBox(sbmlBBox, curTextGlyph.getBoundingBox(), sbmlDims, sbmlPt);
          sbmlTextGlyph.setBoundingBox(sbmlBBox);
        }
