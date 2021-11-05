@@ -632,7 +632,8 @@ end;
 function TController.createSBMLModel(currentModel: TModel): TModel;
 var builder: TNetworkToModel;
 begin
-  builder := TNetworkToModel.create(currentModel, network);
+  builder := TNetworkToModel.create(currentModel, network,
+                    self.networkCanvas.bitmap.Width, self.networkCanvas.bitmap.Height );
   Result := builder.getModel();
 
 end;
