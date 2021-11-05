@@ -1,7 +1,8 @@
 unit uSBMLClasses.Layout;
 
 interface
-   uses System.SysUtils, System.Classes, System.Generics.Collections, Web, JS;
+   uses System.SysUtils, System.Classes, System.Generics.Collections, Web, JS,
+     uSidewinderTypes;
 // NOTE: javascript calling overloaded functions choses the first one, period.
 //      does not care about type or number of parameters. Must have pascal code
 //      calling pascal code for overloads to work. This is then translated to JavaScript.
@@ -68,6 +69,7 @@ type
    constructor create() overload;
    constructor create(newPt: TSBMLLayoutPoint; newDims: TSBMLLayoutDims) overload;
    constructor create(cpy: TSBMLLayoutBoundingBox) overload;
+   procedure clear(); // Used to empty it out for new values.
    procedure setPoint(newPt: TSBMLLayoutPoint) overload;
    procedure setPoint(x: double; y: double) overload;
    function getPoint(): TSBMLLayoutPoint;
@@ -75,6 +77,7 @@ type
    procedure setDims(newHt: double; newWidth: double) overload;
    function getDims(): TSBMLLayoutDims;
    procedure setId( newId: string);
+   function isSetId(): boolean;
    function getId(): string;
    end;
 
@@ -250,7 +253,7 @@ type
  private
    text: string;
    originOfText: string;// id of an entity in the SBML model. Use this instead of text.
-   //graphicalObjId: string; // corresponds to another graphical object id.
+   graphicalObjId: string; // corresponds to another graphical object id.
  public
    constructor create() overload;
    constructor create(cpy: TSBMLLayoutTextGlyph) overload;
@@ -259,8 +262,8 @@ type
    function getText(): string;
    procedure setOriginOfText(newText: string);
    function getOriginOfText: string;
-  // procedure setGraphicalObjId(newId: string);
-  // function getGraphicalObjId(): string;
+   procedure setGraphicalObjId(newId: string);
+   function getGraphicalObjId(): string;
 
  end;
 
@@ -487,9 +490,21 @@ implementation
   end;
   constructor  TSBMLLayoutBoundingBox.create(cpy: TSBMLLayoutBoundingBox) overload;
   begin
-    self.id := cpy.getId;
-    self.point := TSBMLLayoutPoint.create(cpy.getPoint);
-    self.dims := TSBMLLayoutDims.create(cpy.getDims);
+    if cpy <> nil then
+    begin
+      self.id := cpy.getId;
+      self.point := TSBMLLayoutPoint.create(cpy.getPoint);
+      self.dims := TSBMLLayoutDims.create(cpy.getDims);
+    end
+    else notifyUser('TSBMLLayoutBoundingBox: no bounding box to copy');
+
+  end;
+
+  procedure TSBMLLayoutBoundingBox.clear();
+  begin
+    self.id := '';
+    self.point.free;
+    self.dims.free;
   end;
 
   procedure TSBMLLayoutBoundingBox.setPoint(newPt: TSBMLLayoutPoint) overload;
@@ -527,6 +542,13 @@ implementation
   function TSBMLLayoutBoundingBox.getId(): string;
   begin
     Result := self.id;
+  end;
+  function TSBMLLayoutBoundingBox.isSetId(): boolean;
+  var flag: boolean;
+  begin
+    flag := false;
+    if self.id <> '' then flag := true;
+    Result := flag;
   end;
 
   constructor TSBMLLayoutLineSegment.create() overload;
@@ -811,7 +833,7 @@ var
 
   constructor TSBMLLayoutGeneralGlyph.create(newId: string) overload;
   begin
-    inherited create(newId);
+    inherited create('generalGlyph' + newId);
     self.notes := '';
   end;
 
@@ -832,7 +854,7 @@ var
 
   constructor TSBMLLayoutCompartmentGlyph.create(newId: string) overload;
   begin
-    inherited create(newId);
+    inherited create('compGlyph' + newId);
     self.order := 0;
   end;
   constructor TSBMLLayoutCompartmentGlyph.create(cpy: TSBMLLayoutCompartmentGlyph) overload;
@@ -863,7 +885,7 @@ var
 
   constructor TSBMLLayoutSpeciesGlyph.create(newSpId: string) overload;
   begin
-    inherited create('speciesGlyph');
+    inherited create('speciesGlyph' + newSpId);
     self.speciesId := newSpId;
   end;
 
@@ -897,7 +919,7 @@ var
 
   constructor TSBMLLayoutSpeciesReferenceGlyph.create(newSpRefId: string);
   begin
-    inherited create('specRefGlyph');
+    inherited create('specRefGlyph'+ newSpRefId);
     self.specGlyphId := '';
     self.specRefId := newSpRefId;
     self.role := 'undefined';
@@ -961,8 +983,8 @@ var
 
   constructor TSBMLLayoutReactionGlyph.create(newRxnId: string) overload;
   begin
-    inherited create('reactionGlyph');
-    self.rxnId := rxnId;
+    inherited create( 'reactionGlyph' + newRxnId );
+    self.rxnId := newRxnId ;
     self.curveFlag := false;
     self.speciesRefGlyphList := TList<TSBMLLayoutSpeciesReferenceGlyph>.create;
   end;
@@ -1005,6 +1027,7 @@ var
       self.curve.clear;
     //inherited:
     self.setId('');
+    self.boundingBox.free;
     self.boundingBoxSet := false;
   end;
 
@@ -1062,9 +1085,10 @@ var
 
   constructor TSBMLLayoutTextGlyph.create() overload;
   begin
-    inherited create('');
+    inherited create('textGlyph');
     self.text := '';  // has precedence over originOfText.
     self.originOfText := '';
+    self.graphicalObjId := '';
   end;
 
   constructor TSBMLLayoutTextGlyph.create(cpy: TSBMLLayoutTextGlyph) overload;
@@ -1072,6 +1096,8 @@ var
     self.id := cpy.getId;
     self.text := cpy.getText;
     self.originOfText := cpy.getOriginOfText;
+    self.graphicalObjId := cpy.getGraphicalObjId;
+
     self.boundingBox := TSBMLLayoutBoundingBox.create(cpy.getBoundingBox);
   end;
 
@@ -1079,8 +1105,10 @@ var
   begin
     self.text := '';
     self.originOfText := '';
+    self.graphicalObjId := '';
     //inherited:
     self.setId('');
+    self.boundingBox.clear;
     self.boundingBoxSet := false;
   end;
   procedure TSBMLLayoutTextGlyph.setText(newText: string);
@@ -1098,6 +1126,14 @@ var
   function TSBMLLayoutTextGlyph.getOriginOfText: string;
   begin
     Result := self.originOfText;
+  end;
+  procedure TSBMLLayoutTextGlyph.setGraphicalObjId(newId: string);
+  begin
+    self.graphicalObjId := newId;
+  end;
+  function TSBMLLayoutTextGlyph.getGraphicalObjId(): string;
+  begin
+    Result := self.graphicalObjId;
   end;
 
   constructor TSBMLLayout.create() overload;
@@ -1145,6 +1181,7 @@ var
         self.textGlyphList.Add(TSBMLLayoutTextGlyph.create(cpy.getTextGlyph(i)));
       end;
     self.id := cpy.getId;
+    self.dims := TSBMLLayoutDims.create(cpy.getDims);
 
   end;
 
@@ -1161,7 +1198,9 @@ var
   begin
     self.dims := TSBMLLayoutDims.create(newDims);
   end;
-  {procedure TSBMLLayout.setDims(w: double; h: double) overload;
+
+  {
+  procedure TSBMLLayout.setDims(w: double; h: double) overload;
   begin
     //self.dims := TSBMLLayoutDims.create(w, h);
     self.dims := TSBMLLayoutDims.create();
