@@ -76,8 +76,19 @@ implementation
   // now it is safe to use the module
       const reader = new libsbml.SBMLReader();
       const doc = reader.readSBMLFromString(SBMLtext);
+      doc.enablePackage(libsbml.LayoutExtension.prototype.getXmlnsL3V1V1(), 'layout', true);
+      doc.enablePackage(libsbml.RenderExtension.prototype.getXmlnsL3V1V1(), 'render', true);
+
   // read with no errors .. TODO: Chk for errors
       const model = doc.getModel();
+      const lplugin = libsbml.castObject(model.findPlugin("layout"), libsbml.LayoutModelPlugin); // not used for getting layout.
+
+      const layout = lplugin.createLayout();  //Not used for getting layout.
+
+      const rPlugin = libsbml.castObject(layout.getPlugin("render"), libsbml.RenderLayoutPlugin)
+      const rInfo = rPlugin.createLocalRenderInformation();
+
+
       const moreReading = new ProcessSBML(model);
 
       if(model.getNumPlugins() >0) {
@@ -92,6 +103,7 @@ implementation
             }
           }
         }
+       
       }
 
 
