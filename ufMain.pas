@@ -1261,23 +1261,6 @@ begin
 end;
 
 
-{function TMainForm.getEmptySliderPosition(): Integer;
-var i, sliderPosition, totalSliders: Integer;
-begin
-  sliderPosition := 0;
-  totalSliders := self.numbSliders;
-  if self.numbSliders >1 then
-  begin
-    for i := 0 to totalSliders -2 do
-    begin
-      if self.plotsPanelList[i].plotWPanel.Tag = sliderPosition then
-        inc(sliderPosition);
-    end;
-  end;
-
-  Result := sliderPosition;
-end;  }
-
 procedure TMainForm.DeletePlot(plotIndex: Integer);
 var tempObj: TObject;
 begin
