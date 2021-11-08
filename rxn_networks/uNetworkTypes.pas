@@ -46,7 +46,7 @@ begin
   if atype = 'eUniUni' then
      result := eUniUni
   else
-  if atype = 'eUniUni' then
+  if atype = 'eUniBi' then
      result := eUniBi
   else
   if atype = 'eAnyToAny' then
