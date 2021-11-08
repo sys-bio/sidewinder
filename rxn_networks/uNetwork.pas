@@ -97,10 +97,11 @@ type
       fillColor : TColor;
       thickness : integer;
 
-       procedure saveAsJSON (reactionObject : TJSONObject);
-       procedure loadFromJSON (obj : TJSONObject);
-       procedure loadFromSBML (glyphRxn : TSBMLLayoutReactionGlyph; modelRxn: SBMLReaction;
+      procedure saveAsJSON (reactionObject : TJSONObject);
+      procedure loadFromJSON (obj : TJSONObject);
+      procedure loadFromSBML (glyphRxn : TSBMLLayoutReactionGlyph; modelRxn: SBMLReaction;
                             paramAr: array of TSBMLparameter; compAr: array of TSBMLcompartment);
+      function getMassCenter(): TPointF; // Calc mass center for reaction, where each node has mass of 1.
   end;
 
   TReaction = class (TParent)
@@ -359,7 +360,6 @@ begin
      raise Exception.Create ('No parameters in reaction');
 
    rateLaw := obj.GetJSONValue('rateLaw');
-
    fillColor := loadColorFromJSON (obj, 'fillColor');
    thickness := strtoint (obj.GetJSONValue('thickness'));
 end;
@@ -419,6 +419,7 @@ begin
   fillColor := clWebLightSteelBlue;
   thickness := DEFAULT_REACTION_THICKNESS;
 
+  // Do not need to set arcCenter, remove any arcCenter assignments:
   // arc center: order of assignment:
   //  1.  default, if no layout info available.
   //  2.  grab BasePoint 1 of cubicBez if exists
@@ -454,6 +455,26 @@ begin
     end;
   end;
 
+end;
+
+/// Calc mass center for reaction state, where each node has mass of 1.
+function TReactionState.getMassCenter: TPointF;
+var i: integer;
+   xSum, ySum: double;
+begin
+  xSum := 0; ySum := 0;
+  for i := 0 to self.nReactants - 1 do
+    begin
+      xSum := xSum + self.srcPtr[i].state.x;
+      ySum := ySum + self.srcPtr[i].state.y;
+    end;
+  for i := 0 to self.nProducts - 1 do
+    begin
+      xSum := xSum + self.destPtr[i].state.x;
+      ySum := ySum + self.destPtr[i].state.y;
+    end;
+  Result := TPointF.create( xSum/(self.nReactants + nProducts),
+                     ySum/(self.nReactants + nProducts));
 end;
 
 procedure AddJSONHeader (obj : TJSONObject);
