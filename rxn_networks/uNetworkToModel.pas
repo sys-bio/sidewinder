@@ -1,8 +1,8 @@
 unit uNetworkToModel;
  // *** Currently only one-way reactions.
 interface
-uses Web, JS, uModel, uSBMLClasses, uNetwork, uSBMLClasses.Layout,
-   uNetworkTypes, uSidewinderTypes;
+uses Web, JS, WEBLib.Graphics, uModel, uSBMLClasses, uNetwork, uSBMLClasses.Layout,
+   uSBMLClasses.Render, uNetworkTypes, uSidewinderTypes;
 
 const DEFAULT_COMP = 'unit_compartment';
 type
@@ -10,18 +10,23 @@ TNetworkToModel = class
 private
   model: TModel;
   layout: TSBMLLayout;
+  renderInfo: TSBMLRenderInformation;
   network: TNetwork;
   procedure setSpecies;
   //procedure setParameters; // Currently done in setReactions as all params in rxn equations
   procedure setReactions;
   procedure setCompartments; // Currently only one, unit compartment
- 
+  procedure setSpeciesRendering( spState: TNodeState; specGlypId: string;
+                                 specTextGlyphId:string );
+  procedure setReactionRendering( rxnState: TReactionState; rxnGlyphId: string );
+
 public
   constructor create(newModel: TModel; newNetwork: TNetwork;
                      layoutWidth, layoutHeight: integer);
+
   function getModel:TModel;
   function getLayout(): TSBMLLayout;
-
+  function getRenderInformation(): TSBMLRenderInformation;
  // procedure setModel(newModel: TModel);
  // procedure setNetwork(newNetwork: TNetwork);   // TODO
 
@@ -34,13 +39,16 @@ constructor TNetworkToModel.create( newModel: TModel; newNetwork: TNetwork;
 begin
   self.model := newModel;
   self.layout := TSBMLLayout.create();
+  self.renderInfo := TSBMLRenderInformation.create();
   self.layout.setDims( TSBMLLayoutDims.create(layoutWidth, layoutHeight) );
-  self.layout.setId(newNetwork.id);
+  self.layout.setId('layout' + newNetwork.id);
+  self.renderInfo.setId('renderInfo' + newNetwork.id);
   self.network := newNetwork;
   self.setCompartments;
   self.setSpecies;
   self.setReactions;
   self.model.setSBMLLayout(self.layout);
+  self.model.setSBMLRenderInfo(self.renderInfo);
 
 end;
 
@@ -63,6 +71,9 @@ var i: integer;
     newTextGlyph: TSBMLLayoutTextGlyph;
     newLayoutPt: TSBMLLayoutPoint;
     newDims: TSBMLLayoutDims;
+    newColorDef: TSBMLRenderColorDefinition;
+    newStyle: TSBMLRenderStyle;
+    newRG: TSBMLRenderGroup;
 begin
   nodes := self.network.nodes;
   for i := 0 to Length(nodes)-1 do
@@ -77,12 +88,14 @@ begin
     newDims := TSBMLLayoutDims.create(nodes[i].state.w, nodes[i].state.h);
     newSpGlyph.setBoundingBox(TSBMLLayoutBoundingBox.create(newLayoutPt, newDims));
     self.layout.addSpGlyph(newSpGlyph);
+
     newTextGlyph := TSBMLLayoutTextGlyph.create();
     newTextGlyph.setText(nodes[i].state.id);
     newTextGlyph.setId('txtGlyph' + nodes[i].state.id);
     newTextGlyph.setGraphicalObjId(newSpGlyph.getId);
     newTextGlyph.setBoundingBox(TSBMLLayoutBoundingBox.create(newLayoutPt,newDims));
     self.layout.addTextGlyph(newTextGlyph);
+    self.setSpeciesRendering( nodes[i].state, newSpGlyph.getId, newTextGlyph.getId );
 
   end;
 end;
@@ -207,21 +220,92 @@ begin
     newReaction.setCompartment(DEFAULT_COMP);
     self.model.addSBMLReaction(newReaction);
     newRxnGlyph.setCurve(newRxnCurve);
+    self.setReactionRendering( self.network.reactions[i].state, newRxnGlyph.getId );
     self.layout.addRxnGlyph(newRxnGlyph);
   end;
 
 end;
 
+   // set species and text glyph renderings:
+procedure TNetworkToModel.setSpeciesRendering( spState: TNodeState; specGlypId: string;
+                                               specTextGlyphId:string );
+var newStyle: TSBMLRenderStyle;
+    newRG: TSBMLRenderGroup;
+    newFillColor, newOutlineColor: TColor;
+    colorStr: string;
+    fillColorDefId, olColorDefId: string;
+begin
+  newFillColor := spState.fillColor;
+  colorStr := colorToHex( newFillColor ); // no # in front of hex number
+  console.log('Fill color: ', colorStr );
+  fillColorDefId :=  'fillColorSpecies_' + specGlypId;
+  self.renderInfo.addColorDef(TSBMLRenderColorDefinition.create( colorStr, fillColorDefId) );
+  newOutlineColor := spState.outlineColor;
+  colorStr := colorToHex( newOutlineColor );
+  olColorDefId := 'outlineColorSpecies_' + specGlypId;
+  self.renderInfo.addColorDef(TSBMLRenderColorDefinition.create( colorStr, olColorDefId) );
+  // species glyph style:
+  newStyle := TSBMLRenderStyle.create;
+  newStyle.setId('speciesStyle_' + spState.id);
+  newStyle.addType(STYLE_TYPES[1]);
+  newStyle.addGoId( specGlypId );
+  newRg := TSBMLRenderGroup.create;
+  newRg.setStrokeWidth( spState.outlineThickness );
+  newRg.setStrokeColor( olColorDefId );
+  newRg.setFillColor( fillColorDefId );
+  newStyle.setRenderGroup( TSBMLRenderGroup.create(newRg) );
+  self.renderInfo.addStyle( TSBMLRenderStyle.create(newStyle) );
+  // Text glyph style:
+  newRg.Free;
+  newStyle.Free;
+  newStyle := TSBMLRenderStyle.create;
+  newStyle.setId( 'textStyle_' + spState.id );
+  newStyle.addType(STYLE_TYPES[4]);
+  newStyle.addGoId( specTextGlyphId );
+  newRg := TSBMLRenderGroup.create;
+  newRg.setFontStyle('normal');
+  newStyle.setRenderGroup( TSBMLRenderGroup.create(newRg) );
+  self.renderInfo.addStyle( TSBMLRenderStyle.create(newStyle) );
+end;
+
+procedure TNetworkToModel.setReactionRendering( rxnState: TReactionState; rxnGlyphId: string );
+var newStyle: TSBMLRenderStyle;
+    newRG: TSBMLRenderGroup;
+    newFillColor: TColor;
+    colorStr: string;
+    fillColorDefId: string;
+begin
+  newFillColor := rxnState.fillColor;
+  colorStr := colorToHex( newFillColor ); // no # in front of hex number
+ // console.log('Fill color: ', colorStr );
+  fillColorDefId :=  'fillColorReaction_' + rxnGlyphId;
+  self.renderInfo.addColorDef(TSBMLRenderColorDefinition.create( colorStr, fillColorDefId) );
+  newStyle := TSBMLRenderStyle.create;
+  newStyle.setId('reactionStyle_' + rxnState.id);
+  newStyle.addType(STYLE_TYPES[2]);
+  newStyle.addType(STYLE_TYPES[3]); // species reference as well?
+  newStyle.addGoId( rxnGlyphId );
+  newRg := TSBMLRenderGroup.create;
+  newRg.setStrokeWidth( rxnState.thickness );
+  newRg.setStrokeColor( fillColorDefId ); // same as fill
+  newRg.setFillColor( fillColorDefId );
+  newStyle.setRenderGroup( TSBMLRenderGroup.create(newRg) );
+  self.renderInfo.addStyle( TSBMLRenderStyle.create(newStyle) );
+end;
+
 function TNetworkToModel.getModel: TModel;
 begin
- // if savingModel then  self.model.setSBMLLayout(self.layout);
-
   Result := self.model;
 end;
 
 function TNetworkToModel.getLayout(): TSBMLLayout;
 begin
   Result := self.layout;
+end;
+
+function TNetworkToModel.getRenderInformation(): TSBMLRenderInformation;
+begin
+  Result := self.renderInfo;
 end;
 
 end.

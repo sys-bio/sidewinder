@@ -34,10 +34,12 @@ class GenerateSBMLModel {
    if( this.modelLayout != undefined) {
         // Build SBML layout, add to SBML model
    console.log( 'layout id: ', modelName + this.modelLayout.getId() );
-     this.libSBMLlayout.setId(modelName + this.modelLayout.getId());
+     this.libSBMLlayout.setId( modelName + this.modelLayout.getId() );
      this.createLayout();
    }
-
+   this.modelRendering = this.rxnModel.getSBMLRenderInfo();
+   this.libSBMLrInfo.setId( modelName + this.modelRendering.getId() );
+   this.createModelRendering();
  }
 
  getSBMLString() {
@@ -172,7 +174,7 @@ class GenerateSBMLModel {
    const sbmlBBDims = sbmlBBox.getDimensions();   // pointer to speciesGlyph bounding box dims
    sbmlBBDims.setWidth(bBox.getDims().getWidth());
    sbmlBBDims.setHeight(bBox.getDims().getHeight());
-console.log('process BBox, width x height: ', sbmlBBox.getDimensions().getWidth(),sbmlBBox.getDimensions().getHeight() );
+//console.log('process BBox, width x height: ', sbmlBBox.getDimensions().getWidth(),sbmlBBox.getDimensions().getHeight() );
    sbmlBBox.setX(bBox.getPoint().getX()); // sets x coord in species glyph bbox center.
    sbmlBBox.setY(bBox.getPoint().getY()); // assume no Z
 
@@ -205,6 +207,7 @@ console.log('process BBox, width x height: ', sbmlBBox.getDimensions().getWidth(
    sbmlEnd.setX( lnSeg.getEndPt().getX() );
    sbmlEnd.setY( lnSeg.getEndPt().getY() );
    sbmlLnSeg.setId( lnSeg.getId() );
+   console.log('startpt: ', sbmlLnSeg.getStart().x(),', ',sbmlLnSeg.getStart().y());
  }
 
  createCompartmentGlyphs() {
@@ -338,6 +341,48 @@ console.log('process BBox, width x height: ', sbmlBBox.getDimensions().getWidth(
      const curBBox = curGenGlyph.getBoundingBox();
      const sbmlBBox = sbmlGenGlyph.getBoundingBox();
      this.processBoundingBox( curBBox, sbmlBBox );
+   }
+ }
+
+ createModelRendering() {
+   this.libSBMLrInfo.setProgramName("Sidewinder");
+   var i;
+   // create color definitions:
+   for( i=0; i < this.modelRendering.getNumbColorDefs(); i++ ) {
+     const newColor = this.modelRendering.getColorDef(i);
+     const sbmlColor = this.libSBMLrInfo.createColorDefinition();
+     sbmlColor.setId(newColor.getId());
+     sbmlColor.setColorValue( newColor.getValue() );
+   }
+
+   // create styles:
+   for( i=0; i < this.modelRendering.getNumberStyles(); i++ ) {
+     const newStyle = this.modelRendering.getStyle(i);
+     const sbmlStyle = this.libSBMLrInfo.createStyle( newStyle.getId() );
+     var j;
+     for( j=0; j < newStyle.getNumbTypes(); j++ ) {
+       sbmlStyle.addType( newStyle.getType(j) );
+     }
+     for( j=0; j <  newStyle.getNumbGoIds(); j++ ) {
+ //    sbmlStyle.addId( newStyle.getGoId(j) ); // libsbmljs gives error
+     // need to fix in idl to accept id of graphical object that is using this style.
+
+     }
+     const newRG = newStyle.getRenderGroup();
+     if( newRG.isStrokeWidthSet() ) {
+       sbmlStyle.getGroup().setStrokeWidth( newRG.getStrokeWidth() );
+     }
+     if( newRG.getStrokeColor() != '' ) {
+       sbmlStyle.getGroup().setStroke( newRG.getStrokeColor() );
+     }
+     if( newRG.getFillColor() != '' ) {
+       sbmlStyle.getGroup().setFillColor( newRG.getFillColor() );
+     }
+     if( newRG.isFontSizeSet() ) {
+       sbmlStyle.getGroup().setFontSize( newRG.getFontSize() );
+     }
+     sbmlStyle.getGroup().setFontStyle( newRG.getFontStyle() );
+
    }
  }
 

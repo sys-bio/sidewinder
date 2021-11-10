@@ -43,7 +43,7 @@ uses
   uPlotPanel in 'plot\uPlotPanel.pas',
   uSBMLClasses.Layout in 'sbml\uSBMLClasses.Layout.pas',
   uASTNode in 'math\uASTNode.pas',
-  uSBML.Classes.Render in 'sbml\uSBML.Classes.Render.pas';
+  uSBMLClasses.Render in 'sbml\uSBMLClasses.Render.pas';
 
 {$R *.res}
 

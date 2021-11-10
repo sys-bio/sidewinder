@@ -1,7 +1,8 @@
 unit uModel;
 
 interface
-uses Web, JS, uSBMLClasses, uSBMLClasses.rule, uSBMLClasses.Layout, uSidewinderTypes;
+uses Web, JS, uSBMLClasses, uSBMLClasses.rule, uSBMLClasses.Layout,
+     uSBMLClasses.Render, uSidewinderTypes;
 
 type
 
@@ -24,6 +25,7 @@ type
     modelRules: array of TSBMLRule;  // optional
     modelId: String; // optional model name
     modelLayout: TSBMLLayout;
+    modelRendering: TSBMLRenderInformation;
 
     // Arrays of Double used by ODE integrator, keep array of strings for mapping:
     s_Vals: array of Double; // Changes, one to one correlation: s_Vals[n] <=> s_Names[n]
@@ -70,8 +72,10 @@ type
    function  getSBMLcompartment(i:integer): TSBMLcompartment overload;
    function  getSBMLcompartment(compId: string): TSBMLcompartment overload;
    procedure addSBMLcompartment(newComp: TSBMLcompartment);
-   procedure setSBMLLayout(newLayout: TSBMLLayout);
+   procedure setSBMLLayout( newLayout: TSBMLLayout );
    function  getSBMLLayout(): TSBMLLayout;
+   procedure setSBMLRenderInfo( newRender: TSBMLRenderInformation );
+   function  getSBMLRenderInfo(): TSBMLRenderInformation;
 
    function getS_Names(): array of String;
    function getS_Vals(): array of Double;
@@ -372,6 +376,15 @@ procedure TModel.SBML_UpdateEvent();
  function  TModel.getSBMLLayout(): TSBMLLayout;
  begin
    Result := self.modelLayout;
+ end;
+
+ procedure TModel.setSBMLRenderInfo( newRender: TSBMLRenderInformation );
+ begin
+   self.modelRendering := TSBMLRenderInformation.create( newRender );
+ end;
+ function  TModel.getSBMLRenderInfo(): TSBMLRenderInformation;
+ begin
+   Result := self.modelRendering;
  end;
 
  // Get initial vals for Species from SBML model
