@@ -182,6 +182,21 @@ implementation
 
 Uses WEBLib.Dialogs, uDrawReaction, uGraphUtils;
 
+function colorToHexString( color: TColor ): string; // hex string for writing to SBML
+// From: https://delphi.fandom.com/wiki/Colors_in_Delphi
+begin        // Note: no # added to front of hex string.
+   result := IntToHex(GetRValue( ColorToRGB(color) ), 2) +
+            IntToHex(GetGValue( ColorToRGB(color) ), 2) +
+            IntToHex(GetBValue( ColorToRGB(color) ), 2) ;
+end;
+
+function HexToTColor(sColor : string) : TColor;
+begin
+   result :=  RGB( StrToInt('$'+Copy(sColor, 1, 2)),
+                   StrToInt('$'+Copy(sColor, 3, 2)),
+                   StrToInt('$'+Copy(sColor, 5, 2)) ) ;
+end;
+
 function loadColorFromJSON (obj : TJSONObject; colorName : string) : TColor;
 var colorPair : TJSONPair; colorObj : TJSONObject;
     R, G, B : byte;
@@ -198,6 +213,7 @@ end;
 function saveColorToJSON (color : TColor) : TJSONObject;
 var A : byte;
 begin
+  console.log('Color: ', colorToHexString(color) );
   result := TJSONObject.Create;
   result.AddPair ('R', TJSONNumber.Create (GetRValue (color)));
   result.AddPair ('G', TJSONNumber.Create (GetGValue (color)));
