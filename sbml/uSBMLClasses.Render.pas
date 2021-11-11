@@ -24,6 +24,19 @@ interface
     function  containsValue( sCmpValue: string ): boolean;
 
  end;
+{
+ TSBMLRenderRectangle = class
+   private
+   x, y: double;// position within the bounding box of the enclosing Layout object.
+   height, width: double; // specify the width and height of the rectangle, either in absolute
+                  // values or as a percentage of the width and height of the enclosing bounding box
+   rx, ry: double;    // optional, specify the radius of the corner curvature.
+   z: double;         //  "
+   ratio: double;     //  "
+
+   public
+
+ end;  }
 
  TSBMLRenderGroup = class
    private
