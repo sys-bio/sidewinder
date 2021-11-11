@@ -119,11 +119,17 @@ var i, j, k, index: integer;
    newLineSeg: TSBMLLayoutLineSegment;
    newCubicBezier: TSBMLLayoutCubicBezier;
    spRefCenter: TSBMLLayoutPoint;
+   spRefProdCenter: TSBMLLayoutPoint;  // Use for uni-uni reactions, one line segment.
    massCenter: TPointF;  //Rxn mass center.
+   uniUniRxn: boolean;
 
 begin
   for i := 0 to Length(self.network.reactions)-1 do
   begin
+    uniuniRxn := false;
+    if (self.network.reactions[i].state.nReactants = 1) and
+       (self.network.reactions[i].state.nProducts = 1) then uniUniRxn := true;
+
     massCenter := self.network.reactions[i].state.getMassCenter; // update massCenter;
     newRxnGlyph := TSBMLLayoutReactionGlyph.create(self.network.reactions[i].state.id);
     newRxnCurve := TSBMLLayoutCurve.create;
@@ -155,13 +161,19 @@ begin
         newDims := TSBMLLayoutDims.create(0,0); // Do not need boundingBox, use curve
         if self.network.findNode( self.network.reactions[i].state.srcId[j], index ) then
         begin
-          spRefCenter := TSBMLLayoutPoint.create(self.network.nodes[index].state.x,
-                                             self.network.nodes[index].state.y );
-          newLineSeg := TSBMLLayoutLineSegment.create(newRxnCenterPt, spRefCenter);
-          newRxnCurve.addLineSegment(newLineSeg);
+          spRefCenter := TSBMLLayoutPoint.create(self.network.nodes[index].state.x +
+                                            (self.network.nodes[index].state.w/2)  ,
+                                             self.network.nodes[index].state.y +
+                                             (self.network.nodes[index].state.h/2) );
+          if not uniUniRxn then
+          begin
+            newLineSeg := TSBMLLayoutLineSegment.create(newRxnCenterPt, spRefCenter);
+            newRxnCurve.addLineSegment(newLineSeg);
+          end;
+
         end
         else notifyUser('Node id not found: ' + self.network.reactions[i].state.srcId[j] );
-        spRefCenter := TSBMLLayoutPoint.create(0,0);
+        //spRefCenter := TSBMLLayoutPoint.create(0,0);
         newSpRefGlyph.setBoundingBox(TSBMLLayoutBoundingBox.create(spRefCenter, newDims));
 
         newRxnGlyph.addSpeciesRefGlyph(newSpRefGlyph);
@@ -188,9 +200,13 @@ begin
         newDims := TSBMLLayoutDims.create(0,0);
         if self.network.findNode( self.network.reactions[i].state.destId[j], index ) then
         begin
-          spRefCenter := TSBMLLayoutPoint.create(self.network.nodes[index].state.x,
-                                             self.network.nodes[index].state.y );
-          newLineSeg := TSBMLLayoutLineSegment.create(newRxnCenterPt, spRefCenter);
+          spRefProdCenter := TSBMLLayoutPoint.create(self.network.nodes[index].state.x +
+                                    (self.network.nodes[index].state.w/2)  ,
+                                             self.network.nodes[index].state.y +
+                                             (self.network.nodes[index].state.h/2) );
+          if uniUniRxn then
+            newLineSeg := TSBMLLayoutLineSegment.create(spRefCenter, spRefProdCenter)
+          else newLineSeg := TSBMLLayoutLineSegment.create(newRxnCenterPt, spRefProdCenter);
           newLineSeg.setId('line_' + self.network.reactions[i].state.destId[j] +
                    self.network.reactions[i].state.id );
           newRxnCurve.addLineSegment(newLineSeg);

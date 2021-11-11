@@ -490,7 +490,7 @@ begin
       ySum := ySum + self.destPtr[i].state.y;
     end;
   Result := TPointF.create( xSum/(self.nReactants + nProducts),
-                     ySum/(self.nReactants + nProducts));
+                     ySum/(self.nReactants + nProducts) );
 end;
 
 procedure AddJSONHeader (obj : TJSONObject);
