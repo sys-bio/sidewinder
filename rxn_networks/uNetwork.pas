@@ -480,14 +480,14 @@ var i: integer;
 begin
   xSum := 0; ySum := 0;
   for i := 0 to self.nReactants - 1 do
-    begin
-      xSum := xSum + self.srcPtr[i].state.x;
-      ySum := ySum + self.srcPtr[i].state.y;
+    begin              // Include width and height of nodes in calcs:
+      xSum := xSum + self.srcPtr[i].state.x + self.srcPtr[i].state.w;
+      ySum := ySum + self.srcPtr[i].state.y + self.srcPtr[i].state.h;
     end;
   for i := 0 to self.nProducts - 1 do
     begin
-      xSum := xSum + self.destPtr[i].state.x;
-      ySum := ySum + self.destPtr[i].state.y;
+      xSum := xSum + self.destPtr[i].state.x + self.destPtr[i].state.w;
+      ySum := ySum + self.destPtr[i].state.y + self.destPtr[i].state.h;
     end;
   Result := TPointF.create( xSum/(self.nReactants + nProducts),
                      ySum/(self.nReactants + nProducts) );
