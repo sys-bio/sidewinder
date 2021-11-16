@@ -378,10 +378,23 @@ class GenerateSBMLModel {
      if( newRG.getFillColor() != '' ) {
        sbmlStyle.getGroup().setFillColor( newRG.getFillColor() );
      }
+     sbmlStyle.getGroup().setTextAnchor( newRG.getHTextAnchor() );
+     sbmlStyle.getGroup().setVTextAnchor( newRG.getVTextAnchor() );
+  
      if( newRG.isFontSizeSet() ) {
-       sbmlStyle.getGroup().setFontSize( newRG.getFontSize() );
+        sbmlStyle.getGroup().setFontSize( new this.libSBML.RelAbsVector( newRG.getFontSize(),0 ) );
      }
      sbmlStyle.getGroup().setFontStyle( newRG.getFontStyle() );
+     if( newRG.isRectangleSet() ) {
+       const newRect = newRG.getRectangle();
+       const sbmlRect = sbmlStyle.getGroup().createRectangle();
+
+       sbmlRect.setWidth(new this.libSBML.RelAbsVector(newRect.getWidth(), 0) );
+       sbmlRect.setHeight(new this.libSBML.RelAbsVector(newRect.getHeight(), 0) );
+       sbmlRect.setRadiusX( new this.libSBML.RelAbsVector(0, newRect.getRx()) );
+       sbmlRect.setRadiusY( new this.libSBML.RelAbsVector(0, newRect.getRy()) );
+     }
+
 
    }
  }

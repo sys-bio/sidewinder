@@ -8,6 +8,12 @@ interface
    'ANY' );
 
  type
+ TVTextAnchorTypes = ( V_ZERO, V_TOP, V_MIDDLE, V_BOTTOM, V_BASELINE );
+ THTextAnchorTypes = ( H_ZERO, H_START, H_MIDDLE, H_END );
+    // pas2js compiler currently does not support enum constant where you sent
+    // initial val to something other than 0;
+    // Would like this:
+ //  TVTextAnchorTypes = ( V_TOP = 1, V_MIDDLE, V_BOTTOM, V_BASELINE );
 
  TSBMLRenderColorDefinition = class
   private
@@ -24,19 +30,58 @@ interface
     function  containsValue( sCmpValue: string ): boolean;
 
  end;
-{
- TSBMLRenderRectangle = class
+
+ TSBMLRenderPrimitive1D = class
+   private
+     id: string;
+     stroke: string; // specify the color of the stroke. Can either hold a hex color value
+                     // or id of a predefined TSBMLRenderColorDefinition object
+     strokeWidth: double;
+   public
+     constructor create() overload;
+     constructor create( cpy: TSBMLRenderPrimitive1D ) overload;
+     procedure setId( newId: string );
+     function getId(): string;
+     procedure setStroke( newS: string );
+     function getStroke(): string;
+     procedure setStrokeWidth( newW: double );
+     function getStrokeWidth(): double;
+     function isStrokeWidthSet(): boolean;
+
+ end;
+
+ TSBMLRenderRectangle = class( TSBMLRenderPrimitive1D )
    private
    x, y: double;// position within the bounding box of the enclosing Layout object.
    height, width: double; // specify the width and height of the rectangle, either in absolute
-                  // values or as a percentage of the width and height of the enclosing bounding box
-   rx, ry: double;    // optional, specify the radius of the corner curvature.
-   z: double;         //  "
-   ratio: double;     //  "
-
+            // values or as a percentage of the width and height of the enclosing bounding box.
+   rx, ry: double; // optional, specify the radius of the corner curvature.
+   //z: double;    // depth within the bounding box of the enclosing Layout object. not yet.
+   ratio: double;// optional , the biggest rectangle with the desired ratio of width to
+   // height is to be drawn centered in the objects bounding box. Sqr: ratio of '1'.
+   fill: string;// fill style can either be a hexadecimal color value or the id
+                // of a TSBMLRenderColorDefinition object. 'none' is used for no fill.
    public
+     constructor create() overload;
+     constructor create( cpy: TSBMLRenderRectangle ) overload;
+     procedure setX( newX: double );
+     function getX(): double;
+     procedure setY( newY: double );
+     function getY(): double;
+     procedure setHeight( newH: double );
+     function getHeight(): double;
+     procedure setWidth( newW: double );
+     function getWidth(): double;
+     procedure setRx( newRx: double );
+     function getRx(): double;
+     procedure setRy( newRy: double );
+     function getRy(): double;
+     procedure setRatio( newR: double );
+     function getRatio(): double;
+     procedure setFill( newFill: string );
+     function getFill(): string;
 
- end;  }
+ end;
 
  TSBMLRenderGroup = class
    private
@@ -45,7 +90,10 @@ interface
      sFillColor: string;
      iFontSize: integer;
      sFontStyle: string;
-
+     sVTextAnchor: TVTextAnchorTypes; // how text elements are to be vertically aligned within
+                                      // their bounding box,
+     sHTextAnchor: THTextAnchorTypes; // horizontally aligned in BBox,
+     rRectangle: TSBMLRenderRectangle;
    public
      constructor create() overload;
      constructor create( cpy: TSBMLRenderGroup ) overload;
@@ -61,6 +109,13 @@ interface
      function getFontStyle(): string;
      procedure setFillColor( sNewFC: string );
      function getFillColor(): string;
+     procedure setRectangle( newR: TSBMLRenderRectangle );
+     function getRectangle(): TSBMLRenderRectangle;
+     function isRectangleSet(): boolean;
+     procedure setVTextAnchor( newAnchor: TVTextAnchorTypes );
+     function getVTextAnchor(): TVTextAnchorTypes;
+     procedure setHTextAnchor( newAnchor: THTextAnchorTypes );
+     function getHTextAnchor(): THTextAnchorTypes;
  end;
 
  TSBMLRenderStyle = class
@@ -97,6 +152,7 @@ interface
 
  end;
      }
+
  TSBMLRenderInformation = class
  private
    colorDefList: TList<TSBMLRenderColorDefinition>;
@@ -196,6 +252,9 @@ implementation
     self.sFillColor := '';
     self.iFontSize := -1;
     self.sFontStyle := 'normal';
+    self.sVTextAnchor := V_MIDDLE;
+    self.sHTextAnchor := H_MIDDLE;
+    self.rRectangle := nil;
   end;
 
   constructor TSBMLRenderGroup.create( cpy: TSBMLRenderGroup ) overload;
@@ -205,6 +264,12 @@ implementation
     self.sFillColor := cpy.getFillColor;
     self.iFontSize := cpy.getFontSize;
     self.sFontStyle := cpy.getFontStyle;
+    self.sVTextAnchor := cpy.getVTextAnchor;
+    self.sHTextAnchor := cpy.getHTextAnchor;
+    if cpy.isRectangleSet then
+    begin
+      self.rRectangle := TSBMLRenderRectangle.create( cpy.getRectangle );
+    end;
   end;
 
   procedure TSBMLRenderGroup.setStrokeWidth( iNewSW: integer );
@@ -262,6 +327,38 @@ implementation
     Result := self.sFontStyle;
   end;
 
+  procedure TSBMLRenderGroup.setVTextAnchor( newAnchor: TVTextAnchorTypes );
+  begin
+    self.sVTextAnchor := newAnchor;
+  end;
+  function TSBMLRenderGroup.getVTextAnchor(): TVTextAnchorTypes;
+  begin
+    Result := self.sVTextAnchor;
+  end;
+  procedure TSBMLRenderGroup.setHTextAnchor( newAnchor: THTextAnchorTypes );
+  begin
+    self.sHTextAnchor := newAnchor;
+  end;
+  function TSBMLRenderGroup.getHTextAnchor(): THTextAnchorTypes;
+  begin
+    Result := self.sHTextAnchor;
+  end;
+
+  procedure TSBMLRenderGroup.setRectangle( newR: TSBMLRenderRectangle );
+  begin
+    self.rRectangle := TSBMLRenderRectangle.create( newR );
+  end;
+  function TSBMLRenderGroup.getRectangle(): TSBMLRenderRectangle;
+  begin
+    Result := self.rRectangle;
+  end;
+  function TSBMLRenderGroup.isRectangleSet(): boolean;
+  begin
+    if self.rRectangle = nil then Result := false
+    else Result := true;
+  end;
+
+
   constructor TSBMLRenderStyle.create();
   begin
     self.id := '';
@@ -305,6 +402,8 @@ implementation
     if newRG.getStrokeColor <> '' then self.rg.setStrokeColor( newRG.getStrokeColor );
     if newRG.isFontSizeSet then self.rg.setFontSize( newRG.getFontSize );
     if newRG.getFillColor <> '' then self.rg.setFillColor( newRG.getFillColor );
+    if newRG.isRectangleSet then self.rg.rRectangle := TSBMLRenderRectangle.create( newRG.getRectangle );
+
   end;
 
   function  TSBMLRenderStyle.getRenderGroup(): TSBMLRenderGroup;
@@ -420,5 +519,144 @@ implementation
     Result := self.styleList.Count;
   end;
 
+  constructor TSBMLRenderPrimitive1D.create() overload;
+  begin
+    self.id := '';
+    self.stroke := '';
+    self.strokeWidth := -1;
+  end;
+
+  constructor TSBMLRenderPrimitive1D.create( cpy: TSBMLRenderPrimitive1D ) overload;
+  begin
+    self.id := cpy.getId;
+    self.stroke := cpy.getStroke;
+    self.strokeWidth := cpy.strokeWidth;
+  end;
+
+  procedure TSBMLRenderPrimitive1D.setId( newId: string );
+  begin
+    self.id := newId;
+  end;
+
+  function TSBMLRenderPrimitive1D.getId(): string;
+  begin
+    Result := self.id;
+  end;
+  procedure TSBMLRenderPrimitive1D.setStroke( newS: string );
+  begin
+    self.stroke := newS;
+  end;
+  function TSBMLRenderPrimitive1D.getStroke(): string;
+  begin
+    Result := self.stroke;
+  end;
+  procedure TSBMLRenderPrimitive1D.setStrokeWidth( newW: double );
+  begin
+    self.strokeWidth := newW;
+  end;
+  function TSBMLRenderPrimitive1D.getStrokeWidth(): double;
+  begin
+    Result := self.strokeWidth;
+  end;
+  function TSBMLRenderPrimitive1D.isStrokeWidthSet(): boolean;
+  begin
+    if self.strokeWidth > -1 then Result := true
+    else Result := false;
+  end;
+
+  constructor TSBMLRenderRectangle.create() overload;
+  begin
+    Inherited create();
+    self.fill := '';
+    self.x := 0;
+    self.y := 0;
+    self.height := 0;
+    self.width := 0;
+    self.rx := 0;
+    self.ry := 0;
+    self.ratio := 0;
+  end;
+  constructor TSBMLRenderRectangle.create( cpy: TSBMLRenderRectangle ) overload;
+  begin
+    Inherited create( cpy );
+    self.fill := cpy.getFill;
+    self.x := cpy.getX;
+    self.y := cpy.getY;
+    self.height := cpy.getHeight;
+    self.width := cpy.getWidth;
+    self.rx := cpy.getRx;
+    self.ry := cpy.getRy;
+    self.ratio := cpy.getRatio;
+
+  end;
+  procedure TSBMLRenderRectangle.setX( newX: double );
+  begin
+    self.x := newX;
+  end;
+  function TSBMLRenderRectangle.getX(): double;
+  begin
+    Result := self.x;
+  end;
+  procedure TSBMLRenderRectangle.setY( newY: double );
+  begin
+    self.y := newY;
+  end;
+  function TSBMLRenderRectangle.getY(): double;
+  begin
+    Result := self.y;
+  end;
+  procedure TSBMLRenderRectangle.setHeight( newH: double );
+  begin
+    if newH <0 then self.height := 0
+    else self.height := newH;
+  end;
+  function TSBMLRenderRectangle.getHeight(): double;
+  begin
+    Result := self.height;
+  end;
+  procedure TSBMLRenderRectangle.setWidth( newW: double );
+  begin
+    if newW < 0 then self.width := 0
+    else self.width := newW;
+  end;
+  function TSBMLRenderRectangle.getWidth(): double;
+  begin
+    Result := self.width;
+  end;
+  procedure TSBMLRenderRectangle.setRx( newRx: double );
+  begin
+    if newRx <0 then self.rx := 0
+    else self.rx := newRx;
+  end;
+  function TSBMLRenderRectangle.getRx(): double;
+  begin
+    Result := self.rx;
+  end;
+  procedure TSBMLRenderRectangle.setRy( newRy: double );
+  begin
+    if newRy <0 then self.ry := 0
+    else self.ry := newRy;
+  end;
+  function TSBMLRenderRectangle.getRy(): double;
+  begin
+    Result := self.ry;
+  end;
+  procedure TSBMLRenderRectangle.setRatio( newR: double );
+  begin
+    if newR <0 then self.ratio := 0
+    else self.ratio := newR;
+  end;
+  function TSBMLRenderRectangle.getRatio(): double;
+  begin
+    Result := self.ratio;
+  end;
+  procedure TSBMLRenderRectangle.setFill(newFill: string);
+  begin
+    self.fill := newFill;
+  end;
+  function TSBMLRenderRectangle.getFill: string;
+  begin
+    Result := self.fill;
+  end;
 
 end.

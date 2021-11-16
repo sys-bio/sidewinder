@@ -2,7 +2,7 @@ unit uNetworkToModel;
  // *** Currently only one-way reactions.
 interface
 uses Web, JS, WEBLib.Graphics, uModel, uSBMLClasses, uNetwork, uSBMLClasses.Layout,
-   uSBMLClasses.Render, uNetworkTypes, uSidewinderTypes;
+   uSBMLClasses.Render, uNetworkCanvas, uNetworkTypes, uSidewinderTypes;
 
 const DEFAULT_COMP = 'unit_compartment';
 type
@@ -162,9 +162,10 @@ begin
         if self.network.findNode( self.network.reactions[i].state.srcId[j], index ) then
         begin
           spRefCenter := TSBMLLayoutPoint.create(self.network.nodes[index].state.x +
-                                            (self.network.nodes[index].state.w/2)  ,
+                                            (self.network.nodes[index].state.w)  ,
                                              self.network.nodes[index].state.y +
-                                             (self.network.nodes[index].state.h/2) );
+                                             (self.network.nodes[index].state.h) );
+         
           if not uniUniRxn then
           begin
             newLineSeg := TSBMLLayoutLineSegment.create(newRxnCenterPt, spRefCenter);
@@ -173,7 +174,6 @@ begin
 
         end
         else notifyUser('Node id not found: ' + self.network.reactions[i].state.srcId[j] );
-        //spRefCenter := TSBMLLayoutPoint.create(0,0);
         newSpRefGlyph.setBoundingBox(TSBMLLayoutBoundingBox.create(spRefCenter, newDims));
 
         newRxnGlyph.addSpeciesRefGlyph(newSpRefGlyph);
@@ -201,9 +201,10 @@ begin
         if self.network.findNode( self.network.reactions[i].state.destId[j], index ) then
         begin
           spRefProdCenter := TSBMLLayoutPoint.create(self.network.nodes[index].state.x +
-                                    (self.network.nodes[index].state.w/2)  ,
+                                    (self.network.nodes[index].state.w)  ,
                                              self.network.nodes[index].state.y +
-                                             (self.network.nodes[index].state.h/2) );
+                                             (self.network.nodes[index].state.h) );
+
           if uniUniRxn then
             newLineSeg := TSBMLLayoutLineSegment.create(spRefCenter, spRefProdCenter)
           else newLineSeg := TSBMLLayoutLineSegment.create(newRxnCenterPt, spRefProdCenter);
@@ -248,6 +249,7 @@ procedure TNetworkToModel.setSpeciesRendering( spState: TNodeState; specGlypId: 
 var newStyle: TSBMLRenderStyle;
     newRG: TSBMLRenderGroup;
     newFillColor, newOutlineColor: TColor;
+    newRect: TSBMLRenderRectangle;
     colorStr: string;
     fillColorDefId, olColorDefId: string;
 begin
@@ -263,12 +265,22 @@ begin
   // species glyph style:
   newStyle := TSBMLRenderStyle.create;
   newStyle.setId('speciesStyle_' + spState.id);
-  newStyle.addType(STYLE_TYPES[1]);
+  newStyle.addType(STYLE_TYPES[1]);  // either Type or GoId is used when saving SBML, not both
   newStyle.addGoId( specGlypId );
+  newRect := TSBMLRenderRectangle.create(); // use default x, y
+  newRect.setHeight(spState.h);
+  newRect.setWidth(spState.w);
+  newRect.setRx(0.40 * spState.w); // set radius of rounded corners, estimated, need to find out
+  newRect.setRy(0.60 * spState.h);  // how nodes are drawn to get specific radii.
+  newRect.setFill( fillColorDefId );
+  newRect.setStroke( olColorDefId );
+  newRect.setStrokeWidth( spState.outlineThickness );
   newRg := TSBMLRenderGroup.create;
+  newRg.setRectangle( newRect );
   newRg.setStrokeWidth( spState.outlineThickness );
   newRg.setStrokeColor( olColorDefId );
   newRg.setFillColor( fillColorDefId );
+  //newRg.setFontSize(DEFAULT_FONT_SIZE +4) ; // Not needed here
   newStyle.setRenderGroup( TSBMLRenderGroup.create(newRg) );
   self.renderInfo.addStyle( TSBMLRenderStyle.create(newStyle) );
   // Text glyph style:
@@ -280,6 +292,7 @@ begin
   newStyle.addGoId( specTextGlyphId );
   newRg := TSBMLRenderGroup.create;
   newRg.setFontStyle('normal');
+  newRg.setFontSize(DEFAULT_FONT_SIZE + 2);// need scaling factor here: trunc( DEFAULT_FONT_SIZE * scalingFactor )
   newStyle.setRenderGroup( TSBMLRenderGroup.create(newRg) );
   self.renderInfo.addStyle( TSBMLRenderStyle.create(newStyle) );
 end;
