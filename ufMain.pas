@@ -36,10 +36,10 @@ type
     xLbl: TWebLabel;
     yLbl: TWebLabel;
     zoomLbl: TWebLabel;
-    zoomFactorLbl1: TWebLabel; // Displays simulation results
-    SBMLmodelMemo: TWebMemo;
-    rtLengthEdit1: TWebEdit;    // Run time length, Not used for now.
-    rtLabel1: TWebLabel;        // Not used for now.
+    zoomFactorLbl1: TWebLabel;
+    SBMLmodelMemo: TWebMemo;   // Displays simulation results
+    rtLengthEdit1: TWebEdit;   // Run time length, Not used for now.
+    rtLabel1: TWebLabel;       // Not used for now.
     stepSizeLabel1: TWebLabel;
     stepSizeEdit1: TWebEdit;
     ZoomCntrlPanel: TWebPanel;
