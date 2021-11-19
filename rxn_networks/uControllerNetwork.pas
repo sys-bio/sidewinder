@@ -5,7 +5,7 @@ interface
 uses SysUtils, Classes, System.UITypes, contnrs, Types, WebLib.ExtCtrls,
   WEBLib.Utils, WEBLib.Buttons, WEBLib.Graphics, WEBLib.Controls,
   Vcl.StdCtrls, WEBLib.StdCtrls, uNetwork, Dialogs, uSelectedObjects, Math,
-  uNetworkCanvas,uModel, uNetworkToModel;
+  uNetworkCanvas, uModel, uNetworkToModel, uNetworkTypes;
 
 const
   NOT_SELECTED = -1;
@@ -79,6 +79,7 @@ type
     procedure OnMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; x, y: double);
     procedure OnMouseMove(Sender: TObject; Shift: TShiftState; x, y: double);
     procedure OnMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; x, y: double);
+    function getRxnArrowPts(): array of TPointF;
     function createSBMLModel(currentModel: TModel): TModel; // Build SBML model based on current Network
     procedure SBMLUpdated(updatedModel: TModel);
 
@@ -291,6 +292,11 @@ begin
   end;
   network.nodes[selectedNode].state.conc := newConc;
   network.networkEvent(nil);
+end;
+
+function TController.getRxnArrowPts(): array of TPointF;
+begin
+  Result := self.networkCanvas.reactionRenderer.getRxnAPts;
 end;
 
 procedure TController.setReactionSpecStoich(spIndex: integer; stoichVal: double; src: boolean);
@@ -633,7 +639,8 @@ function TController.createSBMLModel(currentModel: TModel): TModel;
 var builder: TNetworkToModel;
 begin
   builder := TNetworkToModel.create(currentModel, network,
-                    self.networkCanvas.bitmap.Width, self.networkCanvas.bitmap.Height );
+                    self.networkCanvas.bitmap.Width, self.networkCanvas.bitmap.Height, self.getRxnArrowPts() );
+ // builder.setRxnArrowPts( self.getRxnArrowPts()); // for SBML RenderLineEnding
   Result := builder.getModel();
 
 end;
