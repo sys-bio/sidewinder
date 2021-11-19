@@ -15,7 +15,9 @@ type
     property OnSBMLLoaded: TSBMLLoadedEvent read FNotify write FNotify;
   end;
 
-
+ // TODO: add a string list of warnings, errors that occur while reading in SBML string.
+ //   THese are not only libSBML warnings/errors but also assumptions made by Sidewinder.
+ //       Lets user know what assumptions, issues are present once the model is loaded.
 implementation
   constructor TSBMLRead.create(newModel: TModel; SBMLtext: String);
   var
