@@ -347,21 +347,48 @@ class GenerateSBMLModel {
  createModelRendering() {
    this.libSBMLrInfo.setProgramName("Sidewinder");
    var i;
+   const rxnArrowId = 'arrowHeadREACTIONGLYPH';
    // create color definitions:
    for( i=0; i < this.modelRendering.getNumbColorDefs(); i++ ) {
-     const newColor = this.modelRendering.getColorDef(i);
+     const newColor = this.modelRendering.getColorDef( i );
      const sbmlColor = this.libSBMLrInfo.createColorDefinition();
      sbmlColor.setId(newColor.getId());
      sbmlColor.setColorValue( newColor.getValue() );
    }
 
-   // create styles:
+   for( i=0; i < this.modelRendering.getNumbLineEndings(); i++ ) {
+     const curLineEnd = this.modelRendering.getLineEnding( i );
+     const sbmlLineEnd = this.libSBMLrInfo.createLineEnding();
+     sbmlLineEnd.setId(curLineEnd.getId());
+     sbmlLineEnd.setEnableRotationalMapping(true);
+     const curBBox = curLineEnd.getBoundingBox();
+     const sbmlBBox = sbmlLineEnd.getBoundingBox();
+     this.processBoundingBox( curBBox, sbmlBBox );
+     sbmlLineEnd.getGroup().setStrokeWidth( curLineEnd.getRenderGroup().getStrokeWidth() );
+     sbmlLineEnd.getGroup().setStroke( curLineEnd.getRenderGroup().getStrokeColor() );
+     sbmlLineEnd.getGroup().setFillColor( curLineEnd.getRenderGroup().getFillColor() );
+     if ( curLineEnd.getRenderGroup().isPolygonSet() ) {
+       const curPolygon = curLineEnd.getRenderGroup().getPolygon();
+       const sbmlPolygon = sbmlLineEnd.getGroup().createPolygon();
+       for( let j=0; j < curPolygon.getNumbPts(); j++ ) {
+         const curPt = curPolygon.getPt( j );
+         const sbmlPt = sbmlPolygon.createPoint();
+         sbmlPt.setX(new this.libSBML.RelAbsVector( curPt.getX(), 0));
+         sbmlPt.setY(new this.libSBML.RelAbsVector( curPt.getY(), 0));
+       }
+     }
+   }
+
+   var rxnType = false;
+     // create styles:
    for( i=0; i < this.modelRendering.getNumberStyles(); i++ ) {
      const newStyle = this.modelRendering.getStyle(i);
      const sbmlStyle = this.libSBMLrInfo.createStyle( newStyle.getId() );
      var j;
+
      for( j=0; j < newStyle.getNumbTypes(); j++ ) {
        sbmlStyle.addType( newStyle.getType(j) );
+       if( newStyle.getType(j) == 'REACTIONGLYPH') { rxnType = true; }
      }
      for( j=0; j <  newStyle.getNumbGoIds(); j++ ) {
  //    sbmlStyle.addId( newStyle.getGoId(j) ); // libsbmljs gives error
@@ -369,6 +396,13 @@ class GenerateSBMLModel {
 
      }
      const newRG = newStyle.getRenderGroup();
+     if( rxnType ) {
+       console.log('EndHead: ',sbmlStyle.getGroup().getEndHead() );
+
+    // sbmlStyle.getGroup().setEndHead(rxnArrowHead); // Missing from libsbmljs idl
+       console.log('EndHead3: ',sbmlStyle.getGroup().getEndHead() );
+       rxnType = false;
+     }
      if( newRG.isStrokeWidthSet() ) {
        sbmlStyle.getGroup().setStrokeWidth( newRG.getStrokeWidth() );
      }
