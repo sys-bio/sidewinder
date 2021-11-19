@@ -477,6 +477,7 @@ implementation
   constructor TSBMLLayoutBoundingBox.create() overload;
   begin
     self.id := '';
+    self.point := TSBMLLayoutPoint.create();
   end;
   constructor TSBMLLayoutBoundingBox.create(newPt: TSBMLLayoutPoint; newDims: TSBMLLayoutDims) overload;
   begin
