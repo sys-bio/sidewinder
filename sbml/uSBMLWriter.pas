@@ -25,6 +25,7 @@ implementation
    self.sbmlStr := '';
    self.sbmlModel := nil;
  end;
+
  procedure TSBMLWriter.buildSBMLString(model: TModel);
  begin
    self.sbmlStr := '';
@@ -63,6 +64,5 @@ implementation
     if Assigned(FNotify) then
      FNotify(modelStr);
  end;
-
 
 end.
