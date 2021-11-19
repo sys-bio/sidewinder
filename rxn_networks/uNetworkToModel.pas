@@ -322,7 +322,7 @@ begin
   newRg.setStrokeColor( olColorDefId );
   newRg.setFillColor( fillColorDefId );
   //newRg.setFontSize(DEFAULT_FONT_SIZE +4) ; // Not needed here
-  newStyle.setRenderGroup( TSBMLRenderGroup.create(newRg) );
+  newStyle.setRenderGroup( newRg );
   self.renderInfo.addStyle( TSBMLRenderStyle.create(newStyle) );
   // Text glyph style:
   newRg.Free;
