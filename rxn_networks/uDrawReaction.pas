@@ -10,6 +10,7 @@ type
          canvas : TCanvas;
          origin : TPointF;
          scalingFactor : double;
+         arrowPts: array of TPointF;
          procedure drawArrow (tip : TPointF; dxdt, dydt : double);
          procedure drawStraightLineToCentroid(ArcId: integer; reaction : TReaction; centroid: TPointF; scalingFactor: double);
          procedure drawStraightLineFromCentroid (arcId: integer; reaction : TReaction; centroid: TPointF; scalingFactor: double);
@@ -19,6 +20,7 @@ type
 
        public
          procedure draw (origin : TPointF; scalingFactor : double; reaction : TReaction);
+         function getRxnAPts(): array of TPointF; // Get reaction arrow pts
          constructor Create (canvas : TCanvas);
    end;
 
@@ -87,14 +89,25 @@ begin
   //else solidBrush.SetColor (aclArrowColor);
   // pg is a pointer, drawpolygon expect one, so cast it to the pointer it expects
   setlength (fpt, 4);
+  setLength(self.arrowPts, length(fpt));
   for i := 0 to 3 do
       begin
       fpt[i].x := trunc (pg[i].x);
+      self.arrowPts[i].x := pg[i].x;  // assume all arrows are the same
       fpt[i].y := trunc (pg[i].y);
+      self.arrowPts[i].y := pg[i].y;
       end;
+  //setLength(self.arrowPts, length(fpt));
+ // for i := 0 to length(fpt)-1 do
+ //   self.arrowPts[i] := fpt[i]; //
+
   canvas.polygon (fpt);
 end;
 
+function TReactionRender.getRxnAPts(): array of TPointF;
+begin
+  Result := self.arrowPts;
+end;
 
 // Used if the line type is ltLine
 procedure TReactionRender.drawUniUniLine (scalingFactor : double; reaction : TReaction);
