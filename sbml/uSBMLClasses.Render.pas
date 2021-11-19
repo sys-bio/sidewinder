@@ -605,11 +605,21 @@ implementation
   begin
     if self.rg <> nil then self.rg.Free;
     self.rg := TSBMLRenderGroup.create;
+
     if newRG.isStrokeWidthSet then self.rg.setStrokeWidth( newRG.getStrokeWidth );
     if newRG.getStrokeColor <> '' then self.rg.setStrokeColor( newRG.getStrokeColor );
     if newRG.isFontSizeSet then self.rg.setFontSize( newRG.getFontSize );
     if newRG.getFillColor <> '' then self.rg.setFillColor( newRG.getFillColor );
-    if newRG.isRectangleSet then self.rg.rRectangle := TSBMLRenderRectangle.create( newRG.getRectangle );
+    if newRG.isRectangleSet then
+    begin
+      self.rg.rRectangle := TSBMLRenderRectangle.create( newRG.getRectangle );
+      self.rg.rectangleSet := true;
+    end;
+    if newRG.isPolygonSet then
+    begin
+      self.rg.rPolygon := TSBMLRenderPolygon.create( newRG.getPolygon );
+      self.rg.polygonSet := true;
+    end;
 
   end;
 
