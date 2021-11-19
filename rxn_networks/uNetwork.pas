@@ -23,6 +23,7 @@ const
   // the launch point for a reaction arc (edge)
   NODE_ARC_DEADSPACE = 8;
   DEFAULT_REACTION_THICKNESS = 3;
+  DEFAULT_NODE_OUTLINE_THICKNESS = 3;
   MAGIC_IDENTIFER = 'NM01';  // Identifier for json output, 01 refers to version number
 
 type
@@ -253,6 +254,7 @@ begin
    outlineThickness := strtoint (obj.GetJsonValue ('outlineThickness'));
 end;
 
+// TODO: update to read in SBML Render info for color, thickness
 procedure TNodeState.loadFromSBML (obj : TSBMLLayoutSpeciesGlyph; initVal: double);
 begin
   id := obj.getSpeciesId;
@@ -264,7 +266,7 @@ begin
   // default values, Currently no sbml Render package used:
   fillColor := RGB(255,204,153);// clWebPeachPuff;
   outlineColor := RGB(255,102,0);
-  outlineThickness := 3;
+  outlineThickness := DEFAULT_NODE_OUTLINE_THICKNESS;  //3;
 end;
 
 procedure TReactionState.saveAsJSON (reactionObject : TJSONObject);
@@ -687,7 +689,7 @@ procedure TNetwork.autoBuildNetworkFromSBML(model: TModel);
         nodeState.h := 40;     //   "
         nodeState.fillColor := RGB(255,204,153);// clWebPeachPuff;
         nodeState.outlineColor := RGB(255,102,0);
-        nodeState.outlineThickness := 3;
+        nodeState.outlineThickness := DEFAULT_NODE_OUTLINE_THICKNESS;
         self.addNode(nodeState);
 
       end;
@@ -786,7 +788,7 @@ procedure TNetwork.autoBuildNetworkFromSBML(model: TModel);
    nodeState.h := 40;  //   "
    nodeState.fillColor := clSilver;
    nodeState.outlineColor := RGB(255,102,0);
-   nodeState.outlineThickness := 3;
+   nodeState.outlineThickness := DEFAULT_NODE_OUTLINE_THICKNESS;
    result := nodeState;
  end;
 
@@ -953,6 +955,7 @@ begin
   //console.log('Node h: ', nodes[length(nodes) -1].state.h, ', width: ',nodes[length(nodes) -1].state.w);
   result := nodes[length (nodes)-1];
   result.state.x := x; result.state.y := y;
+  result.state.outlineThickness :=  DEFAULT_NODE_OUTLINE_THICKNESS;
   result.state.Id := Id;
   self.networkEvent(nil); // Notify listener
 end;
@@ -965,6 +968,7 @@ begin
   result := nodes[length (nodes)-1];
   result.state.x := x; result.state.y := y;
   result.state.h := h; result.state.w := w;
+  result.state.outlineThickness :=  DEFAULT_NODE_OUTLINE_THICKNESS;
   result.state.Id := Id;
   self.networkEvent(nil); // Notify listener
 end;
