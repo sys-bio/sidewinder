@@ -1,15 +1,16 @@
 unit uSBMLClasses.Render;
 // Classes based on SBML Level 3 Render package: v1.1, 2017
 interface
- uses System.SysUtils, System.Classes, System.Generics.Collections, Web;
+ uses System.SysUtils, System.Classes, System.Generics.Collections, Web,
+   uSBMLClasses.Layout;
 
  const STYLE_TYPES: array [0..7] of string = ( 'COMPARTMENTGLYPH', 'SPECIESGLYPH',
    'REACTIONGLYPH', 'SPECIESREFERENCEGLYPH', 'TEXTGLYPH', 'GENERALGLYPH', 'GRAPHICALOBJECT',
    'ANY' );
 
  type
- TVTextAnchorTypes = ( V_ZERO, V_TOP, V_MIDDLE, V_BOTTOM, V_BASELINE );
- THTextAnchorTypes = ( H_ZERO, H_START, H_MIDDLE, H_END );
+ TVTextAnchorTypes = ( V_NULL, V_TOP, V_MIDDLE, V_BOTTOM, V_BASELINE );
+ THTextAnchorTypes = ( H_NULL, H_START, H_MIDDLE, H_END );
     // pas2js compiler currently does not support enum constant where you sent
     // initial val to something other than 0;
     // Would like this:
@@ -50,6 +51,55 @@ interface
 
  end;
 
+ TSBMLRenderPoint = class
+   private
+     id: string;
+     x: double; // The absolute coordinate values are always with respect to the bounding box
+     y: double; // of the layout object to which the render information applies.
+   //z: double;  Not used
+
+   public
+     constructor create() overload;
+     constructor create( cpy: TSBMLRenderPoint ) overload;
+     constructor create( newX, newY: double ) overload;
+     procedure setId( newId: string );
+     function getId(): string;
+     procedure setX( newVal: double );
+     function getX(): double;
+     procedure setY( newVal: double );
+     function getY(): double;
+ end;
+ {
+ TSBMLRenderListOfElements = class
+   private
+     id: string;
+     renderPtList: TList<TSBMLRenderPoint>;
+   //renderCBezierList: TList<TSBMLRenderCubicBezier>;
+   public
+     constructor create() overload;
+     constructor create( cpy: TSBMLRenderListOfElements ) overload;
+     procedure setId( newId: string );
+     function getId(): string;
+     procedure addPt( newPt: TSBMLRenderPoint );
+     function getPt( index: integer ): TSBMLRenderPoint;
+     function getNumbPts(): integer;
+ end;     }
+
+ TSBMLRenderPolygon = class( TSBMLRenderPrimitive1D )
+   private
+     fill: string;
+     renderPtList: TList<TSBMLRenderPoint>;
+     // Not using TSBMLRenderListOfElements for now.
+   public
+     constructor create() overload;
+     constructor create( cpy: TSBMLRenderPolygon ) overload;
+     procedure setFill( newFill: string );
+     function getFill(): string; // fill color
+     procedure addPt( newPt: TSBMLRenderPoint );
+     function getPt( index: integer ): TSBMLRenderPoint;
+     function getNumbPts(): integer;
+ end;
+
  TSBMLRenderRectangle = class( TSBMLRenderPrimitive1D )
    private
    x, y: double;// position within the bounding box of the enclosing Layout object.
@@ -83,6 +133,7 @@ interface
 
  end;
 
+
  TSBMLRenderGroup = class
    private
      iStrokeWidth: integer;
@@ -90,10 +141,15 @@ interface
      sFillColor: string;
      iFontSize: integer;
      sFontStyle: string;
-     sVTextAnchor: TVTextAnchorTypes; // how text elements are to be vertically aligned within
+     vTextAnchor: TVTextAnchorTypes; // how text elements are to be vertically aligned within
                                       // their bounding box,
-     sHTextAnchor: THTextAnchorTypes; // horizontally aligned in BBox,
-     rRectangle: TSBMLRenderRectangle;
+     hTextAnchor: THTextAnchorTypes; // horizontally aligned in BBox,
+     endHead: string; // optional, Id which point to a LineEnding for the start and end of curves.
+     startHead: string; // optional,    "
+     rRectangle: TSBMLRenderRectangle; // optional
+     rectangleSet: boolean;
+     rPolygon: TSBMLRenderPolygon;    // optional
+     polygonSet: boolean;
    public
      constructor create() overload;
      constructor create( cpy: TSBMLRenderGroup ) overload;
@@ -112,10 +168,30 @@ interface
      procedure setRectangle( newR: TSBMLRenderRectangle );
      function getRectangle(): TSBMLRenderRectangle;
      function isRectangleSet(): boolean;
+     procedure setPolygon( newR: TSBMLRenderPolygon );
+     function getPolygon(): TSBMLRenderPolygon;
+     function isPolygonSet(): boolean;
      procedure setVTextAnchor( newAnchor: TVTextAnchorTypes );
      function getVTextAnchor(): TVTextAnchorTypes;
      procedure setHTextAnchor( newAnchor: THTextAnchorTypes );
      function getHTextAnchor(): THTextAnchorTypes;
+     procedure setStartHead( headId: string );
+     function getStartHead(): string;
+     procedure setEndHead( headId: string );
+     function getEndHead(): string;
+ end;
+
+ TSBMLRenderLineEnding = class( TSBMLRenderPrimitive1D )
+   private
+     endBBox: TSBMLLayoutBoundingBox;
+     endRenderGroup: TSBMLRenderGroup;
+   public
+     constructor create( newId: string ) overload;
+     constructor create( cpy: TSBMLRenderLineEnding ) overload;
+     procedure setBoundingBox( newBBox: TSBMLLayoutBoundingBox );
+     function getBoundingBox(): TSBMLLayoutBoundingBox;
+     procedure setRenderGroup( newRG: TSBMLRenderGroup );
+     function getRenderGroup(): TSBMLRenderGroup;
  end;
 
  TSBMLRenderStyle = class
@@ -146,18 +222,14 @@ interface
  {
  TSBMLRenderGradientDefinition = class
 
- end;
+ end;   }
 
- TSBMLRenderLineEnding = class
-
- end;
-     }
 
  TSBMLRenderInformation = class
  private
    colorDefList: TList<TSBMLRenderColorDefinition>;
   // gradientDefList: TList<TSBMLRenderGradientDefinition>;
-  // lineEndingList: TList<TSBMLRenderLineEnding>;
+   lineEndingList: TList<TSBMLRenderLineEnding>;
    styleList: TList<TSBMLRenderStyle>;
 
    id: string;
@@ -172,9 +244,9 @@ interface
  //  function  getNumbGradientDefs(): integer;
  //  procedure addGradientDef( newGradient: TSBMLRenderGradientDefinition );
  //  function  getGradientDef( index: integer ): TSBMLRenderGradientDefinition;
- //  function  getNumbLineEndings(): integer;
- //  procedure addLineEnding( newLineEnding: TSBMLRenderLineEnding );
- //  function  getLineEnding( index: integer ): TSBMLRenderLineEnding;
+   function  getNumbLineEndings(): integer;
+   procedure addLineEnding( newLineEnding: TSBMLRenderLineEnding );
+   function  getLineEnding( index: integer ): TSBMLRenderLineEnding;
    function  getNumberStyles(): integer;
    procedure addStyle( newStyle: TSBMLRenderStyle );
    function  getStyle( index: integer ): TSBMLRenderStyle;
@@ -245,6 +317,57 @@ implementation
     else Result := false;
   end;
 
+  constructor TSBMLRenderPoint.create() overload;
+  begin
+    self.id := '';
+    self.x := 0;
+    self.y := 0;
+    //self.z := 0;
+  end;
+  constructor TSBMLRenderPoint.create( cpy: TSBMLRenderPoint ) overload;
+  begin
+    self.id := cpy.getId;
+    self.x := cpy.getX;
+    self.y := cpy.getY;
+  end;
+
+  constructor TSBMLRenderPoint.create( newX, newY: double ) overload;
+  begin
+    self.id := '';
+    self.x := newX;
+    self.y := newY;
+  end;
+
+  procedure TSBMLRenderPoint.setId( newId: string );
+  begin
+    self.id := newId;
+  end;
+
+  function TSBMLRenderPoint.getId(): string;
+  begin
+    Result := self.id;
+  end;
+
+  procedure TSBMLRenderPoint.setX( newVal: double );
+  begin
+    self.x := newVal;
+  end;
+
+  function TSBMLRenderPoint.getX(): double;
+  begin
+    Result := self.x;
+  end;
+
+  procedure TSBMLRenderPoint.setY( newVal: double );
+  begin
+    self.y := newVal;
+  end;
+
+  function TSBMLRenderPoint.getY(): double;
+  begin
+    Result := self.y;
+  end;
+
   constructor TSBMLRenderGroup.create() overload;
   begin
     self.iStrokeWidth := -1;   // not set
@@ -252,9 +375,14 @@ implementation
     self.sFillColor := '';
     self.iFontSize := -1;
     self.sFontStyle := 'normal';
-    self.sVTextAnchor := V_MIDDLE;
-    self.sHTextAnchor := H_MIDDLE;
+    self.vTextAnchor := V_MIDDLE;
+    self.hTextAnchor := H_MIDDLE;
+    self.startHead := '';
+    self.endHead := '';
     self.rRectangle := nil;
+    self.rPolygon := nil;
+    self.rectangleSet := false;
+    self.polygonSet := false;
   end;
 
   constructor TSBMLRenderGroup.create( cpy: TSBMLRenderGroup ) overload;
@@ -264,12 +392,37 @@ implementation
     self.sFillColor := cpy.getFillColor;
     self.iFontSize := cpy.getFontSize;
     self.sFontStyle := cpy.getFontStyle;
-    self.sVTextAnchor := cpy.getVTextAnchor;
-    self.sHTextAnchor := cpy.getHTextAnchor;
+    self.vTextAnchor := cpy.getVTextAnchor;
+    self.hTextAnchor := cpy.getHTextAnchor;
+    self.startHead := cpy.getStartHead;
+    self.endHead := cpy.getEndHead;
+    self.rectangleSet := cpy.isRectangleSet;
+    self.polygonSet := cpy.isPolygonSet;
     if cpy.isRectangleSet then
     begin
       self.rRectangle := TSBMLRenderRectangle.create( cpy.getRectangle );
     end;
+    if cpy.isPolygonSet then
+    begin
+      self.rPolygon := TSBMLRenderPolygon.create( cpy.getPolygon );
+    end;
+  end;
+
+  procedure TSBMLRenderGroup.setStartHead( headId: string );
+  begin
+    self.startHead := headId;
+  end;
+  function TSBMLRenderGroup.getStartHead(): string;
+  begin
+    Result := self.startHead;
+  end;
+  procedure TSBMLRenderGroup.setEndHead( headId: string );
+  begin
+    self.endHead := headId;
+  end;
+  function TSBMLRenderGroup.getEndHead(): string;
+  begin
+    Result := self.endHead;
   end;
 
   procedure TSBMLRenderGroup.setStrokeWidth( iNewSW: integer );
@@ -329,24 +482,25 @@ implementation
 
   procedure TSBMLRenderGroup.setVTextAnchor( newAnchor: TVTextAnchorTypes );
   begin
-    self.sVTextAnchor := newAnchor;
+    self.vTextAnchor := newAnchor;
   end;
   function TSBMLRenderGroup.getVTextAnchor(): TVTextAnchorTypes;
   begin
-    Result := self.sVTextAnchor;
+    Result := self.vTextAnchor;
   end;
   procedure TSBMLRenderGroup.setHTextAnchor( newAnchor: THTextAnchorTypes );
   begin
-    self.sHTextAnchor := newAnchor;
+    self.hTextAnchor := newAnchor;
   end;
   function TSBMLRenderGroup.getHTextAnchor(): THTextAnchorTypes;
   begin
-    Result := self.sHTextAnchor;
+    Result := self.hTextAnchor;
   end;
 
   procedure TSBMLRenderGroup.setRectangle( newR: TSBMLRenderRectangle );
   begin
     self.rRectangle := TSBMLRenderRectangle.create( newR );
+    self.rectangleSet := true;
   end;
   function TSBMLRenderGroup.getRectangle(): TSBMLRenderRectangle;
   begin
@@ -354,8 +508,61 @@ implementation
   end;
   function TSBMLRenderGroup.isRectangleSet(): boolean;
   begin
-    if self.rRectangle = nil then Result := false
-    else Result := true;
+    //if self.rRectangle = nil then Result := false
+   // else Result := true;
+    Result := self.rectangleSet;
+  end;
+
+  procedure TSBMLRenderGroup.setPolygon( newR: TSBMLRenderPolygon );
+  begin
+    self.rPolygon := TSBMLRenderPolygon.create( newR );
+    self.polygonSet := true;
+
+  end;
+  function TSBMLRenderGroup.getPolygon(): TSBMLRenderPolygon;
+  begin
+    Result := self.rPolygon;
+  end;
+  function TSBMLRenderGroup.isPolygonSet(): boolean;
+  begin
+   //if self.rPolygon = nil then Result := false
+   // else Result := true;
+    Result := self.polygonSet;
+  end;
+
+
+  constructor TSBMLRenderLineEnding.create( newId: string ) overload;
+  begin
+    self.id := newId;
+    self.stroke := '';
+    self.strokeWidth := -1;
+  end;
+
+  constructor TSBMLRenderLineEnding.create( cpy: TSBMLRenderLineEnding ) overload;
+  begin
+    self.id := cpy.getId;
+    self.stroke := cpy.getStroke;
+    self.strokeWidth := cpy.getStrokeWidth;
+    self.endBBox := TSBMLLayoutBoundingBox.create( cpy.getBoundingBox );
+    self.endRenderGroup := TSBMLRenderGroup.create( cpy.getRenderGroup );
+  end;
+
+  procedure TSBMLRenderLineEnding.setBoundingBox( newBBox: TSBMLLayoutBoundingBox );
+  begin
+    self.endBBox := TSBMLLayoutBoundingBox.create( newBBox );
+  end;
+  function TSBMLRenderLineEnding.getBoundingBox(): TSBMLLayoutBoundingBox;
+  begin
+    Result := self.endBBox;
+  end;
+
+  procedure TSBMLRenderLineEnding.setRenderGroup( newRG: TSBMLRenderGroup );
+  begin
+    self.endRenderGroup := TSBMLRenderGroup.create( newRG );
+  end;
+  function TSBMLRenderLineEnding.getRenderGroup(): TSBMLRenderGroup;
+  begin
+    Result := self.endRenderGroup;
   end;
 
 
@@ -456,6 +663,7 @@ implementation
   //  self.gradientDefList := TList<TSBMLRenderGradientDefinition>.create;
   //  self.lineEndingList := TList<TSBMLRenderLineEnding>.create;
     self.styleList := TList<TSBMLRenderStyle>.create;
+    self.lineEndingList := TList<TSBMLRenderLineEnding>.create;
   end;
 
   constructor TSBMLRenderInformation.create( cpy: TSBMLRenderInformation ) overload;
@@ -464,6 +672,7 @@ implementation
     self.id := cpy.getId;
     self.colorDefList := TList<TSBMLRenderColorDefinition>.create;
     self.styleList := TList<TSBMLRenderStyle>.create;
+    self.lineEndingList := TList<TSBMLRenderLineEnding>.create;
 
     for i := 0 to cpy.getNumbColorDefs -1 do
       begin
@@ -471,9 +680,12 @@ implementation
       end;
     for i := 0 to cpy.getNumberStyles  -1 do
       begin
-        self.styleList.Add(TSBMLRenderStyle.create(cpy.getStyle(i)) );
+        self.styleList.Add( TSBMLRenderStyle.create(cpy.getStyle(i)) );
       end;
-
+    for i := 0 to cpy.getNumbLineEndings  -1 do
+      begin
+        self.lineEndingList.Add( TSBMLRenderLineEnding.create(cpy.getLineEnding(i)) );
+      end;
   end;
 
   function  TSBMLRenderInformation.getNumbColorDefs(): integer;
@@ -505,7 +717,7 @@ implementation
     begin
       //nStyle.create();
      // nStyle.id := newStyle.getId;
-      self.styleList.Add( newStyle );
+      self.styleList.Add( TSBMLRenderStyle.create(newStyle) );
     end;
   end;
 
@@ -519,6 +731,20 @@ implementation
     Result := self.styleList.Count;
   end;
 
+  function  TSBMLRenderInformation.getNumbLineEndings(): integer;
+  begin
+    Result := self.lineEndingList.Count;
+  end;
+  procedure TSBMLRenderInformation.addLineEnding( newLineEnding: TSBMLRenderLineEnding );
+  begin
+    self.lineEndingList.Add( TSBMLRenderLineEnding.create(newLineEnding) );
+  end;
+  function  TSBMLRenderInformation.getLineEnding( index: integer ): TSBMLRenderLineEnding;
+  begin
+    Result := self.lineEndingList[index];
+  end;
+
+
   constructor TSBMLRenderPrimitive1D.create() overload;
   begin
     self.id := '';
@@ -528,9 +754,12 @@ implementation
 
   constructor TSBMLRenderPrimitive1D.create( cpy: TSBMLRenderPrimitive1D ) overload;
   begin
-    self.id := cpy.getId;
-    self.stroke := cpy.getStroke;
-    self.strokeWidth := cpy.strokeWidth;
+    if cpy <> nil then
+    begin
+      self.id := cpy.getId;
+      self.stroke := cpy.getStroke;
+      self.strokeWidth := cpy.strokeWidth;
+    end;
   end;
 
   procedure TSBMLRenderPrimitive1D.setId( newId: string );
@@ -564,6 +793,53 @@ implementation
     else Result := false;
   end;
 
+
+  constructor TSBMLRenderPolygon.create() overload;
+  begin
+    inherited create();
+    self.fill := '';
+    self.renderPtList := TList<TSBMLRenderPoint>.create;
+  end;
+
+  constructor TSBMLRenderPolygon.create( cpy: TSBMLRenderPolygon ) overload;
+  var i: integer;
+  begin
+    if cpy <> nil then
+    begin
+      self.id := cpy.getId;
+      self.stroke := cpy.getStroke;
+      self.strokeWidth := cpy.strokeWidth;
+      self.fill := cpy.fill;
+      self.renderPtList := TList<TSBMLRenderPoint>.create;
+      for i := 0 to cpy.getNumbPts -1 do
+        begin
+          self.renderPtList.Add( TSBMLRenderPoint.create(cpy.getPt(i)) );
+        end;
+    end
+    else console.log( 'cpy is nil: TSBMLRenderPolygon.create' );
+  end;
+
+  procedure TSBMLRenderPolygon.setFill( newFill: string );
+  begin
+    self.fill := newFill;
+  end;
+  function TSBMLRenderPolygon.getFill(): string; // fill color
+  begin
+    Result := self.fill;
+  end;
+  procedure TSBMLRenderPolygon.addPt( newPt: TSBMLRenderPoint );
+  begin
+    self.renderPtList.Add( TSBMLRenderPoint.create(newPt) );
+  end;
+  function TSBMLRenderPolygon.getPt( index: integer ): TSBMLRenderPoint;
+  begin
+    Result := self.renderPtList[index];
+  end;
+  function TSBMLRenderPolygon.getNumbPts(): integer;
+  begin
+    Result := self.renderPtList.Count;
+  end;
+
   constructor TSBMLRenderRectangle.create() overload;
   begin
     Inherited create();
@@ -578,15 +854,19 @@ implementation
   end;
   constructor TSBMLRenderRectangle.create( cpy: TSBMLRenderRectangle ) overload;
   begin
-    Inherited create( cpy );
-    self.fill := cpy.getFill;
-    self.x := cpy.getX;
-    self.y := cpy.getY;
-    self.height := cpy.getHeight;
-    self.width := cpy.getWidth;
-    self.rx := cpy.getRx;
-    self.ry := cpy.getRy;
-    self.ratio := cpy.getRatio;
+    if cpy <> nil then
+    begin
+      Inherited create( cpy );
+      self.fill := cpy.getFill;
+      self.x := cpy.getX;
+      self.y := cpy.getY;
+      self.height := cpy.getHeight;
+      self.width := cpy.getWidth;
+      self.rx := cpy.getRx;
+      self.ry := cpy.getRy;
+      self.ratio := cpy.getRatio;
+    end
+    else console.log( 'cpy is nil: TSBMLRenderRectangle.create' );
 
   end;
   procedure TSBMLRenderRectangle.setX( newX: double );
