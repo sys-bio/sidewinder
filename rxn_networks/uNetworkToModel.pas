@@ -1,7 +1,7 @@
 unit uNetworkToModel;
  // *** Currently only one-way reactions.
 interface
-uses Web, JS, WEBLib.Graphics, uModel, uSBMLClasses, uNetwork, uSBMLClasses.Layout,
+uses Types, Web, JS, WEBLib.Graphics, uModel, uSBMLClasses, uNetwork, uSBMLClasses.Layout,
    uSBMLClasses.Render, uNetworkCanvas, uNetworkTypes, uSidewinderTypes;
 
 const DEFAULT_COMP = 'unit_compartment';
@@ -12,6 +12,8 @@ private
   layout: TSBMLLayout;
   renderInfo: TSBMLRenderInformation;
   network: TNetwork;
+  rxnArrowPts: array of TPointF;  // all rxn arrows are assumed to be the same for now.
+  arrowBBoxDims: TSBMLLayoutDims; // contains rxnArrowPts
   procedure setSpecies;
   //procedure setParameters; // Currently done in setReactions as all params in rxn equations
   procedure setReactions;
@@ -19,14 +21,18 @@ private
   procedure setSpeciesRendering( spState: TNodeState; specGlypId: string;
                                  specTextGlyphId:string );
   procedure setReactionRendering( rxnState: TReactionState; rxnGlyphId: string );
+  function generateRxnLineEnding( id: string; fColorDefId: string;
+                            rxnState: TReactionState ): TSBMLRenderLineEnding;
+  procedure normalizeLineEndingPts( pts: array of TPointF );
 
 public
   constructor create(newModel: TModel; newNetwork: TNetwork;
-                     layoutWidth, layoutHeight: integer);
+               layoutWidth, layoutHeight: integer; rxnEndPts: array of TPointF);
 
   function getModel:TModel;
   function getLayout(): TSBMLLayout;
   function getRenderInformation(): TSBMLRenderInformation;
+  procedure setRxnArrowPts( newPts: array of TPointF );
  // procedure setModel(newModel: TModel);
  // procedure setNetwork(newNetwork: TNetwork);   // TODO
 
@@ -35,9 +41,10 @@ end;
 implementation
 
 constructor TNetworkToModel.create( newModel: TModel; newNetwork: TNetwork;
-                                    layoutWidth, layoutHeight: integer );
+              layoutWidth, layoutHeight: integer; rxnEndPts: array of TPointF );
 begin
   self.model := newModel;
+  self.setRxnArrowPts(rxnEndPts);
   self.layout := TSBMLLayout.create();
   self.renderInfo := TSBMLRenderInformation.create();
   self.layout.setDims( TSBMLLayoutDims.create(layoutWidth, layoutHeight) );
@@ -50,6 +57,40 @@ begin
   self.model.setSBMLLayout(self.layout);
   self.model.setSBMLRenderInfo(self.renderInfo);
 
+end;
+
+procedure TNetworkToModel.setRxnArrowPts( newPts: array of TPointF );
+var i: integer;
+begin
+  self.normalizeLineEndingPts( newPts );
+end;
+       // Fit points in box of dimensions: maxX-minX, MaxY-minY
+procedure TNetworkToModel.normalizeLineEndingPts( pts: array of TPointF );
+var i: integer;
+    minX, minY: double;
+    maxX, maxY: double;
+begin
+  if length(pts) > 0 then
+  begin
+    minX := pts[0].x; minY := pts[0].y;
+    maxX := pts[0].x; maxY := pts[0].y;
+  end;
+
+  setLength( self.rxnArrowPts, length(pts) );
+  for i := 1 to length(pts)-1 do
+    begin
+      if pts[i].x < minX then minX := pts[i].x;
+      if pts[i].y < minY then minY := pts[i].y;
+      if pts[i].x > maxX then maxX := pts[i].x;
+      if pts[i].y > maxY then maxY := pts[i].y;
+
+    end;
+  for i := 0 to length(pts)-1 do
+    begin
+      self.rxnArrowPts[i].x := pts[i].x - minX;
+      self.rxnArrowPts[i].y := pts[i].y - minY;
+    end;
+  self.arrowBBoxDims := TSBMLLayoutDims.create(maxX-minX, maxY-minY);
 end;
 
 procedure TNetworkToModel.setCompartments;
@@ -303,7 +344,11 @@ var newStyle: TSBMLRenderStyle;
     newFillColor: TColor;
     colorStr: string;
     fillColorDefId: string;
+    newLineEndId: string;
+    rxnArrowAdded: boolean;
+  i: Integer;
 begin
+  rxnArrowAdded := false;
   newFillColor := rxnState.fillColor;
   colorStr := colorToHex( newFillColor ); // no # in front of hex number
  // console.log('Fill color: ', colorStr );
@@ -318,8 +363,51 @@ begin
   newRg.setStrokeWidth( rxnState.thickness );
   newRg.setStrokeColor( fillColorDefId ); // same as fill
   newRg.setFillColor( fillColorDefId );
+  newLineEndId := 'arrowHead' + STYLE_TYPES[2];
+  for i := 0 to self.renderInfo.getNumbLineEndings -1 do
+  begin
+    if self.renderInfo.getLineEnding(i).getId = newLineEndId then rxnArrowAdded := true;
+  end;
+
+  if rxnArrowAdded = false then
+    self.renderInfo.addLineEnding( self.generateRxnLineEnding( newLineEndId, fillColorDefId, rxnState ) );
   newStyle.setRenderGroup( TSBMLRenderGroup.create(newRg) );
   self.renderInfo.addStyle( TSBMLRenderStyle.create(newStyle) );
+end;
+
+function TNetworkToModel.generateRxnLineEnding( id: string; fColorDefId: string;
+                               rxnState: TReactionState ): TSBMLRenderLineEnding;
+var newLineEnd: TSBMLRenderLineEnding;
+    newPolygon: TSBMLRenderPolygon;
+    newRGroup: TSBMLRenderGroup;
+    newBBox: TSBMLLayoutBoundingBox;
+    i: integer;
+    x,y: double;
+begin
+  newLineEnd := TSBMLRenderLineEnding.create(id);
+  newBBox := TSBMLLayoutBoundingBox.create();
+  newBBox.setDims(self.arrowBBoxDims);
+  x := self.arrowBBoxDims.getWidth/2;
+  y := self.arrowBBoxDims.getHeight/2;
+  newBBox.setPoint(x,y);
+  newLineEnd.setBoundingBox(newBBox);
+  newRGroup := TSBMLRenderGroup.create();
+  newRGroup.setStrokeWidth( rxnState.thickness );
+  newRGroup.setStrokeColor( fColorDefId );
+  newRGroup.setFillColor( fColorDefId );
+  newPolygon := TSBMLRenderPolygon.create();
+  for i := 0 to length( self.rxnArrowPts ) -1 do
+    begin
+      console.log('pt: ',i,': ', self.rxnArrowPts[i].x,', ',self.rxnArrowPts[i].y );
+      newPolygon.addPt( TSBMLRenderPoint.create(self.rxnArrowPts[i].x, self.rxnArrowPts[i].y ) );
+    end;
+
+  newPolygon.setFill( fColorDefId );
+  newPolygon.setStroke( fColorDefId );
+  newPolygon.setStrokeWidth( rxnState.thickness );
+  newRGroup.setPolygon( newPolygon );
+  newLineEnd.setRenderGroup( newRGroup );
+  Result := newLineEnd;
 end;
 
 function TNetworkToModel.getModel: TModel;
