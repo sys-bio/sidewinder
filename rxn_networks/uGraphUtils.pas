@@ -17,8 +17,6 @@ function computeLineIntersection (node : TNode; scalingFactor : double; var pt :
 
 implementation
 
-Uses uNetwork;
-
 const
   HANDLE_RADIUS = 5.0;
 

@@ -2,7 +2,7 @@ unit uDrawReaction;
 
 interface
 
-Uses SysUtils, Classes, WEBLib.Graphics, Types, uNetwork, Dialogs, uNetwork, uNetworkTypes;
+Uses SysUtils, Classes, WEBLib.Graphics, Types, uNetwork, Dialogs, uNetworkTypes;
 
 type
    TReactionRender = class
@@ -26,7 +26,7 @@ type
 
 implementation
 
-Uses uGraphUtils, uNetworkTypes;
+Uses uGraphUtils;
 
 const
   CENTROID_RADIUS = 3;
