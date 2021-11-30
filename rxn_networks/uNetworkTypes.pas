@@ -21,14 +21,6 @@ type
   TLineSegment = record p, q : TPointF; end;
   TBoundingBoxSegments = array[1..4] of TLineSegment;   // A Square
 
-  TArcDirection = (adInArc, adOutArc);  // Arc comes into the arc center or out of the arc center
-  TBezierCurve = record
-     src, dest : TPointF;
-     h1, h2 : TPointF;
-     Merged : LongBool;
-     arcDirection : TArcDirection;
-  end; // Bezier curve
-
   function getReactionTypeString (atype : TReactionType) : string;
   function getReactionType (atype : string) : TReactionType;
 

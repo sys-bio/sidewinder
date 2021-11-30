@@ -48,6 +48,7 @@ type
 
   TCompartment = class
       state : TCompartmentState;
+
   end;
 
   // This is used to support undo operations and json reading and writing
@@ -73,8 +74,6 @@ type
        function    getCenter : TPointF;
        function    getNodeBoundingBox : TBoundingBoxSegments;
        procedure   unSelect;
-       //function    computeOuterSegs (node : TNode) : TBoundingBoxSegments;
-       //function    computeLaunchPoint (endPt : TPointF) : TPointF;
        function    getCurrentState : TNodeState;
        procedure   loadState (node : TNodeState);
        constructor create (id : string);
@@ -98,7 +97,6 @@ type
       rateParams :TList<TSBMLparameter>; // rate and param consts,
       fillColor : TColor;
       thickness : integer;
-      bezierCurves : array of TBezierCurve;
 
       procedure saveAsJSON (reactionObject : TJSONObject);
       procedure loadFromJSON (obj : TJSONObject);
@@ -174,10 +172,10 @@ type
        function    hasReactions (node : TNode) : boolean;
        function    getCurrentState : TNetworkSavedState;
        procedure   loadState (networkState : TNetworkSavedState);
-       property    OnNetworkEvent: TNetworkEvent read FNetworkEvent write FNetworkEvent;
-       property    OnAutoLayoutEvent: TAutoLayoutEvent read FAutoLayoutEvent write FAutoLayoutEvent;
-       procedure   networkEvent(sender: TObject); // Notify listener that Network has changed.
-       procedure   autoLayoutEvent(sender: TObject); // Notify listener that Network layout needs to be configured.
+       property OnNetworkEvent: TNetworkEvent read FNetworkEvent write FNetworkEvent;
+       property OnAutoLayoutEvent: TAutoLayoutEvent read FAutoLayoutEvent write FAutoLayoutEvent;
+       procedure networkEvent(sender: TObject); // Notify listener that Network has changed.
+       procedure autoLayoutEvent(sender: TObject); // Notify listener that Network layout needs to be configured.
        constructor Create (id : string);
   end;
 
@@ -1024,7 +1022,6 @@ begin
 end;
 
 
-
 procedure TNetwork.computeUniUniCoords (reaction : TReaction; srcNode, destNode : TNode);
 begin
   // To be implemented
@@ -1032,60 +1029,9 @@ end;
 
 
 procedure TNetwork.computeAnyToAnyCoordinates (reaction : TReaction; sourceNodes, destNodes : array of TNode);
-var cx, cy : double;
-    i : integer;
-    nReactants, nProducts, nTotal : integer;
-    bnx, bny, bn_1x, bn_1y, c1x, c1y : double;
-    pt : TPointF;
-    src : TNode;
-    index: integer;
 begin
-  nReactants := length (sourceNodes);
-  nProducts := length (destNodes);
-  nTotal := nReactants + nProducts;
 
-  reaction.state.arcCenter := ComputeCentroid (reaction);
-  cx := reaction.state.arcCenter.x; cy := reaction.state.arcCenter.y;
-
-  setLength (reaction.state.bezierCurves, nTotal);
-
-  for i := 0 to nReactants - 1 do
-      reaction.state.bezierCurves[i].arcDirection := adInArc;
-  for i := nReactants to nTotal - 1 do
-      reaction.state.bezierCurves[i].arcDirection := adOutArc;
-
-  for i := 0 to nReactants - 1 do
-      begin
-      findNode (sourceNodes[i].state.id, index);
-      //pt := nodes[index].computeLaunchPoint (reaction.state.arcCenter);
-
-      reaction.state.bezierCurves[i].src := pt;
-      reaction.state.bezierCurves[i].dest := reaction.state.arcCenter;
-      reaction.state.bezierCurves[i].h1.x := pt.x + (cx - nodes[index].state.x) / 2;
-      reaction.state.bezierCurves[i].h1.y := pt.y + (cy - nodes[index].state.y) / 2;
-      reaction.state.bezierCurves[i].h2.x := pt.x + (cx - nodes[index].state.x) / 2;
-      reaction.state.bezierCurves[i].h2.y := pt.y + (cy - nodes[index].state.y) / 2;
-      end;
-
-  for i := 0 to nProducts - 1 do
-      begin
-      findNode (destNodes[i].state.id, index);
-      //pt := nodes[index].computeLaunchPoint (reaction.state.arcCenter);
-
-      reaction.state.bezierCurves[i+nReactants].src := reaction.state.arcCenter;
-      reaction.state.bezierCurves[i+nReactants].dest := pt;
-      reaction.state.bezierCurves[i+nReactants].h1.x := pt.x + (cx - nodes[index].state.x) / 2;
-      reaction.state.bezierCurves[i+nReactants].h1.y := pt.y + (cy - nodes[index].state.y) / 2;
-
-      reaction.state.bezierCurves[i+nReactants].h2.x := pt.x + (cx - nodes[index].state.x) / 2;
-      reaction.state.bezierCurves[i+nReactants].h2.y := pt.y + (cy - nodes[index].state.y) / 2;
-      end;
-
-  // Record the act that handles are merged
-  for i := nReactants to nReactants + nProducts - 1 do
-      reaction.state.bezierCurves[i].Merged := true;
 end;
-
 
 
 //function TNetwork.AddAnyToAnyEdge (sourceNodes, destNodes : array of TNode; var edgeIndex : integer) : TReaction;
@@ -1376,60 +1322,6 @@ begin
      result := True
   else result := False;
 end;
-
-// Construct the outer rectangle segments which forms the boundary
-// where arcs start and stop at nodes.
-//function TNode.ComputeOuterSegs (node : TNode) : TBoundingBoxSegments;
-//var tx, ty, tw, th : single;
-//begin
-//  tx := node.state.x;
-//  ty := node.state.y;
-//  tw := node.state.w;
-//  th := node.state.h;
-//
-//  Result[1].p.x := tx - NODE_ARC_DEADSPACE;
-//  Result[1].p.y := ty - NODE_ARC_DEADSPACE;
-//  Result[1].q.x := tx + tw + NODE_ARC_DEADSPACE;
-//  Result[1].q.y := ty - NODE_ARC_DEADSPACE;
-//
-//  Result[2].p.x := tx + tw + NODE_ARC_DEADSPACE;
-//  Result[2].p.y := ty - NODE_ARC_DEADSPACE;
-//  Result[2].q.x := tx + tw + NODE_ARC_DEADSPACE;
-//  Result[2].q.y := ty + th + NODE_ARC_DEADSPACE;
-//
-//  Result[3].p.x := tx + tw + NODE_ARC_DEADSPACE;
-//  Result[3].p.y := ty + th + NODE_ARC_DEADSPACE;
-//  Result[3].q.x := tx - NODE_ARC_DEADSPACE;
-//  Result[3].q.y := ty + th + NODE_ARC_DEADSPACE;
-//
-//  Result[4].p.x := tx - NODE_ARC_DEADSPACE;
-//  Result[4].p.y := ty + th + NODE_ARC_DEADSPACE;
-//  Result[4].q.x := tx - NODE_ARC_DEADSPACE;
-//  Result[4].q.y := ty - NODE_ARC_DEADSPACE;
-//end;
-
-
-//function TNode.computeLaunchPoint (endPt : TPointF) : TPointF;
-//var v : TLineSegment; i : integer; SquareSegs : TBoundingBoxSegments;
-//begin
-// TO BE DONE
-//  // Define a straight line segment from Node to end Pt
-//  v.p.x := state.x + (state.w / 2);
-//  v.p.y := state.y + (state.h / 2);
-//
-//  v.q.x := endPt.x;
-//  v.q.y := endPt.y;
-//  // Compute the point where the segment will start and terminate
-//  // Gather the boundary segments lines around the node
-//  SquareSegs := computeOuterSegs (self);
-//  for i := 1 to 4 do
-//      if SegmentIntersects (SquareSegs[i], v, Result) then
-//         exit;
-//
-//  // if no intersection then use node centres
-//  result.x := state.x;
-//  result.y := state.y;
-//end;
 
 
 procedure TNode.UnSelect;

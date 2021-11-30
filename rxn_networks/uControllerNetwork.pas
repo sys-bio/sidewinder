@@ -88,7 +88,7 @@ type
 
 implementation
 
-Uses JS, Web, WEBLib.JSON, uGraphUtils;
+Uses JS, Web, WEBLib.JSON, uGraphUtils, uNetworkTypes;
 
 constructor TNetworkStack.Create;
 begin

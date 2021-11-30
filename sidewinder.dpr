@@ -43,9 +43,7 @@ uses
   uPlotPanel in 'plot\uPlotPanel.pas',
   uSBMLClasses.Layout in 'sbml\uSBMLClasses.Layout.pas',
   uASTNode in 'math\uASTNode.pas',
-  uSBMLClasses.Render in 'sbml\uSBMLClasses.Render.pas',
-  uSidewinderConsts in 'uSidewinderConsts.pas',
-  uSidewinderGlobal in 'uSidewinderGlobal.pas';
+  uSBMLClasses.Render in 'sbml\uSBMLClasses.Render.pas';
 
 {$R *.res}
 

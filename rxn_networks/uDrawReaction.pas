@@ -2,7 +2,7 @@ unit uDrawReaction;
 
 interface
 
-Uses SysUtils, Classes, WEBLib.Graphics, Types, Dialogs, uNetwork, uNetworkTypes;
+Uses SysUtils, Classes, WEBLib.Graphics, Types, uNetwork, Dialogs, uNetwork, uNetworkTypes;
 
 type
    TReactionRender = class
@@ -12,7 +12,6 @@ type
          scalingFactor : double;
          arrowPts: array of TPointF;
          procedure drawArrow (tip : TPointF; dxdt, dydt : double);
-         procedure drawBezierToCentroid (arcId : integer; reaction : TReaction; AdjustedArcCentre : TPointF; scalingFactor: double);
          procedure drawStraightLineToCentroid(ArcId: integer; reaction : TReaction; centroid: TPointF; scalingFactor: double);
          procedure drawStraightLineFromCentroid (arcId: integer; reaction : TReaction; centroid: TPointF; scalingFactor: double);
          procedure drawCentroidPoint(adjustedArcCenter : TPointF; color : TColor);
@@ -27,7 +26,7 @@ type
 
 implementation
 
-Uses uGraphUtils;
+Uses uGraphUtils, uNetworkTypes;
 
 const
   CENTROID_RADIUS = 3;
@@ -162,54 +161,6 @@ begin
      //   end;
 end;
 
-procedure TReactionRender.drawBezierToCentroid (arcId : integer; reaction : TReaction; AdjustedArcCentre : TPointF; scalingFactor: double);
-var pSrc, pDest, h1, h2, pt : TPointF;
-    par : double;
-    Segn : integer;
-    node : TNode;
-begin
-  node := reaction.state.srcPtr[arcId];
-
-  // Get the bezier control handle coordinates for the first subarc
-  h1 := scalePt (reaction.state.bezierCurves[arcId].h1, scalingFactor);
-  h2 := scalePt (reaction.state.bezierCurves[arcId].h2, scalingFactor);
-
-  // We will draw an arc form the node to the arc centre
-  // First calculate the centre of the src node, then the arc centre
-  pSrc := scalePt (node.getCenter, scalingFactor);
-  pDest := scalePt (AdjustedArcCentre, scalingFactor);
-
-  // Compute the points along the bezier from node centre to centroid
-  ComputeBezPoints ([pSrc, h1, h2, pDest]);
-
-  // Adjust for changes in the origin
-  h1 := minusPt (h1, Origin);
-  h2 := minusPt (h2, Origin);
-  pDest := minusPt (pDest, Origin);
-
-  // Clip the src starting point by returning the bezier segment number which intersects with the node outer rectangle }
-  if ComputeBezLineIntersection (node, pt, Par, Segn) then  // Only draw if successful }
-     begin
-     // Store the new start point for the bezier, and draw it
-     pSrc := minusPt (pt, Origin);
-     // See UniUni for explanation of following line
-     //intersect[arcId] := pt;
-
-     // TO BE DONE HMS
-     //canvas.Stroke.Kind := TBrushKind.Solid;
-     //canvas.Stroke.Thickness := scalingFactor*lineThickness;
-     //if selected then
-     //   canvas.Stroke.Color := selectedLineColor
-     //else
-     //   canvas.Stroke.Color := lineColor;
-
-     //drawBezier (ca.canvas, [TPointF.Create (pSrc.x, pSrc.y), TPointF.Create (h1.x, h1.y),
-     //                        TPointF.Create (h2.x, h2.y), TPointF.Create (pDest.x, pDest.y)]);
-     // if Selected then DoDrawSubArcHandles (ca.canvas, [pSrc, h1, h2, pDest]);
-     end;
-end;
-
-
 
 procedure TReactionRender.drawStraightLineToCentroid(ArcId: integer; reaction : TReaction;
              centroid: TPointF; scalingFactor: double);
@@ -294,6 +245,7 @@ begin
 end;
 
 
+
 function isMouseOnArcCentre(reaction: TReaction; x, y: double): Boolean;
 begin
   if PointWithinCircle(x, y, computeCentroid (reaction)) then
@@ -311,6 +263,7 @@ begin
 end;
 
 
+
 procedure TReactionRender.drawAnyToAny (reaction : TReaction);
 var
   i: integer;
@@ -322,8 +275,8 @@ begin
    // To arc center
    for i := 0 to reaction.state.nReactants - 1 do
        begin
-       //drawStraightLineToCentroid (i, reaction, centroid, scalingFactor);
-       drawBezierToCentroid (i, reaction, centroid, scalingFactor);
+       drawStraightLineToCentroid (i, reaction, centroid, scalingFactor);
+
 //       case edgeLineType of
 //         ltBezier :
 //           drawBezierToCentroid (i, (srcConnectedNodeList[ i ] as TConnectedNode).SubNode, AdjustedArcCentre, Origin, scalingFactor);
@@ -360,8 +313,3 @@ end;
 
 
 end.
-
-
-
-
-

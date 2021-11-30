@@ -12,7 +12,7 @@ uses
   uControllerNetwork, uNetworkCanvas, uNetwork, Vcl.TMSFNCTypes, Vcl.TMSFNCUtils,
   Vcl.TMSFNCGraphics,
   Vcl.TMSFNCGraphicsTypes, Vcl.TMSFNCCustomControl, Vcl.TMSFNCScrollBar,
-  uNetworkTypes, WEBLib.Lists, Vcl.Forms, uModel,
+  uNetworkTypes, Vcl.Imaging.pngimage, WEBLib.Lists, Vcl.Forms, uModel,
   uSBMLClasses, uSimulation, uControllerMain,
   uODE_FormatUtility, uGraphP, Vcl.Menus, WEBLib.Menus, ufVarSelect, uPlotPanel,
   uParamSliderLayout, uSidewinderTypes, WEBLib.ComCtrls;

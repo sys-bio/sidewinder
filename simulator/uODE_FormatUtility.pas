@@ -6,7 +6,7 @@ unit uODE_FormatUtility;
 // Convert basic math functions to javascript notation (ie pow() -> Math.pow() )
 
 interface
-uses System.SysUtils, System.StrUtils, System.Types,
+uses System.SysUtils, System.StrUtils, System.StrUtils, System.Types,
      web, uSBMLClasses, uModel, uSBMLClasses.rule;
 
 type
