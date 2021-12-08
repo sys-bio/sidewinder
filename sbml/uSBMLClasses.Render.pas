@@ -27,8 +27,10 @@ interface
     procedure setId( sNewId: string);
     function  getId(): string;
     procedure setValue( sNewValue: string );
-    function  getValue(): string;
+    function  getValue(): string; // if only 6 hex digits then alpha assumed #FF
+    procedure setValueRGBAInts( red, green, blue, alpha: integer );
     function  containsValue( sCmpValue: string ): boolean;
+    procedure clear();
 
  end;
 
@@ -133,6 +135,31 @@ interface
 
  end;
 
+ TSBMLRenderEllipse = class( TSBMLRenderPrimitive1D )
+ private
+   fill: string;   // fill color
+   cx, cy: double; // elipse center coord, z not used
+   rx, ry: double; // radius along x, y axis.
+   ratio: double;  // optional, the biggest ellipse with the desired ratio
+                   // of width to height. '1' is circle
+ public
+   constructor create() overload;
+   constructor create( cpy: TSBMLRenderEllipse ) overload;
+   function getCx(): double;
+   procedure setCx( val: double );
+   function getCy(): double;
+   procedure setCy( val: double );
+   function getRx(): double;
+   procedure setRx( val: double );
+   function getRy(): double;
+   procedure setRy( val: double );
+   function getRatio(): double;
+   procedure setRatio( val: double );
+   function isRatioSet(): boolean;
+   procedure setFill( newFill: string );
+   function getFill(): string;
+
+ end;
 
  TSBMLRenderGroup = class
    private
@@ -146,10 +173,12 @@ interface
      hTextAnchor: THTextAnchorTypes; // horizontally aligned in BBox,
      endHead: string; // optional, Id which point to a LineEnding for the start and end of curves.
      startHead: string; // optional,    "
-     rRectangle: TSBMLRenderRectangle; // optional
+     rRectangle: TSBMLRenderRectangle;// optional
      rectangleSet: boolean;
      rPolygon: TSBMLRenderPolygon;    // optional
      polygonSet: boolean;
+     rEllipse: TSBMLRenderEllipse;    // optional
+     ellipseSet: boolean;
    public
      constructor create() overload;
      constructor create( cpy: TSBMLRenderGroup ) overload;
@@ -171,6 +200,9 @@ interface
      procedure setPolygon( newR: TSBMLRenderPolygon );
      function getPolygon(): TSBMLRenderPolygon;
      function isPolygonSet(): boolean;
+     procedure setEllipse( newE: TSBMLRenderEllipse );
+     function getEllipse(): TSBMLRenderEllipse;
+     function isEllipseSet(): boolean;
      procedure setVTextAnchor( newAnchor: TVTextAnchorTypes );
      function getVTextAnchor(): TVTextAnchorTypes;
      procedure setHTextAnchor( newAnchor: THTextAnchorTypes );
@@ -179,12 +211,14 @@ interface
      function getStartHead(): string;
      procedure setEndHead( headId: string );
      function getEndHead(): string;
+     procedure clear();
  end;
 
  TSBMLRenderLineEnding = class( TSBMLRenderPrimitive1D )
    private
      endBBox: TSBMLLayoutBoundingBox;
      endRenderGroup: TSBMLRenderGroup;
+     enableRotationalMapping: boolean;
    public
      constructor create( newId: string ) overload;
      constructor create( cpy: TSBMLRenderLineEnding ) overload;
@@ -192,6 +226,8 @@ interface
      function getBoundingBox(): TSBMLLayoutBoundingBox;
      procedure setRenderGroup( newRG: TSBMLRenderGroup );
      function getRenderGroup(): TSBMLRenderGroup;
+     function isSetRotationalMapping(): boolean;
+     procedure setRotationalMapping( value: boolean );
  end;
 
  TSBMLRenderStyle = class
@@ -311,6 +347,21 @@ implementation
   begin
     Result := self.value;
   end;
+
+  procedure TSBMLRenderColorDefinition.setValueRGBAInts( red, green, blue, alpha: integer );
+  begin
+    // if only 6 hex digits then alpha assumed #FF
+    self.value := intToHex( red, 2) + intToHex( green, 2 )
+                 + intToHex( blue, 2 ) + intToHex( alpha, 2 );
+
+  end;
+
+  procedure TSBMLRenderColorDefinition.clear;
+  begin
+    self.id := '';
+    self.value := '';
+  end;
+
   function  TSBMLRenderColorDefinition.containsValue( sCmpValue: string ): boolean;
   begin
     if self.value = sCmpValue then Result := true
@@ -383,6 +434,7 @@ implementation
     self.rPolygon := nil;
     self.rectangleSet := false;
     self.polygonSet := false;
+    self.ellipseSet := false;
   end;
 
   constructor TSBMLRenderGroup.create( cpy: TSBMLRenderGroup ) overload;
@@ -398,6 +450,7 @@ implementation
     self.endHead := cpy.getEndHead;
     self.rectangleSet := cpy.isRectangleSet;
     self.polygonSet := cpy.isPolygonSet;
+    self.ellipseSet := cpy.isEllipseSet;
     if cpy.isRectangleSet then
     begin
       self.rRectangle := TSBMLRenderRectangle.create( cpy.getRectangle );
@@ -406,6 +459,27 @@ implementation
     begin
       self.rPolygon := TSBMLRenderPolygon.create( cpy.getPolygon );
     end;
+    if cpy.isEllipseSet then
+      self.rEllipse := TSBMLRenderEllipse.create( cpy.getEllipse );
+  end;
+
+  procedure TSBMLRenderGroup.clear();
+  begin
+    self.iStrokeWidth := -1;   // not set
+    self.sStrokeColor := '';
+    self.sFillColor := '';
+    self.iFontSize := -1;
+    self.sFontStyle := 'normal';
+    self.vTextAnchor := V_MIDDLE;
+    self.hTextAnchor := H_MIDDLE;
+    self.startHead := '';
+    self.endHead := '';
+    self.rRectangle := nil;
+    self.rPolygon := nil;
+    self.rEllipse := nil;
+    self.rectangleSet := false;
+    self.polygonSet := false;
+    self.ellipseSet := false;
   end;
 
   procedure TSBMLRenderGroup.setStartHead( headId: string );
@@ -530,12 +604,26 @@ implementation
     Result := self.polygonSet;
   end;
 
+  procedure TSBMLRenderGroup.setEllipse(newE: TSBMLRenderEllipse);
+  begin
+    self.rEllipse := TSBMLRenderEllipse.create( newE );
+    self.ellipseSet := true;
+  end;
+  function TSBMLRenderGroup.getEllipse(): TSBMLRenderEllipse;
+  begin
+    Result := self.rEllipse;
+  end;
+  function TSBMLRenderGroup.isEllipseSet: Boolean;
+  begin
+    Result := self.ellipseSet;
+  end;
 
   constructor TSBMLRenderLineEnding.create( newId: string ) overload;
   begin
     self.id := newId;
     self.stroke := '';
     self.strokeWidth := -1;
+    self.enableRotationalMapping := false;
   end;
 
   constructor TSBMLRenderLineEnding.create( cpy: TSBMLRenderLineEnding ) overload;
@@ -543,8 +631,19 @@ implementation
     self.id := cpy.getId;
     self.stroke := cpy.getStroke;
     self.strokeWidth := cpy.getStrokeWidth;
+    self.enableRotationalMapping := cpy.isSetRotationalMapping;
     self.endBBox := TSBMLLayoutBoundingBox.create( cpy.getBoundingBox );
     self.endRenderGroup := TSBMLRenderGroup.create( cpy.getRenderGroup );
+  end;
+
+  function TSBMLRenderLineEnding.isSetRotationalMapping(): boolean;
+  begin
+    Result := self.enableRotationalMapping;
+  end;
+
+  procedure TSBMLRenderLineEnding.setRotationalMapping( value: boolean );
+  begin
+    self.enableRotationalMapping := value;
   end;
 
   procedure TSBMLRenderLineEnding.setBoundingBox( newBBox: TSBMLLayoutBoundingBox );
@@ -949,4 +1048,86 @@ implementation
     Result := self.fill;
   end;
 
+  constructor TSBMLRenderEllipse.create() overload;
+  begin
+    Inherited create();
+    self.fill := '';
+    self.cx := 0; self.cy := 0;
+    self.rx := 0; self.ry := 0;
+    self.ratio := 0;
+  end;
+  constructor TSBMLRenderEllipse.create( cpy: TSBMLRenderEllipse ) overload;
+  begin
+    if cpy <> nil then
+    begin
+      Inherited create( cpy );
+      self.fill := cpy.getFill;
+      self.cx := cpy.getCx;
+      self.cy := cpy.getCy;
+      self.rx := cpy.getRx;
+      self.ry := cpy.getRy;
+      self.Ratio := cpy.getRatio;
+    end;
+  end;
+
+  function TSBMLRenderEllipse.getCx(): double;
+  begin
+    Result := self.cx;
+  end;
+  procedure TSBMLRenderEllipse.setCx( val: double );
+  begin
+    self.cx := val;
+  end;
+
+  function TSBMLRenderEllipse.getCy(): double;
+  begin
+    Result := self.cy;
+  end;
+  procedure TSBMLRenderEllipse.setCy( val: double );
+  begin
+    self.cy := val;
+  end;
+
+  function TSBMLRenderEllipse.getRx(): double;
+  begin
+    Result := self.rx;
+  end;
+  procedure TSBMLRenderEllipse.setRx( val: double );
+  begin
+    self.rx := val;
+  end;
+
+  function TSBMLRenderEllipse.getRy(): double;
+  begin
+    Result := self.ry;
+  end;
+  procedure TSBMLRenderEllipse.setRy( val: double );
+  begin
+    self.ry := val;
+  end;
+
+  function TSBMLRenderEllipse.getRatio(): double;
+  begin
+    Result := self.ratio;
+  end;
+  procedure TSBMLRenderEllipse.setRatio( val: double );
+  begin
+    self.ratio := val;
+  end;
+
+  function TSBMLRenderEllipse.isRatioSet(): boolean;
+  begin
+    if self.ratio > 0 then
+      Result := true
+    else Result := false;
+  end;
+
+  procedure TSBMLRenderEllipse.setFill( newFill: string );
+  begin
+    self.fill := newFill;
+  end;
+  function TSBMLRenderEllipse.getFill(): string;
+  begin
+    Result := self.fill;
+  end;
 end.
