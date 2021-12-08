@@ -590,7 +590,8 @@ begin
         selectedReaction := reactionIndex;
         selectedNode := -1;
         console.log('mouse click over reaction');
-        network.reactions[index].selected := True;
+       // network.reactions[index].selected := True;
+        network.reactions[selectedReaction].selected := True;
         exit;
       end;
 
