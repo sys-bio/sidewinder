@@ -45,7 +45,6 @@ end;
 procedure fruchterman_reingold(network : TNetwork; width, height : integer; iterations : integer; callBack : TCallBack);
 var W, L, area : double;
     k, dt, t, x, y : double;
-    i : integer;
     dx, dy, ddx, ddy, delta, disp, d: double;
     v, u, m : integer;
     tempinit, alpha : double;

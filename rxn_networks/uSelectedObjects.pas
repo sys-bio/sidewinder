@@ -2,15 +2,15 @@ unit uSelectedObjects;
 
 interface
 
-Uses SysUtils, Classes, uNetwork;
+Uses SysUtils, Classes, uNetwork, Types, uNetworkTypes;
 
 type
-  TListSelectedObjects = array of TParent;
+  TListOfSelectedObjects = array of TParent;
 
   TSelectedObjects = class
 
    private
-    selectedObjects : TListSelectedObjects;
+    selectedObjects : TListOfSelectedObjects;
     function  getValue (index : integer) : TParent;
     procedure setValue (index : integer; obj : TParent);
    public
@@ -25,6 +25,15 @@ type
     constructor Create;
   end;
 
+  TObjectInformation = record
+     reactionIndex : integer;
+     handleCoords : TPointF;
+     arcId : integer;   // Which bezier is it?
+     handleId : integer;   // Which handle on the bezier is it?
+     isReactant : boolean;
+  end;
+
+var ObjectInformation : TObjectInformation;
 
 
 implementation

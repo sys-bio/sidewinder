@@ -103,6 +103,7 @@ type
     btnStopSimSave: TWebButton;
     lblRxnId: TWebLabel;
     lblRxnIdString: TWebLabel;
+    WebConsoleLog1: TWebConsoleLog;
 
     procedure btnUniUniClick(Sender: TObject);
     procedure btnBiBiClick(Sender: TObject);
@@ -319,30 +320,37 @@ procedure TMainForm.btnClearClick(Sender: TObject);
 begin
   network.Clear;
   networkPB1.Invalidate;
-
 end;
 
 procedure TMainForm.btnDrawClick(Sender: TObject);
 var
   n1, n2, n3, n4: TNode;
+  srcNodes, destNodes : array of TNode;
 begin
+  setLength (srcNodes, 1); setLength (destNodes, 1);
   if length(network.getCurrentState.savedNodes) = 0 then
   begin
     n1 := networkController.addNode('node1', 60, 200);
     n2 := networkController.addNode('node2', 270, 270);
     n3 := networkController.addNode('node3', 540, 80);
     n4 := networkController.addNode('node4', 400, 500);
-    console.log('btndrawclick: dy,height: ', n1.dy, ' dx:: ',n1.dx);
-    networkController.addReaction('r1', n1, n2);
-    networkController.addReaction('r2', n2, n3);
-    networkController.addReaction('r3', n3, n4);
-    networkController.addReaction('r4', n4, n2);
+    srcNodes[0] := n1; destNodes[0] := n2;
+    networkController.addReaction('r1', srcNodes, destNodes);
+
+    srcNodes[0] := n2; destNodes[0] := n3;
+    networkController.addReaction('r2', srcNodes, destNodes);
+
+    srcNodes[0] := n3; destNodes[0] := n4;
+    networkController.addReaction('r3', srcNodes, destNodes);
+
+    srcNodes[0] := n4; destNodes[0] := n2;
+    networkController.addReaction('r4', srcNodes, destNodes);
     networkPB1.Invalidate;
   end
   else
     notifyUser('Network already exists in panel.');
-
 end;
+
 
 procedure TMainForm.btnIdleClick(Sender: TObject);
 begin
@@ -589,7 +597,7 @@ var i: integer;
 begin
  //console.log('TMainForm.RxnParamComboBoxChange');
  i := self.RxnParamComboBox.ItemIndex;
- self.rxnParamEdit.text := floattostr(networkController.network.reactions[networkController.selectedEdge].state.rateParams[i].getValue);
+ self.rxnParamEdit.text := floattostr(networkController.network.reactions[networkController.selectedReaction].state.rateParams[i].getValue);
 end;
 
 procedure TMainForm.RxnParamComboBoxClick(Sender: TObject);
@@ -617,14 +625,14 @@ begin
   try
     begin
       newVal :=strtofloat(self.RxnParamEdit.text);
-      self.networkController.network.reactions[networkController.selectedEdge].state.rateParams[self.RxnParamComboBox.ItemIndex].setValue(newVal);
+      self.networkController.network.reactions[networkController.selectedReaction].state.rateParams[self.RxnParamComboBox.ItemIndex].setValue(newVal);
       self.networkController.network.networkEvent(nil);   // notify listener that network changed. TODO: Move to network class ( add add setValue to networkController)
     end;
   except
     on Exception : EConvertError do
     begin
     notifyUser(Exception.Message);
-    self.RxnParamEdit.text := floattostr(self.networkController.network.reactions[networkController.selectedEdge].state.rateParams[self.RxnParamComboBox.ItemIndex].getValue());
+    self.RxnParamEdit.text := floattostr(self.networkController.network.reactions[networkController.selectedReaction].state.rateParams[self.RxnParamComboBox.ItemIndex].getValue());
     end;
 
   end;
@@ -661,10 +669,8 @@ begin
   networkPB1.Invalidate;
   if networkController.selectedNode <> -1 then
     begin
-      editNodeId.Text := networkController.network.nodes
-        [networkController.selectedNode].state.id;
-      editNodeConc.Text := networkController.network.nodes
-        [networkCOntroller.selectedNode].state.conc.ToString;
+      editNodeId.Text := networkController.network.nodes [networkController.selectedNode].state.id;
+      editNodeConc.Text := networkController.network.nodes [networkCOntroller.selectedNode].state.conc.ToString;
       pnlNodePanel.visible := true;
       self.rightPanelType := NODE_PANEL;
       self.RRxnEditWPanel.visible := false;
@@ -673,7 +679,7 @@ begin
       self.RNodeEditWPanel.invalidate;
       self.setRightPanels;
     end
-  else if networkController.selectedEdge <>-1 then
+  else if networkController.selectedReaction <>-1 then
     begin
       self.rightPanelType := REACTION_PANEL;
       self.RSimWPanel.visible := false;
@@ -690,7 +696,6 @@ begin
         self.rightPanelType := SIMULATION_PANEL;
         self.setRightPanels;
       end;
-
 end;
 
 procedure TMainForm.networkPB1MouseMove(Sender: TObject; Shift: TShiftState;
@@ -1574,8 +1579,8 @@ end;
 procedure TMainForm.updateRxnRatePanel(); // Refresh with current rxn info.
 begin
   try
-    self.rateLawEqLabel.Caption := networkController.network.reactions[networkController.selectedEdge].state.rateLaw; // use getRateLaw instead.
-    self.lblRxnIdString.Caption := networkController.network.reactions[networkController.selectedEdge].state.id;
+    self.rateLawEqLabel.Caption := networkController.network.reactions[networkController.selectedReaction].state.rateLaw; // use getRateLaw instead.
+    self.lblRxnIdString.Caption := networkController.network.reactions[networkController.selectedReaction].state.id;
     self.RxnRatePanel.Width := self.rateLawEqLabel.Width + self.rateLawLabel.Width + 60;
     self.RxnRatePanel.invalidate;
     self.RSimWPanel.visible := false;
@@ -1597,14 +1602,14 @@ var paramTStr: string;
 begin
   paramTStr:= '';
   self.RxnParamComboBox.clear;
-  for i := 0 to networkController.network.reactions[networkController.selectedEdge].state.rateParams.count -1 do
+  for i := 0 to networkController.network.reactions[networkController.selectedReaction].state.rateParams.count -1 do
   begin
-    paramTStr := networkController.network.reactions[networkController.selectedEdge].state.rateParams.Items[i].getId;
-    self.RxnParamComboBox.AddItem(networkController.network.reactions[networkController.selectedEdge].state.rateParams.Items[i].getId,nil);
+    paramTStr := networkController.network.reactions[networkController.selectedReaction].state.rateParams.Items[i].getId;
+    self.RxnParamComboBox.AddItem(networkController.network.reactions[networkController.selectedReaction].state.rateParams.Items[i].getId,nil);
   end;
   if self.rxnParamComboBox.Items.count >0 then
   begin
-    self.rxnParamEdit.text := floattostr(networkController.network.reactions[networkController.selectedEdge].state.rateParams[0].getValue);
+    self.rxnParamEdit.text := floattostr(networkController.network.reactions[networkController.selectedReaction].state.rateParams[0].getValue);
   end;
   self.RxnParamComboBox.invalidate;
 
@@ -1614,16 +1619,16 @@ procedure TMainForm.updateRxnStoichPanel();
 var i: integer;
 begin
   self.clearRxnStoichCoeffs();
-  for i := 0 to Length(networkController.network.reactions[networkController.selectedEdge].state.srcId)-1 do
+  for i := 0 to Length(networkController.network.reactions[networkController.selectedReaction].state.srcId)-1 do
   begin
-    if networkController.network.reactions[networkController.selectedEdge].state.srcId[i] <> '' then
+    if networkController.network.reactions[networkController.selectedReaction].state.srcId[i] <> '' then
       self.addRxnStoichEdit(i, true);
 
   end;
 
-  for i := 0 to Length(networkController.network.reactions[networkController.selectedEdge].state.destId)-1 do
+  for i := 0 to Length(networkController.network.reactions[networkController.selectedReaction].state.destId)-1 do
   begin
-    if networkController.network.reactions[networkController.selectedEdge].state.destId[i] <> '' then
+    if networkController.network.reactions[networkController.selectedReaction].state.destId[i] <> '' then
     begin
       self.addRxnStoichEdit(i, false);
     end;
@@ -1682,29 +1687,29 @@ begin
 
     if rxnReactant then
     begin
-      if networkController.network.reactions[networkController.selectedEdge].state.srcId[spIndex] <> '' then
+      if networkController.network.reactions[networkController.selectedReaction].state.srcId[spIndex] <> '' then
       begin
-        newStoichLabel.caption := networkController.network.reactions[networkController.selectedEdge].state.srcId[spIndex];
+        newStoichLabel.caption := networkController.network.reactions[networkController.selectedReaction].state.srcId[spIndex];
         newStoichLabel.top := self.StoicReactantsLabel.top + self.StoicReactantsLabel.height + round(spIndex*EDITBOX_HT);
         rxnReactStoichLabels.add(newStoichLabel);
         newStoichEdit.Top := self.StoicReactantsLabel.top + self.StoicReactantsLabel.height + round(spIndex*EDITBOX_HT);
 
         newStoichEdit.onExit := editRxnSrcStoichExit;
-        newStoichEdit.Text := networkController.network.reactions[networkController.selectedEdge].state.srcStoich[spIndex].toString();
+        newStoichEdit.Text := networkController.network.reactions[networkController.selectedReaction].state.srcStoich[spIndex].toString();
         rxnReactStoichEdits.add(newStoichEdit);
       end;
     end
     else
     begin
-      if networkController.network.reactions[networkController.selectedEdge].state.destId[spIndex] <> '' then
+      if networkController.network.reactions[networkController.selectedReaction].state.destId[spIndex] <> '' then
       begin
-       newStoichLabel.caption := networkController.network.reactions[networkController.selectedEdge].state.destId[spIndex];
+       newStoichLabel.caption := networkController.network.reactions[networkController.selectedReaction].state.destId[spIndex];
        newStoichLabel.top := self.StoichProductsLabel.top + self.StoichProductsLabel.height + round(spIndex*20);
 
        rxnProdStoichLabels.add(newStoichLabel);
        newStoichEdit.Top := self.StoichProductsLabel.top + self.StoichProductsLabel.height + round(spIndex*20);
        newStoichEdit.onExit := editRxnDestStoichExit;
-       newStoichEdit.Text := networkController.network.reactions[networkController.selectedEdge].state.destStoich[spIndex].toString();
+       newStoichEdit.Text := networkController.network.reactions[networkController.selectedReaction].state.destStoich[spIndex].toString();
        rxnProdStoichEdits.add(newStoichEdit);
       end;
     end;

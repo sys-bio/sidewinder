@@ -73,6 +73,7 @@ type
        function    isInRectangle (selectionRect : TRect) : boolean;
        function    getCenter : TPointF;
        function    getNodeBoundingBox : TBoundingBoxSegments;
+       function    computeStartingPoint (endPt : TPointF) : TPointF;
        procedure   unSelect;
        function    getCurrentState : TNodeState;
        procedure   loadState (node : TNodeState);
@@ -93,7 +94,11 @@ type
       destPtr : array[0..5] of TNode;  // These are not saved to json as they are pointers
       rateLaw : string;                // Mass action rate law for reaction
       srcStoich : array[0..5] of double; // src Stoichiometric coefficients of the rxn.
-      destStoich : array[0..5] of double;// dest  "
+      destStoich : array[0..5] of double;// dest
+      lineType: TReactionLineType;
+      reactantReactionArcs: array of TBezierCurve;
+      productReactionArcs: array of TBezierCurve;
+
       rateParams :TList<TSBMLparameter>; // rate and param consts,
       fillColor : TColor;
       thickness : integer;
@@ -107,12 +112,26 @@ type
 
   TReaction = class (TParent)
        state : TReactionState;
+
+       // These define the start and end points of the bezier that's actually drawn,
+       // i.e the intersection of the bezier with the outer rectangle of a node,
+       // they'd don't need to be saved when the reaction is saved, they are
+       // computed on demand. There is one intersection point per bezier
+       intersectionPts : array[0..12] of TPointF; // Nees to be made dynamic
        procedure   unSelect;
        function    getCurrentState : TReactionState;
        procedure   loadState (nodes : TListOfNodes; reactionState : TReactionState);
        procedure   setRateRule;
        procedure   setDefaultParams;
        function    getRateRule: string;
+       function    overCentroid (x, y : double) : boolean;
+       procedure   adjustArcCentres(vx, vy: double);
+       function    overBezierHandle (x, y : double;
+                        var isReactantSide : boolean;
+                        var bezierId: integer;
+                        var handleId : TCurrentSelectedBezierHandle;
+                        var handleCoords: TPointF): Boolean;
+
        constructor create; overload;
        constructor create (id : string; src, dest : TNode); overload;
    end;
@@ -147,20 +166,24 @@ type
        function    convertToJSON : string;
        function    overNode (x, y : double; var node : TNode) : boolean; overload;
        function    overNode (x, y : double; var index : integer) : TNode; overload;
-       function    overEdge (x, y : double; var reactionIndex : integer) : TReaction;
-       function    overCentroid (x, y : double; var reactionIndex : integer) : TReaction;
+       function    overReaction (x, y : double; var reactionIndex, arcId : integer) : boolean;
+       function    overCentroid (selectedReaction : integer; x, y : double) : boolean;
+       function    overBezierHandle (x, y : double;
+                       selectedReaction : integer;
+                       var isReactant : boolean;
+                       var bezierId : integer;
+                       var handleId : TCurrentSelectedBezierHandle;
+                       var handleCoords: TPointF): Boolean;
 
-       function    findNode (id : string; var index : integer) : boolean;
+        function    findNode (id : string; var index : integer) : boolean;
        function    addNode (id : string) : TNode; overload;
        function    addNode (id : string; x, y : double) : TNode; overload;
        function    addNode (id : string; x, y, w, h : double) : TNode; overload;
        function    addNode (state : TNodeState): TNode; overload;
        function    buildNullNodeState(rxnId: string; num: integer): TNodeState; // used to add null node for one species rxn
 
-       procedure   computeUniUniCoords (reaction : TReaction; srcNode, destNode : TNode);
        procedure   computeAnyToAnyCoordinates (reaction : TReaction; sourceNodes, destNodes : array of TNode);
 
-       function    addUniUniReaction (id : string; src, dest : TNode) : integer; overload;
        function    addReaction (state : TReactionState) : TReaction; overload;
        function    addReaction (reaction : TReaction) : integer; overload;
        procedure   updateReactions(node: TNode);  // Node Id changes
@@ -505,6 +528,7 @@ end;
 constructor TNetwork.create (id : string);
 begin
   self.id := id;
+  computeBezierBlendingFuncs;
 end;
 
 procedure TNetwork.networkEvent(sender: TObject);
@@ -994,15 +1018,6 @@ begin
 end;
 
 
-function TNetwork.addUniUniReaction (id : string; src, dest : TNode) : integer;
-begin
-  setlength (reactions, length (reactions) + 1);
-  reactions[length (reactions)-1] := TReaction.create (id, src, dest);
-  result := length (reactions) - 1;
-  self.networkEvent(nil); // Notify listener
-end;
-
-
 function TNetwork.addReaction (state : TReactionState) : TReaction;
 begin
   setlength (reactions, length (reactions) + 1);
@@ -1022,20 +1037,85 @@ begin
 end;
 
 
-procedure TNetwork.computeUniUniCoords (reaction : TReaction; srcNode, destNode : TNode);
-begin
-  // To be implemented
-end;
-
-
 procedure TNetwork.computeAnyToAnyCoordinates (reaction : TReaction; sourceNodes, destNodes : array of TNode);
+var nReactants, nProducts : integer;
+    cx, cy, sumX, sumY, centerX, centerY : double;
+    i : integer;
+    nDestCount : integer;
+    startPt, pt : TPointF;
 begin
+  nReactants := length (sourceNodes);
+  nProducts := length (destNodes);
 
+  reaction.state.arcCenter := computeCentroid (reaction);
+  cx := reaction.state.arcCenter.x; cy := reaction.state.arcCenter.y;
+
+  setLength (reaction.state.reactantReactionArcs, nReactants);
+  setLength (reaction.state.productReactionArcs, nProducts);
+
+  for i := 0 to nReactants - 1 do
+      reaction.state.reactantReactionArcs[i].arcDirection := adInArc;
+  for i := 0 to nProducts - 1 do
+      reaction.state.productReactionArcs[i].arcDirection := adOutArc;
+
+  // Set up start handles on each reactant, these are half way
+  // between the node and arc center
+  for i := 0 to nReactants - 1 do
+      begin
+      pt := sourceNodes[i].getCenter;
+      reaction.state.reactantReactionArcs[i].h1.x := pt.x + (cx - pt.x) / 2;
+      reaction.state.reactantReactionArcs[i].h1.y := pt.y + (cy - pt.y) / 2;
+      end;
+
+  // Compute the common position of the inner control point on the
+  // reactant side, the opposite inner control point will be
+  // made collinear with this point. We'll make the inner control point
+  // on the reactant side the centroid between teh reactants and arccenter
+
+  sumX := 0; sumY := 0;
+  for i := 0 to nReactants - 1 do
+      begin
+      pt := sourceNodes[i].getCenter;
+      sumX := sumX + pt.x;
+      sumY := sumY + pt.y;
+      end;
+  // Don't forget to add the centroid
+  sumX := sumX + cx; sumY := sumY + cy;
+  centerX := sumx/(nReactants+1);
+  centerY := sumy/(nReactants+1);
+
+  for i := 0 to nReactants -1 do
+      begin
+      reaction.state.reactantReactionArcs[i].h2.x := centerX;
+      reaction.state.reactantReactionArcs[i].h2.y := centerY;
+      end;
+
+  // Set up start handles on each product
+  for i := 0 to nProducts - 1 do
+      begin
+      pt := destNodes[i].getCenter;
+      reaction.state.productReactionArcs[i].h2.x := cx + (pt.x - cx) / 2;
+      reaction.state.productReactionArcs[i].h2.y := cy + (pt.y - cy) / 2;
+      end;
+
+  // Next compute the collinear coordiante for the inner control points of the products
+  nDestCount := 0;
+  for i := 0 to nProducts - 1 do
+      begin
+      reaction.state.productReactionArcs[i].h1.x := 2*cx - reaction.state.reactantReactionArcs[0].h2.x;
+      reaction.state.productReactionArcs[i].h1.y := 2*cy - reaction.state.reactantReactionArcs[0].h2.y;
+      end;
+
+  // Record fact that handles are merged
+  for i := 0 to nProducts - 1 do
+      reaction.state.productReactionArcs[i].Merged := true;
+
+  // If we want line segments they go here.
+  // ...... (See uNetwork.pas in pathwayDesigner line 2311)
 end;
 
 
-//function TNetwork.AddAnyToAnyEdge (sourceNodes, destNodes : array of TNode; var edgeIndex : integer) : TReaction;
-function TNetwork.AddAnyToAnyEdge (id: string; sourceNodes, destNodes : array of TNode; var edgeIndex : integer) : TReaction;
+function TNetwork.addAnyToAnyEdge (id: string; sourceNodes, destNodes : array of TNode; var edgeIndex : integer) : TReaction;
 var newReaction : TReaction;
     i : integer;
     nSource, nDestination : integer;
@@ -1072,9 +1152,9 @@ begin
   //    destNodes[i].ConnectedEdgeList.Add (TConnectedEdge.Create (NewEdge));
 
   // Special case for AnyToAny if uniuni, no arccenter for uniuni
-  if (nSource = 1) and (nDestination = 1) then
-     computeUniUniCoords (newReaction, sourceNodes[0], destNodes[0])
-  else
+  //if (nSource = 1) and (nDestination = 1) then
+  //   computeUniUniCoords (newReaction, sourceNodes[0], destNodes[0])
+  //else
      computeAnyToAnyCoordinates (newReaction, sourceNodes, destNodes);
 
   // add Rate rule
@@ -1113,63 +1193,102 @@ begin
 end;
 
 
-function dist (x1, y1, x2, y2 : double) : double;
+function TNetwork.overReaction(x, y : double; var reactionIndex, arcId : integer) : boolean;
+var i, j : integer;  p1, p2 : TPointF;
+    parametricDistance : double;
 begin
-  result := sqrt (sqr(x2-x1) + sqr (y2-y1));
+  console.log ('In over reaction method');
+  result := False;
+  p2 := TPointF.Create (x, y);
+  for i := 0 to length (reactions) -1 do
+      begin
+      for j := 0 to reactions[i].state.nReactants - 1 do
+          begin
+          if ptOnBezier ([reactions[i].intersectionPts[j],
+                          reactions[i].state.reactantReactionArcs[j].h1,
+                          reactions[i].state.reactantReactionArcs[j].h2,
+                          reactions[i].state.arcCenter], p2, parametricDistance) then
+             begin
+             reactionIndex := i;
+             arcId := j;
+             console.log ('Found it');
+             exit (True);
+             end;
+          end;
+      for j := 0 to reactions[i].state.nProducts - 1 do
+         begin
+         if ptOnBezier ([reactions[i].state.arcCenter,
+                         reactions[i].state.productReactionArcs[j].h1,
+                         reactions[i].state.productReactionArcs[j].h2,
+                         reactions[i].intersectionPts[j]], p2, parametricDistance) then
+             begin
+             reactionIndex := i;
+             arcId := j;
+             console.log ('Found it');
+             exit (True);
+             end;
+
+         end;
+      end;
+
+//  for  i := 0 to length (reactions) - 1 do
+//       begin
+//       for j := 0 to reactions[i].state.nReactants - 1 do
+//           begin
+//           p1 := reactions[i].state.srcPtr[j].getCenter;
+//           p2 := reactions[i].state.arcCenter;
+//           if ptOnLine (p1, p2, x, y) then
+//              begin
+//              reactionIndex := i;
+//              exit (reactions[i]);
+//              end;
+//           end;
+//
+//       for j := 0 to reactions[i].state.nProducts - 1 do
+//           begin
+//           p2 := reactions[i].state.destPtr[j].getCenter;
+//           p1 := reactions[i].state.arcCenter;
+//           if ptOnLine (p1, p2, x, y) then
+//              begin
+//              reactionIndex := i;
+//              exit (reactions[i]);
+//              end;
+//           end;
+//       end;
 end;
 
 
-// www.jeffreythompson.org/collision-detection/line-point.php
-function ptOnLine (p1, p2 : TPointF; px, py : double) : boolean;
-var d1, d2 : double; lineLen, buffer : double;
+function TNetwork.overCentroid (selectedReaction : integer; x, y : double) : boolean;
 begin
-  d1 := dist(px, py, p1.x, p1.y);
-  d2 := dist(px, py, p2.x, p2.y);
-  lineLen := dist(p1.x, p1.y, p2.x, p2.y);
-  buffer := 0.2;    // higher the number = less accurate
-  if (d1 + d2 >= lineLen-buffer) and (d1 + d2 <= lineLen+buffer) then
-    result := True
+  // Are we over a reaction
+  if selectedReaction <> -1 then
+     begin
+     result := reactions[selectedReaction].overCentroid (x, y)
+     end
+  else
+     result := False;
+  //console.log ('Over centroid: ' + booltostr (result));
+end;
+
+
+function TNetwork.overBezierHandle (x, y : double;
+                       selectedReaction : integer;
+                       var isReactant : boolean;
+                       var bezierId : integer;
+                       var handleId : TCurrentSelectedBezierHandle;
+                       var handleCoords: TPointF): Boolean;
+begin
+  console.log ('selected reaction overbezier:');
+  console.log (selectedReaction);
+  if selectedReaction <> -1 then
+     begin
+     result := reactions[selectedReaction].overBezierHandle (x, y, isReactant, bezierId,
+                  handleId, handleCoords);
+     end
   else
     result := False;
 end;
 
-
-function TNetwork.overEdge(x, y : double; var reactionIndex : integer) : TReaction;
-var i, j : integer;  p1, p2 : TPointF;
-begin
-  result := nil;
-
-  for  i := 0 to length (reactions) - 1 do
-       begin
-       for j := 0 to reactions[i].state.nReactants - 1 do
-           begin
-           p1 := reactions[i].state.srcPtr[j].getCenter;
-           p2 := computeCentroid (reactions[i]);
-           if ptOnLine (p1, p2, x, y) then
-              begin
-              reactionIndex := i;
-              exit (reactions[i]);
-              end;
-           end;
-
-       for j := 0 to reactions[i].state.nProducts - 1 do
-           begin
-           p2 := reactions[i].state.destPtr[j].getCenter;
-           p1 := computeCentroid (reactions[i]);
-           if ptOnLine (p1, p2, x, y) then
-              begin
-              reactionIndex := i;
-              exit (reactions[i]);
-              end;
-           end;
-       end;
-end;
-
-
-function TNetwork.overCentroid (x, y : double; var reactionIndex : integer) : TReaction;
-begin
-  //oldX := x; oldY := y;
-end;
 
 
 procedure TNetwork.clear;
@@ -1297,6 +1416,29 @@ begin
 end;
 
 
+function TNode.computeStartingPoint (endPt : TPointF) : TPointF;
+var v : TLineSegment; i : integer; SquareSegs : TBoundingBoxSegments;
+begin
+  // Define a straight line segment from Node to End Pt
+  v.p.x := self.state.x + (self.state.w / 2);
+  v.p.y := self.state.y + (self.state.h / 2);
+
+  v.q.x := endPt.x;
+  v.q.y := endPt.y;
+  // Compute where the point where the segment will start and terminate
+  // Gather the boundary segments lines around the node
+  SquareSegs := self.getNodeBoundingBox;
+  for i := 1 to 4 do
+      if segmentIntersects (SquareSegs[i], v, Result) then
+         exit;
+
+  // if no intersection then use node centres
+  result.x := self.state.x;
+  result.y := self.state.y;
+end;
+
+
+
 function TNode.overNode (x, y : double) : boolean;
 begin
   if (x > self.state.x) and (y > self.state.y) and (x < self.state.x + self.state.w) and (y < self.state.y + self.state.h) then
@@ -1336,6 +1478,7 @@ constructor TReaction.Create;
 begin
   state.fillColor := clWebLightSteelBlue;
   state.thickness := DEFAULT_REACTION_THICKNESS;
+  state.lineType := ltBezier;
   selected := False;
 end;
 
@@ -1431,6 +1574,121 @@ end;
 function TReaction.getRateRule: string;
 begin
   Result := state.rateLaw;
+end;
+
+
+function TReaction.overCentroid (x, y : double) : boolean;
+begin
+  if ptInCircle (x, y, state.arcCenter)  then
+    result := True
+  else
+    result := False;
+end;
+
+// Adjust the arc centre to vx, vy and when doing so also adjust the
+// INNER control handles by the same amount, makes things behave
+// visually in a nice way.
+procedure TReaction.adjustArcCentres(vx, vy: double);
+var
+  dvx, dvy: double;
+  i : integer;
+begin
+  dvx := vx - state.arcCenter.x;
+  dvy := vy - state.arcCenter.y;
+  state.arcCenter.x := vx;
+  state.arcCenter.y := vy;
+
+  for i := 0 to state.nReactants - 1 do
+      begin
+      state.reactantReactionArcs[i].h2.x := state.reactantReactionArcs[i].h2.x + dvx;
+      state.reactantReactionArcs[i].h2.y := state.reactantReactionArcs[i].h2.y + dvy;
+      end;
+
+  for i := 0 to state.nProducts - 1 do
+      begin
+      state.productReactionArcs[i].h1.x := state.productReactionArcs[i].h1.x + dvx;
+      state.productReactionArcs[i].h1.y := state.productReactionArcs[i].h1.y + dvy;
+      end;
+
+//  for i := 0 to length(state.reactionArcs) - 1 do
+//          case state.reactionArcs[i].arcDirection of
+//            adInArc:
+//              begin
+//                state.reactionArcs[i].h2.x := state.reactionArcs[i].h2.x + dvx;
+//                state.reactionArcs[i].h2.y := state.reactionArcs[i].h2.y + dvy;
+//              end;
+//            adOutArc:
+//              begin
+//                state.reactionArcs[i].h1.x := state.reactionArcs[i].h1.x + dvx;
+//                state.reactionArcs[i].h1.y := state.reactionArcs[i].h1.y + dvy;
+//              end;
+//          end;
+ end;
+
+// Check if mouse in on a particular control handle. If successful it returns:
+// isReactantSide : True if the handle is on the reactant side
+// bezierId : which bezier arc was it
+// handleId : Which handle on the bezier was detected?
+// handleCoords : The x/y coords of detected handle
+//
+function TReaction.overBezierHandle(x, y : double;
+           var isReactantSide : boolean;
+           var bezierId: integer;
+           var handleID: TCurrentSelectedBezierHandle;
+           var handleCoords: TPointF): Boolean;
+var i : integer;
+    h1, h2 : TPointF;
+begin
+  result := False;
+  for i := 0 to state.nReactants - 1 do
+      begin
+      h1 := state.reactantReactionArcs[i].h1;
+      h2 := state.reactantReactionArcs[i].h2;
+      console.log ('h1 and h2');
+      console.log (h1); console.log (h2);
+      if ptInCircle (x, y, h1) then
+         begin
+         bezierId := i;
+         handleId := 0;
+         handleCoords := h1;
+         result := True;
+         isReactantSide := True;
+         exit;
+         end;
+      if ptInCircle (x, y, h2) then
+         begin
+         bezierId := i;
+         handleId := 1;
+         handleCoords := h2;
+         isReactantSide := True;
+         result := True;
+         exit;
+         end;
+      end;
+
+  for i := 0 to state.nProducts - 1 do
+      begin
+      h1 := state.productReactionArcs[i].h1;
+      h2 := state.productReactionArcs[i].h2;
+      if ptInCircle (x, y, h1) then
+         begin
+         bezierId := i;
+         handleId := 0;   // never gets here
+         handleCoords := h1;
+         isReactantSide := False;
+         result := True;
+         exit;
+         end;
+      if ptInCircle (x, y, h2) then
+         begin
+         bezierId := i;
+         handleId := 1;
+         handleCoords := h2;
+         isReactantSide := False;
+         result := True;
+         exit;
+         end;
+      end;
 end;
 
 end.

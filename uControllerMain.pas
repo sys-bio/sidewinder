@@ -156,7 +156,7 @@ procedure TControllerMain.UpdateVals( time: double; updatedVals: array of double
   // Network has changed, notify any listeners
 procedure TControllerMain.networkUpdated(sender: TObject);
 begin
-  console.log('Network changed');
+  //console.log('Network changed');
   self.networkUpdate := true;      // after model updated, change to false.
   if Assigned(FNetworkChanged) then
     FNetworkChanged(sender);

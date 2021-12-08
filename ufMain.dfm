@@ -463,7 +463,7 @@ object mainForm: TmainForm
     object LeftWPanel: TWebPanel
       Left = 0
       Top = 0
-      Width = 137
+      Width = 201
       Height = 735
       ElementClassName = 'card rounded-0'
       HeightPercent = 100.000000000000000000
@@ -827,6 +827,14 @@ object mainForm: TmainForm
         WidthPercent = 100.000000000000000000
         OnClick = btnAddNodeClick
       end
+      object WebConsoleLog1: TWebConsoleLog
+        Left = 3
+        Top = 258
+        Width = 174
+        Height = 463
+        HeightPercent = 100.000000000000000000
+        WidthPercent = 100.000000000000000000
+      end
     end
     object RSimWPanel: TWebPanel
       Left = 1274
@@ -1026,9 +1034,9 @@ object mainForm: TmainForm
       end
     end
     object pnlCenter: TWebPanel
-      Left = 137
+      Left = 201
       Top = 0
-      Width = 822
+      Width = 758
       Height = 735
       ElementClassName = 'card rounded-0'
       HeightPercent = 100.000000000000000000
@@ -1039,10 +1047,12 @@ object mainForm: TmainForm
       ChildOrder = 2
       ElementBodyClassName = 'card-body'
       ElementFont = efCSS
+      ExplicitLeft = 137
+      ExplicitWidth = 822
       object networkPB1: TWebPaintBox
         Left = 0
         Top = 0
-        Width = 804
+        Width = 740
         Height = 717
         HeightPercent = 100.000000000000000000
         WidthPercent = 100.000000000000000000
@@ -1055,9 +1065,11 @@ object mainForm: TmainForm
         OnMouseMove = networkPB1MouseMove
         OnMouseUp = networkPB1MouseUp
         OnMouseWheel = networkPB1MouseWheel
+        ExplicitLeft = -6
+        ExplicitTop = -6
       end
       object netDrawScrollBarVert: TTMSFNCScrollBar
-        Left = 804
+        Left = 740
         Top = 0
         Width = 18
         Height = 717
@@ -1098,11 +1110,12 @@ object mainForm: TmainForm
         Max = 1000.000000000000000000
         PageSize = 10.000000000000000000
         OnValueChanged = netDrawScrollBarVertValueChanged
+        ExplicitLeft = 804
       end
       object netDrawScrollBarHoriz: TTMSFNCScrollBar
         Left = 0
         Top = 717
-        Width = 822
+        Width = 758
         Height = 18
         Align = alBottom
         ParentDoubleBuffered = False
@@ -1142,6 +1155,7 @@ object mainForm: TmainForm
         Max = 1000.000000000000000000
         PageSize = 10.000000000000000000
         OnValueChanged = netDrawScrollBarHorizValueChanged
+        ExplicitWidth = 822
       end
     end
     object splitter: TWebSplitter

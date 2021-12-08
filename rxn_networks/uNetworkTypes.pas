@@ -18,8 +18,12 @@ type
 
   TRectArray = array[0..MaxControlPoints-1] of TRect;
 
+  TReactionLineType = (ltLine, ltSegmentedLine, ltBezier);
+  TArcDirection = (adInArc, adOutArc);
+  TBezierCurve = record h1, h2 : TPointF; Merged : boolean; arcDirection : TArcDirection; end;
   TLineSegment = record p, q : TPointF; end;
   TBoundingBoxSegments = array[1..4] of TLineSegment;   // A Square
+  TCurrentSelectedBezierHandle = -1..1;  // -1 = no handle, 0 (h1), 1 (h2)
 
   function getReactionTypeString (atype : TReactionType) : string;
   function getReactionType (atype : string) : TReactionType;

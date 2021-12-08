@@ -2,7 +2,7 @@ unit uDrawReaction;
 
 interface
 
-Uses SysUtils, Classes, WEBLib.Graphics, Types, uNetwork, Dialogs, uNetworkTypes;
+Uses SysUtils, Classes, Web, WEBLib.Graphics, Types, uNetwork, Dialogs, uNetworkTypes, uGraphUtils;
 
 type
    TReactionRender = class
@@ -12,6 +12,9 @@ type
          scalingFactor : double;
          arrowPts: array of TPointF;
          procedure drawArrow (tip : TPointF; dxdt, dydt : double);
+         procedure drawBezierArcHandles(p: array of TPointF);
+         procedure drawBezierToCentroid (arcId: integer; reaction : TReaction; centroid: TPointF; scalingFactor: double) ;
+         procedure drawBezierFromCentroid(arcId: integer; reaction : TReaction; centroid: TPointF;  scalingFactor: double);
          procedure drawStraightLineToCentroid(ArcId: integer; reaction : TReaction; centroid: TPointF; scalingFactor: double);
          procedure drawStraightLineFromCentroid (arcId: integer; reaction : TReaction; centroid: TPointF; scalingFactor: double);
          procedure drawCentroidPoint(adjustedArcCenter : TPointF; color : TColor);
@@ -25,8 +28,6 @@ type
    end;
 
 implementation
-
-Uses uGraphUtils;
 
 const
   CENTROID_RADIUS = 3;
@@ -109,6 +110,7 @@ begin
   Result := self.arrowPts;
 end;
 
+
 // Used if the line type is ltLine
 procedure TReactionRender.drawUniUniLine (scalingFactor : double; reaction : TReaction);
 var startPt, endPt : TPointF;
@@ -162,7 +164,169 @@ begin
 end;
 
 
-procedure TReactionRender.drawStraightLineToCentroid(ArcId: integer; reaction : TReaction;
+// Draw the bezier control points
+procedure TReactionRender.drawBezierArcHandles(p: array of TPointF);
+var
+  oldcolour: TColor;
+  oldThickness: integer;
+  oldPenStyle: TPenStyle;
+  oldBrushStyle: TBrushStyle;
+  oldSolidPenThickness: single;
+begin
+  // Must remember brush colour because arrow heads are filled in with
+  // foreground colour which is different from background colour.
+  oldcolour := Canvas.Brush.color;
+  oldThickness := Canvas.Pen.Width;
+  oldBrushStyle := Canvas.Brush.style;
+  oldPenStyle := Canvas.Pen.style;
+  oldSolidPenThickness := canvas.pen.width;
+  try
+    Canvas.Brush.color := clRed; // makes them stand out
+    Canvas.Pen.Width := 2;
+    Canvas.Brush.style := bsSolid;
+    Canvas.Pen.style := psSolid;
+
+    canvas.moveto (p[0].x, p[0].y); canvas.lineto (p[1].x, p[1].y);
+    canvas.ellipse (p[1].x - HANDLE_RADIUS, p[1].y - HANDLE_RADIUS,
+                    p[1].x + HANDLE_RADIUS, p[1].y + HANDLE_RADIUS );
+
+    canvas.moveto (p[2].x, p[2].y); canvas.lineto (p[3].x, p[3].y);
+    canvas.ellipse (p[2].x - HANDLE_RADIUS, p[2].y - HANDLE_RADIUS,
+                    p[2].x + HANDLE_RADIUS, p[2].y + HANDLE_RADIUS );
+  finally
+    Canvas.Brush.color := oldcolour;
+    Canvas.Pen.Width := oldThickness;
+    Canvas.Brush.style := oldBrushStyle;
+    Canvas.Pen.style := oldPenStyle;
+  end;
+end;
+
+
+procedure TReactionRender.drawBezierToCentroid (arcId: integer; reaction : TReaction; centroid: TPointF; scalingFactor: double);
+var h1, h2, pt: TPointF;
+    pSrc, pDest : TPointF;
+    node : TNode;
+    par : double;
+    segmentNumber : integer;
+begin
+  node := reaction.state.srcPtr[arcId];
+
+  // Get the bezier control handle coordinates for the first subarc
+  h1 := scalePt(reaction.state.reactantReactionArcs[arcId].h1, scalingFactor);
+  h2 := scalePt(reaction.state.reactantReactionArcs[arcid].h2, scalingFactor);
+
+  // We will draw an arc form the node to the arc center
+  // First calculate the center of the src node, then the arc centre
+  pSrc := scalePt(node.getCenter(), scalingFactor);
+  pDest := scalePt(centroid, scalingFactor);
+
+  // Compute the points along the bezier from node center to centroid
+  // bezier pts needed by computeBezierLineIntersection
+  computeBezierPoints([pSrc, h1, h2, pDest]);
+
+  // Clip the src starting point by returning the bezier segment number which intersects with the node outer rectangle
+  if computeBezierLineIntersection(node, scalingFactor, pt, par, segmentNumber) then
+    // Only draw if successful }
+    begin
+    reaction.intersectionPts[arcId] := pt;
+
+    // Adjust for changes in the origin
+    h1 := minusPt(h1, Origin);
+    h2 := minusPt(h2, Origin);
+    pDest := minusPt(pDest, Origin);
+
+    // Store the new start point for the bezier, and draw it
+    pSrc := minusPt(pt, Origin);
+
+    computeBezierPoints([pSrc, h1, h2, pDest]);
+    // See UniUni for explanation of following line
+    //Intersect[ArcId] := pt;
+
+    if reaction.selected then
+       canvas.pen.color := clRed
+    else
+       canvas.pen.color := reaction.state.fillColor;
+
+    canvas.pen.width := trunc (reaction.state.thickness * scalingFactor);
+    canvas.brush.color := reaction.state.fillColor;
+
+    drawBezier (canvas);
+
+    if reaction.selected then
+       drawBezierArcHandles([pSrc, h1, h2, pDest]);
+    // ***** HMS
+    //if reversible then
+    //  arrowTip.Paint(self, pSrc, pDest.x - pSrc.x, pDest.y - pSrc.y, true); // true = reverse arrow
+   end;
+end;
+
+
+procedure TReactionRender.drawBezierFromCentroid(arcId: integer; reaction : TReaction; centroid: TPointF;  scalingFactor: double);
+var
+  pSrc, pDest, h1, h2, pt: TPointF;
+  par: double;
+  Segn: integer;
+  alpha: double;
+  adX, adY: double;
+  node : TNode;
+begin
+  // Nasty hack, destPtr ranges from 0 to nProducts but arcId includes reactant and
+  // product arcs so we must subtract the nReactants to get the indexing right.
+  node := reaction.state.destPtr[arcId];
+
+  // This time we're going to draw from the arccentre to the node
+  h1 := scalePt(reaction.state.productReactionArcs[arcId].h1, scalingFactor);
+  h2 := scalePt(reaction.state.productReactionArcs[arcId].h2, scalingFactor);
+  pSrc := scalePt(centroid, scalingFactor);
+  pDest := scalePt(node.getCenter, scalingFactor);
+
+  computeBezierPoints([pSrc, h1, h2, pDest]);
+
+  h1 := minusPt(h1, Origin);
+  h2 := minusPt(h2, Origin);
+  pSrc := minusPt(pSrc, Origin);
+
+  if computeBezierLineIntersection(node, scalingFactor, pt, par, Segn) then
+  begin
+    reaction.intersectionPts[arcId] := pt;
+
+    pDest := minusPt(pt, Origin);
+
+    // Move the end point slightly back to make room for the arrow
+    alpha := Angle(pDest.x - h2.x, pDest.y - h2.y);
+    adX := trunc(8 * scalingFactor) * cos(alpha);
+    adY := trunc(8 * scalingFactor) * sin(alpha);
+    adX := pDest.x - trunc(adX);
+    adY := pDest.y - trunc(adY);
+
+    // Store the new start point for the bezier, and draw it
+    //pSrc := minusPt(pt, Origin);
+
+    computeBezierPoints([pSrc, h1, h2, pDest]);
+
+    //Intersect[ArcId] := pt;
+
+    if reaction.selected then
+       canvas.pen.color := clRed
+    else
+       canvas.pen.color := reaction.state.fillColor;
+
+    canvas.pen.width := trunc (reaction.state.thickness * scalingFactor);
+    canvas.brush.color := reaction.state.fillColor;
+
+    drawBezier (canvas);
+
+    //if arrowTip.visible then
+    //   arrowTip.Paint(self, pDest, pDest.x - h2.x, pDest.y - h2.y);
+    if reaction.selected then
+       begin
+       drawBezierArcHandles ([pSrc, h1, h2, pDest]);
+       end;
+  end;
+end;
+
+
+procedure TReactionRender.drawStraightLineToCentroid(arcId: integer; reaction : TReaction;
              centroid: TPointF; scalingFactor: double);
 var
   pSrc, pt: TPointF;
@@ -178,6 +342,8 @@ begin
   centroid := scalePt (centroid, scalingFactor);
   if computeLineIntersection(node, scalingFactor, pt, line(pSrc, centroid)) then
      begin
+     reaction.intersectionPts[arcId] := pt;
+
      if reaction.selected then
         canvas.pen.color := clRed
      else
@@ -214,6 +380,8 @@ begin
 
   if computeLineIntersection(Node, scalingFactor, pt, line(centroid, pDest)) then
      begin
+     reaction.intersectionPts[arcId] := pt;
+
      if reaction.selected then
         canvas.pen.color := clRed
      else
@@ -221,7 +389,9 @@ begin
 
      canvas.pen.width := trunc (reaction.state.thickness * scalingFactor);
      canvas.brush.color := reaction.state.fillColor;
-     //Intersect[ArcId] := pt;
+
+     reaction.intersectionPts[arcId] := pt;
+
      endPt := minusPt(pt, Origin);
      startPt := minusPt(centroid, Origin);
      canvas.moveTo (startPt.x, startPt.y);
@@ -248,7 +418,7 @@ end;
 
 function isMouseOnArcCentre(reaction: TReaction; x, y: double): Boolean;
 begin
-  if PointWithinCircle(x, y, computeCentroid (reaction)) then
+  if ptInCircle(x, y, reaction.state.arcCenter) then
     result := True
   else
     result := False;
@@ -270,27 +440,30 @@ var
   centroid: TPointF;
   oldSize: integer;
 begin
-  centroid:= computeCentroid (reaction);
+  centroid:= reaction.state.arcCenter;
   try
    // To arc center
    for i := 0 to reaction.state.nReactants - 1 do
        begin
-       drawStraightLineToCentroid (i, reaction, centroid, scalingFactor);
-
-//       case edgeLineType of
-//         ltBezier :
-//           drawBezierToCentroid (i, (srcConnectedNodeList[ i ] as TConnectedNode).SubNode, AdjustedArcCentre, Origin, scalingFactor);
-//         ltLine :
-//           drawStaightLineToCentroid (i, (srcConnectedNodeList[ i ] as TConnectedNode).SubNode, AdjustedArcCentre, Origin, scalingFactor);
-//         ltSegmentedLine :
-//           drawLineSegmentToCentroid (i, (srcConnectedNodeList[ i ] as TConnectedNode).SubNode, AdjustedArcCentre, Origin, scalingFactor);
-//       end;
+        case reaction.state.lineType of
+         ltBezier :
+           drawBezierToCentroid (i, reaction, centroid, scalingFactor);
+         ltLine :
+           drawStraightLineToCentroid (i, reaction, centroid, scalingFactor);
+         //ltSegmentedLine :
+         //  drawLineSegmentToCentroid (i, (srcConnectedNodeList[ i ] as TConnectedNode).SubNode, AdjustedArcCentre, Origin, scalingFactor);
+       end;
        end;
 
   // From arc center to products
   for i := 0 to reaction.state.nProducts - 1 do
       begin
-      drawStraightLineFromCentroid(reaction.state.nReactants + i, reaction, centroid,  scalingFactor);
+        case reaction.state.lineType of
+         ltBezier :
+            drawBezierFromCentroid (i, reaction, centroid, scalingFactor);
+         ltLine :
+            drawStraightLineFromCentroid(reaction.state.nReactants + i, reaction, centroid,  scalingFactor);
+         end;
       end;
 
   if reaction.selected then
