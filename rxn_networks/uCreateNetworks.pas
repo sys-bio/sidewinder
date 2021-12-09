@@ -29,7 +29,7 @@ begin
                 begin
                 srcNodes[0] := network.nodes[i];
                 destNodes[0] := network.nodes[j];
-                network.addAnyToAnyEdge ('J' + inttostr (i), srcNodes, destNodes, reactionIndex);
+                network.addAnyToAnyReaction ('J' + inttostr (i), srcNodes, destNodes, reactionIndex);
                 end;
              end;
 

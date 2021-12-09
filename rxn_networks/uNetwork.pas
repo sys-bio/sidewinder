@@ -1,14 +1,13 @@
 unit uNetwork;
 
-// This file represents methods and objects to represent a simple graph of edges and nodes.
+// This file represents methods and objects to represent a
+// simple reaction network of reactions and species.
 
-// Functions to add:
+// All coordinates specified here are world coordinates.
 
-// Delete reactions
-// Delete nodes
-// Set colors, line widths etc
-// Add text to node, what to do about fonts as we need a canvas for that. Maybe library
-// will have a call back to request this information from an external canvas?
+// uNetworkCanvas.pas is responible for converting the
+// world view into a screen view and should take care of
+// things like panning and zooming.
 
 interface
 
@@ -156,10 +155,7 @@ type
        id : string;
        nodes : TListOfNodes;
        reactions : TListOfReactions;
-       scalingFactor : double;
        savedState : TNetworkSavedState;
-
-       function    unScale (x : double) : double;
 
        procedure   loadModel (modelStr : string);
        procedure   loadSBMLModel (model: TModel);
@@ -175,7 +171,7 @@ type
                        var handleId : TCurrentSelectedBezierHandle;
                        var handleCoords: TPointF): Boolean;
 
-        function    findNode (id : string; var index : integer) : boolean;
+       function    findNode (id : string; var index : integer) : boolean;
        function    addNode (id : string) : TNode; overload;
        function    addNode (id : string; x, y : double) : TNode; overload;
        function    addNode (id : string; x, y, w, h : double) : TNode; overload;
@@ -187,7 +183,7 @@ type
        function    addReaction (state : TReactionState) : TReaction; overload;
        function    addReaction (reaction : TReaction) : integer; overload;
        procedure   updateReactions(node: TNode);  // Node Id changes
-       function    addAnyToAnyEdge (id: string; sourceNodes, destNodes : array of TNode; var edgeIndex : integer) : TReaction;
+       function    addAnyToAnyReaction (id: string; sourceNodes, destNodes : array of TNode; var edgeIndex : integer) : TReaction;
        procedure   unSelectAll;
        procedure   unReactionSelect;
        procedure   centerNetwork (w, h : integer);
@@ -953,12 +949,6 @@ begin
 end;
 
 
-function TNetwork.unScale (x : double) : double;
-begin
-  result := trunc (x / scalingFactor);
-end;
-
-
 function TNetwork.findNode (id : string; var index : integer) : boolean;
 var i : integer;
 begin
@@ -1115,7 +1105,7 @@ begin
 end;
 
 
-function TNetwork.addAnyToAnyEdge (id: string; sourceNodes, destNodes : array of TNode; var edgeIndex : integer) : TReaction;
+function TNetwork.addAnyToAnyReaction (id: string; sourceNodes, destNodes : array of TNode; var edgeIndex : integer) : TReaction;
 var newReaction : TReaction;
     i : integer;
     nSource, nDestination : integer;
@@ -1452,6 +1442,7 @@ function TNode.IsInRectangle (selectionRect : TRect) : boolean;
 var scalingFactor : double;
     sl, st, sr, sb :  double;
 begin
+  console.log ('IsInrectangle');
   //scalingFactor := (ParentNode.NetworkRef as TNetwork).scalingFactor;
   result := True;
   sl := selectionRect.Left;///scalingFactor;

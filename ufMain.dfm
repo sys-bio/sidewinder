@@ -1047,8 +1047,6 @@ object mainForm: TmainForm
       ChildOrder = 2
       ElementBodyClassName = 'card-body'
       ElementFont = efCSS
-      ExplicitLeft = 137
-      ExplicitWidth = 822
       object networkPB1: TWebPaintBox
         Left = 0
         Top = 0
@@ -1065,8 +1063,6 @@ object mainForm: TmainForm
         OnMouseMove = networkPB1MouseMove
         OnMouseUp = networkPB1MouseUp
         OnMouseWheel = networkPB1MouseWheel
-        ExplicitLeft = -6
-        ExplicitTop = -6
       end
       object netDrawScrollBarVert: TTMSFNCScrollBar
         Left = 740
@@ -1110,7 +1106,6 @@ object mainForm: TmainForm
         Max = 1000.000000000000000000
         PageSize = 10.000000000000000000
         OnValueChanged = netDrawScrollBarVertValueChanged
-        ExplicitLeft = 804
       end
       object netDrawScrollBarHoriz: TTMSFNCScrollBar
         Left = 0
@@ -1155,7 +1150,6 @@ object mainForm: TmainForm
         Max = 1000.000000000000000000
         PageSize = 10.000000000000000000
         OnValueChanged = netDrawScrollBarHorizValueChanged
-        ExplicitWidth = 822
       end
     end
     object splitter: TWebSplitter

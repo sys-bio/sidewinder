@@ -241,7 +241,7 @@ var
   reactionIndex: integer;
 begin
   prepareUndo;
-  network.addAnyToAnyReaction (Id, srcNodes, destNodes, reactionIndex);
+  network.addAnyToAnyEdge(Id, srcNodes, destNodes, reactionIndex);
   // result := network.addUniUniReaction(Id, src, dest);
 end;
 
@@ -376,7 +376,8 @@ begin
           setLength(destNodes, 1);
           destNodes[0] := node;
           prepareUndo;
-          network.addAnyToAnyReaction ('J' + inttostr(Length(network.reactions)), sourceNodes, destNodes, index);
+          network.addAnyToAnyEdge('J' + inttostr(Length(network.reactions)),
+            sourceNodes, destNodes, index);
           network.nodes[srcNode].addReactionSelected := False;
           srcNode := NOT_SELECTED;
           destNode := NOT_SELECTED;
@@ -430,7 +431,8 @@ begin
             begin
               prepareUndo;
               // network.AddAnyToAnyEdge(sourceNodes, destNodes, index);
-              network.addAnyToAnyReaction ('J' + inttostr(Length(network.reactions)), sourceNodes, destNodes, index);
+              network.addAnyToAnyEdge('J' + inttostr(Length(network.reactions)),
+                sourceNodes, destNodes, index);
               sourceNodeCounter := -1;
               destNodeCounter := -1;
               network.UnSelectAll;
@@ -590,7 +592,6 @@ begin
       end;
 
     // selectedReaction is an input here
-    // isEeactant returns true if the located bezier is on the reactant side
     if network.overBezierHandle(x, y, selectedReaction, isReactant, arcId, handleId, handleCoords) then
          begin
          console.log('Mouse click over bezier handle');
@@ -608,7 +609,7 @@ begin
          exit;
          end;
 
-    // Nothing has happned for clear everything
+    console.log('Stage 4');
     mStatus := sSelect;
     network.UnSelectAll;
     selectedObjects.Clear;
@@ -623,13 +624,13 @@ begin
 end;
 
 
-procedure TController.OnMouseMove(Sender: TObject; Shift: TShiftState; x, y: double);
+procedure TController.OnMouseMove(Sender: TObject; Shift: TShiftState;
+  x, y: double);
 var
   dx, dy: double;
   index, i: integer;
   reaction : TReaction;
 begin
-  // Compute delta movement since last mouse move
   dx := (x - currentX);
   dy := (y - currentY);
   case mStatus of
@@ -721,11 +722,9 @@ begin
             networkCanvas.bolDrawSelectionBox := True;
             networkCanvas.selectionBoxPt.x := trunc(x); // Current coordinates
             networkCanvas.selectionBoxPt.y := trunc(y);
-
-            // Original mousedown coordinate (See MouseDown)
             networkCanvas.MousePt.x := trunc(MouseX);
+            // Original mousedown coordinate
             networkCanvas.MousePt.y := trunc(MouseY);
-
             mStatus := sSelectingBox;
             (Sender as TPaintBox).invalidate;
           end;
@@ -747,9 +746,11 @@ procedure TController.OnMouseUp(Sender: TObject; Button: TMouseButton;
 var
   i: integer;
 begin
+  console.log(mStatus);
   if mStatus in [sMouseDown, sMoveCentroid, sMovingBezierHandle] then
-     mStatus := sSelect;
-
+    begin
+      mStatus := sSelect;
+    end;
   mouseDownPressed := False;
   networkCanvas.bolDrawSelectionBox := False;
   case mStatus of
@@ -794,8 +795,8 @@ begin
   if Length(network.nodes) < 1 then // Only update network if loaded from file.
     begin
       if updatedModel.getSpeciesNumb > 0 then
-         console.log('Network: TController.SBMLUpdate, First species: ',
-         updatedModel.getSBMLSpecies(0).getID);
+        console.log('Network: TController.SBMLUpdate, First species: ',
+          updatedModel.getSBMLSpecies(0).getID);
       self.loadSBMLModel(updatedModel);
     end;
 end;
