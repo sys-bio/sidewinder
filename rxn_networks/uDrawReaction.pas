@@ -2,7 +2,8 @@ unit uDrawReaction;
 
 interface
 
-Uses SysUtils, Classes, Web, WEBLib.Graphics, Types, uNetwork, Dialogs, uNetworkTypes, uGraphUtils;
+Uses SysUtils, Classes, Web, WEBLib.Graphics, Types, uNetwork, Dialogs, uNetworkTypes, uGraphUtils,
+     System.Generics.Collections;
 
 type
    TReactionRender = class
@@ -10,7 +11,14 @@ type
          canvas : TCanvas;
          origin : TPointF;
          scalingFactor : double;
-         arrowPts: array of TPointF;
+      //   arrowPts: array of TPointF;
+         arrowPts: TList<TPointF>;  // holds basic arrow shape at 0 degrees (rad)
+         arrowTipPt: integer; // position of arrow tip in arrowPts
+         procedure generateArrow(); // builds arrow if needed.
+         function findArrowTip(): TPointF;
+         function translateArrow(tip : TPointF; dxdt, dydt : double): TList<TPoint>;  // translates arrow based on rxn line slope
+
+         procedure renderArrow (trArrowPts: TList<TPoint>); // converts to array for canvas.polygon
          procedure drawArrow (tip : TPointF; dxdt, dydt : double);
          procedure drawBezierArcHandles(p: array of TPointF);
          procedure drawBezierToCentroid (arcId: integer; reaction : TReaction; centroid: TPointF; scalingFactor: double) ;
@@ -35,79 +43,110 @@ const
 constructor TReactionRender.Create (canvas : TCanvas);
 begin
   self.canvas := canvas;
+  self.arrowPts := TList<TPointF>.create;
 end;
 
-
-procedure TReactionRender.drawArrow (tip : TPointF; dxdt, dydt : double);
-var dx, dy : integer;
-    alpha, cosine, sine : double;
-    pg : TPointDynArray;  // defines the vertices of an arrow
-    adX, adY : double;
-    scalingFactor : double;
-    scale : double;
-    fpt : array of TPoint;
-    i : integer;
+procedure TReactionRender.generateArrow(); // builds 4 pt arrow if needed.
+var alpha, cosine, sine : double;
+    pt: TPointF;
+    i: integer;
+    scale: double;
 begin
-  setLength (pg, 4);
-
-  scale := 1; scalingFactor := 1;
-  alpha := -Angle (dxdt, dydt);
+  alpha := Angle(1, 0);  //(x,y)
   cosine := cos (alpha); sine := sin (alpha);
-  // Adjust the tip so that it moves forward slightly: I didn't do this in the end.
-  adX := trunc (1*scalingFactor)*cos (-alpha);
-  adY := trunc (1*scalingFactor)*sin (-alpha);
-  tip.x := tip.x + trunc (adX);
-  tip.y := tip.y + trunc (adY);
+  scale := 1;
+  pt.x := trunc (0*Scale*cosine + 14*Scale*sine);
+  pt.y := trunc(-0*Scale*sine + 14*Scale*cosine);
+  self.arrowPts.add(pt);
+  pt.x := trunc(3*Scale*cosine + 7*Scale*sine);
+  pt.y := trunc(-3*Scale*sine + 7*Scale*cosine);
+  self.arrowPts.add(pt);
+  pt.x := trunc(0*Scale*cosine + 0*Scale*sine);
+  pt.y := trunc(-0*Scale*sine + 0*Scale*cosine);
+  self.arrowPts.add(pt);
+  pt.x := trunc(9*Scale*cosine + 7*Scale*sine);
+  pt.y := trunc(-9*Scale*sine + 7*Scale*cosine);
+  self.arrowTipPt := 3;
+  self.arrowPts.add(pt);
+end;
 
-  pg[0].x := trunc (0*Scale*cosine + 14*Scale*sine);
-  pg[0].y := trunc(-0*Scale*sine + 14*Scale*cosine);
+function TReactionRender.findArrowTip(): TPointF;
+begin
+  // Todo
+  Result.x := 1;
+  Result.y := 2;
+end;
 
-  //pg[1].x := trunc(7*Scale*cosine + 7*Scale*sine);
-  //pg[1].y := trunc(-7*Scale*sine + 7*Scale*cosine);
-  pg[1].x := trunc(3*Scale*cosine + 7*Scale*sine);
-  pg[1].y := trunc(-3*Scale*sine + 7*Scale*cosine);
-
-  pg[2].x := trunc(0*Scale*cosine + 0*Scale*sine);
-  pg[2].y := trunc(-0*Scale*sine + 0*Scale*cosine);
-
-  pg[3].x := trunc(9*Scale*cosine + 7*Scale*sine);
-  pg[3].y := trunc(-9*Scale*sine + 7*Scale*cosine);
-
+function TReactionRender.translateArrow(tip : TPointF; dxdt, dydt : double): TList<TPoint>;
+var i: integer;
+    alpha, cosine, sine : double;
+    dx, dy : integer;
+    newPt: TPoint;
+    scale: double;
+    initPts: TList<TPoint>;
+begin
+  Result := TList<TPoint>.create;
+  initPts := TList<Tpoint>.create;
+  alpha := -Angle(dxdt, dydt);  //(x,y)
+  cosine := cos (alpha); sine := sin (alpha);
+  scale := 1;    // not used for now
+  for i := 0 to self.arrowPts.count -1 do
+    begin
+      newPt.x := trunc( self.arrowPts[i].x * scale* cosine + self.arrowPts[i].y * scale * sine );
+      newPt.y := trunc( self.arrowPts[i].y * scale * cosine - self.arrowPts[i].x * scale * sine );
+      initPts.add( newPt );
+    end;
   // Compute the distance of the tip of the arrow to the end point on the line
   // where the arrow should be placed. Then use this distance to translate S and T
-  dx := integer (trunc (tip.x - pg[3].x));
-  dy := integer (trunc (tip.y - pg[3].y));
+  dx := integer (trunc (tip.x - initPts[arrowTipPt].x));
+  dy := integer (trunc (tip.y - initPts[arrowTipPt].y));
+  for i := 0 to initPts.count -1 do
+    begin
+      if i = self.arrowTipPt then
+        begin    // Translate the coordinates of the arrow
+          newPt.x := trunc(tip.x);
+          newPt.y := trunc(tip.y);
+          Result.add( newPt );
+        end
+      else
+        begin
+          newPt.x := trunc( initPts[i].x + dx );
+          newPt.y := trunc( initPts[i].y + dy );
+          Result.add( newPt );
+        end;
+    end
 
-  // Translate the remaining coordinates of the arrow, note tip = V
-  pg[0].x := pg[0].x + dx; pg[0].y := pg[0].y + dy;  // S
-  pg[1].x := pg[1].x + dx; pg[1].y := pg[1].y + dy;  // T
-  pg[2].x := pg[2].x + dx; pg[2].y := pg[2].y + dy;  // U
-  pg[3].x := tip.x;
-  pg[3].y := tip.y;
+end;
 
-  //if selected then
-  //   solidBrush.SetColor (aclSelectedLineColor)
-  //else solidBrush.SetColor (aclArrowColor);
-  // pg is a pointer, drawpolygon expect one, so cast it to the pointer it expects
-  setlength (fpt, 4);
-  setLength(self.arrowPts, length(fpt));
-  for i := 0 to 3 do
-      begin
-      fpt[i].x := trunc (pg[i].x);
-      self.arrowPts[i].x := pg[i].x;  // assume all arrows are the same
-      fpt[i].y := trunc (pg[i].y);
-      self.arrowPts[i].y := pg[i].y;
-      end;
-  //setLength(self.arrowPts, length(fpt));
- // for i := 0 to length(fpt)-1 do
- //   self.arrowPts[i] := fpt[i]; //
+procedure TReactionRender.drawArrow (tip : TPointF; dxdt, dydt : double);
+begin
+  if self.arrowPts.count < 2 then self.generateArrow;
+  self.renderArrow( self.translateArrow(tip, dxdt, dydt) );
+end;
 
-  canvas.polygon (fpt);
+procedure TReactionRender.renderArrow(trArrowPts: TList<TPoint>);
+var i: integer;
+    renderPts: array of TPoint;
+begin
+  setLength(renderPts, trArrowPts.count);
+  for i := 0 to trArrowPts.count -1 do
+    begin
+      renderPts[i].x := trArrowPts[i].x;
+      renderPts[i].y := trArrowPts[i].y;
+    end;
+  self.canvas.polygon(renderPts);
 end;
 
 function TReactionRender.getRxnAPts(): array of TPointF;
+var i: integer;
 begin
-  Result := self.arrowPts;
+  setLength(Result, self.arrowPts.count);
+  for i := 0 to self.arrowPts.count -1 do
+    begin
+      Result[i].x := self.arrowPts[i].x;
+      Result[i].y := self.arrowPts[i].y;
+    end;
+
 end;
 
 
@@ -155,7 +194,7 @@ begin
 
   drawArrow (endPt, pDest.x - pSrc.x, pDest.y - pSrc.y);
 
-     //if edgeLabel.visible then
+     //if edgeLabel.visible then    ?? needed??
      //   begin
      //   centreOfLine.x := srcPtIntersect.x + (destPtIntersect.x - srcPtIntersect.x) div 2;
      //   centreOfLine.y := srcPtIntersect.y + (destPtIntersect.y - srcPtIntersect.y) div 2;
@@ -318,6 +357,7 @@ begin
 
     //if arrowTip.visible then
     //   arrowTip.Paint(self, pDest, pDest.x - h2.x, pDest.y - h2.y);
+    drawArrow(pDest,pDest.x - h2.x, pDest.y - h2.y);
     if reaction.selected then
        begin
        drawBezierArcHandles ([pSrc, h1, h2, pDest]);
