@@ -5,13 +5,21 @@
  //   libSBML is loaded module from libsbml.js
 
 class ProcessSBML {
- constructor( libSBMLModel ){
+ constructor( libSBMLModel, curLibsbml ){
+   this.libSBML = curLibsbml;
    this.model = libSBMLModel; // Model from libSBML doc.getModel()
+   this.isLocalRenderSet = false;
+   this.isGlobalRenderSet = false;
+   console.log(' # ofplugins: ', this.model.getNumPlugins() );
    if(this.model.getNumPlugins() >0) {
      this.SBMLLayOut = this.model.findPlugin('layout');
 
+
+    if(this.model.hasPlugin('layout')) {
+       console.log(' model has layout plugin' );
+    }
      if(this.SBMLLayOut == undefined) {
-       console.log('No layout plugin');
+       console.log('No layout plugin defined');
        }
      else {
        this.newLayoutPlug = this.SBMLLayOut.asLayout();
@@ -188,6 +196,23 @@ getRules(tModela, tRule) {
     for(i=0; i< 1; i++) { // cap at one for now, numLayouts reports 2 when there is one.
       console.log(' Getting next layout #: ', i);
       const aLayout = this.newLayoutPlug.getLayout(i);
+    const rPlugin = this.libSBML.castObject(aLayout.getPlugin("render"), this.libSBML.RenderLayoutPlugin);
+    const numRenderPlug = rPlugin.getNumLocalRenderInformationObjects();
+    if( numRenderPlug > 0 ) {
+      this.localRenderInfo = rPlugin.getRenderInformation(numRenderPlug-1); // works for localInfo, not GlobalInfo
+      this.isLocalRenderSet = true;
+    }
+    // global:
+  //  const rGlobalPlugin = this.libSBML.castObject(aLayout.getPlugin("render"), this.libSBML.RenderListOfLayoutsPlugin);   // none found
+ // bad   const rGlobalPlugin = this.libSBML.castObject(this.SBMLLayOut.getPlugin("render"), this.libSBML.RenderListOfLayoutsPlugin);
+// bad   const rGlobalRenderList = this.libSBML.castObject(this.SBMLLayOut.getPlugin("render"), this.libSBML.RenderListOfLayoutsPlugin);
+// bad const rGlobalRenderList = this.SBMLLayOut.asRenderListOfLayoutsPlugin();
+
+ //   const numGlobalObj = rGlobalRenderList.getNumGlobalRenderInformationObjects();
+ //   if( numGlobalObj > 0 ) {
+ //     this.globalRenderInfo = rGlobalRenderList.getRenderGlobalInformation(numGlobalObj -1 );
+ //   }
+
       const dims = aLayout.getDimensions()
       tDims = this.assignDims(tDims, dims);
       tLayout.setDims(tDims); // assume NO depth.
@@ -412,6 +437,138 @@ getRules(tModela, tRule) {
      }
 
      return nLayout;
+   }
+
+   getRenderInformation( tRenderInfo, tRenderStyle, tLineEnding, tRenderGroup,
+         tEllipse, tRectangle, tPolygon, tRenderPt, tRender1D, tColorDef, tBBox,
+         tDims, tPt )
+   {
+
+
+     return tRenderInfo;
+   }
+
+   getColorDefs( nRendorInfo, tColorDef ) {
+     var i;
+     var numbObjs = 0;
+     if( this.isLocalRenderSet ) {
+       nRenderInfo.setId( this.localRenderInfo.getId() );
+       numbObjs = this.localRenderInfo.getNumColorDefinitions();
+     } //else this.global
+     for( i=0; i< numbObjs; i++ ) {
+       const newColorDef = this.localRenderInfo.getColorDefinition(i);
+       if( tColorDef.isSetId() ) { tColorDef.setId( newColorDef.getId ); }
+       const red =  newColorDef.getRed(); // int
+       const blue = newColorDef.getBlue();
+       const green = newColorDef.getGreen();
+       const alpha = newColorDef.getAlpha();
+       tColorDef.setValueRGBAInts( red, green, blue, alpha );
+       nRenderInfo.addColorDef( tColorDef );
+       tColorDef.clear();
+     }
+
+     return nRenderInfo;
+   }
+
+   assignRenderGroup(nRenderGroup, sbmlRenderGroup,tPolygon, tRectangle, tRenderPt )
+   {
+     if( sbmlRenderGroup.isSetStrokeWidth() ) {
+       nRenderGroup.setStrokeWidth( sbmlRenderGroup.getStrokeWidth() );
+     }
+     if( sbmlRenderGroup.isSetStroke() ) {
+       nRenderGroup.setStrokeWidth( sbmlRenderGroup.getStroke() );
+     }
+     if( sbmlRenderGroup.isSetFillColor() ) {
+       nRenderGroup.setFillColor( sbmlRenderGroup.getFillColor() );
+     }
+     if( sbmlRenderGroup.isSetStrokeWidth() ) {
+       nRenderGroup.setStrokeWidth( sbmlRenderGroup.getStrokeWidth );
+     }
+     const sbmlFontSize = sbmlRenderGroup.getFontSize(); // RelAbsVector
+     var fontSz = sbmlFontSize.getAbsoluteValue();
+     if( fontSz == 0 ){
+       fontSz = sbmlFontSize.getRelativeValue(); }
+     nRenderGroup.setFontSize( fontSz );
+     const fontStyle = sbmlRenderGroup.getFontStyle();  // integer : 1='normal', 2='italic'
+     if( fontStyle == 2 ){
+       nRenderGroup.setFontStyle('italic'); }
+     else { nRenderGroup.setFontStyle('normal');}
+
+     if( sbmlRenderGroup.isSetTextAnchor() )
+     { nRenderGroup.setHTextAnchor( sbmlRenderGroup.getTextAnchor() ) ; }
+     if( sbmlRenderGroup.isSetVTextAnchor() ) {
+       nRenderGroup.setVTextAnchor( sbmlRenderGroup.getVTextAnchor() ) ; }
+
+     if( sbmlRenderGroup.isSetEndHead() ) {
+       nRenderGroup.setEndHead( sbmlRenderGroup.getEndHead() ); }
+     if( sbmlRenderGroup.isSetStartHead() ) {
+       nRenderGroup.setStartHead( sbmlRenderGroup.getStartHead() ); }
+      // For shapes, get list of elements, save as polygon, regardless:
+      const numElements = sbmlRenderGroup.getNumElements();
+      for( i=0; i < numElements; i++ ) {
+        const element = sbmlRenderGroup.getElement( i );
+        // May try to cast to polygon and see if easier:
+        // void PrimitiveCaster();
+
+        //  boolean isPolygon(Transformation2D p);
+        //  Polygon asPolygon(Transformation2D p);
+
+      }
+
+     return nRenderGroup;
+   }
+
+   getLineEndings(nRenderInfo, tLineEnding, tRenderGroup, tBBox, tPolygon,
+                  tRectangle, tRenderPt, tDims, tPt )
+   {
+     var i;
+     var numObjs;
+     if( this.isLocalRenderSet ) {
+       numbObjs = this.localRenderInfo.getNumLineEndings();
+     } //else this.global
+     for( i=0; i< numbObjs; i++ ) {
+       const newLineEnd = this.localRenderInfo.getLineEnding(i);
+       tLineEnding.setId(newLineEnd.getId());
+       tLineEnding.setRotationalMapping(newLineEnd.getIsEnabledRotationalMapping());
+       tBBox = this.assignBBox(tBBox, newLineEnd.getBoundingBox(), tDims, tPt);
+       tLineEnding.setBoundingBox( tBBox );
+       const newRenderGroup = newLineEnd.getGroup();
+       tRenderGroup = this.assignRenderGroup(tRenderGroup, newRenderGroup,
+                          tPolygon, tRectangle, tRenderPt );
+       tLineEnding.setRenderGroup( tRenderGroup );
+       nRenderInfo.addRenderGroup( tlineEnding );
+       tRenderGroup.clear();
+     }
+     return nRenderInfo;
+   }
+
+   getStyles( nRenderInfo, tRenderGroup, tPolygon, tRectangle, tEllipse )
+   {
+
+     return nRenderInfo;
+   }
+
+   getGradientDefs(nRenderInfo ) {
+      // TODO
+     return nRenderInfo;
+   }
+
+   getEllipse( tEllipse, sbmlEllipse )
+   {
+
+     return tEllipse;
+   }
+
+   getRectangle( tRect, sbmlRect )
+   {
+
+     return tRect;
+   }
+
+   getPolygon( tPoly, sbmlPoly, tPt )
+   {
+
+     return tPoly;
    }
 
  }
