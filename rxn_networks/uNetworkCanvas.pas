@@ -59,13 +59,18 @@ begin
   reactionRenderer := TReactionRender.Create(bitmap.canvas);
 end;
 
+// ---------------------------------------------------------
+// WORLD / SCREEN CONVERSION METHODS
+// ---------------------------------------------------------
+
+
 function TNetworkCanvas.unScale (x : double) : double;
 begin
   result := trunc (x / scalingFactor);
 end;
 
 // Use this for lengths such as widths and heigths
-// For point coorindates use workToScreen
+// For point coorindates use worldToScreen methds
 function TNetworkCanvas.scaleWorldDim_X (x : double) : integer;
 begin
   result := trunc (x * scalingFactor);
@@ -93,12 +98,11 @@ begin
   result := trunc(wy * scalingFactor - origin.y);
 end;
 
-procedure TNetworkCanvas.paint;// (origin: TPointF; scalingFactor: double);
-var
-  dest: TRect;
+// -------------------------------------------------------
+
+procedure TNetworkCanvas.paint;
+var dest: TRect;
 begin
-  //self.origin := origin;
-  //self.scalingFactor := scalingFactor;
   dest.Left := 0;
   dest.top := 0;
   dest.Right := bitmap.Width - 0;
@@ -185,8 +189,6 @@ end;
 function TNetworkCanvas.drawNodeCaption (node : TNode; scaledX, scaledY : double) : TPointF;
 var p, q : double;
     oldBrushStyle : TBrushStyle;
-    //gdiFont : TGPFont;
-    //solidBrush : TGPSolidBrush;
     //bbox : TGPRectF;
     xp, yp : double;
     relativeDisplacment : double;
