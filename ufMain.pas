@@ -786,7 +786,7 @@ begin
   zoomFactorLbl1.caption := FloatToStr(zoomTrackBar.Position / 10);
 end;
 
-function TMainForm.ScreenToWorld(X, Y: Double): TPointF;
+function TMainForm.ScreenToWorld (X, Y: Double): TPointF;
 begin
   result.X := (X + origin.X) / (zoomTrackBar.Position / 10);
   result.Y := (Y + origin.Y) / (zoomTrackBar.Position / 10);
