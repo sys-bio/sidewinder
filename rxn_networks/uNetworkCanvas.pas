@@ -3,7 +3,7 @@ unit uNetworkCanvas;
 interface
 
 Uses SysUtils, Classes, Graphics, Types, Dialogs, uNetwork, uDrawReaction,
-  uNetworkTypes, Math, uGraphUtils;
+  uNetworkTypes, Math, uGraphUtils, Web;
 
 const
    DEFAULT_FONT_SIZE = 10;
@@ -32,7 +32,17 @@ type
     procedure drawReactions;
     procedure drawNodes;
     procedure drawNode;
-    function  drawNodeCaption (node : TNode; scaledX, scaledY : double; scalingFactor : double) : TPointF;
+    function  drawNodeCaption (node : TNode; scaledX, scaledY : double) : TPointF;
+
+    function  unScale (x : double) : double;  inline;
+
+    function  scaleWorldDim_X (x : double) : integer; inline;
+    function  scaleWorldDim_Y (y : double) : integer; inline;
+
+    function  worldToScreen_X (wx : double) : integer; inline;
+    function  worldToScreen_Y (wy : double) : integer; inline;
+    function  worldToScreen (wx, wy : double) : TPoint;  inline;
+
     constructor Create (network: TNetwork);
 
   end;
@@ -49,6 +59,39 @@ begin
   reactionRenderer := TReactionRender.Create(bitmap.canvas);
 end;
 
+function TNetworkCanvas.unScale (x : double) : double;
+begin
+  result := trunc (x / scalingFactor);
+end;
+
+// Use this for lengths such as widths and heigths
+// For point coorindates use workToScreen
+function TNetworkCanvas.scaleWorldDim_X (x : double) : integer;
+begin
+  result := trunc (x * scalingFactor);
+end;
+
+function TNetworkCanvas.scaleWorldDim_Y (y : double) : integer;
+begin
+  result := trunc (y * scalingFactor);
+end;
+
+
+function TNetworkCanvas.worldToScreen (wx, wy : double) : TPoint;
+begin
+  result.x := trunc(wx * scalingFactor - origin.x);
+  result.y := trunc(wy * scalingFactor - origin.y);
+end;
+
+function TNetworkCanvas.worldToScreen_X (wx : double) : integer;
+begin
+  result := trunc(wx * scalingFactor - origin.x);
+end;
+
+function TNetworkCanvas.worldToScreen_Y (wy : double) : integer;
+begin
+  result := trunc(wy * scalingFactor - origin.y);
+end;
 
 procedure TNetworkCanvas.paint;// (origin: TPointF; scalingFactor: double);
 var
@@ -114,14 +157,12 @@ begin
   result[0] := rect(x - grabW2, y - grabW2, x + grabW2, y + grabH2);
   result[1] := rect(x + w - grabW2, y - grabH2, x + w + grabW2, y + grabH2);
   result[2] := rect(x - grabW2, y + h - grabH2, x + grabW2, y + h + grabH2);
-  result[3] := rect(x + w - grabW2, y + h - grabH2, x + w + grabW2,
-    y + h + grabH2);
+  result[3] := rect(x + w - grabW2, y + h - grabH2, x + w + grabW2, y + h + grabH2);
 end;
 
+
 procedure TNetworkCanvas.drawMouseGrabPoints(x, y, w, h: integer);
-var
-  scalingFactor: double;
-  rectList: TRectArray;
+var rectList: TRectArray;
 begin
   rectList := getControlRects(x, y, w, h);
 
@@ -133,6 +174,7 @@ begin
   bitmap.canvas.FillRect(rectList[3]);
 end;
 
+
 procedure TNetworkCanvas.drawNode;
 begin
 
@@ -140,7 +182,7 @@ end;
 
 
 // Returns the unscaled rectangle coords for the caption
-function TNetworkCanvas.drawNodeCaption (node : TNode; scaledX, scaledY : double; scalingFactor : double) : TPointF;
+function TNetworkCanvas.drawNodeCaption (node : TNode; scaledX, scaledY : double) : TPointF;
 var p, q : double;
     oldBrushStyle : TBrushStyle;
     //gdiFont : TGPFont;
@@ -155,8 +197,8 @@ begin
   bitmap.canvas.Brush.Style := bsClear;
 
   // Center x and y relative to top left corner adjusted by size of text
-  p := node.state.w*scalingFactor / 2 - (bitmap.canvas.TextWidth (node.state.Id) / 2);
-  q := node.state.h*scalingFactor / 2 - (bitmap.canvas.TextHeight (node.state.Id) / 2);
+  p := scaleWorldDim_X (node.state.w) / 2 - (bitmap.canvas.TextWidth (node.state.Id) / 2);
+  q := scaleWorldDim_Y (node.state.h) / 2 - (bitmap.canvas.TextHeight (node.state.Id) / 2);
 
   relativeDisplacment := 8/100; // 8/100 = 8% adjustment
   xp := scaledX + p;
@@ -192,6 +234,7 @@ begin
 
   bitmap.canvas.Brush.Style := oldBrushStyle;
 
+  // Not currently used:
   result.x := p/scalingFactor;
   result.y := q/scalingFactor;
 end;
@@ -205,6 +248,7 @@ var
   oldColor: TColor;
   f, sX, sY: integer;
   scaledX, scaledY, scaledW, scaledH: integer;
+  scaledPt : TPoint;
   sizeOfText : TCanvasSizeF;
 begin
   oldWidth := bitmap.canvas.pen.Width;
@@ -217,31 +261,31 @@ begin
   try
     for i := 0 to length(network.nodes) - 1 do
         begin
-       // Compute the scaled values, adjusting for any change in the origin
-       scaledX := trunc(network.nodes[i].state.x * scalingFactor - origin.x);
-       scaledY := trunc(network.nodes[i].state.y * scalingFactor - origin.y);
-       scaledW := trunc(network.nodes[i].state.w * scalingFactor);
-       scaledH := trunc(network.nodes[i].state.h * scalingFactor);
+        // convert the node positions to screen value
+        scaledX := worldToScreen_X (network.nodes[i].state.x);
+        scaledY := worldToScreen_Y (network.nodes[i].state.y);
+        scaledW := scaleWorldDim_X (network.nodes[i].state.w);
+        scaledH := scaleWorldDim_Y (network.nodes[i].state.h);
 
-       // Get the size of the text
-       sizeOfText := bitmap.canvas.TextExtent (network.nodes[i].state.id);
+        // Get the size of the text
+        sizeOfText := bitmap.canvas.TextExtent (network.nodes[i].state.id);
 
-       if sizeOfText.cx/scalingFactor + 1 >= network.nodes[i].state.w then
-           network.nodes[i].state.w := SizeOfText.cx/scalingFactor + 0.1*(sizeOfText.cx/scalingFactor);
+        if sizeOfText.cx/scalingFactor + 1 >= network.nodes[i].state.w then
+           network.nodes[i].state.w := unscale (SizeOfText.cx) + 0.1*unscale (sizeOfText.cx);
 
-       if network.nodes[i].selected then
-          begin
-          bitmap.canvas.pen.color := clRed;
-          bitmap.canvas.pen.Width := 1;
-          bitmap.canvas.Brush.style := bsClear;
-          f := trunc(4 * scalingFactor);
+        if network.nodes[i].selected then
+           begin
+           bitmap.canvas.pen.color := clRed;
+           bitmap.canvas.pen.Width := 1;
+           bitmap.canvas.Brush.style := bsClear;
+           f := scaleWorldDim_X (4);
 
-          sX := trunc(scaledX) - f;
-          sY := trunc(scaledY) - f;
+           sX := scaledX - f;
+           sY := scaledY - f;
 
-          bitmap.canvas.Rectangle(sX, sY, sX + scaledW + 2 * f, sY + scaledH + 2 * f);
-          drawMouseGrabPoints(sX, sY, scaledW + 2 * f, scaledH + 2 * f);
-          end;
+           bitmap.canvas.Rectangle(sX, sY, sX + scaledW + 2 * f, sY + scaledH + 2 * f);
+           drawMouseGrabPoints(sX, sY, scaledW + 2 * f, scaledH + 2 * f);
+           end;
 
        if network.nodes[i].addReactionSelected then
           begin
@@ -249,24 +293,25 @@ begin
           bitmap.canvas.Brush.style := bsClear;
           bitmap.canvas.pen.Width := 1;
           bitmap.canvas.pen.style := psDash;
-          bitmap.canvas.RoundRect((network.nodes[i].state.x - 7) * scalingFactor -
-          origin.x, (network.nodes[i].state.y - 7) * scalingFactor - origin.y,
-          scaledX + (network.nodes[i].state.w + 7) * scalingFactor,
-          scaledY + (network.nodes[i].state.h + 7) * scalingFactor, 25, 25);
+          bitmap.canvas.RoundRect(
+                     worldToScreen_X (network.nodes[i].state.x - 7),
+                     worldToScreen_Y (network.nodes[i].state.y - 7),
+                     scaledX + scaleWorldDim_X (network.nodes[i].state.w + 7),
+                     scaledY + scaleWorldDim_Y (network.nodes[i].state.h + 7), 25, 25);
 
           bitmap.canvas.pen.style := psSolid;
           bitmap.canvas.pen.color := network.nodes[i].state.outlineColor;
           end;
 
-      bitmap.canvas.pen.color := network.nodes[i].state.outlineColor;
-      bitmap.canvas.pen.Width := 3;
-      bitmap.canvas.Brush.color := network.nodes[i].state.fillColor;
-      bitmap.canvas.Brush.style := bsSolid;
-      bitmap.canvas.RoundRect(scaledX, scaledY,
-         scaledX + network.nodes[i].state.w * scalingFactor,
-         scaledY + network.nodes[i].state.h * scalingFactor, 25, 25);
+       bitmap.canvas.pen.color := network.nodes[i].state.outlineColor;
+       bitmap.canvas.pen.Width := 3;
+       bitmap.canvas.Brush.color := network.nodes[i].state.fillColor;
+       bitmap.canvas.Brush.style := bsSolid;
+       bitmap.canvas.RoundRect(scaledX, scaledY,
+                 scaledX + scaleWorldDim_X (network.nodes[i].state.w),
+                 scaledY + scaleWorldDim_Y (network.nodes[i].state.h), 25, 25);
 
-      drawNodeCaption (network.nodes[i], scaledX, scaledY, scalingFactor);
+      drawNodeCaption (network.nodes[i], scaledX, scaledY);
     end;
   finally
     bitmap.canvas.pen.Width := oldWidth;
