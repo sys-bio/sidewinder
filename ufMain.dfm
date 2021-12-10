@@ -1057,12 +1057,15 @@ object mainForm: TmainForm
         Align = alClient
         ChildOrder = 3
         ElementFont = efCSS
+        OnDblClick = networkPB1DblClick
         OnPaint = networkPB1Paint
         OnKeyDown = networkPB1KeyDown
         OnMouseDown = networkPB1MouseDown
         OnMouseMove = networkPB1MouseMove
         OnMouseUp = networkPB1MouseUp
         OnMouseWheel = networkPB1MouseWheel
+        ExplicitLeft = -6
+        ExplicitTop = 6
       end
       object netDrawScrollBarVert: TTMSFNCScrollBar
         Left = 740
@@ -1180,8 +1183,8 @@ object mainForm: TmainForm
       ElementFont = efCSS
       Visible = False
       object pnlNodePanel: TWebPanel
-        Left = 8
-        Top = 0
+        Left = 6
+        Top = 6
         Width = 160
         Height = 185
         ElementClassName = 'card'
@@ -1209,7 +1212,7 @@ object mainForm: TmainForm
         end
         object nodeFillLabel: TWebLabel
           Left = 3
-          Top = 96
+          Top = 104
           Width = 44
           Height = 13
           Caption = 'Node Fill:'
@@ -1253,7 +1256,7 @@ object mainForm: TmainForm
           WidthPercent = 100.000000000000000000
         end
         object btnNodeOutlineColor: TWebColorPicker
-          Left = 52
+          Left = 56
           Top = 136
           Width = 51
           Height = 33
@@ -1265,20 +1268,21 @@ object mainForm: TmainForm
           OnClick = btnNodeOutlineColorClick
         end
         object editNodeId: TWebEdit
-          Left = 10
+          Left = 72
           Top = 22
-          Width = 136
+          Width = 74
           Height = 22
           ChildOrder = 4
           ElementClassName = 'form-control'
           ElementFont = efCSS
           HeightPercent = 100.000000000000000000
+          SpellCheck = False
           WidthPercent = 100.000000000000000000
           OnExit = editNodeIdExit
         end
         object btnNodeFillColor: TWebColorPicker
-          Left = 52
-          Top = 88
+          Left = 56
+          Top = 92
           Width = 52
           Height = 33
           HeightPercent = 100.000000000000000000
@@ -1287,9 +1291,10 @@ object mainForm: TmainForm
           Color = 11788021
           Role = ''
           OnClick = btnNodeFillColorClick
+          OnSelect = btnNodeFillColorSelect
         end
         object editNodeConc: TWebEdit
-          Left = 52
+          Left = 56
           Top = 55
           Width = 90
           Height = 22
@@ -1529,5 +1534,11 @@ object mainForm: TmainForm
     OnGetFileAsText = SBMLOpenDialogGetFileAsText
     Left = 1160
     Top = 754
+  end
+  object WebPopupMenu1: TWebPopupMenu
+    Appearance.HamburgerMenu.Caption = 'Menu'
+    Appearance.SubmenuIndicator = '&#9658;'
+    Left = 1162
+    Top = 580
   end
 end

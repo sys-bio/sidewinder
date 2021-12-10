@@ -104,6 +104,7 @@ type
     lblRxnId: TWebLabel;
     lblRxnIdString: TWebLabel;
     WebConsoleLog1: TWebConsoleLog;
+    WebPopupMenu1: TWebPopupMenu;
 
     procedure btnUniUniClick(Sender: TObject);
     procedure btnBiBiClick(Sender: TObject);
@@ -148,6 +149,7 @@ type
     procedure SBMLOpenDialogGetFileAsText(Sender: TObject; AFileIndex: Integer;
       AText: string);
     procedure btnClearClick(Sender: TObject);
+    procedure btnNodeFillColorSelect(Sender: TObject);
     procedure mnuSaveClick(Sender: TObject);
     procedure mnuUndoClick(Sender: TObject);
     procedure ParamSliderOnChange(Sender: TObject);
@@ -168,6 +170,7 @@ type
     procedure SplitterPlotSliderMoved(Sender: TObject);
     procedure btnSaveSimResultsClick(Sender: TObject);
     procedure btnStopSimSaveClick(Sender: TObject);
+    procedure networkPB1DblClick(Sender: TObject);
 
   private
     numbPlots: Integer; // Number of plots displayed
@@ -363,10 +366,10 @@ var
 begin
   for i := 0 to length(network.nodes) - 1 do
     if network.nodes[i].selected then
-      begin
-        network.nodes[i].state.fillColor := btnNodeFillColor.color;
-        networkPB1.Invalidate;
-      end;
+       begin
+       network.nodes[i].state.fillColor := btnNodeFillColor.color;
+       end;
+  networkPB1.Invalidate;
 end;
 
 procedure TMainForm.btnNodeOutlineColorClick(Sender: TObject);
@@ -663,6 +666,12 @@ procedure TMainForm.networkPB1MouseDown(Sender: TObject; Button: TMouseButton;
 var
   v: TPointF;
 begin
+  if Button = mbRight then
+     begin
+     console.log ('Click Panel');
+     WebPopupMenu1.Popup(x, y);
+     exit;
+     end;
   v := ScreenToWorld(X, Y);
 
   networkController.OnMouseDown(Sender, Button, Shift, v.X, v.Y);
@@ -1715,6 +1724,17 @@ begin
     end;
 end;
 
+procedure TMainForm.btnNodeFillColorSelect(Sender: TObject);
+var i : integer;
+begin
+  for i := 0 to length(network.nodes) - 1 do
+    if network.nodes[i].selected then
+       begin
+       network.nodes[i].state.fillColor := btnNodeFillColor.color;
+       end;
+  networkPB1.Invalidate;
+end;
+
 procedure TMainForm.clearRxnStoichCoeffs();
 var i: integer;
     tempObj: TObject;
@@ -1754,6 +1774,12 @@ begin
     self.clearRxnStoichCoeffs();
     self.rightPanelType := SIMULATION_PANEL; // Right panel no longer shows deleted obj
     self.setRightPanels;
+end;
+
+procedure TMainForm.networkPB1DblClick(Sender: TObject);
+begin
+  console.log ('double click')
+
 end;
 
 procedure TMainForm.setUpSimulationUI();
