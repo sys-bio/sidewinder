@@ -104,7 +104,6 @@ type
     lblRxnId: TWebLabel;
     lblRxnIdString: TWebLabel;
     WebConsoleLog1: TWebConsoleLog;
-    WebPopupMenu1: TWebPopupMenu;
 
     procedure btnUniUniClick(Sender: TObject);
     procedure btnBiBiClick(Sender: TObject);
@@ -117,8 +116,6 @@ type
     procedure btnAboutClick(Sender: TObject);
     procedure btnDrawClick(Sender: TObject);
     procedure zoomTrackBarChange(Sender: TObject);
-    procedure btnNodeOutlineColorClick(Sender: TObject);
-    procedure btnNodeFillColorClick(Sender: TObject);
     procedure btnAddNodeClick(Sender: TObject);
     procedure WebFormCreate(Sender: TObject);
     procedure editNodeIdExit(Sender: TObject);
@@ -150,6 +147,7 @@ type
       AText: string);
     procedure btnClearClick(Sender: TObject);
     procedure btnNodeFillColorSelect(Sender: TObject);
+    procedure btnNodeOutlineColorSelect(Sender: TObject);
     procedure mnuSaveClick(Sender: TObject);
     procedure mnuUndoClick(Sender: TObject);
     procedure ParamSliderOnChange(Sender: TObject);
@@ -358,30 +356,6 @@ end;
 procedure TMainForm.btnIdleClick(Sender: TObject);
 begin
   networkController.setSelectStatus;
-end;
-
-procedure TMainForm.btnNodeFillColorClick(Sender: TObject);
-var
-  i: Integer;
-begin
-  for i := 0 to length(network.nodes) - 1 do
-    if network.nodes[i].selected then
-       begin
-       network.nodes[i].state.fillColor := btnNodeFillColor.color;
-       end;
-  networkPB1.Invalidate;
-end;
-
-procedure TMainForm.btnNodeOutlineColorClick(Sender: TObject);
-var
-  i: Integer;
-begin
-  for i := 0 to length(network.nodes) - 1 do
-    if network.nodes[i].selected then
-      begin
-        network.nodes[i].state.outlineColor := btnNodeOutlineColor.color;
-        networkPB1.Invalidate;
-      end;
 end;
 
 procedure TMainForm.btnRandomNetworkClick(Sender: TObject);
@@ -666,12 +640,6 @@ procedure TMainForm.networkPB1MouseDown(Sender: TObject; Button: TMouseButton;
 var
   v: TPointF;
 begin
-  if Button = mbRight then
-     begin
-     console.log ('Click Panel');
-     WebPopupMenu1.Popup(x, y);
-     exit;
-     end;
   v := ScreenToWorld(X, Y);
 
   networkController.OnMouseDown(Sender, Button, Shift, v.X, v.Y);
@@ -1733,6 +1701,17 @@ begin
        network.nodes[i].state.fillColor := btnNodeFillColor.color;
        end;
   networkPB1.Invalidate;
+end;
+
+procedure TMainForm.btnNodeOutlineColorSelect(Sender: TObject);
+var i : integer;
+begin
+  for i := 0 to length(network.nodes) - 1 do
+    if network.nodes[i].selected then
+      begin
+        network.nodes[i].state.outlineColor := btnNodeOutlineColor.color;
+      end;
+   networkPB1.Invalidate;
 end;
 
 procedure TMainForm.clearRxnStoichCoeffs();

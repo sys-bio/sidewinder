@@ -899,6 +899,8 @@ object mainForm: TmainForm
         ChildOrder = 3
         ElementBodyClassName = 'card-body'
         ElementFont = efCSS
+        ExplicitLeft = -1
+        ExplicitTop = -6
         object simResultsMemo: TWebMemo
           Left = 0
           Top = 596
@@ -1182,11 +1184,12 @@ object mainForm: TmainForm
       ElementBodyClassName = 'card-body'
       ElementFont = efCSS
       Visible = False
+      ExplicitTop = 6
       object pnlNodePanel: TWebPanel
         Left = 6
         Top = 6
         Width = 160
-        Height = 185
+        Height = 275
         ElementClassName = 'card'
         HeightPercent = 100.000000000000000000
         WidthPercent = 100.000000000000000000
@@ -1256,8 +1259,8 @@ object mainForm: TmainForm
           WidthPercent = 100.000000000000000000
         end
         object btnNodeOutlineColor: TWebColorPicker
-          Left = 56
-          Top = 136
+          Left = 54
+          Top = 131
           Width = 51
           Height = 33
           HeightPercent = 100.000000000000000000
@@ -1265,12 +1268,12 @@ object mainForm: TmainForm
           ChildOrder = 3
           Color = 36095
           Role = ''
-          OnClick = btnNodeOutlineColorClick
+          OnSelect = btnNodeOutlineColorSelect
         end
         object editNodeId: TWebEdit
-          Left = 72
+          Left = 3
           Top = 22
-          Width = 74
+          Width = 145
           Height = 22
           ChildOrder = 4
           ElementClassName = 'form-control'
@@ -1290,7 +1293,6 @@ object mainForm: TmainForm
           ChildOrder = 3
           Color = 11788021
           Role = ''
-          OnClick = btnNodeFillColorClick
           OnSelect = btnNodeFillColorSelect
         end
         object editNodeConc: TWebEdit
@@ -1534,11 +1536,5 @@ object mainForm: TmainForm
     OnGetFileAsText = SBMLOpenDialogGetFileAsText
     Left = 1160
     Top = 754
-  end
-  object WebPopupMenu1: TWebPopupMenu
-    Appearance.HamburgerMenu.Caption = 'Menu'
-    Appearance.SubmenuIndicator = '&#9658;'
-    Left = 1162
-    Top = 580
   end
 end
