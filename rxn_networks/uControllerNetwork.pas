@@ -69,13 +69,11 @@ type
     procedure setNodeId(Id: string);
     procedure setNodeConc(conc: string);
     procedure addReaction(Id: string; srcNodes, destNodes: array of TNode);
-    procedure setReactionSpecStoich(spIndex: integer; stoichVal: double;
-      src: boolean);
+    procedure setReactionSpecStoich(spIndex: integer; stoichVal: double; src: boolean);
     procedure prepareUndo;
     procedure undo;
     procedure deleteSelectedItems;
 
-    procedure addUniUniReactionMouseDown(Sender: TObject; x, y: double);
     procedure addAnyReactionMouseDown(Sender: TObject; x, y: double; nReactants, nProducts: integer);
     procedure OnMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; x, y: double);
     procedure OnMouseMove(Sender: TObject; Shift: TShiftState; x, y: double);
@@ -242,7 +240,6 @@ var
 begin
   prepareUndo;
   network.addAnyToAnyReaction (Id, srcNodes, destNodes, reactionIndex);
-  // result := network.addUniUniReaction(Id, src, dest);
 end;
 
 function TController.addNode(Id: string; x, y: double): TNode;
@@ -344,51 +341,6 @@ begin
       showmessage
         ('Error setting reaction Stoichiometric coefficient for a species.');
   end;
-end;
-
-procedure TController.addUniUniReactionMouseDown(Sender: TObject; x, y: double);
-var
-  index: integer;
-  node: TNode;
-begin
-  (Sender as TPaintBox).cursor := crHandPoint;
-
-  if srcNode = NOT_SELECTED then // ie srcnode not chosen yet
-    begin
-      node := network.overNode(x, y, index);
-      if node <> nil then
-        begin
-          srcNode := index;
-          destNode := NOT_SELECTED;
-          network.nodes[index].addReactionSelected := True;
-          setLength(sourceNodes, 1);
-          sourceNodes[0] := node;
-        end
-      else
-        mStatus := sSelect;
-    end
-  else if srcNode <> NOT_SELECTED then
-    begin
-      node := network.overNode(x, y, index);
-      if node <> nil then
-        begin
-          destNode := index;
-          setLength(destNodes, 1);
-          destNodes[0] := node;
-          prepareUndo;
-          network.addAnyToAnyReaction ('J' + inttostr(Length(network.reactions)), sourceNodes, destNodes, index);
-          network.nodes[srcNode].addReactionSelected := False;
-          srcNode := NOT_SELECTED;
-          destNode := NOT_SELECTED;
-          (Sender as TPaintBox).cursor := crDefault;
-        end
-      else
-        begin
-          mStatus := sSelect;
-          srcNode := NOT_SELECTED;
-          destNode := NOT_SELECTED;
-        end;
-    end;
 end;
 
 
@@ -511,7 +463,7 @@ begin
         end;
        sAddUniUni:
         begin
-          addUniUniReactionMouseDown(Sender, x, y);
+          addAnyReactionMouseDown(Sender, x, y, 1, 1);
           exit;
         end;
       sAddUniBi:

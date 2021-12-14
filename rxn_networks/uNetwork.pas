@@ -62,6 +62,7 @@ type
        procedure saveAsJSON (nodeObject : TJSONObject);
        procedure loadFromJSON (obj : TJSONObject);
        procedure loadFromSBML (obj : TSBMLLayoutSpeciesGlyph; initVal: double);
+       function  clone : TNodeState;
   end;
 
   TNode = class (TParent)
@@ -337,6 +338,13 @@ begin
   reactionObject.AddPair ('thickness', TJSONNumber.Create (thickness));
 end;
 
+
+function TNodeState.clone : TNodeState;
+begin
+  result := self;
+end;
+
+// ---------------------------------------------------------------------------
 
 procedure TReactionState.loadFromJSON (obj : TJSONObject);
 var speciesObject : TJSONObject;
