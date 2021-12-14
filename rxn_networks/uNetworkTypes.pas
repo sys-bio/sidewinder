@@ -2,7 +2,7 @@ unit uNetworkTypes;
 
 interface
 
-Uses Types, Classes, SysUtils;
+Uses System.Types, Classes, SysUtils, Web, WEBLib.Graphics;
 
 const
    MaxControlPoints = 4;
@@ -16,7 +16,7 @@ type
   end;
   TPointDynArray = array of TPointF;
 
-  TRectArray = array[0..MaxControlPoints-1] of TRect;
+  TRectangularArray = array[0..MaxControlPoints-1] of TCanvasRectF;
 
   TReactionLineType = (ltLine, ltSegmentedLine, ltBezier);
   TArcDirection = (adInArc, adOutArc);
@@ -29,6 +29,7 @@ type
   function getReactionType (atype : string) : TReactionType;
 
 implementation
+
 
 constructor TPointF.create (x, y : double);
 begin

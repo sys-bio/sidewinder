@@ -24,6 +24,7 @@ const
   DEFAULT_REACTION_THICKNESS = 3;
   DEFAULT_NODE_OUTLINE_THICKNESS = 3;
   MAGIC_IDENTIFER = 'NM01';  // Identifier for json output, 01 refers to version number
+  MAX_NODE_CONTROL_POINTS = 4;
 
 type
   // Replace TColor with something like this.
@@ -64,12 +65,17 @@ type
   end;
 
   TNode = class (TParent)
+     private
+        //function getControlRects (x, y, w, h : double) : TRectangularArray;
+        //function PtInRect (rect : TCanvasRectF; pt : TPointF) : boolean;
+     public
        state : TNodeState;
        addReactionSelected : boolean;
        dx, dy : double; // for autolayout algorithm
 
        function    overNode (x, y : double) : boolean;
-       function    isInRectangle (selectionRect : TRect) : boolean;
+       function    overControlRectangle (x, y : double;  var selectedNodeGrabRectangle : integer) : boolean;
+       function    isInRectangle (selectionRect : TCanvasRectF) : boolean;
        function    getCenter : TPointF;
        function    getNodeBoundingBox : TBoundingBoxSegments;
        function    computeStartingPoint (endPt : TPointF) : TPointF;
@@ -125,6 +131,7 @@ type
        function    getRateRule: string;
        function    overCentroid (x, y : double) : boolean;
        procedure   adjustArcCentres(vx, vy: double);
+       function    IsInRectangle (selectionBox : TCanvasRectF) : boolean;
        function    overBezierHandle (x, y : double;
                         var isReactantSide : boolean;
                         var bezierId: integer;
@@ -162,8 +169,9 @@ type
        function    convertToJSON : string;
        function    overNode (x, y : double; var node : TNode) : boolean; overload;
        function    overNode (x, y : double; var index : integer) : TNode; overload;
+       function    overNodeControlRectangle (x, y : double; selectedNode : integer; var selectedNodeGrabRectangle : integer) : boolean;
        function    overReaction (x, y : double; var reactionIndex, arcId : integer) : boolean;
-       function    overCentroid (selectedReaction : integer; x, y : double) : boolean;
+       function    overCentroid (x, y : double; selectedReaction : integer) : boolean;
        function    overBezierHandle (x, y : double;
                        selectedReaction : integer;
                        var isReactant : boolean;
@@ -200,7 +208,7 @@ type
 
 implementation
 
-Uses WEBLib.Dialogs, uDrawReaction, uGraphUtils;
+Uses WEBLib.Dialogs, uDrawReaction, uNetworkCanvas, uGraphUtils;
 
 function colorToHexString( color: TColor ): string; // hex string for writing to SBML
 // From: https://delphi.fandom.com/wiki/Colors_in_Delphi
@@ -1170,6 +1178,7 @@ begin
          end;
 end;
 
+
 function TNetwork.overNode (x, y : double; var node : TNode) : boolean;
 var i : integer;
 begin
@@ -1183,11 +1192,27 @@ begin
 end;
 
 
+function TNetwork.overNodeControlRectangle (x, y : double; selectedNode : integer; var selectedNodeGrabRectangle : integer) : boolean;
+var i : integer;
+begin
+  console.log ('TNetwork.overNodeControlRectangle selectedNode=' + inttostr (selectedNode));
+  result := False;
+  if selectedNode <> -1 then
+     if nodes[selectedNode].overControlRectangle (x, y, selectedNodeGrabRectangle) then
+         begin
+         console.log ('netowork.overNodeControlRectangle: TRUE, i = ' + inttostr (i));
+         result := True;
+         exit;
+         end;
+end;
+
+
+
 function TNetwork.overReaction(x, y : double; var reactionIndex, arcId : integer) : boolean;
 var i, j : integer;  p1, p2 : TPointF;
     parametricDistance : double;
 begin
-  console.log ('In over reaction method');
+  reactionIndex := -1;
   result := False;
   p2 := TPointF.Create (x, y);
   for i := 0 to length (reactions) -1 do
@@ -1248,7 +1273,7 @@ begin
 end;
 
 
-function TNetwork.overCentroid (selectedReaction : integer; x, y : double) : boolean;
+function TNetwork.overCentroid (x, y : double; selectedReaction : integer) : boolean;
 begin
   // Are we over a reaction
   if selectedReaction <> -1 then
@@ -1257,7 +1282,6 @@ begin
      end
   else
      result := False;
-  //console.log ('Over centroid: ' + booltostr (result));
 end;
 
 
@@ -1438,7 +1462,43 @@ begin
 end;
 
 
-function TNode.IsInRectangle (selectionRect : TRect) : boolean;
+function TNode.overControlRectangle (x, y : double; var selectedNodeGrabRectangle : integer) : boolean;
+var r : TRectangularArray;
+    i : integer;
+var sX, sY, sW, sH : double;
+    f : integer;
+begin
+  result := False;
+
+  // Compute the selected box around the node
+  f := trunc(4);//*scalingFactor);
+  //sX := x*scalingFactor - f;
+  //sY := y*scalingFactor - f;
+  //sW := state.w*scalingFactor + 2*f;
+  //sH := state.h*scalingFactor + 2*f;
+
+  sX := state.x - f;
+  sY := state.y - f;
+  sW := state.w + 2*f;
+  sH := state.h + 2*f;
+
+  // Given the selected box, now compute the control boxes around this rectangle
+  r := getControlRects(sX, sY, sW, sH);
+  for i := 0 to MAX_NODE_CONTROL_POINTS - 1 do
+      begin
+      console.log ('TNode.overControlRectangle: ' + inttostr (i));
+      result := uGraphUtils.PtInRectF (r[i], TPointF.Create (x,y)) or result;
+      if result then
+         begin
+         console.log ('TNode.overControlRectangle: FOUND');
+         selectedNodeGrabRectangle := i;
+         exit;
+         end;
+      end;
+end;
+
+
+function TNode.IsInRectangle (selectionRect : TCanvasRectF) : boolean;
 var scalingFactor : double;
     sl, st, sr, sb :  double;
 begin
@@ -1681,6 +1741,20 @@ begin
          end;
       end;
 end;
+
+
+function TReaction.isInRectangle (selectionBox : TCanvasRectF) : boolean;
+var i :  integer;
+begin
+  result := True;
+  for i := 0 to length (state.srcPtr) - 1 do
+      console.log (state.srcPtr);
+      //result := result and ptInRectF (selectionBox, TPointF.Create(state.srcPtr[i].state.x, state.srcPtr[i].state.y));
+
+  //for i := 0 to length (state.destPtr) - 1 do
+   //   result := result and ptInRectF (selectionBox, TPointF.Create(state.destPtr[i].state.x, state.destPtr[i].state.y));
+end;
+
 
 end.
 

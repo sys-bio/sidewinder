@@ -59,13 +59,6 @@ type
     btnBiBi: TWebSpeedButton;
     btnIdle: TWebSpeedButton;
     btnAddNode: TWebSpeedButton;
-    pnlNodePanel: TWebPanel;
-    nodeOutlineLabel: TWebLabel;
-    nodeFillLabel: TWebLabel;
-    editNodeLabel: TWebLabel;
-    btnNodeOutlineColor: TWebColorPicker;
-    editNodeId: TWebEdit;
-    btnNodeFillColor: TWebColorPicker;
     RSimWPanel: TWebPanel;
     plotEditLB: TWebListBox;
     SliderEditLB: TWebListBox;
@@ -77,8 +70,6 @@ type
     btnSimple: TWebButton;
     SaveSBMLButton: TWebButton;
     SetUpSimButton: TWebButton;
-    nodeConcLabel: TWebLabel;
-    editNodeConc: TWebEdit;
     RNodeEditWPanel: TWebPanel;
     RRxnEditWPanel: TWebPanel;
     RxnRatePanel: TWebPanel;
@@ -92,8 +83,6 @@ type
     RxnStoichLabel: TWebLabel;
     StoicReactantsLabel: TWebLabel;
     StoichProductsLabel: TWebLabel;
-    pnlPlotContainer: TWebPanel;
-    simResultsMemo: TWebMemo;
     SplitterPlotSlider: TWebSplitter;
     pnlSliderContainer: TWebPanel;
     pnlSimResultsFile: TWebPanel;
@@ -103,6 +92,20 @@ type
     btnStopSimSave: TWebButton;
     lblRxnId: TWebLabel;
     lblRxnIdString: TWebLabel;
+    pnlPlotContainer: TWebPanel;
+    simResultsMemo: TWebMemo;
+    pnlNodePanel: TWebPanel;
+    nodeOutlineLabel: TWebLabel;
+    nodeFillLabel: TWebLabel;
+    editNodeLabel: TWebLabel;
+    nodeConcLabel: TWebLabel;
+    btnNodeOutlineColor: TWebColorPicker;
+    editNodeId: TWebEdit;
+    btnNodeFillColor: TWebColorPicker;
+    editNodeConc: TWebEdit;
+    WebLabel1: TWebLabel;
+    WebButton1: TWebButton;
+    WebButton2: TWebButton;
     WebConsoleLog1: TWebConsoleLog;
 
     procedure btnUniUniClick(Sender: TObject);

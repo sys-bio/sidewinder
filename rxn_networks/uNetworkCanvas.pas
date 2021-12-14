@@ -3,7 +3,7 @@ unit uNetworkCanvas;
 interface
 
 Uses SysUtils, Classes, Graphics, Types, Dialogs, uNetwork, uDrawReaction,
-  uNetworkTypes, Math, uGraphUtils, Web;
+  uNetworkTypes, Math, uGraphUtils, Web, WEBLib.Graphics;
 
 const
    DEFAULT_FONT_SIZE = 10;
@@ -12,7 +12,7 @@ type
   TNetworkCanvas = class
 
   private
-    function  getControlRects(x, y, w, h: integer): TRectArray;
+    //function  getControlRects(x, y, w, h: integer): TRectangularArray;
     procedure drawMouseGrabPoints(x, y, w, h: integer);
 
   public
@@ -20,7 +20,7 @@ type
     reactionRenderer: TReactionRender;
     bolDrawSelectionBox: boolean;
     selectionBoxPt : TPoint;
-    selectionBox : TRect;
+    selectionBox : TCanvasRectF;
     MousePt : TPoint;
 
     bitmap: TBitmap;
@@ -146,27 +146,27 @@ begin
   Bitmap.Canvas.Pen.Style := oldStyle;
 end;
 
-
-// Assumes that x, y, w and h have been prescaled
-function TNetworkCanvas.getControlRects(x, y, w, h: integer): TRectArray;
-var
-  grabW, grabH: integer;
-  grabW2, grabH2: integer;
-begin
-  grabW := trunc(6);
-  grabH := trunc(6);
-  grabW2 := grabW div 2;
-  grabH2 := grabH div 2;
-
-  result[0] := rect(x - grabW2, y - grabW2, x + grabW2, y + grabH2);
-  result[1] := rect(x + w - grabW2, y - grabH2, x + w + grabW2, y + grabH2);
-  result[2] := rect(x - grabW2, y + h - grabH2, x + grabW2, y + h + grabH2);
-  result[3] := rect(x + w - grabW2, y + h - grabH2, x + w + grabW2, y + h + grabH2);
-end;
+//
+//// Assumes that x, y, w and h have been prescaled
+//function TNetworkCanvas.getControlRects(x, y, w, h: integer): TRectangularArray;
+//var
+//  grabW, grabH: integer;
+//  grabW2, grabH2: integer;
+//begin
+//  grabW := trunc(6);
+//  grabH := trunc(6);
+//  grabW2 := grabW div 2;
+//  grabH2 := grabH div 2;
+//
+//  result[0] := createCanvasRectF(x - grabW2, y - grabW2, x + grabW2, y + grabH2);
+//  result[1] := createCanvasRectF(x + w - grabW2, y - grabH2, x + w + grabW2, y + grabH2);
+//  result[2] := createCanvasRectF(x - grabW2, y + h - grabH2, x + grabW2, y + h + grabH2);
+//  result[3] := createCanvasRectF(x + w - grabW2, y + h - grabH2, x + w + grabW2, y + h + grabH2);
+//end;
 
 
 procedure TNetworkCanvas.drawMouseGrabPoints(x, y, w, h: integer);
-var rectList: TRectArray;
+var rectList: TRectangularArray;
 begin
   rectList := getControlRects(x, y, w, h);
 

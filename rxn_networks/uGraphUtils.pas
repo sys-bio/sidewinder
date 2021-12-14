@@ -27,6 +27,9 @@ procedure computeBezierBlendingFuncs;
 function  computeBezierLineIntersection(node: TNode; const scalingFactor : double; var pt: TPointF;   var t: double; var Segn: integer): Boolean;
 procedure drawBezier (canvas : TCanvas);
 function  ptOnBezier (p : array of TPointF; pt : TPointF; var t : double) : Boolean;
+//function  overControlRectangle (x, y : double; const state : TNodeState; var selectedNodeGrabRectangle : integer) : boolean;
+function  getControlRects (x, y, w, h : double) : TRectangularArray;
+function  ptInRectF (rect : TCanvasRectF; pt : TPointF) : boolean;
 
 implementation
 
@@ -203,6 +206,31 @@ begin
   result.x := trunc (r.x - Origin.x);
   result.y := trunc (r.y - Origin.y);
 end;
+
+
+function PtInRectF (rect : TCanvasRectF; pt : TPointF) : boolean;
+begin
+  result := (pt.X >= Rect.Left) and (pt.X < Rect.Right) and (pt.Y >= Rect.Top)
+    and (pt.Y < Rect.Bottom);
+end;
+
+
+// Assumes that x, y, w and h have been prescaled
+function getControlRects (x, y, w, h : double) : TRectangularArray;
+var grabW,  grabH : double;
+    grabW2, grabH2 : double;
+begin
+  grabW := 8;
+  grabH := 8;
+  grabW2 := grabW / 2;
+  grabH2 := grabH / 2;
+
+  result[0] := createCanvasRectF(x - grabW2, y - grabW2, x + grabW2, y + grabH2);
+  result[1] := createCanvasRectF(x + w - grabW2, y - grabH2, x + w + grabW2, y + grabH2);
+  result[2] := createCanvasRectF(x - grabW2, y + h - grabH2, x + grabW2, y + h + grabH2);
+  result[3] := createCanvasRectF(x + w - grabW2, y + h - grabH2, x + w + grabW2, y + h + grabH2);
+end;
+
 
 
 // Compute factorial of n.  I know, there is a better way but this will do for
