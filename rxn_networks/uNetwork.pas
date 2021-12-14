@@ -113,6 +113,7 @@ type
       procedure loadFromSBML (glyphRxn : TSBMLLayoutReactionGlyph; modelRxn: SBMLReaction;
                             paramAr: array of TSBMLparameter; compAr: array of TSBMLcompartment);
       function getMassCenter(): TPointF; // Calc mass center for reaction, where each node has mass of 1.
+      function clone : TReactionState;
   end;
 
   TReaction = class (TParent)
@@ -521,6 +522,31 @@ begin
   Result := TPointF.create( xSum/(self.nReactants + nProducts),
                      ySum/(self.nReactants + nProducts) );
 end;
+
+
+function TReactionState.clone : TReactionState;
+var i : integer;
+begin
+  result := self;
+  setlength (result.reactantReactionArcs, length (self.reactantReactionArcs));
+  for i := 0 to length (self.reactantReactionArcs) - 1 do
+      begin
+      result.reactantReactionArcs[i].h1 := self.reactantReactionArcs[i].h1;
+      result.reactantReactionArcs[i].h2 := self.reactantReactionArcs[i].h2;
+      result.reactantReactionArcs[i].merged := self.reactantReactionArcs[i].merged;
+      result.reactantReactionArcs[i].arcDirection := self.reactantReactionArcs[i].arcDirection;
+      end;
+
+  setlength (result.productReactionArcs, length (self.productReactionArcs));
+  for i := 0 to length (self.reactantReactionArcs) - 1 do
+      begin
+      result.productReactionArcs[i].h1 := self.productReactionArcs[i].h1;
+      result.productReactionArcs[i].h2 := self.productReactionArcs[i].h2;
+      result.productReactionArcs[i].merged := self.productReactionArcs[i].merged;
+      result.productReactionArcs[i].arcDirection := self.productReactionArcs[i].arcDirection;
+      end;
+end;
+
 
 procedure AddJSONHeader (obj : TJSONObject);
 begin
@@ -1502,7 +1528,6 @@ function TNode.IsInRectangle (selectionRect : TCanvasRectF) : boolean;
 var scalingFactor : double;
     sl, st, sr, sb :  double;
 begin
-  console.log ('IsInrectangle');
   //scalingFactor := (ParentNode.NetworkRef as TNetwork).scalingFactor;
   result := True;
   sl := selectionRect.Left;///scalingFactor;
@@ -1603,8 +1628,9 @@ end;
 
 
 function TReaction.getCurrentState : TReactionState;
+var i : integer;
 begin
-  result := state;  // This works so long as we don't have dynamic arrays.
+  result := state.clone;  // This works so long as we don't have dynamic arrays.
 end;
 
 
@@ -1724,7 +1750,7 @@ begin
       if ptInCircle (x, y, h1) then
          begin
          bezierId := i;
-         handleId := 0;   // never gets here
+         handleId := 0;
          handleCoords := h1;
          isReactantSide := False;
          result := True;
@@ -1747,12 +1773,11 @@ function TReaction.isInRectangle (selectionBox : TCanvasRectF) : boolean;
 var i :  integer;
 begin
   result := True;
-  for i := 0 to length (state.srcPtr) - 1 do
-      console.log (state.srcPtr);
-      //result := result and ptInRectF (selectionBox, TPointF.Create(state.srcPtr[i].state.x, state.srcPtr[i].state.y));
+  for i := 0 to state.nReactants - 1 do
+      result := result and ptInRectF (selectionBox, TPointF.Create(state.srcPtr[i].state.x, state.srcPtr[i].state.y));
 
-  //for i := 0 to length (state.destPtr) - 1 do
-   //   result := result and ptInRectF (selectionBox, TPointF.Create(state.destPtr[i].state.x, state.destPtr[i].state.y));
+  for i := 0 to state.nProducts - 1 do
+      result := result and ptInRectF (selectionBox, TPointF.Create(state.destPtr[i].state.x, state.destPtr[i].state.y));
 end;
 
 

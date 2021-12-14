@@ -500,6 +500,7 @@ var
   isReactant : boolean;
   selectedNodeGrabRectangle : integer;
 begin
+  prepareUndo;
   console.log ('MOUSE DOWN');
   try
     case mStatus of
