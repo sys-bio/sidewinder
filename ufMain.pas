@@ -808,10 +808,11 @@ procedure TMainForm.WebFormCreate(Sender: TObject);
 begin
   self.numbPlots := 0;
   self.numbSliders := 0;
-  self.zoomTrackBar.left := 20; //20;
+  self.zoomTrackBar.left := 20;
   self.zoomTrackBar.Position := 10;
-  self.netDrawScrollBarHoriz.Value := networkPB1.Width/2; // need to fiddle with this?
-  self.netDrawScrollBarVert.Value := networkPB1.Height/2;
+  self.netDrawScrollBarHoriz.Value := 0;
+  self.netDrawScrollBarVert.Value := 0;
+
 
   origin.X := 0.0;
   origin.Y := 0.0;
