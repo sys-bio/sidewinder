@@ -259,8 +259,8 @@ object mainForm: TmainForm
       OnClick = btnRandomNetworkClick
     end
     object btnAutoLayout: TWebButton
-      Left = 404
-      Top = 57
+      Left = 524
+      Top = 3
       Width = 116
       Height = 25
       Caption = 'Auto Layout'
@@ -272,11 +272,11 @@ object mainForm: TmainForm
       OnClick = btnAutoLayoutClick
     end
     object btnSampleLayout: TWebButton
-      Left = 552
-      Top = 24
-      Width = 145
+      Left = 404
+      Top = 34
+      Width = 116
       Height = 25
-      Caption = 'Draw Sample Network'
+      Caption = 'Sample Network'
       ChildOrder = 2
       ElementClassName = 'btn btn-primary btn-sm'
       ElementFont = efCSS
@@ -298,9 +298,9 @@ object mainForm: TmainForm
       OnClick = btnAboutClick
     end
     object btnCenter: TWebButton
-      Left = 272
-      Top = 24
-      Width = 96
+      Left = 282
+      Top = 3
+      Width = 116
       Height = 25
       Caption = 'Center'
       ChildOrder = 4
@@ -406,7 +406,7 @@ object mainForm: TmainForm
     object ZoomCntrlPanel: TWebPanel
       Left = 726
       Top = 3
-      Width = 147
+      Width = 176
       Height = 79
       ElementClassName = 'card'
       HeightPercent = 100.000000000000000000
@@ -431,9 +431,9 @@ object mainForm: TmainForm
         WidthPercent = 100.000000000000000000
       end
       object zoomTrackBar: TWebTrackBar
-        Left = 30
+        Left = 16
         Top = 40
-        Width = 81
+        Width = 145
         Height = 20
         HeightPercent = 100.000000000000000000
         WidthPercent = 100.000000000000000000
@@ -1092,7 +1092,6 @@ object mainForm: TmainForm
         ChildOrder = 3
         Color = clBtnFace
         OnMoved = SplitterPlotSliderMoved
-        ExplicitLeft = 257
       end
       object pnlSliderContainer: TWebPanel
         Left = 134
@@ -1108,8 +1107,6 @@ object mainForm: TmainForm
         ChildOrder = 4
         ElementBodyClassName = 'card-body'
         ElementFont = efCSS
-        ExplicitLeft = 262
-        ExplicitWidth = 264
         DesignSize = (
           392
           735)
@@ -1229,7 +1226,6 @@ object mainForm: TmainForm
           SelStart = 0
           Visible = False
           WidthPercent = 100.000000000000000000
-          ExplicitWidth = 257
         end
       end
     end
@@ -1247,8 +1243,6 @@ object mainForm: TmainForm
       ChildOrder = 2
       ElementBodyClassName = 'card-body'
       ElementFont = efCSS
-      ExplicitLeft = 185
-      ExplicitWidth = 774
       object networkPB1: TWebPaintBox
         Left = 0
         Top = 0
@@ -1266,7 +1260,6 @@ object mainForm: TmainForm
         OnMouseMove = networkPB1MouseMove
         OnMouseUp = networkPB1MouseUp
         OnMouseWheel = networkPB1MouseWheel
-        ExplicitWidth = 756
       end
       object netDrawScrollBarVert: TTMSFNCScrollBar
         Left = 660
@@ -1310,7 +1303,6 @@ object mainForm: TmainForm
         Max = 1000.000000000000000000
         PageSize = 10.000000000000000000
         OnValueChanged = netDrawScrollBarVertValueChanged
-        ExplicitLeft = 756
       end
       object netDrawScrollBarHoriz: TTMSFNCScrollBar
         Left = 0
@@ -1355,7 +1347,6 @@ object mainForm: TmainForm
         Max = 1000.000000000000000000
         PageSize = 10.000000000000000000
         OnValueChanged = netDrawScrollBarHorizValueChanged
-        ExplicitWidth = 774
       end
     end
     object splitter: TWebSplitter
@@ -1385,7 +1376,6 @@ object mainForm: TmainForm
       ElementBodyClassName = 'card-body'
       ElementFont = efCSS
       Visible = False
-      ExplicitTop = 6
     end
     object RRxnEditWPanel: TWebPanel
       Left = 964

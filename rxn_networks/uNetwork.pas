@@ -131,6 +131,7 @@ type
        procedure   setRateRule;
        procedure   setDefaultParams;
        function    getRateRule: string;
+       procedure   moveReaction (dx, dy : double);
        function    overCentroid (x, y : double) : boolean;
        procedure   adjustArcCentres(vx, vy: double);
        function    IsInRectangle (selectionBox : TCanvasRectF) : boolean;
@@ -171,9 +172,8 @@ type
        function    convertToJSON : string;
        function    overNode (x, y : double; var node : TNode) : boolean; overload;
        function    overNode (x, y : double; var index : integer) : TNode; overload;
-       function    overNodeControlRectangle (x, y : double; selectedNode : integer; var selectedNodeGrabRectangle : integer) : boolean;
+       function    overNodeControlRectangle (x, y : double; node : TNode; var selectedNodeGrabRectangle : integer) : boolean;
        function    overReaction (x, y : double; var reactionIndex, arcId : integer) : boolean;
-       function    overCentroid (x, y : double; selectedReaction : integer) : boolean;
        function    overBezierHandle (x, y : double;
                        selectedReaction : integer;
                        var isReactant : boolean;
@@ -1226,18 +1226,16 @@ begin
 end;
 
 
-function TNetwork.overNodeControlRectangle (x, y : double; selectedNode : integer; var selectedNodeGrabRectangle : integer) : boolean;
+function TNetwork.overNodeControlRectangle (x, y : double; node : TNode; var selectedNodeGrabRectangle : integer) : boolean;
 var i : integer;
 begin
-  console.log ('TNetwork.overNodeControlRectangle selectedNode=' + inttostr (selectedNode));
   result := False;
-  if selectedNode <> -1 then
-     if nodes[selectedNode].overControlRectangle (x, y, selectedNodeGrabRectangle) then
-         begin
-         console.log ('netowork.overNodeControlRectangle: TRUE, i = ' + inttostr (i));
-         result := True;
-         exit;
-         end;
+  if node.overControlRectangle (x, y, selectedNodeGrabRectangle) then
+     begin
+     console.log ('netowork.overNodeControlRectangle: TRUE, i = ' + inttostr (i));
+     result := True;
+     exit;
+     end;
 end;
 
 
@@ -1307,17 +1305,6 @@ begin
 end;
 
 
-function TNetwork.overCentroid (x, y : double; selectedReaction : integer) : boolean;
-begin
-  // Are we over a reaction
-  if selectedReaction <> -1 then
-     begin
-     result := reactions[selectedReaction].overCentroid (x, y)
-     end
-  else
-     result := False;
-end;
-
 
 function TNetwork.overBezierHandle (x, y : double;
                        selectedReaction : integer;
@@ -1375,7 +1362,7 @@ end;
 
 
 procedure TNetwork.centerNetwork (w, h : integer);
-var i : integer;
+var i, j : integer;
     sumx, sumy, cx, cy : double;
 begin
   sumx := 0; sumy := 0;
@@ -1395,6 +1382,28 @@ for i := 0 to length (nodes) - 1 do
        nodes[i].state.y := nodes[i].state.y + (h/2 - cy);
        end;
     end;
+
+  for i := 0 to length (reactions) - 1 do
+      begin
+      reactions[i].state.arcCenter.x := reactions[i].state.arcCenter.x + (w/2 - cx);
+      reactions[i].state.arcCenter.y := reactions[i].state.arcCenter.y + (h/2 - cy);
+      for j := 0 to length (reactions[i].state.reactantReactionArcs) -1 do
+          begin
+          reactions[i].state.reactantReactionArcs[j].h1.x := reactions[i].state.reactantReactionArcs[j].h1.x + (w/2 - cx);
+          reactions[i].state.reactantReactionArcs[j].h1.y := reactions[i].state.reactantReactionArcs[j].h1.y + (h/2 - cy);
+          reactions[i].state.reactantReactionArcs[j].h2.x := reactions[i].state.reactantReactionArcs[j].h2.x + (w/2 - cx);
+          reactions[i].state.reactantReactionArcs[j].h2.y := reactions[i].state.reactantReactionArcs[j].h2.y + (h/2 - cy);
+          end;
+      for j := 0 to length (reactions[i].state.productReactionArcs) -1 do
+          begin
+          reactions[i].state.productReactionArcs[j].h1.x := reactions[i].state.productReactionArcs[j].h1.x + (w/2 - cx);
+          reactions[i].state.productReactionArcs[j].h1.y := reactions[i].state.productReactionArcs[j].h1.y + (h/2 - cy);
+          reactions[i].state.productReactionArcs[j].h2.x := reactions[i].state.productReactionArcs[j].h2.x + (w/2 - cx);
+          reactions[i].state.productReactionArcs[j].h2.y := reactions[i].state.productReactionArcs[j].h2.y + (h/2 - cy);
+          end;
+      end;
+
+
 end;
 
 
@@ -1659,6 +1668,36 @@ end;
 function TReaction.getRateRule: string;
 begin
   Result := state.rateLaw;
+end;
+
+
+procedure TReaction.MoveReaction(dx, dy: double);
+var
+  dp: TPointF;
+  i, j: integer;
+begin
+  dp := TPointF.Create(dx, dy);
+  for i := 0 to state.nReactants - 1 do
+      begin
+      state.reactantReactionArcs[i].h1.x := state.reactantReactionArcs[i].h1.x + dp.x;
+      state.reactantReactionArcs[i].h1.y := state.reactantReactionArcs[i].h1.y + dp.y;
+      state.reactantReactionArcs[i].h2.x := state.reactantReactionArcs[i].h2.x + dp.x;
+      state.reactantReactionArcs[i].h2.y := state.reactantReactionArcs[i].h2.y + dp.y;
+      //for j := 0 to length(SubSegments[i]) - 1 do
+      // SubSegments[i][j] := addPtF(SubSegments[i][j], dp);
+      end;
+  for i := 0 to state.nProducts - 1 do
+      begin
+      state.productReactionArcs[i].h1.x := state.productReactionArcs[i].h1.x + dp.x;
+      state.productReactionArcs[i].h1.y := state.productReactionArcs[i].h1.y + dp.y;
+      state.productReactionArcs[i].h2.x := state.productReactionArcs[i].h2.x + dp.x;
+      state.productReactionArcs[i].h2.y := state.productReactionArcs[i].h2.y + dp.y;
+      //for j := 0 to length(SubSegments[i]) - 1 do
+      // SubSegments[i][j] := addPtF(SubSegments[i][j], dp);
+      end;
+
+  state.arcCenter.x := state.arcCenter.x + dp.x;
+  state.arcCenter.y := state.arcCenter.y + dp.y;
 end;
 
 

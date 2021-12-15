@@ -30,8 +30,8 @@ type
   TController = class
     mStatus: TMouseStatus;
     srcNode, destNode: integer;
-    selectedNode: integer;
-    selectedReaction: integer;
+    //selectedNode: integer;
+    //selectedReaction: integer;
     currentX, currentY: double;
     MouseX, MouseY: double;
 
@@ -47,13 +47,13 @@ type
     undoStack: TNetworkStack;
 
     selectedObjects: TSelectedObjects;
-    currentObject: TParent;
+    currentObject: TObjectInformation;
 
     mouseDownPressed: boolean;
 
     networkCanvas: TNetworkCanvas;
 
-    procedure adjustMovedBezierHandle;
+    procedure adjustMovedBezierHandle (reactionObj : TObjectInformation);
   public
     procedure loadModel(modelStr: string);
     procedure loadSBMLModel(newSBMLmodel: TModel);
@@ -128,8 +128,8 @@ begin
   destNode := NOT_SELECTED;
   sourceNodeCounter := -1;
   destNodeCounter := -1;
-  selectedNode := -1;
-  selectedReaction := -1;
+  //selectedNode := -1;
+  //selectedReaction := -1;
   selectedObjects := TSelectedObjects.Create;
   mouseDownPressed := False;
 end;
@@ -177,7 +177,7 @@ begin
           for j := i + 1 to alength - 1 do
             network.reactions[j - 1] := network.reactions[j];
           setLength(network.reactions, alength - 1);
-          selectedReaction := -1;
+          // HMS network.;
           network.networkEvent(nil);
           exit;
         end;
@@ -263,8 +263,9 @@ procedure TController.setNodeId(Id: string);
 var
   index: integer;
 begin
-  if selectedNode = -1 then
-    exit;
+  // HMS
+  //if selectedNode = -1 then
+  //  exit;
 
   prepareUndo;
   if network.findNode(Id, index) then
@@ -273,9 +274,9 @@ begin
       exit;
     end;
 
-  network.nodes[selectedNode].state.Id := Id;
+  selectedObjects[0].node.state.Id := Id;
   // Update reactions that have this node:
-  network.updateReactions(network.nodes[selectedNode]);
+  network.updateReactions(selectedObjects[0].node);
   network.networkEvent(nil);
 end;
 
@@ -284,7 +285,7 @@ var
   index: integer;
   newConc: double;
 begin
-  if selectedNode = -1 then
+  if selectedObjects.count = 0 then
     exit;
 
   prepareUndo;
@@ -295,7 +296,7 @@ begin
       // ShowMessage(Exception.Message);
       showmessage('Concentration must be a number');
   end;
-  network.nodes[selectedNode].state.conc := newConc;
+  selectedObjects[0].node.state.conc := newConc;
   network.networkEvent(nil);
 end;
 
@@ -309,33 +310,32 @@ procedure TController.setReactionSpecStoich(spIndex: integer; stoichVal: double;
 var
   i: integer;
 begin
-  if selectedReaction = -1 then
+  if selectedObjects.count = 0 then
     exit;
+
   prepareUndo;
   try
     if src then
       begin
-        if spIndex < Length(network.reactions[selectedReaction].state.srcStoich)
+        if spIndex < Length(selectedObjects[0].reaction.state.srcStoich)
         then
           begin
-            network.reactions[selectedReaction].state.srcStoich[spIndex] :=
-              stoichVal;
+            selectedObjects[0].reaction.state.srcStoich[spIndex] := stoichVal;
             network.networkEvent(nil);
           end
         else
           showmessage('Source species index too large');
       end
     else // destination node:
-      if spIndex < Length(network.reactions[selectedReaction].state.destStoich)
+      if spIndex < Length(selectedObjects[0].reaction.state.destStoich)
       then
         begin
-          network.reactions[selectedReaction].state.destStoich[spIndex] :=
-            stoichVal;
+          selectedObjects[0].reaction.state.destStoich[spIndex] :=  stoichVal;
           network.networkEvent(nil);
         end
       else
         showmessage('Source destination index too large');
-    network.reactions[selectedReaction].setRateRule;
+    selectedObjects[0].reaction.setRateRule;
   except
     on Exception do
       showmessage
@@ -393,21 +393,21 @@ begin
     end;
 end;
 
-procedure TController.adjustMovedBezierHandle;
+procedure TController.adjustMovedBezierHandle (reactionObj : TObjectInformation);
 var bnx, bny, bn_1x, bn_1y, c1x, c1y : double;
     i : integer;
     reaction : TReaction;
     bezier : TBezierCurve;
 begin
   console.log ('adjust....');
-  reaction := network.reactions[ObjectInformation.reactionIndex];
+  reaction := reactionObj.reaction;
 
-  if ObjectInformation.isReactant then
-     bezier := reaction.state.reactantReactionArcs[ObjectInformation.arcId]
+  if reactionObj.isReactant then
+     bezier := reaction.state.reactantReactionArcs[reactionObj.arcId]
   else
-     bezier := reaction.state.productReactionArcs[ObjectInformation.arcId];
+     bezier := reaction.state.productReactionArcs[reactionObj.arcId];
 
-  if ObjectInformation.isReactant then
+  if reactionObj.isReactant then
      begin
      for i := 0 to reaction.state.nReactants - 1 do
          reaction.state.reactantReactionArcs[i].h2 := bezier.h2;
@@ -451,6 +451,8 @@ var
   handleCoords: TPointF;
   isReactant : boolean;
   selectedNodeGrabRectangle : integer;
+  selectedNode : integer;
+  rIndex : integer;
 begin
   prepareUndo;
   console.log ('MOUSE DOWN');
@@ -483,22 +485,21 @@ begin
         end;
       sSelect:
         begin
-        console.log ('SELECT');
-        //selectedNode := -1;
-        //network.UnSelectAll;
-        //selectedObjects.Clear;
         end;
     end;
 
     if network.overNode(x, y, index) <> nil then
        begin
-        console.log ('MOUSEDONW: Overnode');
-        currentObject := network.nodes[index];
+        console.log ('MOUSEDOWN: Overnode');
+        currentObject := TObjectInformation.Create;
+        currentObject.node := network.nodes[index];
+        currentObject.objType := oNode;
+
         // In words: If shift not pressed and node not selected, then
         // unselect everything in preparation to select the node
         if not(ssShift in Shift) then
           begin
-            if not currentObject.selected then
+            if not currentObject.node.selected then
                begin
                network.UnSelectAll;
                selectedObjects.Clear;
@@ -508,87 +509,112 @@ begin
         // Shift to select multiple objects
         // If the object is already selected and shift is held
         // down, then unselect the object
-        if currentObject.selected and (ssShift in Shift) then
+        if currentObject.node.selected and (ssShift in Shift) then
            begin
-           currentObject.selected := False;
+           currentObject.node.selected := False;
            selectedObjects.remove(currentObject);
            exit;
            end;
 
         // If the object is already in the selected list,
         // don't add it to the list again
-        if not selectedObjects.isSelected(currentObject) then
+        if not selectedObjects.isSelected(currentObject, objIndex) then
            objIndex := selectedObjects.add(currentObject);
 
         mStatus := sMouseDown;
-        selectedNode := index;
-        selectedReaction := -1;
         network.nodes[index].selected := True;
         currentX := x;
         currentY := y;
         exit;
         end;
 
-    if network.overNodeControlRectangle (x, y, selectedNode, selectedNodeGrabRectangle) then
-       begin
-       currentX := x - network.nodes[selectedNode].state.w;
-       currentY := y - network.nodes[selectedNode].state.h;
-       mStatus := sMoveNodeControlRectangle;
-       console.log ('sMoveNodeControlRectangle: Selected Node = ', inttostr (selectedNode));
-       console.log ('EXIT');
-       exit;
-       end;
-
-
-    // selectedReaction is an input
-    if network.overCentroid(x, y, selectedReaction) then
-       begin
-       currentX := x;
-       currentY := y;
-       mStatus := sMoveCentroid;
-       console.log('Over centroid: Mouse Down');
-       exit;
-       end;
-
-    // selectedReaction is an input here
-    // isEeactant returns true if the located bezier is on the reactant side
-    if network.overBezierHandle(x, y, selectedReaction, isReactant, arcId, handleId, handleCoords) then
+    if (selectedObjects.count > 0) and (selectedObjects[0].objType = oNode) then
+      if network.overNodeControlRectangle (x, y, selectedObjects[0].node, selectedNodeGrabRectangle) then
         begin
-        console.log('Mouse click over bezier handle');
-        // CurrentObjectInfo holds the info on the handle but not the edge,
-        // get the edge info from the last selected arc
-        currentX := x - handleCoords.x; // * scalingFactor;
-        currentY := y - handleCoords.y; // * scalingFactor;
-        ObjectInformation.handleCoords := handleCoords;
-        ObjectInformation.handleId := handleId;
-        ObjectInformation.arcId := arcId;
-        ObjectInformation.reactionIndex := selectedReaction;
-        ObjectInformation.isReactant := isReactant;
-
-        mStatus := sMovingBezierHandle;
+        currentX := x - network.nodes[selectedNode].state.w;
+        currentY := y - network.nodes[selectedNode].state.h;
+        mStatus := sMoveNodeControlRectangle;
+        console.log ('sMoveNodeControlRectangle: Selected Node = ', inttostr (selectedNode));
         exit;
         end;
 
-    console.log ('selectedReaction 1:=', selectedReaction);
+    if (selectedObjects.count > 0) and (selectedObjects[0].objType in [oReaction]) then
+       if selectedObjects[0].reaction.overCentroid (x, y) then
+          begin
+          currentX := x;
+          currentY := y;
+          mStatus := sMoveCentroid;
+          console.log('Over centroid: Mouse Down');
+          exit;
+          end;
+
+    // selectedReaction is an input here
+    // isEeactant returns true if the located bezier is on the reactant side
+    if (selectedObjects.count > 0) and (selectedObjects[0].objType in [oReaction]) then
+       if selectedObjects[0].reaction.overBezierHandle(x, y, isReactant, arcId, handleId, handleCoords) then
+          begin
+          console.log('Over bezier handle: Mouse Down');
+          // CurrentObjectInfo holds the info on the handle but not the edge,
+          // get the edge info from the last selected arc
+          //currentObject := TObjectInformation.Create;
+          currentX := x - handleCoords.x; // * scalingFactor;
+          currentY := y - handleCoords.y; // * scalingFactor;
+          currentObject.handleCoords := handleCoords;
+          currentObject.handleId := handleId;
+          currentObject.arcId := arcId;
+          currentObject.reaction := selectedObjects[0].reaction;
+          currentObject.isReactant := isReactant;
+
+          mStatus := sMovingBezierHandle;
+          exit;
+          end;
+
     // selectedReaction is an output there
-    if network.overReaction(x, y, selectedReaction, arcId) then
-       begin
-       //network.UnSelectAll;
-       selectedNode := -1;
-       console.log('Mouse click over reaction');
-       network.reactions[selectedReaction].selected := True;
-       console.log ('EXIT TNetwork.overReaction');
-       exit;
-       end;
-    console.log ('selectedReaction 2:=', selectedReaction);
+    if network.overReaction(x, y, rindex, arcId) then
+         begin
+         if not (ssShift in Shift) then
+            begin
+            network.unSelectAll;
+            selectedObjects.Clear;
+            end;
+
+         currentObject := TObjectInformation.Create;
+         currentObject.objType := oReaction;
+         currentObject.reaction := network.reactions[rindex];
+         currentObject.arcId := arcId;
+
+         // If shift pressed, deselect the reaction if it was selected
+         // else select it and add to selected objects.
+         if ssShift in Shift then
+            begin
+            if currentObject.reaction.selected then
+               begin
+               currentObject.reaction.selected := False;
+               selectedObjects.remove (currentObject);
+               end
+            else
+               begin
+               currentObject.reaction.selected := True;
+               ObjIndex := selectedObjects.Add(currentObject);
+               end;
+            currentX := x; currentY := y;
+            (sender as TWebPaintbox).invalidate;
+            exit;
+            end;
+
+         if not selectedObjects.IsSelected(currentObject, ObjIndex) then
+            ObjIndex := selectedObjects.Add(currentObject);
+         selectedObjects[ObjIndex].reaction.selected := True;
+         currentX := x; currentY := y;
+         (sender as TWebPaintbox).invalidate;
+         exit;
+         end;
 
     console.log ('Click on white canvas');
     // Nothing has happened for clear everything
     mStatus := sSelect;
     network.UnSelectAll;
     selectedObjects.Clear;
-    selectedNode := -1;
-    selectedReaction := -1;
     mouseDownPressed := True;
     MouseX := x;
     MouseY := y;
@@ -603,6 +629,7 @@ var
   dx, dy: double;
   index, i: integer;
   reaction : TReaction;
+  node : TNode;
 begin
   // Compute delta movement since last mouse move
   dx := (x - currentX);
@@ -616,32 +643,33 @@ begin
             // if not selectedObjects[i].isPositionLocked then
             begin
               // Update the old node coords as we'll need them next time to compute the distance
-              if selectedObjects[i].selected then
-                begin
-                  (selectedObjects[i] as TNode).state.x := (selectedObjects[i] as TNode).state.x + dx;
-                  (selectedObjects[i] as TNode).state.y := (selectedObjects[i] as TNode).state.y + dy;
-
-                  // Find out what compartment the node is now in and reassign compartment if necessary
-                  // if Network.CompartmentList.IsInCompartment (SelectedObjectList[i].SubNode.x, SelectedObjectList[i].SubNode.y,
-                  // compartment, Index) then
-                  // SelectedObjectList[i].SubNode.ParentNode.compartment := Compartment;
-                end;
+              if selectedObjects[i].objType = oNode then
+                 begin
+                 if selectedObjects[i].node.selected then
+                    begin
+                    selectedObjects[i].node.state.x := selectedObjects[i].node.state.x + dx;
+                    selectedObjects[i].node.state.y := selectedObjects[i].node.state.y + dy;
+                    end;
+                 end;
+              if selectedObjects[i].objType = oReaction then
+                 begin
+                 if selectedObjects[i].reaction.selected then
+                    begin
+                    selectedObjects[i].reaction.moveReaction (dx, dy);
+                    end;
+                 end;
             end;
             currentX := x;
             currentY := y;
           end;
-
-        // network.nodes[selectedNode].state.x := network.nodes[selectedNode].state.x + dx;
-        // network.nodes[selectedNode].state.y := network.nodes[selectedNode].state.y + dy;
-        // currentX := x; currentY := y;
         exit;
       end;
 
     sMoveCentroid:
       begin
-        if selectedReaction <> -1 then
+        if selectedObjects.Count > 0 then
           begin
-            network.reactions[selectedReaction].adjustArcCentres(x, y);
+            selectedObjects[0].reaction.adjustArcCentres(x, y);
             (Sender as TPaintBox).invalidate;
           end;
         exit;
@@ -649,41 +677,41 @@ begin
 
     sMovingBezierHandle:
       begin
-      if selectedReaction <> -1 then
+      if selectedObjects.Count = 1 then
          begin
-         reaction := network.reactions[ObjectInformation.reactionIndex];
+         reaction := selectedObjects[0].reaction;
          // Each bezier arc has two handles, h1 and h2, update whichever is being moved
-         //console.log ('handleId');
-        //console.log (ObjectInformation.handleId);
-         case ObjectInformation.handleId of
+         console.log ('handleId');
+         console.log (selectedObjects[0].handleId);
+         case selectedObjects[0].handleId of
              0 : begin
-                 if ObjectInformation.isReactant then
+                 if selectedObjects[0].isReactant then
                     begin
-                    reaction.state.reactantReactionArcs[ObjectInformation.arcId].h1.x := (x - CurrentX);// /scalingFactor;
-                    reaction.state.reactantReactionArcs[ObjectInformation.arcId].h1.y := (y - CurrentY);// /scalingFactor;
+                    reaction.state.reactantReactionArcs[selectedObjects[0].arcId].h1.x := (x - CurrentX);// /scalingFactor;
+                    reaction.state.reactantReactionArcs[selectedObjects[0].arcId].h1.y := (y - CurrentY);// /scalingFactor;
                     end
                  else
                     begin
-                    reaction.state.productReactionArcs[ObjectInformation.arcId].h1.x := (x - CurrentX);// /scalingFactor;
-                    reaction.state.productReactionArcs[ObjectInformation.arcId].h1.y := (y - CurrentY);// /scalingFactor;
+                    reaction.state.productReactionArcs[selectedObjects[0].arcId].h1.x := (x - CurrentX);// /scalingFactor;
+                    reaction.state.productReactionArcs[selectedObjects[0].arcId].h1.y := (y - CurrentY);// /scalingFactor;
                     end;
                  end;
              1 : begin
-                 if ObjectInformation.isReactant then
+                 if selectedObjects[0].isReactant then
                     begin
-                    reaction.state.reactantReactionArcs[ObjectInformation.arcId].h2.x := (x - CurrentX);// /scalingFactor;
-                    reaction.state.reactantReactionArcs[ObjectInformation.arcId].h2.y := (y - CurrentY);// /scalingFactor;
+                    reaction.state.reactantReactionArcs[selectedObjects[0].arcId].h2.x := (x - CurrentX);// /scalingFactor;
+                    reaction.state.reactantReactionArcs[selectedObjects[0].arcId].h2.y := (y - CurrentY);// /scalingFactor;
                     end
                  else
                     begin
-                    reaction.state.productReactionArcs[ObjectInformation.arcId].h2.x := (x - CurrentX);// /scalingFactor;
-                    reaction.state.productReactionArcs[ObjectInformation.arcId].h2.y := (y - CurrentY);// /scalingFactor;
+                    reaction.state.productReactionArcs[selectedObjects[0].arcId].h2.x := (x - CurrentX);// /scalingFactor;
+                    reaction.state.productReactionArcs[selectedObjects[0].arcId].h2.y := (y - CurrentY);// /scalingFactor;
                     end
                  end
              else
               showmessage ('Currently Selected Handle has incorrect value:');
          end;
-      adjustMovedBezierHandle;
+      adjustMovedBezierHandle (selectedObjects[0]);
       (Sender as TPaintBox).invalidate;
       end;
 
@@ -691,8 +719,8 @@ begin
 
     sMoveNodeControlRectangle :
       begin
-      network.nodes[selectedNode].state.w := (x - currentX);
-      network.nodes[selectedNode].state.h := (y - currentY);
+      selectedObjects[0].node.state.w := (x - currentX);
+      selectedObjects[0].node.state.h := (y - currentY);
       (Sender as TPaintBox).invalidate;
       end;
 
@@ -742,7 +770,7 @@ begin
 
     sSelectingBox:
       begin
-        networkCanvas.paint; // (networkCanvas.origin, 1);
+        (Sender as TPaintBox).invalidate;
         mStatus := sSelect;
         network.UnSelectAll;
         selectedObjects.Clear;
@@ -753,8 +781,10 @@ begin
 
             if network.nodes[i].IsInRectangle(networkCanvas.selectionBox) then
               begin
-                currentObject := network.nodes[i];
-                currentObject.selected := True;
+                currentObject := TObjectInformation.Create;
+                currentObject.node := network.nodes[i];
+                currentObject.objType := oNode;
+                currentObject.node.selected := True;
                 selectedObjects.add(currentObject);
               end;
           end;
@@ -763,8 +793,10 @@ begin
        for i := 0 to length (network.reactions) - 1 do
            if network.reactions[i].IsInRectangle (networkCanvas.selectionBox) then
               begin
-              currentObject := network.reactions[i];
-              currentObject.selected := True;
+              currentObject := TObjectInformation.Create;
+              currentObject.reaction := network.reactions[i];
+              currentObject.objType := oReaction;
+              currentObject.reaction.selected := True;
               selectedObjects.add(currentObject);
               //CurrentObjectInfo := TObjectInfo.Create (Network.EdgeList[i]);
               //CurrentObjectInfo.vx := selectionBox.Left; CurrentObjectInfo.vy := selectionBox.Top;
@@ -774,7 +806,6 @@ begin
 
       end;
   end;
-  console.log ('Selected node = ', inttostr (selectednode));
 end;
 
 

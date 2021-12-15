@@ -2,38 +2,41 @@ unit uSelectedObjects;
 
 interface
 
-Uses SysUtils, Classes, uNetwork, Types, uNetworkTypes;
+Uses SysUtils, Classes, uNetwork, Types, uNetworkTypes, System.Generics.Collections;
 
 type
-  TListOfSelectedObjects = array of TParent;
+  TObjectType = (oNone, oNode, oReaction);
 
-  TSelectedObjects = class
+  TObjectInformation = class (TObject)
 
-   private
-    selectedObjects : TListOfSelectedObjects;
-    function  getValue (index : integer) : TParent;
-    procedure setValue (index : integer; obj : TParent);
-   public
-    function    isSelected (obj : TParent) : boolean;
-    function    add (obj : TParent) : integer;
-    procedure   remove (obj : TParent);
-    procedure   clear;
-    function    count : integer;
+     objType : TObjectType;
 
-    property    items[index : integer] : TParent read getValue write setValue; default;
-
-    constructor Create;
-  end;
-
-  TObjectInformation = record
-     reactionIndex : integer;
+     node : TNode;
+     reaction : TReaction;
      handleCoords : TPointF;
      arcId : integer;   // Which bezier is it?
      handleId : integer;   // Which handle on the bezier is it?
      isReactant : boolean;
   end;
 
-var ObjectInformation : TObjectInformation;
+  TListOfSelectedObjects = TObjectList<TObjectInformation>;// array of TObjectInformation;
+
+  TSelectedObjects = class
+   private
+     selectedObjects : TListOfSelectedObjects;
+     function  getValue (index : integer) : TObjectInformation;
+     procedure setValue (index : integer; obj : TObjectInformation);
+   public
+     function    isSelected (const obj : TObjectInformation; var index : integer) : boolean;
+     function    add (const obj : TObjectInformation) : integer;
+     procedure   remove (obj : TObjectInformation);
+     procedure   clear;
+     function    count : integer;
+
+     property    items[index : integer] : TObjectInformation read getValue write setValue; default;
+
+     constructor Create;
+  end;
 
 
 implementation
@@ -41,16 +44,17 @@ implementation
 constructor TSelectedObjects.Create;
 begin
   inherited;
+  selectedObjects := TObjectList<TObjectInformation>.Create;
 end;
 
 
-function  TSelectedObjects.getValue (index : integer) : TParent;
+function  TSelectedObjects.getValue (index : integer) : TObjectInformation;
 begin
   result := selectedObjects[index];
 end;
 
 
-procedure TSelectedObjects.setValue (index : integer; obj : TParent);
+procedure TSelectedObjects.setValue (index : integer; obj : TObjectInformation);
 begin
   selectedObjects[index] := obj;
 end;
@@ -58,30 +62,63 @@ end;
 
 function TSelectedObjects.count : integer;
 begin
-  result := length (selectedObjects);
+  result := selectedObjects.Count;//  length (selectedObjects);
 end;
 
 
-function TSelectedObjects.isSelected (obj : TParent) : boolean;
+function TSelectedObjects.isSelected (const obj : TObjectInformation; var index : integer) : boolean;
+var i : integer;
+    c : integer;
 begin
-  result := obj.selected;
+  result := False;
+  c := Count();
+  for i := 0 to c - 1 do
+      begin
+      if (obj.node <> nil) and (obj.node = items[i].node) then
+         begin
+         result := True;
+         index := i;
+         exit;
+         end;
+      if (obj.reaction <> nil) and (Obj.reaction = items[i].reaction) then
+         begin
+         result := True;
+         index := i;
+         exit;
+         end;
+      //if (ObjectInfo.Compartment <> nil) and (ObjectInfo.Compartment = Items[i].Compartment) then
+      //   begin
+      //   result := True;
+      //   index := i;
+       //  exit;
+       //  end;
+      //if (ObjectInfo.NetObj <> nil) and (ObjectInfo.NetObj = Items[i].NetObj) then
+      //   begin
+      //   result := True;
+      //   index := i;
+      //   exit;
+      //   end;
+      end;
 end;
 
 
-function TSelectedObjects.add (obj : TParent) : integer;
+function TSelectedObjects.add (const obj : TObjectInformation) : integer;
 begin
- setLength(selectedObjects, length(selectedObjects) + 1);
- selectedObjects[High(selectedObjects)] := obj;
+ selectedObjects.Add (obj);
+ //setLength(selectedObjects, length(selectedObjects) + 1);
+ //selectedObjects[High(selectedObjects)] := obj;
+ //result := length (selectedObjects) - 1;
 end;
 
 
-procedure TSelectedObjects.remove (obj : TParent);
+procedure TSelectedObjects.remove (obj : TObjectInformation);
 var
   ALength: Cardinal;
   i, index : Cardinal;
 begin
   index := -1;
-  ALength := Length(selectedObjects);
+  ALength := selectedObjects.Count;
+  //ALength := Length(selectedObjects);
   // Find the object
   for i := 0 to ALength - 1 do
       if selectedObjects[i] = obj then
@@ -92,15 +129,17 @@ begin
   if index = -1 then
      raise Exception.Create('Internal error, obj not found');
 
-  for i := index + 1 to ALength - 1 do
-     selectedObjects[i - 1] := selectedObjects[i];
-  setLength(selectedObjects, ALength - 1);
+  selectedObjects.Remove (obj);
+ // for i := index + 1 to ALength - 1 do
+  //   selectedObjects[i - 1] := selectedObjects[i];
+  //setLength(selectedObjects, ALength - 1);
 end;
 
 
 procedure TSelectedObjects.clear;
 begin
-  setLength (selectedObjects, 0);
+  selectedObjects.Clear;
+  //setLength (selectedObjects, 0);
 end;
 
 end.

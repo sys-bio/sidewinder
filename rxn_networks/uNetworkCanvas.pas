@@ -146,24 +146,6 @@ begin
   Bitmap.Canvas.Pen.Style := oldStyle;
 end;
 
-//
-//// Assumes that x, y, w and h have been prescaled
-//function TNetworkCanvas.getControlRects(x, y, w, h: integer): TRectangularArray;
-//var
-//  grabW, grabH: integer;
-//  grabW2, grabH2: integer;
-//begin
-//  grabW := trunc(6);
-//  grabH := trunc(6);
-//  grabW2 := grabW div 2;
-//  grabH2 := grabH div 2;
-//
-//  result[0] := createCanvasRectF(x - grabW2, y - grabW2, x + grabW2, y + grabH2);
-//  result[1] := createCanvasRectF(x + w - grabW2, y - grabH2, x + w + grabW2, y + grabH2);
-//  result[2] := createCanvasRectF(x - grabW2, y + h - grabH2, x + grabW2, y + h + grabH2);
-//  result[3] := createCanvasRectF(x + w - grabW2, y + h - grabH2, x + w + grabW2, y + h + grabH2);
-//end;
-
 
 procedure TNetworkCanvas.drawMouseGrabPoints(x, y, w, h: integer);
 var rectList: TRectangularArray;

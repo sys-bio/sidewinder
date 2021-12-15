@@ -480,7 +480,7 @@ var
   centroid: TPointF;
   oldSize: integer;
 begin
-  centroid:= reaction.state.arcCenter;
+  centroid := reaction.state.arcCenter;
   try
    // To arc center
    for i := 0 to reaction.state.nReactants - 1 do
@@ -507,7 +507,10 @@ begin
       end;
 
   if reaction.selected then
+     begin
+     centroid := scalePt (centroid, scalingFactor);
      drawCentroidPoint (minusPt (centroid, origin), clRed);
+     end;
 
    //reactionLabel.Paint(self, addPtF (AdjustedArcCentre, TPointF.Create (reactionLabel.textValue.rx, reactionLabel.textValue.ry)));
 

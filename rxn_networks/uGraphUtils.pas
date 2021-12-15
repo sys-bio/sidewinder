@@ -91,7 +91,7 @@ begin
   d1 := dist(px, py, p1.x, p1.y);
   d2 := dist(px, py, p2.x, p2.y);
   lineLen := dist(p1.x, p1.y, p2.x, p2.y);
-  buffer := 4;    // higher the number = less accurate
+  buffer := 8;    // higher the number = less accurate
   if (d1 + d2 >= lineLen-buffer) and (d1 + d2 <= lineLen+buffer) then
     result := True
   else
