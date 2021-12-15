@@ -80,11 +80,11 @@ object mainForm: TmainForm
       OnClick = mnuSaveClick
     end
     object onLineSimButton: TWebButton
-      Left = 830
+      Left = 654
       Top = 10
       Width = 120
       Height = 25
-      Caption = 'Simulation: Play'
+      Caption = 'Setup Simulation'
       ChildOrder = 5
       ElementClassName = 'btn btn-danger btn-sm'
       Font.Charset = DEFAULT_CHARSET
@@ -94,7 +94,6 @@ object mainForm: TmainForm
       Font.Style = [fsBold]
       HeightPercent = 100.000000000000000000
       ParentFont = False
-      Visible = False
       WidthPercent = 100.000000000000000000
       OnClick = onLineSimButtonClick
     end
@@ -214,11 +213,11 @@ object mainForm: TmainForm
       OnClick = SaveSBMLButtonClick
     end
     object SetUpSimButton: TWebButton
-      Left = 664
-      Top = 10
-      Width = 125
+      Left = 792
+      Top = 7
+      Width = 149
       Height = 32
-      Caption = 'New simulation'
+      Caption = 'Reset to initial species values'
       ChildOrder = 13
       ElementClassName = 'btn btn-primary btn-sm'
       ElementFont = efCSS
@@ -230,8 +229,9 @@ object mainForm: TmainForm
       HeightStyle = ssAuto
       HeightPercent = 100.000000000000000000
       ParentFont = False
+      Visible = False
       WidthPercent = 100.000000000000000000
-      OnClick = SetUpSimButtonClick
+      OnClick = resetInitValsButtonClick
     end
   end
   object bottomWPanel: TWebPanel
@@ -1082,7 +1082,7 @@ object mainForm: TmainForm
         OnClick = SliderEditLBClick
       end
       object SplitterPlotSlider: TWebSplitter
-        Left = 129
+        Left = 305
         Top = 0
         Width = 5
         Height = 735
@@ -1092,12 +1092,12 @@ object mainForm: TmainForm
         ChildOrder = 3
         Color = clBtnFace
         OnMoved = SplitterPlotSliderMoved
-        ExplicitLeft = 257
+        ExplicitLeft = 129
       end
       object pnlSliderContainer: TWebPanel
-        Left = 134
+        Left = 310
         Top = 0
-        Width = 392
+        Width = 216
         Height = 735
         ElementClassName = 'card'
         HeightPercent = 100.000000000000000000
@@ -1108,10 +1108,10 @@ object mainForm: TmainForm
         ChildOrder = 4
         ElementBodyClassName = 'card-body'
         ElementFont = efCSS
-        ExplicitLeft = 262
-        ExplicitWidth = 264
+        ExplicitLeft = 134
+        ExplicitWidth = 392
         DesignSize = (
-          392
+          216
           735)
         object pnlSimResultsFile: TWebPanel
           Left = 24
@@ -1202,7 +1202,7 @@ object mainForm: TmainForm
       object pnlPlotContainer: TWebPanel
         Left = 0
         Top = 0
-        Width = 129
+        Width = 305
         Height = 735
         ElementClassName = 'card'
         HeightPercent = 100.000000000000000000
@@ -1216,7 +1216,7 @@ object mainForm: TmainForm
         object simResultsMemo: TWebMemo
           Left = 0
           Top = 596
-          Width = 129
+          Width = 305
           Height = 139
           Align = alBottom
           AutoSize = False
@@ -1229,7 +1229,7 @@ object mainForm: TmainForm
           SelStart = 0
           Visible = False
           WidthPercent = 100.000000000000000000
-          ExplicitWidth = 257
+          ExplicitWidth = 129
         end
       end
     end
@@ -1247,8 +1247,6 @@ object mainForm: TmainForm
       ChildOrder = 2
       ElementBodyClassName = 'card-body'
       ElementFont = efCSS
-      ExplicitLeft = 185
-      ExplicitWidth = 774
       object networkPB1: TWebPaintBox
         Left = 0
         Top = 0
@@ -1266,7 +1264,6 @@ object mainForm: TmainForm
         OnMouseMove = networkPB1MouseMove
         OnMouseUp = networkPB1MouseUp
         OnMouseWheel = networkPB1MouseWheel
-        ExplicitWidth = 756
       end
       object netDrawScrollBarVert: TTMSFNCScrollBar
         Left = 660
@@ -1310,7 +1307,6 @@ object mainForm: TmainForm
         Max = 1000.000000000000000000
         PageSize = 10.000000000000000000
         OnValueChanged = netDrawScrollBarVertValueChanged
-        ExplicitLeft = 756
       end
       object netDrawScrollBarHoriz: TTMSFNCScrollBar
         Left = 0
@@ -1355,7 +1351,6 @@ object mainForm: TmainForm
         Max = 1000.000000000000000000
         PageSize = 10.000000000000000000
         OnValueChanged = netDrawScrollBarHorizValueChanged
-        ExplicitWidth = 774
       end
     end
     object splitter: TWebSplitter
@@ -1385,7 +1380,6 @@ object mainForm: TmainForm
       ElementBodyClassName = 'card-body'
       ElementFont = efCSS
       Visible = False
-      ExplicitTop = 6
     end
     object RRxnEditWPanel: TWebPanel
       Left = 964
