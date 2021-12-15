@@ -81,9 +81,9 @@ object mainForm: TmainForm
     end
     object onLineSimButton: TWebButton
       Left = 654
-      Top = 10
+      Top = 11
       Width = 120
-      Height = 25
+      Height = 28
       Caption = 'Setup Simulation'
       ChildOrder = 5
       ElementClassName = 'btn btn-danger btn-sm'
@@ -101,7 +101,7 @@ object mainForm: TmainForm
       Left = 974
       Top = 10
       Width = 96
-      Height = 25
+      Height = 32
       Caption = 'Add Plot'
       ChildOrder = 5
       ElementClassName = 'btn btn-primary btn-sm'
@@ -115,7 +115,7 @@ object mainForm: TmainForm
       Left = 1090
       Top = 10
       Width = 143
-      Height = 25
+      Height = 32
       Hint = 'Add parameter slider'
       Caption = 'Add Parameter Slider'
       ChildOrder = 6
@@ -1092,7 +1092,6 @@ object mainForm: TmainForm
         ChildOrder = 3
         Color = clBtnFace
         OnMoved = SplitterPlotSliderMoved
-        ExplicitLeft = 129
       end
       object pnlSliderContainer: TWebPanel
         Left = 310
@@ -1108,8 +1107,6 @@ object mainForm: TmainForm
         ChildOrder = 4
         ElementBodyClassName = 'card-body'
         ElementFont = efCSS
-        ExplicitLeft = 134
-        ExplicitWidth = 392
         DesignSize = (
           216
           735)
@@ -1229,7 +1226,6 @@ object mainForm: TmainForm
           SelStart = 0
           Visible = False
           WidthPercent = 100.000000000000000000
-          ExplicitWidth = 129
         end
       end
     end

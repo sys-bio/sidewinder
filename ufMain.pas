@@ -336,6 +336,7 @@ begin
   if length(network.getCurrentState.savedNodes) = 0 then
   begin
     n1 := networkController.addNode('node1', 60, 200);
+    n1.state.conc := 5.0;
     n2 := networkController.addNode('node2', 270, 270);
     n3 := networkController.addNode('node3', 540, 80);
     n4 := networkController.addNode('node4', 400, 500);
