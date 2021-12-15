@@ -26,7 +26,7 @@ type
     stepSize: Double; // (msec) (integration step)
     pixelStepAr: array of Integer; // pixel equiv of time (integration) step
     currTime: Double;
-    online: Boolean; // Simulation running
+   // online: Boolean; // Simulation running
     saveSBMLFlag: Boolean;
     ODEready: Boolean; // TRUE: ODE solver is setup.
     networkUpdate: Boolean; // Use to prevent circular update when network is changed.
@@ -85,14 +85,12 @@ constructor TControllerMain.Create(networkCtrl: TController);
 begin
   self.sbmlText := '';
   self.modelLoaded := false;
- // self.sbmlFileLoaded := false;
   self.resetCurrTime;
   self.stepSize := 0.1; // 100 msec
   self.runTime := 500; // sec
-  self.online := false;
   self.networkUpdate := false;
   self.saveSBMLFlag := false;
-  self.createModel;
+  //self.createModel;    // Is this necessary here???
   self.currNetworkCtrl := networkCtrl;
   self.OnSBMLUpdate := networkCtrl.SBMLUpdated;
   networkCtrl.network.OnNetworkEvent := self.networkUpdated;
@@ -139,7 +137,7 @@ begin
   begin
     self.runSim.Free;
     self.SBMLmodel.resetS_Vals();  // TODO: Move S_vals to simulator.
-    self.online := false;
+   // self.online := false;
   end;
   self.currTime := 0;
   self.runSim := TSimulationJS.create(self.runTime, self.stepSize, self.SBMLmodel, self.solverUsed);
@@ -201,7 +199,9 @@ end;
 
 function TControllerMain.IsOnline(): Boolean;
 begin
-  Result := self.runSim.IsOnline;
+  if runSim <> nil then
+    Result := self.runSim.IsOnline
+  else Result := false;
 end;
 procedure TControllerMain.SetOnline(bOnline: Boolean);
 begin
@@ -278,11 +278,14 @@ var SBMLReader: TSBMLRead;
 begin
   sbmlText := sbmlStr; // store the sbml model as text.
   if sbmlText <> '' then
-  begin
+    begin
+    // check if sbmlmodel has stuff, if so, clear out....
+    self.networkUpdate := false;
+    self.createModel();
     self.currNetworkCtrl.network.clear; // clear out old network;
-    SBMLReader := TSBMLRead.create(sbmlmodel, self.sbmlText );// Process text with libsbml.js
+    SBMLReader := TSBMLRead.create(self.sbmlmodel, self.sbmlText );// Process text with libsbml.js
    // self.sbmlFileLoaded := true;
-  end
+    end
   else showMessage ('SBML text empty.');
 
 end;

@@ -80,11 +80,11 @@ object mainForm: TmainForm
       OnClick = mnuSaveClick
     end
     object onLineSimButton: TWebButton
-      Left = 830
+      Left = 654
       Top = 10
       Width = 120
       Height = 25
-      Caption = 'Simulation: Play'
+      Caption = 'Setup Simulation'
       ChildOrder = 5
       ElementClassName = 'btn btn-danger btn-sm'
       Font.Charset = DEFAULT_CHARSET
@@ -94,7 +94,6 @@ object mainForm: TmainForm
       Font.Style = [fsBold]
       HeightPercent = 100.000000000000000000
       ParentFont = False
-      Visible = False
       WidthPercent = 100.000000000000000000
       OnClick = onLineSimButtonClick
     end
@@ -214,11 +213,11 @@ object mainForm: TmainForm
       OnClick = SaveSBMLButtonClick
     end
     object SetUpSimButton: TWebButton
-      Left = 664
-      Top = 10
-      Width = 125
+      Left = 792
+      Top = 7
+      Width = 149
       Height = 32
-      Caption = 'New simulation'
+      Caption = 'Reset to initial species values'
       ChildOrder = 13
       ElementClassName = 'btn btn-primary btn-sm'
       ElementFont = efCSS
@@ -230,8 +229,9 @@ object mainForm: TmainForm
       HeightStyle = ssAuto
       HeightPercent = 100.000000000000000000
       ParentFont = False
+      Visible = False
       WidthPercent = 100.000000000000000000
-      OnClick = SetUpSimButtonClick
+      OnClick = resetInitValsButtonClick
     end
   end
   object bottomWPanel: TWebPanel
@@ -1082,7 +1082,7 @@ object mainForm: TmainForm
         OnClick = SliderEditLBClick
       end
       object SplitterPlotSlider: TWebSplitter
-        Left = 129
+        Left = 305
         Top = 0
         Width = 5
         Height = 735
@@ -1092,11 +1092,15 @@ object mainForm: TmainForm
         ChildOrder = 3
         Color = clBtnFace
         OnMoved = SplitterPlotSliderMoved
+<<<<<<< HEAD
+=======
+        ExplicitLeft = 129
+>>>>>>> 7e83c68fa4531f72c0d8a91e129e66b1daeaf0c4
       end
       object pnlSliderContainer: TWebPanel
-        Left = 134
+        Left = 310
         Top = 0
-        Width = 392
+        Width = 216
         Height = 735
         ElementClassName = 'card'
         HeightPercent = 100.000000000000000000
@@ -1107,8 +1111,13 @@ object mainForm: TmainForm
         ChildOrder = 4
         ElementBodyClassName = 'card-body'
         ElementFont = efCSS
+<<<<<<< HEAD
+=======
+        ExplicitLeft = 134
+        ExplicitWidth = 392
+>>>>>>> 7e83c68fa4531f72c0d8a91e129e66b1daeaf0c4
         DesignSize = (
-          392
+          216
           735)
         object pnlSimResultsFile: TWebPanel
           Left = 24
@@ -1199,7 +1208,7 @@ object mainForm: TmainForm
       object pnlPlotContainer: TWebPanel
         Left = 0
         Top = 0
-        Width = 129
+        Width = 305
         Height = 735
         ElementClassName = 'card'
         HeightPercent = 100.000000000000000000
@@ -1213,7 +1222,7 @@ object mainForm: TmainForm
         object simResultsMemo: TWebMemo
           Left = 0
           Top = 596
-          Width = 129
+          Width = 305
           Height = 139
           Align = alBottom
           AutoSize = False
@@ -1226,6 +1235,10 @@ object mainForm: TmainForm
           SelStart = 0
           Visible = False
           WidthPercent = 100.000000000000000000
+<<<<<<< HEAD
+=======
+          ExplicitWidth = 129
+>>>>>>> 7e83c68fa4531f72c0d8a91e129e66b1daeaf0c4
         end
       end
     end

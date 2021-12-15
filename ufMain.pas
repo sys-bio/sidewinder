@@ -69,7 +69,6 @@ type
     splitter: TWebSplitter;
     btnSimple: TWebButton;
     SaveSBMLButton: TWebButton;
-    SetUpSimButton: TWebButton;
     RNodeEditWPanel: TWebPanel;
     RRxnEditWPanel: TWebPanel;
     RxnRatePanel: TWebPanel;
@@ -107,6 +106,7 @@ type
     WebButton1: TWebButton;
     WebButton2: TWebButton;
     WebConsoleLog1: TWebConsoleLog;
+    SetUpSimButton: TWebButton;
 
     procedure btnUniUniClick(Sender: TObject);
     procedure btnBiBiClick(Sender: TObject);
@@ -161,7 +161,7 @@ type
     procedure btnSimpleClick(Sender: TObject);
     procedure stepSizeEdit1Change(Sender: TObject);
     procedure SaveSBMLButtonClick(Sender: TObject);
-    procedure SetUpSimButtonClick(Sender: TObject);
+    procedure resetInitValsButtonClick(Sender: TObject);
     procedure editNodeConcExit(Sender: TObject);
     procedure RPanelTabSetClick(Sender: TObject);
     procedure RxnParamComboBoxChange(Sender: TObject);
@@ -188,8 +188,8 @@ type
     procedure addPlot(yMax: double); // Add a plot, yMax: largest initial val of plotted species
     procedure resetPlots();  // Reset plots for new simulation.
     procedure selectPlotSpecies(plotnumb: Integer);
-
-    procedure DeletePlot(plotIndex: Integer); // Index of plot to delete
+    procedure deletePlot(plotIndex: Integer); // Index of plot to delete
+    procedure deleteAllPlots();
     function  getEmptyPlotPosition(): Integer;
     function  getPlotPBIndex(plotTag: integer): Integer; // Return Plot index of tag.
     function  getSliderIndex(sliderTag: integer): Integer;
@@ -205,7 +205,8 @@ type
     procedure LoadJSONFile();
     procedure EditSliderList(sn: Integer);
             // delete, change param slider as needed using TWebListBox.
-    procedure DeleteSlider(sn: Integer); // sn: slider index
+    procedure deleteSlider(sn: Integer); // sn: slider index
+    procedure deleteAllSliders();
     procedure adjustRightTabWPanels(); // Adjust all right panels
                   // (node edit, rxn edit, simulation) to same width, height
     procedure updateRxnRatePanel(); // Refresh with current rxn info.
@@ -217,6 +218,7 @@ type
     procedure setUpSimulationUI(); // Set up sim related buttons, plots, etc
     procedure addRxnStoichEdit(spIndex: integer; rxnReactant: boolean);
     procedure refreshPlotAndSliderPanels();
+    procedure clearNetwork(); // clear network canvas and delete all nodes, edges
 
   public
     network: TNetwork;
@@ -322,8 +324,7 @@ end;
 
 procedure TMainForm.btnClearClick(Sender: TObject);
 begin
-  network.Clear;
-  networkPB1.Invalidate;
+  self.clearNetwork;
 end;
 
 procedure TMainForm.btnDrawClick(Sender: TObject);
@@ -463,8 +464,10 @@ begin
   SBMLmodelMemo.Lines.Text := AText;
   SBMLmodelMemo.visible := true;
   // Check if sbmlmodel already created, if so, destroy before creating ?
-
+  self.deleteAllPlots;
+  self.deleteAllSliders;
   self.MainController.loadSBML(AText);
+
 end;
 
 procedure TMainForm.onLineSimButtonClick(Sender: TObject);
@@ -473,44 +476,55 @@ var
   yScaleWidth, newYMax : integer;
 begin
 
-  if MainController.isOnline = false then
-    begin
-      if self.networkUpdated = false then
-      begin
-        MainController.setOnline(true);
-        onLineSimButton.font.color := clred;
-        onLineSimButton.ElementClassName := 'btn btn-success btn-sm';
-        onLineSimButton.caption := 'Simulation: Pause';
-        simResultsMemo.visible := true;
+ if MainController.isOnline = false then
+   begin
+     if self.networkUpdated = false then
+       begin
+       if self.mainController.IsModelLoaded then
+         begin
+         MainController.setOnline(true);
+         onLineSimButton.font.color := clred;
+         onLineSimButton.ElementClassName := 'btn btn-success btn-sm';
+         onLineSimButton.caption := 'Simulation: Pause';
+         simResultsMemo.visible := true;
+         MainController.SetRunTime(200); // Hard coded for now.
+         self.rtLengthEdit1.Text := FloatToStr(MainController.getRunTime);
+         if self.MainController.getCurrTime = 0  then
+           self.InitSimResultsTable();  // Set table of Sim results.
+         self.rightPanelType := SIMULATION_PANEL;
+         self.setRightPanels;
+         MainController.SetTimerEnabled(true); // Turn on web timer (Start simulation)
+         end
+         else notifyUser(' No model created for simulation. ');
+       end
+     else
+       begin
+       self.setUpSimulationUI;
+       onLineSimButton.font.color := clgreen;
+       onLineSimButton.ElementClassName := 'btn btn-danger btn-sm';
+       onLineSimButton.caption := 'Simulation: Play';
+       self.btnAddPlotClick(nil); // add a default plot
+       end;
 
-        MainController.SetRunTime(200); // Hard coded for now.
-        self.rtLengthEdit1.Text := FloatToStr(MainController.getRunTime);
+   end
+ else  // stop simulation
+   begin
+     MainController.setOnline(false);
+     MainController.SetTimerEnabled(false); // Turn off web timer (Stop simulation)
+     onLineSimButton.font.color := clgreen;
+     onLineSimButton.ElementClassName := 'btn btn-danger btn-sm';
+     onLineSimButton.caption := 'Simulation: Play';
+     if self.saveSimResults then
+       begin
+       self.mainController.writeSimData(self.lblSimDataFileName.Caption, self.simResultsMemo.Lines);
+       end;
+   end;
+end;
 
-        if self.MainController.getCurrTime = 0  then
-          self.InitSimResultsTable();  // Set table of Sim results.
-
-        self.rightPanelType := SIMULATION_PANEL;
-        self.setRightPanels;
-        MainController.SetTimerEnabled(true); // Turn on web timer (Start simulation)
-      end
-      else
-        begin
-          notifyUser(' Model has changed, resetting simulation');
-          self.setUpSimulationUI;
-        end;
-    end
-  else
-    begin
-      MainController.setOnline(false);
-      MainController.SetTimerEnabled(false); // Turn off web timer (Stop simulation)
-      onLineSimButton.font.color := clgreen;
-      onLineSimButton.ElementClassName := 'btn btn-danger btn-sm';
-      onLineSimButton.caption := 'Simulation: Play';
-      if self.saveSimResults then
-      begin
-        self.mainController.writeSimData(self.lblSimDataFileName.Caption, self.simResultsMemo.Lines);
-      end;
-    end;
+procedure TMainForm.clearNetwork();
+begin
+  network.Clear;
+  networkPB1.Invalidate;
 end;
 
 procedure TMainForm.initializePlots();
@@ -542,12 +556,14 @@ end;
 
 procedure TMainForm.PingSBMLLoaded(newModel:TModel);
 var
-  i: Integer;
+ // i: Integer;
 begin
- // console.log(' TMainForm.PingSBMLLoaded');
-//  btnParamAddSlider.visible := true;
-//  onLineSimButton.visible := true;
-//  btnAddPlot.visible := true;
+  // Loading new sbml model changes reaction network.
+  //console.log(' sbml model loaded ');
+
+  self.networkPB1.invalidate;
+  self.networkUpdated := true;
+ 
   
 end;
 
@@ -564,7 +580,7 @@ begin
     end;
   if self.plotEditLB.ItemIndex = 1 then // delete plot
     begin
-      self.DeletePlot(getPlotPBIndex(self.plotEditLB.tag));
+      self.deletePlot(getPlotPBIndex(self.plotEditLB.tag));
     end;
   // else ShowMessage('Canceled');
   self.plotEditLB.tag := 0;
@@ -652,6 +668,7 @@ begin
   networkPB1.Invalidate;
   if (networkController.selectedObjects.Count > 0) and (networkController.selectedObjects[0].objType = oNode) then
     begin
+<<<<<<< HEAD
       editNodeId.Text := networkController.selectedObjects[0].node.state.id;
       editNodeConc.Text := networkCOntroller.selectedObjects[0].node.state.conc.ToString;
       pnlNodePanel.visible := true;
@@ -661,23 +678,34 @@ begin
       self.RNodeEditWPanel.visible := true;
       self.RNodeEditWPanel.invalidate;
       self.setRightPanels;
+=======
+    editNodeId.Text := networkController.network.nodes [networkController.selectedNode].state.id;
+    editNodeConc.Text := networkController.network.nodes [networkCOntroller.selectedNode].state.conc.ToString;
+    pnlNodePanel.visible := true;
+    self.rightPanelType := NODE_PANEL;
+    self.RRxnEditWPanel.visible := false;
+    self.RSimWPanel.visible := false;
+    self.RNodeEditWPanel.visible := true;
+    self.RNodeEditWPanel.invalidate;
+    self.setRightPanels;
+>>>>>>> 7e83c68fa4531f72c0d8a91e129e66b1daeaf0c4
     end
   else if (networkController.selectedObjects.Count > 0) and (networkController.selectedObjects[0].objType = oReaction) then
     begin
-      self.rightPanelType := REACTION_PANEL;
-      self.RSimWPanel.visible := false;
-      self.RNodeEditWPanel.visible := false;
-      self.RRxnEditWPanel.visible := true;
-      self.updateRxnRatePanel;
-      self.updateRxnStoichPanel;
-      self.updateRxnParamPanel;
-      self.RRxnEditWPanel.invalidate;
-      self.setRightPanels;
+    self.rightPanelType := REACTION_PANEL;
+    self.RSimWPanel.visible := false;
+    self.RNodeEditWPanel.visible := false;
+    self.RRxnEditWPanel.visible := true;
+    self.updateRxnRatePanel;
+    self.updateRxnStoichPanel;
+    self.updateRxnParamPanel;
+    self.RRxnEditWPanel.invalidate;
+    self.setRightPanels;
     end
     else
       begin
-        self.rightPanelType := SIMULATION_PANEL;
-        self.setRightPanels;
+      self.rightPanelType := SIMULATION_PANEL;
+      self.setRightPanels;
       end;
 end;
 
@@ -822,8 +850,8 @@ begin
   self.adjustRightTabWPanels;
   self.mainController := TControllerMain.Create(self.networkController);
   self.mainController.setOnline(false);
-  onLineSimButton.font.color := clgreen;
-  onLineSimButton.caption := 'Simulation: Play';
+  //onLineSimButton.font.color := clgreen;
+  //onLineSimButton.caption := 'Simulation: Play';
   self.mainController.setODEsolver;
   self.networkUpdated := false;
   self.saveSimResults := false;
@@ -960,7 +988,7 @@ begin
     end;
   if self.SliderEditLB.ItemIndex = 1 then // delete slider
     begin
-      self.DeleteSlider(getSliderIndex(self.SliderEditLB.tag));
+      self.deleteSlider(getSliderIndex(self.SliderEditLB.tag));
     end;
   // else ShowMessage('Cancel');
   self.SliderEditLB.tag := -1;
@@ -1250,7 +1278,7 @@ begin
 end;
 
 
-procedure TMainForm.DeletePlot(plotIndex: Integer);
+procedure TMainForm.deletePlot(plotIndex: Integer);
 var tempObj: TObject;
 begin
   try
@@ -1272,6 +1300,14 @@ begin
      on EArgumentOutOfRangeException do
       notifyUser('Error: Plot number not in array');
   end;
+end;
+
+procedure TMainForm.deleteAllPlots();
+var i: integer;
+begin
+  for i := self.numbPlots - 1 downto 1 do
+    self.deletePlot(i);
+  self.pnlPlotContainer.Invalidate;
 end;
 
 procedure TMainForm.EditPlotList(plotn: Integer);
@@ -1305,7 +1341,7 @@ end;
 
 procedure TMainForm.deletePlotSpecies(plotn: Integer); // Delete a species curve in a plot.
 begin
-  // Not needed: Just delete plot, get new list of species from user and create new plot.
+  // Not needed?: Just delete plot, get new list of species from user and create new plot.
 end;
 
 procedure TMainForm.EditSliderList(sn: Integer);
@@ -1330,7 +1366,7 @@ begin
 end;
 
 // TODO still more cleanup .. reorder sliders if middle one deleted ?
-procedure TMainForm.DeleteSlider(sn: Integer); // sn: slider index
+procedure TMainForm.deleteSlider(sn: Integer); // sn: slider index
 begin
   // console.log('Delete Slider: slider #: ',sn);
   self.pnlSliderAr[sn].free;
@@ -1344,6 +1380,13 @@ begin
   self.RSimWPanel.Invalidate;
 end;
 
+procedure TMainForm.deleteAllSliders();
+var i: integer;
+begin
+  for I := Length(self.pnlSliderAr) -1 downto 0 do
+    self.deleteSlider(i);
+  self.pnlSliderContainer.Invalidate;
+end;
 
 // Select parameter to use for slider
 procedure TMainForm.selectParameter(sNumb: Integer); // snumb is slider index
@@ -1502,20 +1545,20 @@ begin
 
 end;
 
-
-procedure TMainForm.SetUpSimButtonClick(Sender: TObject);
+          // Changed to reset to initial conditions:
+procedure TMainForm.resetInitValsButtonClick(Sender: TObject);
 begin
-  self.setUpSimulationUI(); // Clear out old plots, simulation, parameter sliders for new sim.
-  btnParamAddSlider.visible := true;
-  onLineSimButton.visible := true;
-  btnAddPlot.visible := true;
+ // self.setUpSimulationUI(); // Clear out old plots, simulation, parameter sliders for new sim.
+ // btnParamAddSlider.visible := true;
+ // onLineSimButton.visible := true;
+ // btnAddPlot.visible := true;
 end;
 
 procedure TMainForm.adjustRightTabWPanels(); // Adjust all right panels to same width, height
 begin
   //if self.rightPanelType = SIMULATION_PANEL then
     //begin
-    console.log('splitter moved, RSimWPanel, height: ',networkPB1.Height,', width: ',self.RSimWPanel.Width);
+ //   console.log('splitter moved, RSimWPanel, height: ',networkPB1.Height,', width: ',self.RSimWPanel.Width);
       self.RNodeEditWPanel.Width := self.RSimWPanel.Width;
       self.RNodeEditWPanel.Top := self.RSimWPanel.Top;
       self.RNodeEditWPanel.Height := self.RSimWPanel.Height;
@@ -1525,8 +1568,8 @@ begin
       self.RRxnEditWPanel.Height := self.RSimWPanel.Height;
       self.RRxnEditWPanel.Left := self.RSimWPanel.Left;
       self.RSimWPanel.invalidate;
-  console.log('After: splitter moved, RSimWPanel, height: ',self.RSimWPanel.Height,', width: ',self.RSimWPanel.Width);
-   console.log('splitter moved, RNodeEditWPanel, height: ',self.RNodeEditWPanel.Height,', width: ',self.RNodeEditWPanel.Width);
+ // console.log('After: splitter moved, RSimWPanel, height: ',self.RSimWPanel.Height,', width: ',self.RSimWPanel.Width);
+ //  console.log('splitter moved, RNodeEditWPanel, height: ',self.RNodeEditWPanel.Height,', width: ',self.RNodeEditWPanel.Width);
 
   {  end
   else if self.rightPanelType = NODE_PANEL then
@@ -1771,6 +1814,9 @@ end;
 procedure TMainForm.setUpSimulationUI();
 var i: integer;
 begin
+  btnParamAddSlider.visible := true;
+  btnAddPlot.visible := true;
+
   self.currentGeneration := 0; // reset current x axis point (pixel)
   if self.networkUpdated then // TODO: do not reset plots if species or param init vals have changed.
   begin
