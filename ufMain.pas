@@ -15,7 +15,7 @@ uses
   uNetworkTypes, WEBLib.Lists, Vcl.Forms, uModel,
   uSBMLClasses, uSimulation, uControllerMain,
   uODE_FormatUtility, uGraphP, Vcl.Menus, WEBLib.Menus, ufVarSelect, uPlotPanel,
-  uParamSliderLayout, uSidewinderTypes, WEBLib.ComCtrls;
+  uParamSliderLayout, uSidewinderTypes, WEBLib.ComCtrls, WEBLib.Miletus, WEBLib.JQCtrls;
 
 const EDITBOX_HT = 25;
 
@@ -51,7 +51,7 @@ type
     loadNetworkButton: TWebButton;
     SBMLOpenDialog: TWebOpenDialog;
     SBMLloadButton: TWebButton;
-    WebPanel2: TWebPanel;  // ??
+    pnllBase: TWebPanel;  // ??
     LeftWPanel: TWebPanel;
     btnUniUni: TWebSpeedButton;
     btnUniBi: TWebSpeedButton;
@@ -107,6 +107,12 @@ type
     WebButton2: TWebButton;
     WebConsoleLog1: TWebConsoleLog;
     SetUpSimButton: TWebButton;
+    pnlMenu: TWebPanel;
+    WebJQXDropDownList1: TWebJQXDropDownList;
+    WebMainMenu1: TWebMainMenu;
+    File1: TMenuItem;
+    New1: TMenuItem;
+    New2: TMenuItem;
 
     procedure btnUniUniClick(Sender: TObject);
     procedure btnBiBiClick(Sender: TObject);
