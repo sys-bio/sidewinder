@@ -668,7 +668,7 @@ begin
   networkPB1.Invalidate;
   if (networkController.selectedObjects.Count > 0) and (networkController.selectedObjects[0].objType = oNode) then
     begin
-<<<<<<< HEAD
+//<<<<<<< HEAD
       editNodeId.Text := networkController.selectedObjects[0].node.state.id;
       editNodeConc.Text := networkCOntroller.selectedObjects[0].node.state.conc.ToString;
       pnlNodePanel.visible := true;
@@ -678,17 +678,8 @@ begin
       self.RNodeEditWPanel.visible := true;
       self.RNodeEditWPanel.invalidate;
       self.setRightPanels;
-=======
-    editNodeId.Text := networkController.network.nodes [networkController.selectedNode].state.id;
-    editNodeConc.Text := networkController.network.nodes [networkCOntroller.selectedNode].state.conc.ToString;
-    pnlNodePanel.visible := true;
-    self.rightPanelType := NODE_PANEL;
-    self.RRxnEditWPanel.visible := false;
-    self.RSimWPanel.visible := false;
-    self.RNodeEditWPanel.visible := true;
-    self.RNodeEditWPanel.invalidate;
-    self.setRightPanels;
->>>>>>> 7e83c68fa4531f72c0d8a91e129e66b1daeaf0c4
+//=======
+
     end
   else if (networkController.selectedObjects.Count > 0) and (networkController.selectedObjects[0].objType = oReaction) then
     begin

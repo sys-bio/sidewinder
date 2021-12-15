@@ -1092,10 +1092,7 @@ object mainForm: TmainForm
         ChildOrder = 3
         Color = clBtnFace
         OnMoved = SplitterPlotSliderMoved
-<<<<<<< HEAD
-=======
         ExplicitLeft = 129
->>>>>>> 7e83c68fa4531f72c0d8a91e129e66b1daeaf0c4
       end
       object pnlSliderContainer: TWebPanel
         Left = 310
@@ -1111,11 +1108,8 @@ object mainForm: TmainForm
         ChildOrder = 4
         ElementBodyClassName = 'card-body'
         ElementFont = efCSS
-<<<<<<< HEAD
-=======
         ExplicitLeft = 134
         ExplicitWidth = 392
->>>>>>> 7e83c68fa4531f72c0d8a91e129e66b1daeaf0c4
         DesignSize = (
           216
           735)
@@ -1235,10 +1229,7 @@ object mainForm: TmainForm
           SelStart = 0
           Visible = False
           WidthPercent = 100.000000000000000000
-<<<<<<< HEAD
-=======
           ExplicitWidth = 129
->>>>>>> 7e83c68fa4531f72c0d8a91e129e66b1daeaf0c4
         end
       end
     end
