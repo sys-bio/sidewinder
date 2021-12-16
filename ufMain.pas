@@ -103,9 +103,8 @@ type
     btnNodeFillColor: TWebColorPicker;
     editNodeConc: TWebEdit;
     WebLabel1: TWebLabel;
-    WebButton1: TWebButton;
+    btnEditNodeMore: TWebButton;
     WebButton2: TWebButton;
-    WebConsoleLog1: TWebConsoleLog;
     SetUpSimButton: TWebButton;
     pnlMenu: TWebPanel;
     WebMainMenu: TWebMainMenu;
@@ -120,6 +119,9 @@ type
     Cut1: TMenuItem;
     Copy1: TMenuItem;
     Paste1: TMenuItem;
+    WebConsoleLog1: TWebConsoleLog;
+    pnlReactionPanel: TWebPanel;
+    WebButton3: TWebButton;
 
     procedure btnUniUniClick(Sender: TObject);
     procedure btnBiBiClick(Sender: TObject);
@@ -233,6 +235,8 @@ type
     procedure refreshPlotAndSliderPanels();
     procedure clearNetwork(); // clear network canvas and delete all nodes, edges
 
+    procedure enableEditNodePanel;
+    procedure disableEditNodePanel;
   public
     network: TNetwork;
     networkController: TController;
@@ -277,6 +281,26 @@ implementation
 {$R *.dfm}
 
 Uses uGraphUtils, uCreateNetworks, uLayout, uTestModel, uSelectedObjects;
+
+
+procedure TMainForm.enableEditNodePanel;
+begin
+  editNodeId.Enabled := true;
+  editNodeConc.Enabled := true;
+  btnNodeFillColor.Enabled := true;
+  btnNodeOutlineColor.Enabled := true;
+  btnEditNodeMore.Enabled := true;
+end;
+
+
+procedure TMainForm.disableEditNodePanel;
+begin
+  editNodeId.Enabled := false;
+  editNodeConc.Enabled := false;
+  btnNodeFillColor.Enabled := false;
+  btnNodeOutlineColor.Enabled :=false;
+  btnEditNodeMore.Enabled := false;
+end;
 
 procedure TMainForm.btnAddPlotClick(Sender: TObject);
 begin
@@ -679,10 +703,19 @@ begin
   v := ScreenToWorld(X, Y);
 
   networkController.OnMouseDown(Sender, Button, Shift, v.X, v.Y);
+  if networkController.selectedObjects.count > 0 then
+     begin
+     if networkController.selectedObjects[0].objType = oNode then
+        enableEditNodePanel;
+     end
+  else
+     begin
+     disableEditNodePanel;
+     end;
+
   networkPB1.Invalidate;
   if (networkController.selectedObjects.Count > 0) and (networkController.selectedObjects[0].objType = oNode) then
     begin
-//<<<<<<< HEAD
       editNodeId.Text := networkController.selectedObjects[0].node.state.id;
       editNodeConc.Text := networkCOntroller.selectedObjects[0].node.state.conc.ToString;
       pnlNodePanel.visible := true;
@@ -692,8 +725,6 @@ begin
       self.RNodeEditWPanel.visible := true;
       self.RNodeEditWPanel.invalidate;
       self.setRightPanels;
-//=======
-
     end
   else if (networkController.selectedObjects.Count > 0) and (networkController.selectedObjects[0].objType = oReaction) then
     begin

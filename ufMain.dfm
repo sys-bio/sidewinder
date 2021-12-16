@@ -938,6 +938,7 @@ object mainForm: TmainForm
           WidthPercent = 100.000000000000000000
           ChildOrder = 3
           Color = 36095
+          Enabled = False
           Role = ''
           OnSelect = btnNodeOutlineColorSelect
         end
@@ -948,6 +949,7 @@ object mainForm: TmainForm
           Height = 22
           ChildOrder = 4
           ElementFont = efCSS
+          Enabled = False
           HeightStyle = ssAuto
           HeightPercent = 100.000000000000000000
           SpellCheck = False
@@ -965,6 +967,7 @@ object mainForm: TmainForm
           WidthPercent = 100.000000000000000000
           ChildOrder = 3
           Color = 11788021
+          Enabled = False
           Role = ''
           OnSelect = btnNodeFillColorSelect
         end
@@ -975,6 +978,7 @@ object mainForm: TmainForm
           Height = 22
           ChildOrder = 7
           ElementFont = efCSS
+          Enabled = False
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
           Font.Height = -11
@@ -986,8 +990,8 @@ object mainForm: TmainForm
           WidthPercent = 100.000000000000000000
           OnExit = editNodeConcExit
         end
-        object WebButton1: TWebButton
-          Left = 54
+        object btnEditNodeMore: TWebButton
+          Left = 61
           Top = 199
           Width = 96
           Height = 32
@@ -995,6 +999,7 @@ object mainForm: TmainForm
           ChildOrder = 9
           ElementClassName = 'btn btn-primary btn-sm'
           ElementFont = efCSS
+          Enabled = False
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWhite
           Font.Height = -11
@@ -1024,16 +1029,41 @@ object mainForm: TmainForm
           HeightPercent = 100.000000000000000000
           ParentFont = False
           WidthPercent = 100.000000000000000000
-          OnClick = btnClearClick
         end
       end
-      object WebConsoleLog1: TWebConsoleLog
-        Left = 15
+      object pnlReactionPanel: TWebPanel
+        Left = 16
         Top = 583
-        Width = 261
-        Height = 224
+        Width = 160
+        Height = 171
+        ElementClassName = 'card'
         HeightPercent = 100.000000000000000000
         WidthPercent = 100.000000000000000000
+        BorderColor = clSilver
+        BorderStyle = bsSingle
+        ChildOrder = 7
+        ElementBodyClassName = 'card-body'
+        ElementFont = efCSS
+        object WebButton3: TWebButton
+          Left = 134
+          Top = 1
+          Width = 23
+          Height = 21
+          Caption = '^'
+          ChildOrder = 10
+          ElementClassName = 'btn btn-primary btn-sm'
+          ElementFont = efCSS
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWhite
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          HeightStyle = ssAuto
+          HeightPercent = 100.000000000000000000
+          ParentFont = False
+          WidthPercent = 100.000000000000000000
+          OnClick = btnClearClick
+        end
       end
     end
     object RSimWPanel: TWebPanel
@@ -1214,6 +1244,8 @@ object mainForm: TmainForm
         ChildOrder = 3
         ElementBodyClassName = 'card-body'
         ElementFont = efCSS
+        ExplicitLeft = -1
+        ExplicitTop = 6
         object simResultsMemo: TWebMemo
           Left = 0
           Top = 621
@@ -1229,6 +1261,14 @@ object mainForm: TmainForm
           SelLength = 0
           SelStart = 0
           Visible = False
+          WidthPercent = 100.000000000000000000
+        end
+        object WebConsoleLog1: TWebConsoleLog
+          Left = 6
+          Top = 107
+          Width = 261
+          Height = 224
+          HeightPercent = 100.000000000000000000
           WidthPercent = 100.000000000000000000
         end
       end
@@ -1487,6 +1527,8 @@ object mainForm: TmainForm
         ElementBodyClassName = 'card-body-shadow'
         ElementFont = efCSS
         Visible = False
+        ExplicitLeft = 6
+        ExplicitTop = 83
         object RxnStoichLabel: TWebLabel
           Left = 10
           Top = 5

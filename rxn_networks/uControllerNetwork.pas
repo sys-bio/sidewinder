@@ -263,8 +263,8 @@ procedure TController.setNodeId(Id: string);
 var
   index: integer;
 begin
- if selectedObjects.count = 0 then
-    exit;
+  if selectedObjects.count = 0 then
+     exit;
 
   prepareUndo;
   if network.findNode(Id, index) then
