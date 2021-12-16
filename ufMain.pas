@@ -108,7 +108,7 @@ type
     WebConsoleLog1: TWebConsoleLog;
     SetUpSimButton: TWebButton;
     pnlMenu: TWebPanel;
-    WebMainMenu1: TWebMainMenu;
+    WebMainMenu: TWebMainMenu;
     File1: TMenuItem;
     New1: TMenuItem;
     New2: TMenuItem;
@@ -833,6 +833,8 @@ begin
   self.netDrawScrollBarHoriz.Value := 0;
   self.netDrawScrollBarVert.Value := 0;
 
+  // This is to match the boostrap colors
+  WebMainMenu1.Appearance.BackgroundColor := RGB (50,56,62);
 
   origin.X := 0.0;
   origin.Y := 0.0;
