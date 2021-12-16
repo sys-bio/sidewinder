@@ -120,7 +120,6 @@ type
     Cut1: TMenuItem;
     Copy1: TMenuItem;
     Paste1: TMenuItem;
-    TMSFNCColorPicker1: TTMSFNCColorPicker;
 
     procedure btnUniUniClick(Sender: TObject);
     procedure btnBiBiClick(Sender: TObject);

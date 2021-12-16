@@ -834,7 +834,7 @@ object mainForm: TmainForm
         Left = 16
         Top = 258
         Width = 160
-        Height = 239
+        Height = 319
         ElementClassName = 'card'
         HeightPercent = 100.000000000000000000
         WidthPercent = 100.000000000000000000
@@ -1028,86 +1028,12 @@ object mainForm: TmainForm
         end
       end
       object WebConsoleLog1: TWebConsoleLog
-        Left = 14
-        Top = 503
+        Left = 15
+        Top = 583
         Width = 261
         Height = 224
         HeightPercent = 100.000000000000000000
         WidthPercent = 100.000000000000000000
-      end
-      object TMSFNCColorPicker1: TTMSFNCColorPicker
-        Left = 208
-        Top = 120
-        Width = 60
-        Height = 22
-        ParentDoubleBuffered = False
-        DoubleBuffered = True
-        TabOrder = 8
-        Appearance.Stroke.Color = 11119017
-        Appearance.Fill.Color = 15329769
-        Appearance.StrokeHover.Color = 10061943
-        Appearance.FillHover.Color = 13419707
-        Appearance.StrokeDown.Color = 9470064
-        Appearance.FillDown.Color = 13156536
-        Appearance.StrokeSelected.Color = 5197615
-        Appearance.FillSelected.Color = 13156536
-        Appearance.StrokeDisabled.Color = 11119017
-        Appearance.FillDisabled.Color = clSilver
-        Appearance.SeparatorStroke.Color = 11119017
-        Appearance.Font.Charset = DEFAULT_CHARSET
-        Appearance.Font.Color = clWindowText
-        Appearance.Font.Height = -11
-        Appearance.Font.Name = 'Tahoma'
-        Appearance.Font.Style = []
-        Items = <
-          item
-            Color = clBlack
-          end
-          item
-            Color = clMaroon
-          end
-          item
-            Color = clGreen
-          end
-          item
-            Color = clOlive
-          end
-          item
-            Color = clNavy
-          end
-          item
-            Color = clPurple
-          end
-          item
-            Color = clTeal
-          end
-          item
-            Color = clSilver
-          end
-          item
-            Color = clGray
-          end
-          item
-            Color = clRed
-          end
-          item
-            Color = clLime
-          end
-          item
-            Color = clYellow
-          end
-          item
-            Color = clBlue
-          end
-          item
-            Color = clFuchsia
-          end
-          item
-            Color = clAqua
-          end
-          item
-            Color = clWhite
-          end>
       end
     end
     object RSimWPanel: TWebPanel
@@ -1190,7 +1116,7 @@ object mainForm: TmainForm
           760)
         object pnlSimResultsFile: TWebPanel
           Left = 24
-          Top = 641
+          Top = 621
           Width = 205
           Height = 73
           ElementClassName = 'card'
@@ -1685,7 +1611,6 @@ object mainForm: TmainForm
     Font.Name = 'Tahoma'
     Font.Style = []
     ParentFont = False
-    ExplicitTop = 1
   end
   object NetworkJSONOpenDialog: TWebOpenDialog
     OnChange = NetworkJSONOpenDialogChange
