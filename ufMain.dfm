@@ -834,7 +834,7 @@ object mainForm: TmainForm
         Left = 16
         Top = 258
         Width = 160
-        Height = 319
+        Height = 320
         ElementClassName = 'card'
         HeightPercent = 100.000000000000000000
         WidthPercent = 100.000000000000000000
@@ -1029,11 +1029,12 @@ object mainForm: TmainForm
           HeightPercent = 100.000000000000000000
           ParentFont = False
           WidthPercent = 100.000000000000000000
+          OnClick = WebButton2Click
         end
       end
       object pnlReactionPanel: TWebPanel
         Left = 16
-        Top = 583
+        Top = 586
         Width = 160
         Height = 171
         ElementClassName = 'card'
@@ -1044,6 +1045,23 @@ object mainForm: TmainForm
         ChildOrder = 7
         ElementBodyClassName = 'card-body'
         ElementFont = efCSS
+        object WebLabel2: TWebLabel
+          Left = 30
+          Top = 14
+          Width = 101
+          Height = 18
+          Caption = 'Reaction Editing'
+          ElementFont = efCSS
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWhite
+          Font.Height = -15
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          HeightStyle = ssAuto
+          HeightPercent = 100.000000000000000000
+          ParentFont = False
+          WidthPercent = 100.000000000000000000
+        end
         object WebButton3: TWebButton
           Left = 134
           Top = 1

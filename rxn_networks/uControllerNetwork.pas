@@ -64,7 +64,7 @@ type
     procedure setAddBiBiReaction;
 
     procedure setSelectStatus;
-    function addNode(Id: string; x, y: double): TNode; overload;
+    function  addNode(Id: string; x, y: double): TNode; overload;
     procedure addNode(x, y: double); overload;
     procedure setNodeId(Id: string);
     procedure setNodeConc(conc: string);
@@ -78,8 +78,8 @@ type
     procedure OnMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; x, y: double);
     procedure OnMouseMove(Sender: TObject; Shift: TShiftState; x, y: double);
     procedure OnMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; x, y: double);
-    function getRxnArrowPts(): array of TPointF;
-    function createSBMLModel(currentModel: TModel): TModel;
+    function  getRxnArrowPts(): array of TPointF;
+    function  createSBMLModel(currentModel: TModel): TModel;
     // Build SBML model based on current Network
     procedure SBMLUpdated(updatedModel: TModel);
 
@@ -493,6 +493,7 @@ begin
         currentObject := TObjectInformation.Create;
         currentObject.node := network.nodes[index];
         currentObject.objType := oNode;
+
 
         // In words: If shift not pressed and node not selected, then
         // unselect everything in preparation to select the node

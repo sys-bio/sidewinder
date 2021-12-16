@@ -122,6 +122,7 @@ type
     WebConsoleLog1: TWebConsoleLog;
     pnlReactionPanel: TWebPanel;
     WebButton3: TWebButton;
+    WebLabel2: TWebLabel;
 
     procedure btnUniUniClick(Sender: TObject);
     procedure btnBiBiClick(Sender: TObject);
@@ -187,6 +188,7 @@ type
     procedure btnSaveSimResultsClick(Sender: TObject);
     procedure btnStopSimSaveClick(Sender: TObject);
     procedure networkPB1DblClick(Sender: TObject);
+    procedure WebButton2Click(Sender: TObject);
 
   private
     numbPlots: Integer; // Number of plots displayed
@@ -1898,6 +1900,20 @@ begin
   if self.numbPlots >0 then
     self.resetPlots();
   self.RSimWPanel.invalidate;
+end;
+
+procedure TMainForm.WebButton2Click(Sender: TObject);
+begin
+  if pnlNodePanel.Height < 34 then
+     begin
+     pnlReactionPanel.Top := 584;
+     pnlNodePanel.Height := 320
+     end
+  else
+    begin
+    pnlReactionPanel.Top := 304;
+    pnlNodePanel.Height := 32;
+    end;
 end;
 
 end.
