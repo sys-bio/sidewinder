@@ -22,6 +22,7 @@ const
   // the launch point for a reaction arc (edge)
   NODE_ARC_DEADSPACE = 8;
   DEFAULT_REACTION_THICKNESS = 3;
+  DEFAULT_REACTION_COLOR = clWebLightSteelBlue;
   DEFAULT_NODE_OUTLINE_THICKNESS = 3;
   MAGIC_IDENTIFER = 'NM01';  // Identifier for json output, 01 refers to version number
   MAX_NODE_CONTROL_POINTS = 4;
@@ -91,23 +92,23 @@ type
 
   TReactionState = record
       id : string;
-      arcCenter: TPointF;
-      selected : boolean;
+      arcCenter : TPointF;    // The point that joins the reactant to product arcs
+      selected  : boolean;
       nReactants, nProducts : integer;
-      srcId   : array[0..5] of string;
-      destId  : array[0..5] of string;  // Stores node Ids, saved to json
-      srcPtr  : array[0..5] of TNode;
-      destPtr : array[0..5] of TNode;  // These are not saved to json as they are pointers
-      rateLaw : string;                // Mass action rate law for reaction
+      srcId     : array[0..5] of string;
+      destId    : array[0..5] of string;  // Stores node Ids, saved to json
+      srcPtr    : array[0..5] of TNode;
+      destPtr   : array[0..5] of TNode;  // These are not saved to json as they are pointers
+      rateLaw   : string;                // Mass action rate law for reaction
       srcStoich : array[0..5] of double; // src Stoichiometric coefficients of the rxn.
       destStoich : array[0..5] of double;// dest
-      lineType: TReactionLineType;
-      reactantReactionArcs: array of TBezierCurve;
-      productReactionArcs: array of TBezierCurve;
+      lineType: TReactionLineType;   // line, bezier or line segment
+      reactantReactionArcs : array of TBezierCurve;
+      productReactionArcs  : array of TBezierCurve;
 
-      rateParams :TList<TSBMLparameter>; // rate and param consts,
-      fillColor : TColor;
-      thickness : integer;
+      rateParams : TList<TSBMLparameter>; // rate and param consts,
+      fillColor  : TColor;
+      thickness  : integer;
 
       procedure saveAsJSON (reactionObject : TJSONObject);
       procedure loadFromJSON (obj : TJSONObject);
@@ -470,7 +471,7 @@ begin
     end;
 
   rateLaw := modelRxn.getKineticLaw.getFormula;
-  fillColor := clWebLightSteelBlue;
+  fillColor := DEFAULT_REACTION_COLOR;
   thickness := DEFAULT_REACTION_THICKNESS;
 
   // Do not need to set arcCenter, remove any arcCenter assignments:

@@ -845,7 +845,7 @@ object mainForm: TmainForm
         ElementFont = efCSS
         object nodeOutlineLabel: TWebLabel
           Left = 10
-          Top = 173
+          Top = 170
           Width = 38
           Height = 13
           Caption = 'Outline:'
@@ -862,7 +862,7 @@ object mainForm: TmainForm
         end
         object nodeFillLabel: TWebLabel
           Left = 3
-          Top = 133
+          Top = 130
           Width = 44
           Height = 13
           Caption = 'Node Fill:'
@@ -929,7 +929,7 @@ object mainForm: TmainForm
           WidthPercent = 100.000000000000000000
         end
         object btnNodeOutlineColor: TWebColorPicker
-          Left = 54
+          Left = 56
           Top = 160
           Width = 51
           Height = 33
@@ -955,6 +955,7 @@ object mainForm: TmainForm
           OnExit = editNodeIdExit
         end
         object btnNodeFillColor: TWebColorPicker
+          AlignWithMargins = True
           Left = 56
           Top = 121
           Width = 52
@@ -1033,6 +1034,80 @@ object mainForm: TmainForm
         Height = 224
         HeightPercent = 100.000000000000000000
         WidthPercent = 100.000000000000000000
+      end
+      object TMSFNCColorPicker1: TTMSFNCColorPicker
+        Left = 208
+        Top = 120
+        Width = 60
+        Height = 22
+        ParentDoubleBuffered = False
+        DoubleBuffered = True
+        TabOrder = 8
+        Appearance.Stroke.Color = 11119017
+        Appearance.Fill.Color = 15329769
+        Appearance.StrokeHover.Color = 10061943
+        Appearance.FillHover.Color = 13419707
+        Appearance.StrokeDown.Color = 9470064
+        Appearance.FillDown.Color = 13156536
+        Appearance.StrokeSelected.Color = 5197615
+        Appearance.FillSelected.Color = 13156536
+        Appearance.StrokeDisabled.Color = 11119017
+        Appearance.FillDisabled.Color = clSilver
+        Appearance.SeparatorStroke.Color = 11119017
+        Appearance.Font.Charset = DEFAULT_CHARSET
+        Appearance.Font.Color = clWindowText
+        Appearance.Font.Height = -11
+        Appearance.Font.Name = 'Tahoma'
+        Appearance.Font.Style = []
+        Items = <
+          item
+            Color = clBlack
+          end
+          item
+            Color = clMaroon
+          end
+          item
+            Color = clGreen
+          end
+          item
+            Color = clOlive
+          end
+          item
+            Color = clNavy
+          end
+          item
+            Color = clPurple
+          end
+          item
+            Color = clTeal
+          end
+          item
+            Color = clSilver
+          end
+          item
+            Color = clGray
+          end
+          item
+            Color = clRed
+          end
+          item
+            Color = clLime
+          end
+          item
+            Color = clYellow
+          end
+          item
+            Color = clBlue
+          end
+          item
+            Color = clFuchsia
+          end
+          item
+            Color = clAqua
+          end
+          item
+            Color = clWhite
+          end>
       end
     end
     object RSimWPanel: TWebPanel

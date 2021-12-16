@@ -15,7 +15,7 @@ uses
   uNetworkTypes, WEBLib.Lists, Vcl.Forms, uModel,
   uSBMLClasses, uSimulation, uControllerMain,
   uODE_FormatUtility, uGraphP, Vcl.Menus, WEBLib.Menus, ufVarSelect, uPlotPanel,
-  uParamSliderLayout, uSidewinderTypes, WEBLib.ComCtrls, WEBLib.Miletus, WEBLib.JQCtrls;
+  uParamSliderLayout, uSidewinderTypes, WEBLib.ComCtrls, WEBLib.Miletus, WEBLib.JQCtrls, VCL.TMSFNCCustomPicker, VCL.TMSFNCColorPicker;
 
 const EDITBOX_HT = 25;
 
@@ -120,6 +120,7 @@ type
     Cut1: TMenuItem;
     Copy1: TMenuItem;
     Paste1: TMenuItem;
+    TMSFNCColorPicker1: TTMSFNCColorPicker;
 
     procedure btnUniUniClick(Sender: TObject);
     procedure btnBiBiClick(Sender: TObject);
@@ -834,7 +835,7 @@ begin
   self.netDrawScrollBarVert.Value := 0;
 
   // This is to match the boostrap colors
-  WebMainMenu1.Appearance.BackgroundColor := RGB (50,56,62);
+  WebMainMenu.Appearance.BackgroundColor := RGB (50,56,62);
 
   origin.X := 0.0;
   origin.Y := 0.0;

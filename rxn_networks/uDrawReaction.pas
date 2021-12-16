@@ -11,7 +11,6 @@ type
          canvas : TCanvas;
          origin : TPointF;
          scalingFactor : double;
-      //   arrowPts: array of TPointF;
          arrowPts: TList<TPointF>;  // holds basic arrow shape at 0 degrees (rad)
          arrowTipPt: integer; // position of arrow tip in arrowPts
          procedure generateArrow(); // builds arrow if needed.
@@ -86,7 +85,7 @@ var i: integer;
     initPts: TList<TPoint>;
 begin
   Result := TList<TPoint>.create;
-  initPts := TList<Tpoint>.create;
+  initPts := TList<TPoint>.create;
   alpha := -Angle(dxdt, dydt);  //(x,y)
   cosine := cos (alpha); sine := sin (alpha);
   scale := 1;    // not used for now
@@ -121,8 +120,9 @@ end;
 procedure TReactionRender.drawArrow (tip : TPointF; dxdt, dydt : double);
 begin
   if self.arrowPts.count < 2 then self.generateArrow;
-  self.renderArrow( self.translateArrow(tip, dxdt, dydt) );
+  self.renderArrow (self.translateArrow(tip, dxdt, dydt));
 end;
+
 
 procedure TReactionRender.renderArrow(trArrowPts: TList<TPoint>);
 var i: integer;
