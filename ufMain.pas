@@ -108,11 +108,18 @@ type
     WebConsoleLog1: TWebConsoleLog;
     SetUpSimButton: TWebButton;
     pnlMenu: TWebPanel;
-    WebJQXDropDownList1: TWebJQXDropDownList;
     WebMainMenu1: TWebMainMenu;
     File1: TMenuItem;
     New1: TMenuItem;
     New2: TMenuItem;
+    edit1: TMenuItem;
+    Help1: TMenuItem;
+    mnuAbout: TMenuItem;
+    Undo1: TMenuItem;
+    N1: TMenuItem;
+    Cut1: TMenuItem;
+    Copy1: TMenuItem;
+    Paste1: TMenuItem;
 
     procedure btnUniUniClick(Sender: TObject);
     procedure btnBiBiClick(Sender: TObject);

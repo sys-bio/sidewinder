@@ -1239,16 +1239,6 @@ object mainForm: TmainForm
           WidthPercent = 100.000000000000000000
           ExplicitTop = 609
         end
-        object WebJQXDropDownList1: TWebJQXDropDownList
-          Left = 96
-          Top = 80
-          Width = 200
-          Height = 21
-          HeightPercent = 100.000000000000000000
-          WidthPercent = 100.000000000000000000
-          ItemIndex = -1
-          MultiSelect = False
-        end
       end
     end
     object pnlCenter: TWebPanel
@@ -1656,6 +1646,30 @@ object mainForm: TmainForm
       end
       object New2: TMenuItem
         Caption = 'Open'
+      end
+    end
+    object edit1: TMenuItem
+      Caption = 'Edit'
+      object Undo1: TMenuItem
+        Caption = 'Undo'
+      end
+      object N1: TMenuItem
+        Caption = '-'
+      end
+      object Cut1: TMenuItem
+        Caption = 'Cut'
+      end
+      object Copy1: TMenuItem
+        Caption = 'Copy'
+      end
+      object Paste1: TMenuItem
+        Caption = 'Paste'
+      end
+    end
+    object Help1: TMenuItem
+      Caption = 'Help'
+      object mnuAbout: TMenuItem
+        Caption = 'About'
       end
     end
   end
