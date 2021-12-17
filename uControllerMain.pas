@@ -7,10 +7,10 @@ uses System.SysUtils, System.Classes, Dialogs, uSimulation, uModel, uSBMLClasses
      uSBMLWriter, uNetwork, uSidewinderTypes;
 
 type
- TUpdateSimEvent = procedure(time:double; updatedVals: array of double) of object;
+ TUpdateSimEvent = procedure( time:double; updatedVals: array of double ) of object;
  // Let listeners know of new simulation update event.
-  TUpdateModelEvent = procedure(model: TModel) of object; // SBML model loaded.
-  TNetworkChangeEvent = procedure(sender: TObject) of object; // Notify network has changed, may want to update model.
+  TUpdateModelEvent = procedure( model: TModel ) of object; // SBML model loaded.
+  TNetworkChangeEvent = procedure( sender: TObject ) of object; // Notify network has changed, may want to update model.
 
  TControllerMain = class
   private
@@ -56,6 +56,8 @@ type
     procedure SetOnline(bOnline: Boolean);
     procedure SetModelLoaded(bModelLoaded: boolean);
     function IsModelLoaded(): Boolean;
+    procedure clearModel();
+    procedure clearSim();
    // function IsNetworkUpdated(): Boolean;  // true: network changed, need to update model.
     function hasNetworkChanged(): Boolean;  // true: network changed, need to update model.
     procedure SetTimerEnabled(bTimer: Boolean);
@@ -68,7 +70,8 @@ type
     procedure startTimer();
     procedure resetCurrTime();
     procedure writeSimData(fileName: string; data: TStrings);
-    function getSimulation(): TSimulationJS;
+    function  getSimulation(): TSimulationJS;
+    function  updateSpeciesNodeConc(node: TNode): boolean;
     procedure networkUpdated(sender: TObject); // Network has changed, update model
     property OnNetworkChange: TNetworkChangeEvent read FNetworkChanged write FNetworkChanged;
     property OnSimUpdate: TUpdateSimEvent read FUpdate write FUpdate;
@@ -118,7 +121,7 @@ end;
 procedure TControllerMain.createModel();
 begin
 //console.log('TControllerMain.createModel');
-  if self.sbmlmodel <> nil then self.sbmlmodel.Free;
+  self.clearModel;
   self.sbmlmodel := TModel.create();
   self.sbmlmodel.OnPing := self.SBMLLoaded;  // Register callback function
   if self.networkUpdate then  // Create from Network
@@ -133,15 +136,27 @@ end;
 procedure TControllerMain.createSimulation();
 begin
 //console.log('TControllerMain.createSimulation');
-  if self.runSim <> nil then
-  begin
-    self.runSim.Free;
-    self.SBMLmodel.resetS_Vals();  // TODO: Move S_vals to simulator.
-   // self.online := false;
-  end;
+  self.clearSim;
   self.currTime := 0;
   self.runSim := TSimulationJS.create(self.runTime, self.stepSize, self.SBMLmodel, self.solverUsed);
   self.runSim.OnUpdate := self.getVals; // register callback function.
+end;
+
+procedure TControllerMain.clearModel();
+begin
+  if self.sbmlModel <> nil then
+    begin
+    self.sbmlModel.Free;
+    end;
+end;
+
+procedure TControllerMain.clearSim();
+begin
+  if self.runSim <> nil then
+    begin
+    self.runSim.Free;
+    end;
+ // self.currTime := 0;
 end;
 
 // return current time of run and variable values to listener:
@@ -154,11 +169,64 @@ procedure TControllerMain.UpdateVals( time: double; updatedVals: array of double
   // Network has changed, notify any listeners
 procedure TControllerMain.networkUpdated(sender: TObject);
 begin
-  //console.log('Network changed');
-  self.networkUpdate := true;      // after model updated, change to false.
-  if Assigned(FNetworkChanged) then
-    FNetworkChanged(sender);
+ // mUpdate := true; // default update model
+  console.log('TControllerMain.networkUpdated: Network changed');
+  if sender is TNode then
+    begin
+     console.log('TControllerMain.networkUpdated: Node conc changed');
+     if self.sbmlmodel <> nil then
+       self.networkUpdate := self.updateSpeciesNodeConc( sender as TNode )
+     else self.networkUpdate := true;
+    end
+  else self.networkUpdate := true;      // after model updated, change to false.
+  if self.networkUpdate then
+    begin
+    if Assigned(FNetworkChanged) then
+      FNetworkChanged(sender);
+    end;
+
 end;
+
+function TControllerMain.updateSpeciesNodeConc(node: TNode): boolean;
+// returns 'true' : node val has not changed, something else with node has changed.
+//                  Build new model and setup new simulation.
+//         'false': node val changed, do not set networkUpdate flag. Keep same model.
+
+// TODO: need to update params? some SBMLspecies are BC and const Species and are
+//       treated as params for simulations.
+var i: integer;
+    aVal: double;
+begin
+  Result := true;
+   console.log('TControllerMain.updateSpeciesNodeConc');
+  for i := 0 to self.sbmlmodel.getSpeciesNumb -1 do
+      begin
+      if self.sbmlmodel.getSBMLspecies(i).getID = node.state.id then
+        begin
+        aVal := node.state.conc;
+        if self.sbmlmodel.getSBMLspecies(i).isSetInitialAmount then
+          begin
+          if self.sbmlmodel.getSBMLspecies(i).getInitialAmount <> aVal then
+            begin
+            self.sbmlmodel.getSBMLspecies(i).setInitialAmount(aVal);
+            self.sbmlmodel.resetS_Vals();
+            Result := false; // updated model species val above
+            end;
+          end
+        else
+          begin
+          if self.sbmlmodel.getSBMLspecies(i).getInitialConcentration <> aVal then
+            begin
+            self.sbmlmodel.getSBMLspecies(i).setInitialConcentration(aVal);
+            self.sbmlmodel.resetS_Vals();
+            Result := false;
+            end;
+          end;
+        end;
+      end;
+
+end;
+
 
 procedure TControllerMain.setODESolver();
 begin

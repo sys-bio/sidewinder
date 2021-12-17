@@ -78,7 +78,7 @@ type
    function  getSBMLRenderInfo(): TSBMLRenderInformation;
 
    function getS_Names(): array of String;
-   function getS_Vals(): array of Double;
+   function getS_Vals(): array of Double; // remove at some point, only getS_initVals needed ?
    function getS_initVals(): array of double;
    procedure resetS_Vals();   // reset with species initial vals. Move this to Simulation class.
    function getP_Names(): array of String;
@@ -91,7 +91,6 @@ type
 
    property OnPing: TPingEvent read FPing write FPing;
    property OnPing2: TPingEvent read FPing2 write FPing2;
-  // property OnPing3: TPingEvent read FPing3 write FPing3;
     { Triggers the event if anything is registered }
    procedure SBML_UpdateEvent(); // SBML model updated.
    procedure testModelUpdate(); // check model update mechanism
@@ -414,8 +413,9 @@ begin
     end;
 end;
 
-procedure TModel.resetS_Vals(); //TODO: move S_Vals to simulator
+procedure TModel.resetS_Vals();
 begin
+  self.fillSpeciesArray(); // bj added
   self.s_Vals := self.s_NameValAr.getValAr();
 end;
 
