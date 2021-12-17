@@ -121,8 +121,7 @@ type
     Paste1: TMenuItem;
     WebConsoleLog1: TWebConsoleLog;
     pnlReactionPanel: TWebPanel;
-    WebButton3: TWebButton;
-    WebLabel2: TWebLabel;
+    btnRollUpReactionPanel: TWebButton;
     N2: TMenuItem;
     mnuSaveJSon: TMenuItem;
     mnuOpenJson: TMenuItem;

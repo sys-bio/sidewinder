@@ -480,8 +480,6 @@ object mainForm: TmainForm
       Font.Name = 'Tahoma'
       Font.Style = []
       ParentFont = False
-      ExplicitLeft = -5
-      ExplicitTop = -3
       object btnUniUni: TWebSpeedButton
         Left = 14
         Top = 96
@@ -1045,7 +1043,7 @@ object mainForm: TmainForm
         ChildOrder = 7
         ElementBodyClassName = 'card-body'
         ElementFont = efCSS
-        object WebButton3: TWebButton
+        object btnRollUpReactionPanel: TWebButton
           Left = 134
           Top = 1
           Width = 23
@@ -1147,7 +1145,7 @@ object mainForm: TmainForm
           760)
         object pnlSimResultsFile: TWebPanel
           Left = 24
-          Top = 621
+          Top = 601
           Width = 205
           Height = 73
           ElementClassName = 'card'
@@ -1245,8 +1243,6 @@ object mainForm: TmainForm
         ChildOrder = 3
         ElementBodyClassName = 'card-body'
         ElementFont = efCSS
-        ExplicitLeft = -1
-        ExplicitTop = 6
         object simResultsMemo: TWebMemo
           Left = 0
           Top = 621
@@ -1528,8 +1524,6 @@ object mainForm: TmainForm
         ElementBodyClassName = 'card-body-shadow'
         ElementFont = efCSS
         Visible = False
-        ExplicitLeft = 6
-        ExplicitTop = 83
         object RxnStoichLabel: TWebLabel
           Left = 10
           Top = 5
