@@ -14,6 +14,9 @@ type
    private
     np, ny: Integer;  // Number of parameters, species (ny).
     dydt: TDoubleDynArray;
+    s_Vals: array of Double; // species, Changes, one to one correlation: s_Vals[n] <=> s_Names[n]
+    s_Names: array of String; // Use species ID as name
+
     eqList: String;   // Euler, RK4 ODE eq list.
     LSODAeq: String;  // Formated ODE eq list for LSODA solver.
     step: double;       // time stepsize
@@ -35,8 +38,8 @@ type
     constructor Create ( runTime, nStepSize: double; newModel: TModel; solver: ODESolver ); Overload ;
     procedure setODEsolver(solverToUse: ODESolver);
     procedure nextEval(newTime: double; s: array of double; newPVals: array of double);
-    procedure eval (newTime: double; s: array of double) ;
-    procedure eval2 ( time:double; s: array of double);
+    procedure eval (newTime: double; s: array of double) ; // currently not used
+    procedure eval2 ( time:double; s: array of double); // LSODA integrator
     property OnUpdate: TUpdateValEvent read FUpdate write FUpdate;
     { Notify listener of updated values }
     procedure updateVals(time:double; updatedVals: array of double);
@@ -51,6 +54,7 @@ type
     procedure startTimer();
     procedure startSimulation();
     procedure updateSimulation();
+    procedure resetSpeciesVals(newVals: array of double);
     procedure testLSODA();  // Solve test equations. All pascal code.
  end;
 
@@ -67,6 +71,11 @@ begin
   self.online := false;
   self.model := newModel;
   self.ny := length(self.model.getS_Vals);
+  for i := 0 to ny - 1 do
+    begin
+    self.s_Vals[i] := self.model.getS_Vals()[i];
+    self.s_Names[i] := self.model.getS_Names[i];
+    end;
   self.np := length(self.model.getP_Vals);
   self.solverUsed:= solver;
   self.generateEquations();
@@ -121,13 +130,29 @@ begin
       self.setStepSize(self.WebTimer1.Interval * 0.001); // 1 sec = 1000 msec;
       if self.paramUpdated then
         begin
-          self.paramUpdated := false;
+        self.paramUpdated := false;
         end;
-      self.nextEval(self.time, self.model.getS_Vals, self.model.getP_Vals);
+      self.nextEval(self.time, self.s_Vals, self.model.getP_Vals);
     end
     // else error msg needed?
   else
     self.startSimulation();
+end;
+
+procedure TSimulationJS.resetSpeciesVals(newVals: array of double);
+var i: integer;
+begin
+  if Length( self.s_Vals ) <> Length( newVals ) then
+    begin
+    setLength( self.s_Vals, Length( newVals ) );
+    console.log('TSimulationJS.resetSpeciesVals: species count does not match');
+    end;
+
+  for i := 0 to Length( newVals )- 1 do
+    begin
+    self.s_Vals[i] := newVals[i];
+    end;
+
 end;
 
 procedure TSimulationJS.generateEquations();

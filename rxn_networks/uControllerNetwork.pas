@@ -296,7 +296,7 @@ begin
       showmessage('Concentration must be a number');
   end;
   selectedObjects[0].node.state.conc := newConc;
-  network.networkEvent(nil);
+  network.networkEvent( selectedObjects[0].node ); // pass updated node to listener
 end;
 
 function TController.getRxnArrowPts(): array of TPointF;

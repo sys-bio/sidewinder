@@ -87,7 +87,7 @@ object mainForm: TmainForm
       Height = 28
       Caption = 'Setup Simulation'
       ChildOrder = 5
-      ElementClassName = 'btn btn-danger btn-sm'
+      ElementClassName = 'btn btn-primary btn-sm'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clRed
       Font.Height = -11
@@ -213,12 +213,13 @@ object mainForm: TmainForm
       WidthPercent = 100.000000000000000000
       OnClick = SaveSBMLButtonClick
     end
-    object SetUpSimButton: TWebButton
+    object btnResetSimSpecies: TWebButton
       Left = 792
-      Top = 7
-      Width = 149
-      Height = 32
-      Caption = 'Reset to initial species values'
+      Top = 10
+      Width = 120
+      Height = 25
+      Hint = 'Reset species to initial values'
+      Caption = 'Reset Simulation'
       ChildOrder = 13
       ElementClassName = 'btn btn-primary btn-sm'
       ElementFont = efCSS
@@ -230,6 +231,7 @@ object mainForm: TmainForm
       HeightStyle = ssAuto
       HeightPercent = 100.000000000000000000
       ParentFont = False
+      ShowHint = True
       Visible = False
       WidthPercent = 100.000000000000000000
       OnClick = resetInitValsButtonClick
@@ -480,8 +482,6 @@ object mainForm: TmainForm
       Font.Name = 'Tahoma'
       Font.Style = []
       ParentFont = False
-      ExplicitLeft = -5
-      ExplicitTop = -3
       object btnUniUni: TWebSpeedButton
         Left = 14
         Top = 96
@@ -1164,7 +1164,7 @@ object mainForm: TmainForm
           760)
         object pnlSimResultsFile: TWebPanel
           Left = 24
-          Top = 621
+          Top = 581
           Width = 205
           Height = 73
           ElementClassName = 'card'
@@ -1262,8 +1262,6 @@ object mainForm: TmainForm
         ChildOrder = 3
         ElementBodyClassName = 'card-body'
         ElementFont = efCSS
-        ExplicitLeft = -1
-        ExplicitTop = 6
         object simResultsMemo: TWebMemo
           Left = 0
           Top = 621
@@ -1545,8 +1543,6 @@ object mainForm: TmainForm
         ElementBodyClassName = 'card-body-shadow'
         ElementFont = efCSS
         Visible = False
-        ExplicitLeft = 6
-        ExplicitTop = 83
         object RxnStoichLabel: TWebLabel
           Left = 10
           Top = 5
