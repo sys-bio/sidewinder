@@ -267,7 +267,8 @@ begin
   if computeBezierLineIntersection(node, scalingFactor, pt, par, segmentNumber) then
     // Only draw if successful }
     begin
-    reaction.intersectionPts[arcId] := pt;
+    reaction.state.reactantReactionArcs[arcId].nodeIntersectionPt := pt;
+    //reaction.intersectionPts[arcId] := pt;
 
     // Adjust for changes in the origin
     h1 := minusPt(h1, Origin);
@@ -327,7 +328,8 @@ begin
 
   if computeBezierLineIntersection(node, scalingFactor, pt, par, Segn) then
   begin
-    reaction.intersectionPts[arcId] := pt;
+    reaction.state.productReactionArcs[arcId].nodeIntersectionPt := pt;
+    //reaction.intersectionPts[arcId] := pt;
 
     pDest := minusPt(pt, Origin);
 
@@ -378,11 +380,11 @@ begin
 
   node := reaction.state.srcPtr[arcId];
 
-  pSrc := scalePt(node.getCenter, scalingFactor);
+  pSrc     := scalePt(node.getCenter, scalingFactor);
   centroid := scalePt (centroid, scalingFactor);
   if computeLineIntersection(node, scalingFactor, pt, line(pSrc, centroid)) then
      begin
-     reaction.intersectionPts[arcId] := pt;
+     reaction.state.reactantReactionArcs[arcId].nodeIntersectionPt := pt;
 
      if reaction.selected then
         canvas.pen.color := clRed
@@ -391,7 +393,6 @@ begin
 
      canvas.pen.width := trunc (reaction.state.thickness * scalingFactor);
      canvas.brush.color := reaction.state.fillColor;
-     //Intersect[ArcId] := pt;
      startPt := minusPt(pt, Origin);
      centroid := minusPt(centroid, Origin);
      canvas.moveTo (startPt.x, startPt.y);
@@ -420,7 +421,7 @@ begin
 
   if computeLineIntersection(Node, scalingFactor, pt, line(centroid, pDest)) then
      begin
-     reaction.intersectionPts[arcId] := pt;
+     reaction.state.productReactionArcs[arcId].nodeIntersectionPt := pt;
 
      if reaction.selected then
         canvas.pen.color := clRed
@@ -429,8 +430,6 @@ begin
 
      canvas.pen.width := trunc (reaction.state.thickness * scalingFactor);
      canvas.brush.color := reaction.state.fillColor;
-
-     reaction.intersectionPts[arcId] := pt;
 
      endPt := minusPt(pt, Origin);
      startPt := minusPt(centroid, Origin);

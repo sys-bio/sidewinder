@@ -103,8 +103,8 @@ type
       srcStoich : array[0..5] of double; // src Stoichiometric coefficients of the rxn.
       destStoich : array[0..5] of double;// dest
       lineType: TReactionLineType;   // line, bezier or line segment
-      reactantReactionArcs : array of TBezierCurve;
-      productReactionArcs  : array of TBezierCurve;
+      reactantReactionArcs : array of TReactionCurve;
+      productReactionArcs  : array of TReactionCurve;
 
       rateParams : TList<TSBMLparameter>; // rate and param consts,
       fillColor  : TColor;
@@ -125,7 +125,7 @@ type
        // i.e the intersection of the bezier with the outer rectangle of a node,
        // they'd don't need to be saved when the reaction is saved, they are
        // computed on demand. There is one intersection point per bezier
-       intersectionPts : array[0..12] of TPointF; // Nees to be made dynamic
+       //intersectionPts : array[0..12] of TPointF; // Nees to be made dynamic
        procedure   unSelect;
        function    getCurrentState : TReactionState;
        procedure   loadState (nodes : TListOfNodes; reactionState : TReactionState);
@@ -1252,14 +1252,14 @@ begin
       begin
       for j := 0 to reactions[i].state.nReactants - 1 do
           begin
-          if ptOnBezier ([reactions[i].intersectionPts[j],
+          if ptOnBezier ([reactions[i].state.reactantReactionArcs[j].nodeIntersectionPt,
                           reactions[i].state.reactantReactionArcs[j].h1,
                           reactions[i].state.reactantReactionArcs[j].h2,
                           reactions[i].state.arcCenter], p2, parametricDistance) then
              begin
              reactionIndex := i;
              arcId := j;
-             console.log ('Found it');
+             console.log ('Found Reactant Bezier');
              exit (True);
              end;
           end;
@@ -1268,11 +1268,11 @@ begin
          if ptOnBezier ([reactions[i].state.arcCenter,
                          reactions[i].state.productReactionArcs[j].h1,
                          reactions[i].state.productReactionArcs[j].h2,
-                         reactions[i].intersectionPts[j]], p2, parametricDistance) then
+                         reactions[i].state.productReactionArcs[j].nodeIntersectionPt], p2, parametricDistance) then
              begin
              reactionIndex := i;
              arcId := j;
-             console.log ('Found it');
+             console.log ('Found it Product Bezier');
              exit (True);
              end;
 

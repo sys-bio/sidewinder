@@ -104,7 +104,7 @@ type
     editNodeConc: TWebEdit;
     WebLabel1: TWebLabel;
     btnEditNodeMore: TWebButton;
-    WebButton2: TWebButton;
+    btnCloseNodePanel: TWebButton;
     SetUpSimButton: TWebButton;
     pnlMenu: TWebPanel;
     WebMainMenu: TWebMainMenu;
@@ -121,11 +121,16 @@ type
     Paste1: TMenuItem;
     WebConsoleLog1: TWebConsoleLog;
     pnlReactionPanel: TWebPanel;
-    btnRollUpReactionPanel: TWebButton;
+    btnCloseReactionEditPanel: TWebButton;
     N2: TMenuItem;
     mnuSaveJSon: TMenuItem;
     mnuOpenJson: TMenuItem;
     mnuSaveSBML: TMenuItem;
+    lblReactionEditing: TWebLabel;
+    WebLabel2: TWebLabel;
+    WebEdit1: TWebEdit;
+    btnReactionColor: TWebColorPicker;
+    WebLabel3: TWebLabel;
 
     procedure btnUniUniClick(Sender: TObject);
     procedure btnBiBiClick(Sender: TObject);
@@ -192,7 +197,8 @@ type
     procedure btnStopSimSaveClick(Sender: TObject);
     procedure mniNewClick(Sender: TObject);
     procedure networkPB1DblClick(Sender: TObject);
-    procedure WebButton2Click(Sender: TObject);
+    procedure btnCloseNodePanelClick(Sender: TObject);
+    procedure btnCloseReactionEditPanelClick(Sender: TObject);
 
   private
     numbPlots: Integer; // Number of plots displayed
@@ -1911,17 +1917,34 @@ begin
   self.RSimWPanel.invalidate;
 end;
 
-procedure TMainForm.WebButton2Click(Sender: TObject);
+procedure TMainForm.btnCloseNodePanelClick(Sender: TObject);
+var minimizedHeight : integer;
 begin
-  if pnlNodePanel.Height < 34 then
+  minimizedHeight := 34;
+  if pnlNodePanel.Height < minimizedHeight + 2 then
      begin
-     pnlReactionPanel.Top := 584;
-     pnlNodePanel.Height := 320
+     pnlNodePanel.Height := 240;
+     pnlReactionPanel.Top := pnlNodePanel.Top + pnlNodePanel.Height + 6;
      end
   else
     begin
-    pnlReactionPanel.Top := 304;
-    pnlNodePanel.Height := 32;
+    pnlNodePanel.Height := minimizedHeight;
+    pnlReactionPanel.Top := pnlNodePanel.Top + pnlNodePanel.Height + 6;
+    end;
+end;
+
+procedure TMainForm.btnCloseReactionEditPanelClick(Sender: TObject);
+var minimizedHeight : integer;
+begin
+  minimizedHeight := 34;
+  if pnlReactionPanel.Height < minimizedHeight + 2 then
+     begin
+     pnlReactionPanel.Height := 180
+     end
+  else
+    begin
+    pnlReactionPanel.Top := pnlNodePanel.Top + pnlNodePanel.Height + 6;
+    pnlReactionPanel.Height := minimizedHeight;
     end;
 end;
 

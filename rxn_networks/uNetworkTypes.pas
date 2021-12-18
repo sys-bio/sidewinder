@@ -20,7 +20,12 @@ type
 
   TReactionLineType = (ltLine, ltSegmentedLine, ltBezier);
   TArcDirection = (adInArc, adOutArc);
-  TBezierCurve = record h1, h2 : TPointF; Merged : boolean; arcDirection : TArcDirection; end;
+  // Could be a straight line, a bezier or a series of line segments (not implemented)
+  TReactionCurve = record nodeIntersectionPt : TPointF;
+                        h1, h2 : TPointF;
+                        Merged : boolean;
+                        arcDirection : TArcDirection;
+                   end;
   TLineSegment = record p, q : TPointF; end;
   TBoundingBoxSegments = array[1..4] of TLineSegment;   // A Square
   TCurrentSelectedBezierHandle = -1..1;  // -1 = no handle, 0 (h1), 1 (h2)

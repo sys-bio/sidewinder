@@ -396,7 +396,7 @@ procedure TController.adjustMovedBezierHandle (reactionObj : TObjectInformation)
 var bnx, bny, bn_1x, bn_1y, c1x, c1y : double;
     i : integer;
     reaction : TReaction;
-    bezier : TBezierCurve;
+    bezier : TReactionCurve;
 begin
   console.log ('adjust....');
   reaction := reactionObj.reaction;
