@@ -770,7 +770,6 @@ implementation
     self.id := '';
     self.colorDefList := TList<TSBMLRenderColorDefinition>.create;
   //  self.gradientDefList := TList<TSBMLRenderGradientDefinition>.create;
-  //  self.lineEndingList := TList<TSBMLRenderLineEnding>.create;
     self.styleList := TList<TSBMLRenderStyle>.create;
     self.lineEndingList := TList<TSBMLRenderLineEnding>.create;
   end;
@@ -819,8 +818,6 @@ implementation
   end;
 
   procedure TSBMLRenderInformation.addStyle( newStyle: TSBMLRenderStyle );
-  //var i: integer;
-  //   nStyle: TSBMLRenderStyle;
   begin
     if newStyle <> nil then
     begin
