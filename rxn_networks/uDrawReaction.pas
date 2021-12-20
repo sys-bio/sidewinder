@@ -384,7 +384,8 @@ begin
   centroid := scalePt (centroid, scalingFactor);
   if computeLineIntersection(node, scalingFactor, pt, line(pSrc, centroid)) then
      begin
-     reaction.state.reactantReactionArcs[arcId].nodeIntersectionPt := pt;
+     reaction.state.reactantReactionArcs[arcId].nodeIntersectionPt.create (pt.x, pt.y);
+     //reaction.state.reactantReactionArcs[arcId].nodeIntersectionPt := pt;
 
      if reaction.selected then
         canvas.pen.color := clRed
@@ -414,7 +415,7 @@ var
 begin
   oldWidth := canvas.pen.width;
 
-  node := reaction.state.destPtr[arcId-reaction.state.nReactants];
+  node := reaction.state.destPtr[arcId];
 
   pDest := scalePt(node.getCenter, scalingFactor);
   centroid := scalePt (centroid, scalingFactor);
@@ -422,6 +423,7 @@ begin
   if computeLineIntersection(Node, scalingFactor, pt, line(centroid, pDest)) then
      begin
      reaction.state.productReactionArcs[arcId].nodeIntersectionPt := pt;
+     reaction.state.productReactionArcs[arcId].nodeIntersectionPt.create (pt.x, pt.y);
 
      if reaction.selected then
         canvas.pen.color := clRed
@@ -501,7 +503,7 @@ begin
          ltBezier :
             drawBezierFromCentroid (i, reaction, centroid, scalingFactor);
          ltLine :
-            drawStraightLineFromCentroid(reaction.state.nReactants + i, reaction, centroid,  scalingFactor);
+            drawStraightLineFromCentroid(i, reaction, centroid,  scalingFactor);
          end;
       end;
 

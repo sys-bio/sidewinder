@@ -350,7 +350,7 @@ end;
 procedure TReactionState.loadFromJSON (obj : TJSONObject);
 var speciesObject : TJSONObject;
     speciesArray : TJSONArray;
-    reactantObject : TJSONObject;
+    reactantObject, productObject : TJSONObject;
     paramArray : TJSONArray;
     paramObject : TJSONObject;
     newParam : TSBMLparameter;
@@ -366,6 +366,7 @@ begin
       speciesArray := obj.Get ('species').JsonValue as TJSONArray;
       reactantObject := speciesArray.Items[0] as TJSONObject;
       nReactants := reactantObject.count;
+      setLength (reactantReactionArcs, nReactants);
       for i:= 0 to Length(srcId) -1 do
         begin
           srcId[i] := '';
@@ -379,8 +380,9 @@ begin
           srcStoich[i] := trunc (strtofloat (pa.JsonValue.Value));
           end;
 
-      reactantObject := speciesArray.Items[1] as TJSONObject;
-      nProducts := reactantObject.count;
+      productObject := speciesArray.Items[1] as TJSONObject;
+      nProducts := productObject.count;
+      setLength (productReactionArcs, nProducts);
       rateParams := TList<TSBMLparameter>.create;
       for i:= 0 to Length(destId)-1 do
         begin
@@ -390,7 +392,7 @@ begin
         end;
       for i := 0 to nProducts - 1 do
           begin
-          pa := reactantObject.Get(i);
+          pa := productObject.Get(i);
           destId[i] := pa.JsonString.value;
           destStoich[i] := trunc (strtofloat (pa.JsonValue.Value));  // stoich not negative
           end;
