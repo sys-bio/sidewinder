@@ -15,7 +15,7 @@ uses
   uNetworkTypes, WEBLib.Lists, Vcl.Forms, uModel,
   uSBMLClasses, uSimulation, uControllerMain,
   uODE_FormatUtility, uGraphP, Vcl.Menus, WEBLib.Menus, ufVarSelect, uPlotPanel,
-  uParamSliderLayout, uSidewinderTypes, WEBLib.ComCtrls, WEBLib.Miletus, WEBLib.JQCtrls, VCL.TMSFNCCustomPicker, VCL.TMSFNCColorPicker;
+  uParamSliderLayout, uSidewinderTypes, WEBLib.ComCtrls, WEBLib.Miletus, WEBLib.JQCtrls; //, VCL.TMSFNCCustomPicker, VCL.TMSFNCColorPicker;
 
 const EDITBOX_HT = 25;
 
@@ -105,7 +105,7 @@ type
     WebLabel1: TWebLabel;
     btnEditNodeMore: TWebButton;
     btnCloseNodePanel: TWebButton;
-    SetUpSimButton: TWebButton;
+    btnResetSimSpecies: TWebButton;
     pnlMenu: TWebPanel;
     WebMainMenu: TWebMainMenu;
     File1: TMenuItem;
@@ -232,6 +232,7 @@ type
     procedure LoadJSONFile();
     procedure EditSliderList(sn: Integer);
             // delete, change param slider as needed using TWebListBox.
+    procedure resetOnLineSimButton(); // reset to default look and caption of 'Setup simulation'
     procedure deleteSlider(sn: Integer); // sn: slider index
     procedure deleteAllSliders();
     procedure adjustRightTabWPanels(); // Adjust all right panels
@@ -516,8 +517,15 @@ begin
   // Check if sbmlmodel already created, if so, destroy before creating ?
   self.deleteAllPlots;
   self.deleteAllSliders;
+  self.resetOnLineSimButton;
   self.MainController.loadSBML(AText);
 
+end;
+
+procedure TMainForm.resetOnLineSimButton();
+begin
+  onLineSimButton.ElementClassName := 'btn btn-primary btn-sm';
+  onLineSimButton.caption := 'Setup Simulation';
 end;
 
 procedure TMainForm.onLineSimButtonClick(Sender: TObject);
@@ -525,6 +533,11 @@ var
   i: Integer;
   yScaleWidth, newYMax : integer;
 begin
+ if length(self.network.reactions) < 1 then     // Fix issue 1, 21dec16
+   begin
+   notifyUser(' No network or model created for simulation. ');
+   exit;
+   end;
 
  if MainController.isOnline = false then
    begin
@@ -533,6 +546,7 @@ begin
        if self.mainController.IsModelLoaded then
          begin
          MainController.setOnline(true);
+		 self.btnResetSimSpecies.Visible := false;										  
          onLineSimButton.font.color := clred;
          onLineSimButton.ElementClassName := 'btn btn-success btn-sm';
          onLineSimButton.caption := 'Simulation: Pause';
@@ -560,6 +574,7 @@ begin
  else  // stop simulation
    begin
      MainController.setOnline(false);
+     self.btnResetSimSpecies.Visible := true;
      MainController.SetTimerEnabled(false); // Turn off web timer (Stop simulation)
      onLineSimButton.font.color := clgreen;
      onLineSimButton.ElementClassName := 'btn btn-danger btn-sm';
@@ -573,8 +588,14 @@ end;
 
 procedure TMainForm.clearNetwork();
 begin
-  network.Clear;
-  networkPB1.Invalidate;
+  self.mainController.clearModel;
+  self.mainController.clearSim;
+  self.deleteAllPlots;
+  self.deleteAllSliders;
+  self.network.Clear;
+  self.networkPB1.Invalidate;
+  self.resetOnLineSimButton;
+  self.btnResetSimSpecies.Visible := false;
 end;
 
 procedure TMainForm.initializePlots();
@@ -605,8 +626,6 @@ begin
 end;
 
 procedure TMainForm.PingSBMLLoaded(newModel:TModel);
-var
- // i: Integer;
 begin
   // Loading new sbml model changes reaction network.
   //console.log(' sbml model loaded ');
@@ -900,8 +919,7 @@ begin
   self.adjustRightTabWPanels;
   self.mainController := TControllerMain.Create(self.networkController);
   self.mainController.setOnline(false);
-  //onLineSimButton.font.color := clgreen;
-  //onLineSimButton.caption := 'Simulation: Play';
+ 
   self.mainController.setODEsolver;
   self.networkUpdated := false;
   self.saveSimResults := false;
@@ -1092,6 +1110,7 @@ end;
 procedure TMainForm.loadNetworkButtonClick(Sender: TObject);
 begin
   self.NetworkJSONOpenDialog.execute();
+  self.resetOnLineSimButton;
 end;
 
 procedure TMainForm.mnuSaveClick(Sender: TObject);
@@ -1595,13 +1614,11 @@ begin
 
 end;
 
-          // Changed to reset to initial conditions:
+          // Reset to initial conditions:
 procedure TMainForm.resetInitValsButtonClick(Sender: TObject);
 begin
- // self.setUpSimulationUI(); // Clear out old plots, simulation, parameter sliders for new sim.
- // btnParamAddSlider.visible := true;
- // onLineSimButton.visible := true;
- // btnAddPlot.visible := true;
+  self.mainController.createSimulation();
+  // set cur time back to zero?
 end;
 
 procedure TMainForm.adjustRightTabWPanels(); // Adjust all right panels to same width, height

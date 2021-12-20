@@ -147,6 +147,7 @@ begin
   if self.sbmlModel <> nil then
     begin
     self.sbmlModel.Free;
+    self.modelLoaded := false;
     end;
 end;
 

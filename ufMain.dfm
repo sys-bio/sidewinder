@@ -213,12 +213,12 @@ object mainForm: TmainForm
       WidthPercent = 100.000000000000000000
       OnClick = SaveSBMLButtonClick
     end
-    object SetUpSimButton: TWebButton
+    object btnResetSimSpecies: TWebButton
       Left = 792
-      Top = 7
+      Top = 10
       Width = 149
       Height = 32
-      Caption = 'Reset to initial species values'
+      Caption = 'Reset Simulation'
       ChildOrder = 13
       ElementClassName = 'btn btn-primary btn-sm'
       ElementFont = efCSS
@@ -1225,7 +1225,7 @@ object mainForm: TmainForm
           760)
         object pnlSimResultsFile: TWebPanel
           Left = 24
-          Top = 601
+          Top = 561
           Width = 205
           Height = 73
           ElementClassName = 'card'
@@ -1364,8 +1364,6 @@ object mainForm: TmainForm
       ChildOrder = 2
       ElementBodyClassName = 'card-body'
       ElementFont = efCSS
-      ExplicitLeft = 281
-      ExplicitWidth = 678
       object networkPB1: TWebPaintBox
         Left = 0
         Top = 0
@@ -1383,7 +1381,6 @@ object mainForm: TmainForm
         OnMouseMove = networkPB1MouseMove
         OnMouseUp = networkPB1MouseUp
         OnMouseWheel = networkPB1MouseWheel
-        ExplicitWidth = 660
       end
       object netDrawScrollBarVert: TTMSFNCScrollBar
         Left = 756
@@ -1427,7 +1424,6 @@ object mainForm: TmainForm
         Max = 1000.000000000000000000
         PageSize = 10.000000000000000000
         OnValueChanged = netDrawScrollBarVertValueChanged
-        ExplicitLeft = 660
       end
       object netDrawScrollBarHoriz: TTMSFNCScrollBar
         Left = 0
@@ -1472,7 +1468,6 @@ object mainForm: TmainForm
         Max = 1000.000000000000000000
         PageSize = 10.000000000000000000
         OnValueChanged = netDrawScrollBarHorizValueChanged
-        ExplicitWidth = 678
       end
     end
     object splitter: TWebSplitter
