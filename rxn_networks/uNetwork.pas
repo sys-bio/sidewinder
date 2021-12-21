@@ -91,24 +91,27 @@ type
   TListOfNodeStates = array of TNodeState;
 
   TReactionState = record
-      id : string;
-      arcCenter : TPointF;    // The point that joins the reactant to product arcs
-      selected  : boolean;
+      id : string;            // Unique id for the reaction
+      arcCenter  : TPointF;    // The point that joins the reactant to product arcs
+      selected   : boolean;
       nReactants, nProducts : integer;
-      srcId     : array[0..5] of string;
-      destId    : array[0..5] of string;  // Stores node Ids, saved to json
-      srcPtr    : array[0..5] of TNode;
-      destPtr   : array[0..5] of TNode;  // These are not saved to json as they are pointers
-      rateLaw   : string;                // Mass action rate law for reaction
-      srcStoich : array[0..5] of double; // src Stoichiometric coefficients of the rxn.
-      destStoich : array[0..5] of double;// dest
-      lineType: TReactionLineType;   // line, bezier or line segment
+      srcId      : array of string;
+      destId     : array of string;  // Stores node Ids, saved to json
+      srcPtr     : array of TNode;
+      destPtr    : array of TNode;  // These are not saved to json as they are pointers
+      rateLaw    : string;                // Mass action rate law for reaction
+      srcStoich  : array of double; // src Stoichiometric coefficients of the rxn.
+      destStoich : array of double;// dest
+      lineType   : TReactionLineType;   // line, bezier or line segment
       reactantReactionArcs : array of TReactionCurve;
       productReactionArcs  : array of TReactionCurve;
 
       rateParams : TList<TSBMLparameter>; // rate and param consts,
       fillColor  : TColor;
       thickness  : integer;
+
+      procedure createReactantSpace (nReactants : integer);
+      procedure createProductSpace (nProducts : integer);
 
       procedure saveAsJSON (reactionObject : TJSONObject);
       procedure loadFromJSON (obj : TJSONObject);
@@ -121,11 +124,6 @@ type
   TReaction = class (TParent)
        state : TReactionState;
 
-       // These define the start and end points of the bezier that's actually drawn,
-       // i.e the intersection of the bezier with the outer rectangle of a node,
-       // they'd don't need to be saved when the reaction is saved, they are
-       // computed on demand. There is one intersection point per bezier
-       //intersectionPts : array[0..12] of TPointF; // Nees to be made dynamic
        procedure   unSelect;
        function    getCurrentState : TReactionState;
        procedure   loadState (nodes : TListOfNodes; reactionState : TReactionState);
@@ -377,6 +375,39 @@ end;
 
 // ---------------------------------------------------------------------------
 
+procedure TReactionState.createReactantSpace (nReactants : integer);
+var i : integer;
+begin
+  setLength (reactantReactionArcs, nReactants);
+  setLength (srcId, nReactants);
+  setLength (srcPtr, nReactants);
+  setLength (srcStoich, nReactants);
+
+  for i:= 0 to nReactants -1 do
+      begin
+      srcId[i] := '';
+      if i < Length(srcStoich) then
+         srcStoich[i] := 0.0; // assume same size as srcId
+      end;
+end;
+
+
+procedure TReactionState.createProductSpace (nProducts : integer);
+var i : integer;
+begin
+  setLength (destId, nProducts);
+  setLength (destPtr, nProducts);
+  setLength (productReactionArcs, nProducts);
+  setLength (destStoich, nProducts);
+
+  for i:= 0 to nProducts - 1 do
+      begin
+      destId[i] := '';
+      if i < Length(destStoich) then
+         destStoich[i] := 0.0; // assume same size as destId
+     end;
+end;
+
 procedure TReactionState.loadFromJSON (obj : TJSONObject);
 var speciesObject : TJSONObject;
     speciesArray : TJSONArray;
@@ -385,7 +416,6 @@ var speciesObject : TJSONObject;
     paramObject : TJSONObject;
     newParam : TSBMLparameter;
     pa : TJSONPair;
-   // stoich : integer;
     speciesName : string;
     i, j : integer;
     coordPt : TJSONPair;
@@ -399,15 +429,10 @@ begin
    arcCenter.x := (obj.GetValue ('arcCenterX') as TJSONNumber).AsDouble;
    arcCenter.y := (obj.GetValue ('arcCenterY') as TJSONNumber).AsDouble;
 
+   // Load the reactant information
    speciesArray := obj.Get ('reactants').JsonValue as TJSONArray;
    nReactants := speciesArray.count;
-   setLength (reactantReactionArcs, nReactants);
-   for i:= 0 to Length(srcId) -1 do
-       begin
-       srcId[i] := '';
-       if i < Length(srcStoich) then
-          srcStoich[i] := 0.0; // assume same size as srcId
-       end;
+   createReactantSpace (nReactants);
 
    for i := 0 to nReactants - 1 do
        begin
@@ -426,15 +451,10 @@ begin
        reactantReactionArcs[i].h2.y := (coordArray.Items[1] as TJSONNumber).AsDouble;
        end;
 
+   // Load the product information
    speciesArray := obj.Get ('products').JsonValue as TJSONArray;
    nProducts := speciesArray.count;
-   setLength (productReactionArcs, nProducts);
-   for i:= 0 to Length(destId)-1 do
-     begin
-       destId[i] := '';
-       if i < Length(destStoich) then
-         destStoich[i] := 0.0; // assume same size as destId
-     end;
+   createProductSpace (nProducts);
 
    for i := 0 to nProducts - 1 do
        begin
@@ -484,37 +504,35 @@ var  newParam : TSBMLparameter;
 begin
   id := modelRxn.getId;
   rateParams := TList<TSBMLparameter>.create;
-  for i := 0 to Length(destStoich) -1 do
-     self.destStoich[i] := 0.0; // Initialize array
-  for i := 0 to Length(srcStoich) -1 do
-     self.srcStoich[i] := 0.0; // Initialize array
-  self.nReactants := modelRxn.getNumReactants;
+
   // get reactants:
-  for i := 0 to Length(srcId) -1 do
-    srcId[i] := '';
+  self.nReactants := modelRxn.getNumReactants;
+  createReactantSpace (nReactants);
+
   for i := 0 to modelRxn.getNumReactants - 1 do
-    begin
-      srcId[i] := '';
+      begin
       srcId[i] := modelRxn.getReactant(i).getSpecies;
       srcStoich[i] := modelRxn.getReactant(i).getStoichiometry;
-    end;
-    // get products:
+      end;
+
+  // get products:
   nProducts := modelRxn.getNumProducts;
-  for i := 0 to Length(destId) -1 do
-    destId[i] := '';
+  createProductSpace (nProducts);
+
   for i := 0 to modelRxn.getNumProducts - 1 do
-    begin
+      begin
       destId[i] := modelRxn.getProduct(i).getSpecies;
       destStoich[i] := modelRxn.getProduct(i).getStoichiometry;
-    end;
+      end;
 
-    // For now,  just grab all parameters, not just ones used in reactions:
-    // Grab parameters that are used in reaction:
+  // For now, just grab all parameters, not just ones used in reactions:
+  // Grab parameters that are used in reaction:
   for j := 0 to Length(paramAr) - 1 do
     begin
-     // console.log('param: ',modelRxn.getKineticLaw.getParameter(i),', model param: ',paramAr[j].getId);
+      // console.log('param: ',modelRxn.getKineticLaw.getParameter(i),', model param: ',paramAr[j].getId);
       rateParams.Add(paramAr[j]);
     end;
+
   // Currently just add all compartments as params:
   for i := 0 to Length(compAr) -1 do
     begin
@@ -610,6 +628,14 @@ begin
       result.productReactionArcs[i].merged := self.productReactionArcs[i].merged;
       result.productReactionArcs[i].arcDirection := self.productReactionArcs[i].arcDirection;
       end;
+
+  result.srcId := Copy(self.srcId, 0, Length(self.srcId));
+  result.destId := Copy(self.destId, 0, Length(self.destId));
+  result.srcStoich := Copy (self.srcStoich, 0, Length (self.srcStoich));
+  result.destStoich := Copy (self.destStoich, 0, Length (self.destStoich));
+
+  result.srcPtr := Copy (self.srcPtr, 0, Length (self.srcPtr));
+  result.destPtr := Copy (self.destPtr, 0, Length (self.destPtr));
 end;
 
 
@@ -1216,35 +1242,24 @@ begin
 
   newReaction.state.nReactants := nSource;
   newReaction.state.nProducts := nDestination;
+  newReaction.state.createReactantSpace (newReaction.state.nReactants);
+  newReaction.state.createProductSpace (newReaction.state.nProducts);
   for i := 0 to nSource - 1 do
       begin
       newReaction.state.srcId[i] := sourceNodes[i].state.id;
       newReaction.state.srcPtr[i] := sourceNodes[i];
       end;
-  //    newEdge.srcConnectedNodeList.Add (TConnectedNode.Create (sourceNodes[i], -1));
+
   for i := 0 to nDestination - 1 do
       begin
       newReaction.state.destId[i] := destNodes[i].state.id;
       newReaction.state.destPtr[i] := destNodes[i];
       end;
 
-  //    newEdge.destConnectedNodeList.Add (TConnectedNode.Create (destNodes[i], 1));
-
   newReaction.state.id := id; //getUniqueReactionName();
   edgeIndex := addReaction (newReaction);
 
-  // Update Node to inform it which edges it is connected to, required when
-  // Nodes are moved so that we can adjust surrounding beziers nicely
-  //for i := 0 to nSource - 1 do
-  //    sourceNodes[i].ConnectedEdgeList.Add (TConnectedEdge.Create (NewEdge));
-  //for i := 0 to nDestination - 1 do
-  //    destNodes[i].ConnectedEdgeList.Add (TConnectedEdge.Create (NewEdge));
-
-  // Special case for AnyToAny if uniuni, no arccenter for uniuni
-  //if (nSource = 1) and (nDestination = 1) then
-  //   computeUniUniCoords (newReaction, sourceNodes[0], destNodes[0])
-  //else
-     computeAnyToAnyCoordinates (newReaction, sourceNodes, destNodes);
+  computeAnyToAnyCoordinates (newReaction, sourceNodes, destNodes);
 
   // add Rate rule
   if newReaction.getRateRule = '' then

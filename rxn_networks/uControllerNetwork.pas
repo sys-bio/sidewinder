@@ -243,11 +243,10 @@ begin
 end;
 
 function TController.addNode(Id: string; x, y: double): TNode;
-var
-  index: integer;
+var index: integer;
 begin
   if network.findNode(Id, index) then
-    raise Exception.Create('A node of that name already exists');
+     raise Exception.Create('A node of that name already exists');
 
   prepareUndo;
   result := network.addNode(Id, x, y);
@@ -380,7 +379,6 @@ begin
           if not(destNodeCounter < nProducts - 1) then
             begin
               prepareUndo;
-              // network.AddAnyToAnyEdge(sourceNodes, destNodes, index);
               network.addAnyToAnyReaction ('J' + inttostr(Length(network.reactions)), sourceNodes, destNodes, index);
               sourceNodeCounter := -1;
               destNodeCounter := -1;
