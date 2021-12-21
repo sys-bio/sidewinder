@@ -342,8 +342,7 @@ begin
 end;
 
 
-procedure TController.addAnyReactionMouseDown(Sender: TObject; x, y: double;
-  nReactants, nProducts: integer);
+procedure TController.addAnyReactionMouseDown(Sender: TObject; x, y: double; nReactants, nProducts: integer);
 var
   index: integer;
 begin

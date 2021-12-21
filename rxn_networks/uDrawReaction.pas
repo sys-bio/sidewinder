@@ -37,7 +37,7 @@ type
 implementation
 
 const
-  CENTROID_RADIUS = 3;
+  CENTROID_RADIUS = 4;
 
 constructor TReactionRender.Create (canvas : TCanvas);
 begin
@@ -241,6 +241,7 @@ begin
 end;
 
 
+// Draw the reactant side arcs
 procedure TReactionRender.drawBezierToCentroid (arcId: integer; reaction : TReaction; centroid: TPointF; scalingFactor: double);
 var h1, h2, pt: TPointF;
     pSrc, pDest : TPointF;
@@ -268,7 +269,6 @@ begin
     // Only draw if successful }
     begin
     reaction.state.reactantReactionArcs[arcId].nodeIntersectionPt := pt;
-    //reaction.intersectionPts[arcId] := pt;
 
     // Adjust for changes in the origin
     h1 := minusPt(h1, Origin);
@@ -279,8 +279,6 @@ begin
     pSrc := minusPt(pt, Origin);
 
     computeBezierPoints([pSrc, h1, h2, pDest]);
-    // See UniUni for explanation of following line
-    //Intersect[ArcId] := pt;
 
     if reaction.selected then
        canvas.pen.color := clRed
@@ -470,7 +468,8 @@ procedure TReactionRender.drawCentroidPoint(adjustedArcCenter : TPointF; color :
 begin
   canvas.pen.color := color;
   canvas.brush.color := color;
-  canvas.ellipse(adjustedArcCenter.x - CENTROID_RADIUS, adjustedArcCenter.y - CENTROID_RADIUS, adjustedArcCenter.x + CENTROID_RADIUS, adjustedArcCenter.y + CENTROID_RADIUS);
+  canvas.rectangle (adjustedArcCenter.x - CENTROID_RADIUS, adjustedArcCenter.y - CENTROID_RADIUS, adjustedArcCenter.x + CENTROID_RADIUS, adjustedArcCenter.y + CENTROID_RADIUS);
+  //canvas.ellipse(adjustedArcCenter.x - CENTROID_RADIUS, adjustedArcCenter.y - CENTROID_RADIUS, adjustedArcCenter.x + CENTROID_RADIUS, adjustedArcCenter.y + CENTROID_RADIUS);
 end;
 
 

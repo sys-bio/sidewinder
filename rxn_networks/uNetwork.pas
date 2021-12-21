@@ -614,6 +614,7 @@ begin
   setlength (result.reactantReactionArcs, length (self.reactantReactionArcs));
   for i := 0 to length (self.reactantReactionArcs) - 1 do
       begin
+      result.reactantReactionArcs[i].nodeIntersectionPt := self.reactantReactionArcs[i].nodeIntersectionPt;
       result.reactantReactionArcs[i].h1 := self.reactantReactionArcs[i].h1;
       result.reactantReactionArcs[i].h2 := self.reactantReactionArcs[i].h2;
       result.reactantReactionArcs[i].merged := self.reactantReactionArcs[i].merged;
@@ -623,6 +624,7 @@ begin
   setlength (result.productReactionArcs, length (self.productReactionArcs));
   for i := 0 to length (self.productReactionArcs) - 1 do
       begin
+      result.productReactionArcs[i].nodeIntersectionPt := self.productReactionArcs[i].nodeIntersectionPt;
       result.productReactionArcs[i].h1 := self.productReactionArcs[i].h1;
       result.productReactionArcs[i].h2 := self.productReactionArcs[i].h2;
       result.productReactionArcs[i].merged := self.productReactionArcs[i].merged;
@@ -1173,13 +1175,13 @@ begin
   for i := 0 to nProducts - 1 do
       reaction.state.productReactionArcs[i].arcDirection := adOutArc;
 
-  // Set up start handles on each reactant, these are half way
-  // between the node and arc center
+  // Set up start handles on each reactant, these are between
+  // the the node and arc center but shifted towards the arccenter
   for i := 0 to nReactants - 1 do
       begin
       pt := sourceNodes[i].getCenter;
-      reaction.state.reactantReactionArcs[i].h1.x := pt.x + (cx - pt.x) / 2;
-      reaction.state.reactantReactionArcs[i].h1.y := pt.y + (cy - pt.y) / 2;
+      reaction.state.reactantReactionArcs[i].h1.x := pt.x + (cx - pt.x) / 1.25;
+      reaction.state.reactantReactionArcs[i].h1.y := pt.y + (cy - pt.y) / 1.25;
       end;
 
   // Compute the common position of the inner control point on the
@@ -1205,15 +1207,15 @@ begin
       reaction.state.reactantReactionArcs[i].h2.y := centerY;
       end;
 
-  // Set up start handles on each product
+  // Set up start handles on each product, shift handles twards the arccenter
   for i := 0 to nProducts - 1 do
       begin
       pt := destNodes[i].getCenter;
-      reaction.state.productReactionArcs[i].h2.x := cx + (pt.x - cx) / 2;
-      reaction.state.productReactionArcs[i].h2.y := cy + (pt.y - cy) / 2;
+      reaction.state.productReactionArcs[i].h2.x := cx + (pt.x - cx) / 3.25;
+      reaction.state.productReactionArcs[i].h2.y := cy + (pt.y - cy) / 3.25;
       end;
 
-  // Next compute the collinear coordiante for the inner control points of the products
+  // Next compute the collinear coordinate for the inner control points of the products
   nDestCount := 0;
   for i := 0 to nProducts - 1 do
       begin
