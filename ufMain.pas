@@ -954,7 +954,6 @@ begin
   self.mainController.OnNetworkChange:= self.networkHasChanged;
   self.mainController.OnSimUpdate := self.getVals; // notify when new Sim results
   self.network.OnAutoLayoutEvent := self.generateAutoLayout;
-
 end;
 
 procedure TMainForm.WebFormResize(Sender: TObject);

@@ -1461,14 +1461,14 @@ for i := 0 to length (nodes) - 1 do
       begin
       reactions[i].state.arcCenter.x := reactions[i].state.arcCenter.x + (w/2 - cx);
       reactions[i].state.arcCenter.y := reactions[i].state.arcCenter.y + (h/2 - cy);
-      for j := 0 to length (reactions[i].state.reactantReactionArcs) -1 do
+      for j := 0 to length (reactions[i].state.reactantReactionArcs) - 1 do
           begin
           reactions[i].state.reactantReactionArcs[j].h1.x := reactions[i].state.reactantReactionArcs[j].h1.x + (w/2 - cx);
           reactions[i].state.reactantReactionArcs[j].h1.y := reactions[i].state.reactantReactionArcs[j].h1.y + (h/2 - cy);
           reactions[i].state.reactantReactionArcs[j].h2.x := reactions[i].state.reactantReactionArcs[j].h2.x + (w/2 - cx);
           reactions[i].state.reactantReactionArcs[j].h2.y := reactions[i].state.reactantReactionArcs[j].h2.y + (h/2 - cy);
           end;
-      for j := 0 to length (reactions[i].state.productReactionArcs) -1 do
+      for j := 0 to length (reactions[i].state.productReactionArcs) - 1 do
           begin
           reactions[i].state.productReactionArcs[j].h1.x := reactions[i].state.productReactionArcs[j].h1.x + (w/2 - cx);
           reactions[i].state.productReactionArcs[j].h1.y := reactions[i].state.productReactionArcs[j].h1.y + (h/2 - cy);
@@ -1476,8 +1476,6 @@ for i := 0 to length (nodes) - 1 do
           reactions[i].state.productReactionArcs[j].h2.y := reactions[i].state.productReactionArcs[j].h2.y + (h/2 - cy);
           end;
       end;
-
-
 end;
 
 
