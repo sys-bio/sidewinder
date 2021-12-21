@@ -215,6 +215,7 @@ type
     procedure addPlot(yMax: double); // Add a plot, yMax: largest initial val of plotted species
     procedure resetPlots();  // Reset plots for new simulation.
     procedure selectPlotSpecies(plotnumb: Integer);
+    procedure addPlotAll(); // add plot of all species
     procedure deletePlot(plotIndex: Integer); // Index of plot to delete
     procedure deleteAllPlots();
     function  getEmptyPlotPosition(): Integer;
@@ -518,8 +519,8 @@ begin
   self.deleteAllPlots;
   self.deleteAllSliders;
   self.resetOnLineSimButton;
+  self.btnResetSimSpecies.Visible := false;
   self.MainController.loadSBML(AText);
-
 end;
 
 procedure TMainForm.resetOnLineSimButton();
@@ -567,7 +568,15 @@ begin
        onLineSimButton.font.color := clgreen;
        onLineSimButton.ElementClassName := 'btn btn-danger btn-sm';
        onLineSimButton.caption := 'Simulation: Play';
-       self.btnAddPlotClick(nil); // add a default plot
+       // add a default plot:
+       if self.numbPlots < 1 then
+         begin
+         if length( self.mainController.getModel.getS_Names ) < 10 then
+           addPlotAll()
+         else self.btnAddPlotClick(nil);
+         end
+       else self.btnAddPlotClick(nil);
+
        end;
 
    end
@@ -1098,6 +1107,7 @@ begin
         dataStr := dataStr + floatToStrf(newVals[i], ffExponent, 6, 2) + ', ';
     end;
   simResultsMemo.Lines.Add(dataStr);
+  // Update plots:
   inc(self.currentGeneration);
   for i := 0 to plotsPanelList.count -1 do
     begin
@@ -1261,8 +1271,6 @@ procedure TMainForm.selectPlotSpecies(plotnumb: Integer);
         end;
     end;
 
-
-   // (AForm as TVarSelectForm).speciesList := self.mainController.getModel.getS_names;
     (AForm as TVarSelectForm).speciesList := strList;
     (AForm as TVarSelectForm).fillSpeciesCG();
   end;
@@ -1275,6 +1283,43 @@ begin
   fPlotSpecies.Border := fbDialogSizeable;
   fPlotSpecies.caption := 'Species to plot:';
   fPlotSpecies.ShowModal(@AfterShowModal);
+end;
+
+procedure TMainForm.addPlotAll(); // add plot with all species
+var i: integer; maxYVal: double; plotSp: string;
+begin
+  maxYVal := 0;
+  if self.plotSpecies = nil then
+    self.plotSpecies := TList<TSpeciesList>.create;
+  self.plotSpecies.Add(TSpeciesList.create);
+  self.numbPlots := self.numbPlots + 1;
+  for i := 0 to length(self.mainController.getModel.getS_Names) -1 do
+    begin
+      plotSp := '';
+      plotSp := self.mainController.getModel.getS_names[i];
+      if self.mainController.getModel.getSBMLspecies(plotSp).isSetInitialAmount then
+        begin
+        if self.mainController.getModel.getSBMLspecies(plotSp).getInitialAmount > maxYVal then
+          maxYVal := self.mainController.getModel.getSBMLspecies(plotSp).getInitialAmount;
+        end
+        else
+          if self.mainController.getModel.getSBMLspecies(plotSp).getInitialConcentration > maxYVal then
+            maxYVal := self.mainController.getModel.getSBMLspecies(plotSp).getInitialConcentration;
+      self.plotSpecies[self.numbPlots - 1].Add(plotSp)
+    end;
+  for i := 0 to Length(self.mainController.getModel.getSBMLspeciesAr) -1 do
+    begin
+      if length(self.mainController.getModel.getS_Names) < (i +1) then
+        begin
+        self.plotSpecies.Items[self.numbPlots - 1].Add('')
+        end;
+    end;
+
+  if maxYVal = 0 then
+    maxYVal := DEFAULTSPECIESPLOTHT  // default for plot Y max
+  else maxYVal := maxYVal * 2.0;  // add 100% margin
+  self.addPlot(maxYVal); // <-- Add dynamically created plot at this point
+  self.refreshPlotAndSliderPanels;
 end;
 
 procedure TMainForm.addPlot(yMax: double); // Add a plot
@@ -1290,7 +1335,7 @@ begin
   self.plotsPanelList.Add(TPlotPanel.create(pnlPlotContainer, plotPositionToAdd, yMax,
        self.mainController.getModel.getS_Names, self.mainController.getModel.getS_Vals));
 
-  newHeight := 200; //200;  // default
+  newHeight := 200;  // default
   if self.numbPlots > DEFAULT_NUMB_PLOTS then
   begin
     newHeight := round(self.pnlPlotContainer.Height/self.numbPlots);
