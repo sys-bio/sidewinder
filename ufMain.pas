@@ -51,7 +51,7 @@ type
     loadNetworkButton: TWebButton;
     SBMLOpenDialog: TWebOpenDialog;
     SBMLloadButton: TWebButton;
-    pnllBase: TWebPanel;  // ??
+    pnlBase: TWebPanel;  // ??
     LeftWPanel: TWebPanel;
     btnUniUni: TWebSpeedButton;
     btnUniBi: TWebSpeedButton;
@@ -199,6 +199,7 @@ type
     procedure networkPB1DblClick(Sender: TObject);
     procedure btnCloseNodePanelClick(Sender: TObject);
     procedure btnCloseReactionEditPanelClick(Sender: TObject);
+    procedure btnEditNodeMoreClick(Sender: TObject);
 
   private
     numbPlots: Integer; // Number of plots displayed
@@ -344,8 +345,33 @@ begin
 end;
 
 procedure TMainForm.generateAutoLayout(sender: TObject);
+var i, j : integer;
+    cx, cy : double;
+    pt : TPointF;
+    srcNodes, destNodes : array of TNode;
+    nodeid : string;
+    index : integer;
 begin
   fruchterman_reingold(network, networkPB1.width, networkPB1.Height, 600, nil);
+
+  for i := 0 to length (network.reactions) - 1 do
+      begin
+      setlength (srcNodes, network.reactions[i].state.nReactants);
+      for j := 0 to network.reactions[i].state.nReactants - 1 do
+          begin
+          nodeId := network.reactions[i].state.srcId[j];
+          network.findNode (nodeId, index);
+          srcNodes[j] := network.nodes[index];
+          end;
+      for j := 0 to network.reactions[i].state.nProducts - 1 do
+          begin
+          nodeId := network.reactions[i].state.destId[j];
+          network.findNode (nodeId, index);
+          destNodes[j] := network.nodes[index];
+          end;
+      network.computeAnyToAnyCoordinates (network.reactions[i], srcNodes, destNodes);
+      end;
+
   network.centerNetwork(networkPB1.width, networkPB1.Height);
   networkPB1.Invalidate;
 end;
@@ -937,7 +963,6 @@ begin
   self.mainController.OnNetworkChange:= self.networkHasChanged;
   self.mainController.OnSimUpdate := self.getVals; // notify when new Sim results
   self.network.OnAutoLayoutEvent := self.generateAutoLayout;
-
 end;
 
 procedure TMainForm.WebFormResize(Sender: TObject);
@@ -2008,6 +2033,20 @@ begin
     pnlReactionPanel.Top := pnlNodePanel.Top + pnlNodePanel.Height + 6;
     pnlReactionPanel.Height := minimizedHeight;
     end;
+end;
+
+procedure TMainForm.btnEditNodeMoreClick(Sender: TObject);
+begin
+  if LeftWPanel.Width > 200 then
+     begin
+     LeftWPanel.width := 185;
+     pnlNodePanel.Width := 160;
+     end
+  else
+     begin
+     LeftWPanel.width := 360;
+     pnlNodePanel.Width := 335;
+     end;
 end;
 
 end.

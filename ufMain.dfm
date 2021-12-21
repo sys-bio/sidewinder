@@ -260,7 +260,7 @@ object mainForm: TmainForm
       OnClick = btnRandomNetworkClick
     end
     object btnAutoLayout: TWebButton
-      Left = 524
+      Left = 526
       Top = 3
       Width = 116
       Height = 25
@@ -447,7 +447,7 @@ object mainForm: TmainForm
       end
     end
   end
-  object pnllBase: TWebPanel
+  object pnlBase: TWebPanel
     Left = 0
     Top = 95
     Width = 1800
@@ -830,7 +830,7 @@ object mainForm: TmainForm
       end
       object pnlNodePanel: TWebPanel
         Left = 14
-        Top = 258
+        Top = 261
         Width = 160
         Height = 247
         ElementClassName = 'card'
@@ -841,6 +841,9 @@ object mainForm: TmainForm
         ChildOrder = 1
         ElementBodyClassName = 'card-body-shadow'
         ElementFont = efCSS
+        DesignSize = (
+          160
+          247)
         object nodeOutlineLabel: TWebLabel
           Left = 10
           Top = 165
@@ -989,9 +992,9 @@ object mainForm: TmainForm
           OnExit = editNodeConcExit
         end
         object btnEditNodeMore: TWebButton
-          Left = 61
+          Left = 56
           Top = 199
-          Width = 96
+          Width = 70
           Height = 32
           Caption = 'More ->>'
           ChildOrder = 9
@@ -1007,13 +1010,14 @@ object mainForm: TmainForm
           HeightPercent = 100.000000000000000000
           ParentFont = False
           WidthPercent = 100.000000000000000000
-          OnClick = btnClearClick
+          OnClick = btnEditNodeMoreClick
         end
         object btnCloseNodePanel: TWebButton
           Left = 134
           Top = 0
           Width = 23
           Height = 21
+          Anchors = [akTop, akRight]
           Caption = '^'
           ChildOrder = 10
           ElementClassName = 'btn btn-primary btn-sm'
@@ -1225,7 +1229,7 @@ object mainForm: TmainForm
           760)
         object pnlSimResultsFile: TWebPanel
           Left = 24
-          Top = 561
+          Top = 501
           Width = 205
           Height = 73
           ElementClassName = 'card'
