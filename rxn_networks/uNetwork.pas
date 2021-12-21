@@ -300,29 +300,59 @@ begin
 end;
 
 procedure TReactionState.saveAsJSON (reactionObject : TJSONObject);
-var speciesArray, reactantArray : TJSONArray;
+var speciesArray, controlPt : TJSONArray;
     paramArray: TJSONArray;
     i : integer;
     jso : TJSONObject;
 begin
   reactionObject.AddPair ('id', id);
-  reactionObject.AddPair ('arcCenterX', floattostr (arcCenter.X));
-  reactionObject.AddPair ('arcCenterY', floattostr (arcCenter.Y));
+  reactionObject.AddPair ('arcCenterX', TJSONNumber.Create (arcCenter.X));
+  reactionObject.AddPair ('arcCenterY', TJSONNumber.Create (arcCenter.Y));
+  reactionObject.AddPair ('lineType', lineTypeToStr (lineType));
 
   speciesArray := TJSONArray.Create;
+  reactionObject.AddPair ('reactants', speciesArray);
 
-  reactionObject.AddPair ('species', speciesArray);
-
-  jso := TJsonObject.Create();
   for i := 0 to nReactants - 1 do
-      jso.AddPair(TJsonPair.Create(srcPtr[i].state.id, TJSONValue.Create (srcStoich[i])));
-  speciesArray.Add(jso);
+      begin
+      jso := TJsonObject.Create();
+      jso.AddPair ('species', srcPtr[i].state.id);
+      jso.AddPair ('stoichiometry', TJSONNumber.Create (srcStoich[i]));
 
-  jso := TJsonObject.Create();
+      controlPt := TJSONArray.Create;
+      controlPt.Add (reactantReactionArcs[i].h1.x);
+      controlPt.Add (reactantReactionArcs[i].h1.y);
+      jso.AddPair('h1', controlPt);
+
+      controlPt := TJSONArray.Create;
+      controlPt.Add (reactantReactionArcs[i].h2.x);
+      controlPt.Add (reactantReactionArcs[i].h2.y);
+      jso.addPair ('h2', controlPt);
+
+      speciesArray.Add (jso);
+      end;
+
+  speciesArray := TJSONArray.Create;
+  reactionObject.AddPair ('products', speciesArray);
+
   for i := 0 to nProducts - 1 do
-      jso.AddPair(TJsonPair.Create(destPtr[i].state.id, TJSONValue.Create (destStoich[i])));
-  speciesArray.Add(jso);
+      begin
+      jso := TJsonObject.Create();
+      jso.AddPair ('species', destPtr[i].state.id);
+      jso.AddPair ('stoichiometry', TJSONNumber.Create (destStoich[i]));
 
+      controlPt := TJSONArray.Create;
+      controlPt.Add (productReactionArcs[i].h1.x);
+      controlPt.Add (productReactionArcs[i].h1.y);
+      jso.AddPair('h1', controlPt);
+
+      controlPt := TJSONArray.Create;
+      controlPt.Add (productReactionArcs[i].h2.x);
+      controlPt.Add (productReactionArcs[i].h2.y);
+      jso.addPair ('h2', controlPt);
+
+      speciesArray.Add (jso);
+      end;
   // **
   paramArray := TJSONArray.Create;
   reactionObject.AddPair('parameters', paramArray);
@@ -350,57 +380,81 @@ end;
 procedure TReactionState.loadFromJSON (obj : TJSONObject);
 var speciesObject : TJSONObject;
     speciesArray : TJSONArray;
-    reactantObject, productObject : TJSONObject;
+    reactantObject, productObject, reactantArray : TJSONObject;
     paramArray : TJSONArray;
     paramObject : TJSONObject;
     newParam : TSBMLparameter;
     pa : TJSONPair;
    // stoich : integer;
     speciesName : string;
-    i : integer;
+    i, j : integer;
+    coordPt : TJSONPair;
+    coordArray : TJsonArray;
+    astr : string;
 
 begin
    id := obj.GetJSONValue('id');
-   if obj.Get ('species') <> nil then
-      begin
-      speciesArray := obj.Get ('species').JsonValue as TJSONArray;
-      reactantObject := speciesArray.Items[0] as TJSONObject;
-      nReactants := reactantObject.count;
-      setLength (reactantReactionArcs, nReactants);
-      for i:= 0 to Length(srcId) -1 do
-        begin
-          srcId[i] := '';
-          if i < Length(srcStoich) then
-            srcStoich[i] := 0.0; // assume same size as srcId
-        end;
-      for i := 0 to nReactants - 1 do
-          begin
-          pa := reactantObject.Get(i);
-          srcId[i] := pa.JsonString.value;
-          srcStoich[i] := trunc (strtofloat (pa.JsonValue.Value));
-          end;
 
-      productObject := speciesArray.Items[1] as TJSONObject;
-      nProducts := productObject.count;
-      setLength (productReactionArcs, nProducts);
-      rateParams := TList<TSBMLparameter>.create;
-      for i:= 0 to Length(destId)-1 do
-        begin
-          destId[i] := '';
-          if i < Length(destStoich) then
-            destStoich[i] := 0.0; // assume same size as destId
-        end;
-      for i := 0 to nProducts - 1 do
-          begin
-          pa := productObject.Get(i);
-          destId[i] := pa.JsonString.value;
-          destStoich[i] := trunc (strtofloat (pa.JsonValue.Value));  // stoich not negative
-          end;
-      end
-   else
-      raise Exception.Create ('No species in reaction');
+   lineType := strToLineType (obj.GetJSONValue ('lineType'));
+   arcCenter.x := (obj.GetValue ('arcCenterX') as TJSONNumber).AsDouble;
+   arcCenter.y := (obj.GetValue ('arcCenterY') as TJSONNumber).AsDouble;
 
-   if obj.Get('parameters')<> nil then
+   speciesArray := obj.Get ('reactants').JsonValue as TJSONArray;
+   nReactants := speciesArray.count;
+   setLength (reactantReactionArcs, nReactants);
+   for i:= 0 to Length(srcId) -1 do
+       begin
+       srcId[i] := '';
+       if i < Length(srcStoich) then
+          srcStoich[i] := 0.0; // assume same size as srcId
+       end;
+
+   for i := 0 to nReactants - 1 do
+       begin
+       reactantObject := speciesArray.Items[i] as TJSONObject;
+       srcId[i] := reactantObject.GetValue ('species').value;
+       srcStoich[i] := (reactantObject.GetValue ('stoichiometry') as TJSONNumber).AsDouble;
+
+       coordPt := reactantObject.Get('h1');
+       coordArray :=  coordPt.JsonValue as TJSONArray;
+       reactantReactionArcs[i].h1.x := (coordArray.Items[0] as TJSONNumber).AsDouble;
+       reactantReactionArcs[i].h1.y := (coordArray.Items[1] as TJSONNumber).AsDouble;
+
+       coordPt := reactantObject.Get('h2');
+       coordArray :=  coordPt.JsonValue as TJSONArray;
+       reactantReactionArcs[i].h2.x := (coordArray.Items[0] as TJSONNumber).AsDouble;
+       reactantReactionArcs[i].h2.y := (coordArray.Items[1] as TJSONNumber).AsDouble;
+       end;
+
+   speciesArray := obj.Get ('products').JsonValue as TJSONArray;
+   nProducts := speciesArray.count;
+   setLength (productReactionArcs, nProducts);
+   for i:= 0 to Length(destId)-1 do
+     begin
+       destId[i] := '';
+       if i < Length(destStoich) then
+         destStoich[i] := 0.0; // assume same size as destId
+     end;
+
+   for i := 0 to nProducts - 1 do
+       begin
+       reactantObject := speciesArray.Items[i] as TJSONObject;
+       destId[i] := reactantObject.GetValue ('species').Value;
+       destStoich[i] := (reactantObject.GetValue ('stoichiometry') as TJSONNumber).AsDouble;
+
+       coordPt := reactantObject.Get('h1');
+       coordArray :=  coordPt.JsonValue as TJSONArray;
+       productReactionArcs[i].h1.x := (coordArray.Items[0] as TJSONNumber).AsDouble;
+       productReactionArcs[i].h1.y := (coordArray.Items[1] as TJSONNumber).AsDouble;
+
+       coordPt := reactantObject.Get('h2');
+       coordArray :=  coordPt.JsonValue as TJSONArray;
+       productReactionArcs[i].h2.x := (coordArray.Items[0] as TJSONNumber).AsDouble;
+       productReactionArcs[i].h2.y := (coordArray.Items[1] as TJSONNumber).AsDouble;
+       end;
+
+  rateParams := TList<TSBMLparameter>.create;
+  if obj.Get('parameters')<> nil then
      begin
        paramArray := obj.Get('parameters').JsonValue as TJSONArray;
        paramObject := paramArray.Items[0] as TJSONObject;
@@ -549,7 +603,7 @@ begin
       end;
 
   setlength (result.productReactionArcs, length (self.productReactionArcs));
-  for i := 0 to length (self.reactantReactionArcs) - 1 do
+  for i := 0 to length (self.productReactionArcs) - 1 do
       begin
       result.productReactionArcs[i].h1 := self.productReactionArcs[i].h1;
       result.productReactionArcs[i].h2 := self.productReactionArcs[i].h2;
@@ -1648,9 +1702,9 @@ end;
 
 
 function TReaction.getCurrentState : TReactionState;
-var i : integer;
 begin
-  result := state.clone;  // This works so long as we don't have dynamic arrays.
+
+  result := state.clone;
 end;
 
 

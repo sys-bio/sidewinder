@@ -32,6 +32,8 @@ type
 
   function getReactionTypeString (atype : TReactionType) : string;
   function getReactionType (atype : string) : TReactionType;
+  function lineTypeToStr (lineType : TReactionLineType) : string;
+  function strToLineType (astr : string) : TReactionLineType;
 
 implementation
 
@@ -62,7 +64,31 @@ begin
   if atype = 'eAnyToAny' then
      result := eAnyToAny
   else
-     raise Exception.Create ('Unable to recognized raction type');
+     raise Exception.Create ('Unable to recognizd reaction type: ' + atype);
+end;
+
+function strToLineType (astr : string) : TReactionLineType;
+begin
+  if astr = 'ltLine' then
+     result := ltLine
+  else
+  if astr = 'ltSegmentedLine' then
+     result := ltSegmentedLine
+  else
+  if astr = 'ltBezier' then
+     result := ltBezier
+  else
+     raise Exception.Create ('Unable to recognize reaction line type: ' + astr);
+end;
+
+
+function lineTypeToStr (lineType : TReactionLineType) : string;
+begin
+  case lineType of
+     ltLine: result := 'ltLine';
+     ltSegmentedLine: result := 'ltSegmentedLine';
+     ltBezier: result := 'ltBezier';
+  end;
 end;
 
 end.
