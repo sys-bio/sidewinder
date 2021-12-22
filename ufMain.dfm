@@ -248,6 +248,7 @@ object mainForm: TmainForm
     BorderStyle = bsSingle
     ChildOrder = 4
     ElementBodyClassName = 'card-body-10  bg-dark text-white'
+    ExplicitTop = 861
     object btnRandomNetwork: TWebButton
       Left = 404
       Top = 3
@@ -932,7 +933,7 @@ object mainForm: TmainForm
         object btnNodeOutlineColor: TWebColorPicker
           Left = 82
           Top = 134
-          Width = 51
+          Width = 52
           Height = 33
           ElementClassName = 'btn'
           HeightStyle = ssAuto
@@ -1017,7 +1018,7 @@ object mainForm: TmainForm
       end
       object pnlReactionPanel: TWebPanel
         Left = 19
-        Top = 514
+        Top = 511
         Width = 160
         Height = 180
         ElementClassName = 'card'
@@ -1064,7 +1065,7 @@ object mainForm: TmainForm
         end
         object WebLabel3: TWebLabel
           Left = 5
-          Top = 79
+          Top = 81
           Width = 74
           Height = 13
           Caption = 'Reaction Color:'
@@ -1080,8 +1081,8 @@ object mainForm: TmainForm
           WidthPercent = 100.000000000000000000
         end
         object WebLabel4: TWebLabel
-          Left = 6
-          Top = 120
+          Left = 3
+          Top = 115
           Width = 77
           Height = 13
           Caption = 'Reaction Width:'
@@ -1132,7 +1133,7 @@ object mainForm: TmainForm
         object btnReactionColor: TWebColorPicker
           AlignWithMargins = True
           Left = 85
-          Top = 75
+          Top = 77
           Width = 52
           Height = 33
           ElementClassName = 'btn'
@@ -1147,8 +1148,8 @@ object mainForm: TmainForm
         end
         object edtReactionWidth: TWebSpinEdit
           Left = 85
-          Top = 117
-          Width = 55
+          Top = 111
+          Width = 52
           Height = 22
           HeightStyle = ssAuto
           HeightPercent = 100.000000000000000000
@@ -1158,6 +1159,7 @@ object mainForm: TmainForm
           ChildOrder = 6
           Color = clWhite
           ElementFont = efCSS
+          Enabled = False
           Increment = 1
           MaxValue = 100
           MinValue = 0

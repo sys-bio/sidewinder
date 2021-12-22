@@ -326,7 +326,7 @@ procedure TMainForm.enableEditReactionPanel;
 begin
   edtReactionId.Enabled := true;
   btnReactionColor.Enabled := true;
-  edtReactionWidth.enabled := true;
+  edtReactionWidth.Enabled := true;
 end;
 
 
@@ -334,7 +334,7 @@ procedure TMainForm.disableEditReactionPanel;
 begin
   edtReactionId.Enabled := false;
   btnReactionColor.Enabled := false;
-  edtReactionWidth.enabled := false;
+  edtReactionWidth.Enabled := false;
 end;
 
 
