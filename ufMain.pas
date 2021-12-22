@@ -792,12 +792,20 @@ begin
   if networkController.selectedObjects.count > 0 then
      begin
      case networkController.selectedObjects[0].objType of
-       oNode : enableEditNodePanel;
-       oReaction : enableEditReactionPanel;
+       oNode     : begin enableEditNodePanel; disableEditReactionPanel; end;
+       oReaction : begin enableEditReactionPanel; disableEditNodePanel end;
      else
+       begin
        disableEditNodePanel;
-       diableEditReactionPanel;
-     end;
+       disableEditReactionPanel;
+       end;
+     end
+     end
+  else
+    begin
+    disableEditNodePanel;
+    disableEditReactionPanel;
+    end;
 
   networkPB1.Invalidate;
   if (networkController.selectedObjects.Count > 0) and (networkController.selectedObjects[0].objType = oNode) then
@@ -815,6 +823,8 @@ begin
   else if (networkController.selectedObjects.Count > 0) and (networkController.selectedObjects[0].objType = oReaction) then
     begin
     self.rightPanelType := REACTION_PANEL;
+    edtReactionId.Text := networkController.selectedObjects[0].reaction.state.id;
+    btnReactionColor.Color := networkController.selectedObjects[0].reaction.state.fillColor;
     self.RSimWPanel.visible := false;
     self.RNodeEditWPanel.visible := false;
     self.RRxnEditWPanel.visible := true;
