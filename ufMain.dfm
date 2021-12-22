@@ -829,8 +829,8 @@ object mainForm: TmainForm
         OnClick = btnAddNodeClick
       end
       object pnlNodePanel: TWebPanel
-        Left = 19
-        Top = 261
+        Left = 22
+        Top = 258
         Width = 160
         Height = 247
         ElementClassName = 'card'
@@ -845,8 +845,8 @@ object mainForm: TmainForm
           160
           247)
         object nodeOutlineLabel: TWebLabel
-          Left = 10
-          Top = 165
+          Left = 92
+          Top = 115
           Width = 38
           Height = 13
           Caption = 'Outline:'
@@ -862,8 +862,8 @@ object mainForm: TmainForm
           WidthPercent = 100.000000000000000000
         end
         object nodeFillLabel: TWebLabel
-          Left = 3
-          Top = 126
+          Left = 15
+          Top = 116
           Width = 44
           Height = 13
           Caption = 'Node Fill:'
@@ -930,10 +930,11 @@ object mainForm: TmainForm
           WidthPercent = 100.000000000000000000
         end
         object btnNodeOutlineColor: TWebColorPicker
-          Left = 56
-          Top = 160
+          Left = 82
+          Top = 134
           Width = 51
           Height = 33
+          ElementClassName = 'btn'
           HeightStyle = ssAuto
           HeightPercent = 100.000000000000000000
           WidthPercent = 100.000000000000000000
@@ -959,10 +960,11 @@ object mainForm: TmainForm
         end
         object btnNodeFillColor: TWebColorPicker
           AlignWithMargins = True
-          Left = 56
-          Top = 121
+          Left = 15
+          Top = 135
           Width = 52
           Height = 33
+          ElementClassName = 'btn btn-primary'
           HeightStyle = ssAuto
           HeightPercent = 100.000000000000000000
           WidthPercent = 100.000000000000000000
@@ -990,27 +992,6 @@ object mainForm: TmainForm
           ParentFont = False
           WidthPercent = 100.000000000000000000
           OnExit = editNodeConcExit
-        end
-        object btnEditNodeMore: TWebButton
-          Left = 56
-          Top = 199
-          Width = 70
-          Height = 32
-          Caption = 'More ->>'
-          ChildOrder = 9
-          ElementClassName = 'btn btn-primary btn-sm'
-          ElementFont = efCSS
-          Enabled = False
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clWhite
-          Font.Height = -11
-          Font.Name = 'Tahoma'
-          Font.Style = []
-          HeightStyle = ssAuto
-          HeightPercent = 100.000000000000000000
-          ParentFont = False
-          WidthPercent = 100.000000000000000000
-          OnClick = btnEditNodeMoreClick
         end
         object btnCloseNodePanel: TWebButton
           Left = 134
@@ -1049,7 +1030,7 @@ object mainForm: TmainForm
         ElementFont = efCSS
         object lblReactionEditing: TWebLabel
           Left = 26
-          Top = 3
+          Top = 5
           Width = 101
           Height = 18
           Caption = 'Reaction Editing'
@@ -1083,7 +1064,7 @@ object mainForm: TmainForm
         end
         object WebLabel3: TWebLabel
           Left = 5
-          Top = 84
+          Top = 79
           Width = 74
           Height = 13
           Caption = 'Reaction Color:'
@@ -1098,9 +1079,26 @@ object mainForm: TmainForm
           ParentFont = False
           WidthPercent = 100.000000000000000000
         end
+        object WebLabel4: TWebLabel
+          Left = 6
+          Top = 120
+          Width = 77
+          Height = 13
+          Caption = 'Reaction Width:'
+          ElementFont = efCSS
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWhite
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          HeightStyle = ssAuto
+          HeightPercent = 100.000000000000000000
+          ParentFont = False
+          WidthPercent = 100.000000000000000000
+        end
         object btnCloseReactionEditPanel: TWebButton
           Left = 134
-          Top = 1
+          Top = 0
           Width = 23
           Height = 21
           Caption = '^'
@@ -1137,6 +1135,7 @@ object mainForm: TmainForm
           Top = 75
           Width = 52
           Height = 33
+          ElementClassName = 'btn'
           HeightStyle = ssAuto
           HeightPercent = 100.000000000000000000
           WidthPercent = 100.000000000000000000
@@ -1145,6 +1144,26 @@ object mainForm: TmainForm
           Enabled = False
           Role = ''
           OnSelect = btnReactionColorSelect
+        end
+        object edtReactionWidth: TWebSpinEdit
+          Left = 85
+          Top = 117
+          Width = 55
+          Height = 22
+          HeightStyle = ssAuto
+          HeightPercent = 100.000000000000000000
+          WidthPercent = 100.000000000000000000
+          AutoSize = False
+          BorderStyle = bsSingle
+          ChildOrder = 6
+          Color = clWhite
+          ElementFont = efCSS
+          Increment = 1
+          MaxValue = 100
+          MinValue = 0
+          Role = ''
+          Value = 0
+          OnChange = edtReactionWidthChange
         end
       end
     end
@@ -1228,7 +1247,7 @@ object mainForm: TmainForm
           760)
         object pnlSimResultsFile: TWebPanel
           Left = 24
-          Top = 501
+          Top = 481
           Width = 205
           Height = 73
           ElementClassName = 'card'

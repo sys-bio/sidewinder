@@ -103,7 +103,6 @@ type
     btnNodeFillColor: TWebColorPicker;
     editNodeConc: TWebEdit;
     WebLabel1: TWebLabel;
-    btnEditNodeMore: TWebButton;
     btnCloseNodePanel: TWebButton;
     btnResetSimSpecies: TWebButton;
     pnlMenu: TWebPanel;
@@ -131,6 +130,8 @@ type
     edtReactionId: TWebEdit;
     btnReactionColor: TWebColorPicker;
     WebLabel3: TWebLabel;
+    edtReactionWidth: TWebSpinEdit;
+    WebLabel4: TWebLabel;
 
     procedure btnUniUniClick(Sender: TObject);
     procedure btnBiBiClick(Sender: TObject);
@@ -199,8 +200,8 @@ type
     procedure networkPB1DblClick(Sender: TObject);
     procedure btnCloseNodePanelClick(Sender: TObject);
     procedure btnCloseReactionEditPanelClick(Sender: TObject);
-    procedure btnEditNodeMoreClick(Sender: TObject);
     procedure btnReactionColorSelect(Sender: TObject);
+    procedure edtReactionWidthChange(Sender: TObject);
 
   private
     numbPlots: Integer; // Number of plots displayed
@@ -308,7 +309,6 @@ begin
   editNodeConc.Enabled := true;
   btnNodeFillColor.Enabled := true;
   btnNodeOutlineColor.Enabled := true;
-  btnEditNodeMore.Enabled := true;
 end;
 
 
@@ -318,7 +318,6 @@ begin
   editNodeConc.Enabled := false;
   btnNodeFillColor.Enabled := false;
   btnNodeOutlineColor.Enabled :=false;
-  btnEditNodeMore.Enabled := false;
 end;
 
 
@@ -327,6 +326,7 @@ procedure TMainForm.enableEditReactionPanel;
 begin
   edtReactionId.Enabled := true;
   btnReactionColor.Enabled := true;
+  edtReactionWidth.enabled := true;
 end;
 
 
@@ -334,6 +334,7 @@ procedure TMainForm.disableEditReactionPanel;
 begin
   edtReactionId.Enabled := false;
   btnReactionColor.Enabled := false;
+  edtReactionWidth.enabled := false;
 end;
 
 
@@ -825,6 +826,7 @@ begin
     self.rightPanelType := REACTION_PANEL;
     edtReactionId.Text := networkController.selectedObjects[0].reaction.state.id;
     btnReactionColor.Color := networkController.selectedObjects[0].reaction.state.fillColor;
+    edtReactionWidth.Value := networkController.selectedObjects[0].reaction.state.thickness;
     self.RSimWPanel.visible := false;
     self.RNodeEditWPanel.visible := false;
     self.RRxnEditWPanel.visible := true;
@@ -2053,7 +2055,7 @@ end;
 procedure TMainForm.btnCloseReactionEditPanelClick(Sender: TObject);
 var minimizedHeight : integer;
 begin
-  minimizedHeight := 34;
+  minimizedHeight := 32;
   if pnlReactionPanel.Height < minimizedHeight + 2 then
      begin
      pnlReactionPanel.Height := 180
@@ -2065,20 +2067,6 @@ begin
     end;
 end;
 
-procedure TMainForm.btnEditNodeMoreClick(Sender: TObject);
-begin
-  if LeftWPanel.Width > 200 then
-     begin
-     LeftWPanel.width := 185;
-     pnlNodePanel.Width := 160;
-     end
-  else
-     begin
-     LeftWPanel.width := 360;
-     pnlNodePanel.Width := 335;
-     end;
-end;
-
 procedure TMainForm.btnReactionColorSelect(Sender: TObject);
 var i : integer;
 begin
@@ -2086,6 +2074,17 @@ begin
     if network.reactions[i].selected then
        begin
        network.reactions[i].state.fillColor := btnReactionColor.color;
+       end;
+  networkPB1.Invalidate;
+end;
+
+procedure TMainForm.edtReactionWidthChange(Sender: TObject);
+var i : integer;
+begin
+  for i := 0 to length(network.reactions) - 1 do
+    if network.reactions[i].selected then
+       begin
+       network.reactions[i].state.thickness := edtReactionWidth.Value;
        end;
   networkPB1.Invalidate;
 end;
