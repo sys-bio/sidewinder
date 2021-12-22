@@ -128,7 +128,7 @@ type
     mnuSaveSBML: TMenuItem;
     lblReactionEditing: TWebLabel;
     WebLabel2: TWebLabel;
-    WebEdit1: TWebEdit;
+    edtReactionId: TWebEdit;
     btnReactionColor: TWebColorPicker;
     WebLabel3: TWebLabel;
 
@@ -200,6 +200,7 @@ type
     procedure btnCloseNodePanelClick(Sender: TObject);
     procedure btnCloseReactionEditPanelClick(Sender: TObject);
     procedure btnEditNodeMoreClick(Sender: TObject);
+    procedure btnReactionColorSelect(Sender: TObject);
 
   private
     numbPlots: Integer; // Number of plots displayed
@@ -252,6 +253,9 @@ type
 
     procedure enableEditNodePanel;
     procedure disableEditNodePanel;
+
+    procedure enableEditReactionPanel;
+    procedure disableEditReactionPanel;
   public
     network: TNetwork;
     networkController: TController;
@@ -316,6 +320,22 @@ begin
   btnNodeOutlineColor.Enabled :=false;
   btnEditNodeMore.Enabled := false;
 end;
+
+
+
+procedure TMainForm.enableEditReactionPanel;
+begin
+  edtReactionId.Enabled := true;
+  btnReactionColor.Enabled := true;
+end;
+
+
+procedure TMainForm.disableEditReactionPanel;
+begin
+  edtReactionId.Enabled := false;
+  btnReactionColor.Enabled := false;
+end;
+
 
 procedure TMainForm.btnAddPlotClick(Sender: TObject);
 begin
@@ -771,12 +791,12 @@ begin
   networkController.OnMouseDown(Sender, Button, Shift, v.X, v.Y);
   if networkController.selectedObjects.count > 0 then
      begin
-     if networkController.selectedObjects[0].objType = oNode then
-        enableEditNodePanel;
-     end
-  else
-     begin
-     disableEditNodePanel;
+     case networkController.selectedObjects[0].objType of
+       oNode : enableEditNodePanel;
+       oReaction : enableEditReactionPanel;
+     else
+       disableEditNodePanel;
+       diableEditReactionPanel;
      end;
 
   networkPB1.Invalidate;
@@ -2047,6 +2067,17 @@ begin
      LeftWPanel.width := 360;
      pnlNodePanel.Width := 335;
      end;
+end;
+
+procedure TMainForm.btnReactionColorSelect(Sender: TObject);
+var i : integer;
+begin
+  for i := 0 to length(network.reactions) - 1 do
+    if network.reactions[i].selected then
+       begin
+       network.reactions[i].state.fillColor := btnReactionColor.color;
+       end;
+  networkPB1.Invalidate;
 end;
 
 end.

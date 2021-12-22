@@ -829,7 +829,7 @@ object mainForm: TmainForm
         OnClick = btnAddNodeClick
       end
       object pnlNodePanel: TWebPanel
-        Left = 14
+        Left = 19
         Top = 261
         Width = 160
         Height = 247
@@ -1035,8 +1035,8 @@ object mainForm: TmainForm
         end
       end
       object pnlReactionPanel: TWebPanel
-        Left = 14
-        Top = 511
+        Left = 19
+        Top = 514
         Width = 160
         Height = 180
         ElementClassName = 'card'
@@ -1118,7 +1118,7 @@ object mainForm: TmainForm
           WidthPercent = 100.000000000000000000
           OnClick = btnCloseReactionEditPanelClick
         end
-        object WebEdit1: TWebEdit
+        object edtReactionId: TWebEdit
           Left = 5
           Top = 47
           Width = 145
@@ -1130,12 +1130,11 @@ object mainForm: TmainForm
           HeightPercent = 100.000000000000000000
           SpellCheck = False
           WidthPercent = 100.000000000000000000
-          OnExit = editNodeIdExit
         end
         object btnReactionColor: TWebColorPicker
           AlignWithMargins = True
-          Left = 84
-          Top = 79
+          Left = 85
+          Top = 75
           Width = 52
           Height = 33
           HeightStyle = ssAuto
@@ -1145,7 +1144,7 @@ object mainForm: TmainForm
           Color = 11788021
           Enabled = False
           Role = ''
-          OnSelect = btnNodeFillColorSelect
+          OnSelect = btnReactionColorSelect
         end
       end
     end
