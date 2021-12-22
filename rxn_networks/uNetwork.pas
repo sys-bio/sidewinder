@@ -26,6 +26,7 @@ const
   DEFAULT_NODE_OUTLINE_THICKNESS = 3;
   MAGIC_IDENTIFER = 'NM01';  // Identifier for json output, 01 refers to version number
   MAX_NODE_CONTROL_POINTS = 4;
+  NULL_NODE_TAG = '_Null';
 
 type
   // Replace TColor with something like this.
@@ -927,7 +928,7 @@ procedure TNetwork.autoBuildNetworkFromSBML(model: TModel);
  function TNetwork.buildNullNodeState(rxnId: String; num: integer): TNodeState;
  var nodeState: TNodeState;
  begin
-   nodeState.id := rxnId + '_Null';
+   nodeState.id := rxnId + NULL_NODE_TAG;
    nodeState.conc := 0.0;
    nodeState.x := 22 + 2*num ; // default values
    nodeState.y := 62 + 2*num; //   "

@@ -231,6 +231,7 @@ type
     procedure deletePlotSpecies(plotn: Integer); // Delete a species curve in a plot.
              // delete, change plot species, other added as needed using TWebListBox.
     procedure addParamSlider();
+    procedure addAllParamSliders(); // add sliders without user intervention.
     procedure SetSliderParamValues(sn, paramForSlider: Integer);
     procedure selectParameter(sNumb: Integer); // Get parameter for slider
     procedure LoadJSONFile();
@@ -594,7 +595,7 @@ begin
        if self.mainController.IsModelLoaded then
          begin
          MainController.setOnline(true);
-		 self.btnResetSimSpecies.Visible := false;										  
+		     self.btnResetSimSpecies.Visible := false;
          onLineSimButton.font.color := clred;
          onLineSimButton.ElementClassName := 'btn btn-success btn-sm';
          onLineSimButton.caption := 'Simulation: Pause';
@@ -623,7 +624,16 @@ begin
          else self.btnAddPlotClick(nil);
          end
        else self.btnAddPlotClick(nil);
-
+       // add default param sliders:
+       if self.numbSliders < 1 then
+         begin
+         if length( self.mainController.getModel.getP_Names ) < 11 then
+           begin
+           self.addAllParamSliders;
+           self.btnParamAddSlider.Visible := false;
+           end
+         else self.btnParamAddSliderClick(nil);
+         end
        end;
 
    end
@@ -906,19 +916,26 @@ procedure TMainForm.ParamSliderOnChange(Sender: TObject);
 var
   i, p: Integer;
   newPVal: double;
+  isRunning: boolean;
 begin
   if Sender is TWebTrackBar then
     begin
       newPVal := 0;
+      isRunning := false; // simulation not active.
       i := TWebTrackBar(Sender).tag;
       self.MainController.paramUpdated := true;
       p := self.sliderParamAr[i];
       newPVal := self.sliderPTBarAr[i].Position * 0.01 *
         (sliderPHighAr[i] - sliderPLowAr[i]);
       // get slider parameter position in p_vals array
-      self.MainController.stopTimer;
+      if self.mainController.IsOnline then
+        begin
+          self.MainController.stopTimer;
+          isRunning := true;
+        end;
+
       self.MainController.changeParameterVal(p, newPVal);
-      self.MainController.startTimer;
+      if isRunning then self.MainController.startTimer;
       self.sliderPTBLabelAr[i].caption := self.MainController.getModel.getP_Names[self.sliderParamAr[i]] + ': '
         + FloatToStr(self.MainController.getModel.getP_Vals[self.sliderParamAr[i]]);
     end;
@@ -1210,6 +1227,7 @@ procedure TMainForm.NetworkJSONOpenDialogGetFileAsText(Sender: TObject;
   AFileIndex: Integer; AText: string);
 begin
   try
+    self.clearNetwork; // added
     networkController.loadModel(AText);
   except
     on E: Exception do
@@ -1286,8 +1304,8 @@ procedure TMainForm.selectPlotSpecies(plotnumb: Integer);
       if fPlotSpecies.SpPlotCG.Items.Count < (i +1) then
       begin
         if addingPlot then
-            self.plotSpecies.Items[plotnumb - 1].Add('')
-        else self.plotSpecies.Items[getPlotPBIndex(plotNumb)].Add('');
+            self.plotSpecies[plotnumb - 1].Add('')
+        else self.plotSpecies[getPlotPBIndex(plotNumb)].Add('');
       end;
     end;
 
@@ -1320,7 +1338,7 @@ procedure TMainForm.selectPlotSpecies(plotnumb: Integer);
          curStr := self.mainController.getModel.getSBMLspecies(i).getID
       else curStr := self.mainController.getModel.getSBMLspecies(i).getName;
 
-      if not curStr.Contains('Null') then
+      if not curStr.Contains( NULL_NODE_TAG ) then
         begin
           lgth := Length(strList);
           setLength(strList, lgth + 1);
@@ -1354,21 +1372,26 @@ begin
     begin
       plotSp := '';
       plotSp := self.mainController.getModel.getS_names[i];
-      if self.mainController.getModel.getSBMLspecies(plotSp).isSetInitialAmount then
-        begin
-        if self.mainController.getModel.getSBMLspecies(plotSp).getInitialAmount > maxYVal then
-          maxYVal := self.mainController.getModel.getSBMLspecies(plotSp).getInitialAmount;
-        end
+      if ( plotSp.contains( NULL_NODE_TAG ) ) then plotSp := ''  // Null node
+      else
+      begin
+        if self.mainController.getModel.getSBMLspecies(plotSp).isSetInitialAmount then
+          begin
+          if self.mainController.getModel.getSBMLspecies(plotSp).getInitialAmount > maxYVal then
+            maxYVal := self.mainController.getModel.getSBMLspecies(plotSp).getInitialAmount;
+          end
         else
           if self.mainController.getModel.getSBMLspecies(plotSp).getInitialConcentration > maxYVal then
             maxYVal := self.mainController.getModel.getSBMLspecies(plotSp).getInitialConcentration;
+      end;
       self.plotSpecies[self.numbPlots - 1].Add(plotSp)
+
     end;
   for i := 0 to Length(self.mainController.getModel.getSBMLspeciesAr) -1 do
     begin
       if length(self.mainController.getModel.getS_Names) < (i +1) then
         begin
-        self.plotSpecies.Items[self.numbPlots - 1].Add('')
+        self.plotSpecies[self.numbPlots - 1].Add('');
         end;
     end;
 
@@ -1557,6 +1580,7 @@ begin
   for I := Length(self.pnlSliderAr) -1 downto 0 do
     self.deleteSlider(i);
   self.pnlSliderContainer.Invalidate;
+  self.numbSliders := 0;
 end;
 
 // Select parameter to use for slider
@@ -1574,13 +1598,9 @@ var
     sliderNumb := 0;
     sliderP := '';
     if length(self.sliderParamAr) < (sNumb +1) then
-      begin
-        // Add a plot with species list
-        addingSlider := true;
-
-      end
+      addingSlider := true
     else
-      begin    // Changing species to plot, so clear out old entries:
+      begin    // Changing species to plot, so clear out old param entries:
         addingSlider := false;
         self.sliderParamAr[getSliderIndex(sNumb)] := -1; // Clear slider position, not needed here ?
       end;
@@ -1592,7 +1612,7 @@ var
           begin
             if addingSlider then
               SetLength(self.sliderParamAr, (sliderNumb + 1));    // add a slider
-            sliderP := self.mainController.getModel.getP_names[i];   // needed?
+           // sliderP := self.mainController.getModel.getP_names[i];   // needed?
             self.sliderParamAr[sliderNumb] := i; // assign param indexto slider
             self.addParamSlider(); // <-- Add dynamically created slider
             inc(sliderNumb);
@@ -1623,6 +1643,23 @@ end;
 
 
 // *******************************************************
+
+procedure TMainForm.addAllParamSliders();
+var i: integer;
+    sliderP: string;
+begin
+  for i := 0 to length(self.mainController.getModel.getP_Names) -1 do
+    begin
+    sliderP := '';
+    SetLength(self.sliderParamAr, self.numbSliders + 1);    // add a slider
+    //sliderP := self.mainController.getModel.getP_names[i];   // needed?
+    self.sliderParamAr[self.numbSliders] := i; // assign param indexto slider
+    inc(self.numbSliders);
+    self.addParamSlider(); // <-- Add dynamically created slider
+
+    end;
+
+end;
 
 procedure TMainForm.addParamSlider(); // assume slider index is at last position, otherwise it is just an edit.
 // default TBar range: 0 to initVal*10

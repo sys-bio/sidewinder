@@ -1,8 +1,8 @@
 unit uNetworkToModel;
  // *** Currently only one-way reactions.
 interface
-uses Types, Web, JS, WEBLib.Graphics, uModel, uSBMLClasses, uNetwork, uSBMLClasses.Layout,
-   uSBMLClasses.Render, uNetworkCanvas, uNetworkTypes, uSidewinderTypes;
+uses Types, Web, JS, WEBLib.Graphics, strUtils, uModel, uSBMLClasses, uNetwork,
+   uSBMLClasses.Layout, uSBMLClasses.Render, uNetworkCanvas, uNetworkTypes, uSidewinderTypes;
 
 const DEFAULT_COMP = 'unit_compartment';
 type
@@ -188,6 +188,7 @@ begin
     setLength(newSpecProds,0);
     for j := 0 to self.network.reactions[i].state.nReactants-1 do
     begin
+      //if containsText(self.network.reactions[i].state.srcId[i], 'NULL') then break;
 
       k := length(newSpecReacts);
 
@@ -218,9 +219,10 @@ begin
         newSpRefGlyph.setBoundingBox(TSBMLLayoutBoundingBox.create(spRefCenter, newDims));
 
         newRxnGlyph.addSpeciesRefGlyph(newSpRefGlyph);
-
-        newSpecReacts[k] := TSBMLSpeciesReference.create(newSpRefId,
-                            self.network.reactions[i].state.srcStoich[j] );
+        if length( self.network.reactions[i].state.srcStoich ) > 0 then
+          newSpecReacts[k] := TSBMLSpeciesReference.create( newSpRefId,
+                            self.network.reactions[i].state.srcStoich[j] )
+        else newSpecReacts[k] := TSBMLSpeciesReference.create(newSpRefId);
         newSpecReacts[k].setSpecies(self.network.reactions[i].state.srcId[j]);
         newSpecReacts[k].setConstant(true);  // default: const stoich coeff
       end;
@@ -257,9 +259,10 @@ begin
         spRefCenter := TSBMLLayoutPoint.create(0,0);
         newSpRefGlyph.setBoundingBox(TSBMLLayoutBoundingBox.create(spRefCenter, newDims));
         newRxnGlyph.addSpeciesRefGlyph(newSpRefGlyph);
-
-        newSpecProds[k] := TSBMLSpeciesReference.create(newSpRefId,
-                        self.network.reactions[i].state.destStoich[j] );
+        if length( self.network.reactions[i].state.destStoich ) > 0 then
+          newSpecProds[k] := TSBMLSpeciesReference.create(newSpRefId,
+                        self.network.reactions[i].state.destStoich[j] )
+        else newSpecProds[k] := TSBMLSpeciesReference.create( newSpRefId );
         newSpecProds[k].setSpecies(self.network.reactions[i].state.destId[j]);
         newSpecProds[k].setConstant(true); // default: const stoich coeff
       end;
