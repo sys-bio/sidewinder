@@ -5,10 +5,10 @@ unit uSimulation;
 interface
 
  Uses Classes, Types, JS, Web, SysUtils, LSODA.test, adamsbdf, uVector, uModel,
-     uODE_FormatUtility, WEBLib.ExtCtrls;
+     uODE_FormatUtility, WEBLib.ExtCtrls, uSidewinderTypes;
 
 type
-  TUpdateValEvent = procedure(time:double; updatedVals: array of double) of object;
+  TUpdateValEvent = procedure(time:double; updatedVals: TVarNameValList) of object;
   ODESolver = (EULER, RK4, LSODAS);
  TSimulationJS = class (TObject)
    private
@@ -317,10 +317,18 @@ begin
 
   // return current time of run and variable values to listener:
 procedure TSimulationJS.UpdateVals( time: double; updatedVals: array of double);
+var i: integer;
+    updatedList: TVarNameValList;
  begin
-  // console.log('TSimulationJS.UpdateVals, time: ',time);
    if Assigned(FUpdate) then
-     FUpdate(time, updatedVals);
+     begin
+     updatedList := TVarNameValList.create;
+     for i := 0 to Length(updatedVals) -1 do
+       begin
+       updatedList.add( TVarNameVal.create( self.s_Names[i], updatedVals[i] ) );
+       end;
+     FUpdate( time, updatedList );
+     end;
  end;
 
 procedure TSimulationJS.setODEsolver(solverToUse: ODESolver);

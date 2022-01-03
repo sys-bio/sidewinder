@@ -213,7 +213,6 @@ type
     rxnProdStoichLabels: TList<TWebLabel>;
     rxnProdStoichEdits: TList<TWebEdit>;
     saveSimResults: boolean;
-    currentVals: array of Double;  // Currently not used
     procedure InitSimResultsTable(); // Init simResultsMemo.
     procedure addPlot(yMax: double); // Add a plot, yMax: largest initial val of plotted species
     procedure resetPlots();  // Reset plots for new simulation.
@@ -287,9 +286,10 @@ type
     function WorldToScreen(wx: Integer): Integer; // Network drawing panel
     procedure PingSBMLLoaded(newModel:TModel); // Notify when done loading or model changes
     procedure networkHasChanged(sender: TObject); // Notify when network has changed, may need to update model, plots, etc
-    procedure getVals(newTime: Double; newVals: array of Double);
+    procedure getVals( newTime: Double; newVals: TVarNameValList);// Get new values (species amt) from simulation run
     procedure generateAutoLayout(sender: TObject); // network needs a new layout generated ( fruchterman_reingold)
-    // Get new values (species amt) from simulation run
+
+  //  procedure testIntListener( newVal: integer);
 
   end;
 
@@ -1164,28 +1164,29 @@ begin
 end;
 
 // Get new values (species amt) from simulation run (ODE integrator)
-procedure TMainForm.getVals(newTime: Double; newVals: array of Double);
+procedure TMainForm.getVals( newTime: Double; newVals: TVarNameValList );
 var
   dataStr: String;
   i: Integer;
+  newValsAr: array of double;
 begin
   // Update table of data;
-  self.currentVals := newVals;
+  newValsAr := newVals.getValAr;
   dataStr := '';
   dataStr := floatToStrf(newTime, ffFixed, 4, 4) + ', ';
-  for i := 0 to length(newVals) - 1 do
+  for i := 0 to length(newValsAr) - 1 do
     begin
-      if i = length(newVals)-1 then
-        dataStr := dataStr + floatToStrf(newVals[i], ffExponent, 6, 2)
+      if i = length(newValsAr)-1 then
+        dataStr := dataStr + floatToStrf(newValsAr[i], ffExponent, 6, 2)
       else
-        dataStr := dataStr + floatToStrf(newVals[i], ffExponent, 6, 2) + ', ';
+        dataStr := dataStr + floatToStrf(newValsAr[i], ffExponent, 6, 2) + ', ';
     end;
   simResultsMemo.Lines.Add(dataStr);
   // Update plots:
   inc(self.currentGeneration);
   for i := 0 to plotsPanelList.count -1 do
     begin
-       plotsPanelList[i].processOneScan(newTime, newVals,self.plotSpecies[i],
+       plotsPanelList[i].processOneScan(newTime, newValsAr,self.plotSpecies[i],
              currentGeneration );
     end;
 

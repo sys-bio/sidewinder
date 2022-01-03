@@ -19,7 +19,7 @@ type
       fId: String;
       fVal: double;
     public
-      constructor create(); overload;
+      constructor create() overload;
       constructor create(newId: String; newVal: double); overload;
       constructor create(newCpy: TVarNameVal); overload;
       property Id: String read fId write fId;
@@ -30,11 +30,11 @@ type
       procedure setVal(newVal: double);
   end;
 
-  TVarNameValAr = class  // store array of string/value pair.
+  TVarNameValList = class  // store array of string/value pair.
     private
       idValList: TList<TVarNameVal>;
     public
-      constructor create(); overload;
+      constructor create() overload;
       constructor create(newPair: TVarNameVal); overload;
       procedure add(newPair: TVarNameVal);
       function delete(id: String): Boolean;
@@ -84,22 +84,22 @@ implementation
    self.fVal := newVal;
  end;
 
- constructor TVarNameValAr.create();  overload;
+ constructor TVarNameValList.create(); overload;
  begin
    self.idValList := TList<TVarNameVal>.Create;
  end;
 
- constructor TVarNameValAr.create(newPair: TVarNameVal);  overload;
+ constructor TVarNameValList.create(newPair: TVarNameVal); overload;
  begin
    self.idValList := TList<TVarNameVal>.Create;
    self.idValList.Add(newPair);
  end;
- procedure TVarNameValAr.add(newPair: TVarNameVal);
+ procedure TVarNameValList.add(newPair: TVarNameVal);
  begin
    self.idValList.Add(newPair);
  end;
 
- function TVarNameValAr.delete(id: String): Boolean;
+ function TVarNameValList.delete(id: String): Boolean;
  var i: integer;
      found: Boolean;
  begin
@@ -116,7 +116,7 @@ implementation
    Result := found;
  end;
 
- function TVarNameValAr.getNameVal(id: String): TVarNameVal;
+ function TVarNameValList.getNameVal(id: String): TVarNameVal;
  var i: integer;
      found: Boolean;
  begin
@@ -132,7 +132,7 @@ implementation
    if found = false then Result := nil;
  end;
 
- function TVarNameValAr.getNameAr(): array of String;
+ function TVarNameValList.getNameAr(): array of String;
  var i: integer;
      idAr: array of String;
  begin
@@ -144,7 +144,7 @@ implementation
    Result := idAr;
  end;
 
- function TVarNameValAr.getValAr(): array of double;
+ function TVarNameValList.getValAr(): array of double;
  var i: integer;
      valAr: array of double;
  begin

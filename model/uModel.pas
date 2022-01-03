@@ -30,10 +30,10 @@ type
     // Arrays of Double used by ODE integrator, keep array of strings for mapping:
     s_Vals: array of Double; // Changes, one to one correlation: s_Vals[n] <=> s_Names[n]
     s_Names: array of String; // Use species ID as name
-    s_NameValAr: TVarNameValAr; // List of species, init val pairs.
+    s_NameValAr: TVarNameValList; // List of species, init val pairs.
     p_Vals: array of Double; // Holds current value, Changes, Includes compartments and boundary species.
     p_Names: array of String;//Same size as p_Vals,
-    p_NameValAr: TVarNameValAr;// Holds current param name/value, changes, Includes compartments and boundary species.
+    p_NameValAr: TVarNameValList;// Holds current param name/value, changes, Includes compartments and boundary species.
     FPing: TPingEvent;// Used to send sbml info to listener once asynchronous read done.
     FPing2: TPingEvent;// Used to send sbml info to listener once asynchronous read done.
 
@@ -69,8 +69,8 @@ type
    function  getSBMLdynamicSpeciesAr(): array of TSBMLSpecies;  // return species that are not a bc or amt (not conc) is constant.
    function  getCompNumb(): integer;
    function  getSBMLcompartmentsArr(): array of TSBMLcompartment;
-   function  getSBMLcompartment(i:integer): TSBMLcompartment overload;
-   function  getSBMLcompartment(compId: string): TSBMLcompartment overload;
+   function  getSBMLcompartment(i:integer): TSBMLcompartment; overload;
+   function  getSBMLcompartment(compId: string): TSBMLcompartment; overload;
    procedure addSBMLcompartment(newComp: TSBMLcompartment);
    procedure setSBMLLayout( newLayout: TSBMLLayout );
    function  getSBMLLayout(): TSBMLLayout;
@@ -147,7 +147,7 @@ procedure TModel.SBML_UpdateEvent();
 
  procedure TModel.addSBMLReaction(rxnid:String; prods: array of String; prodStoich: array of double;
          reactants: array of String; reactantsStoich: array of double;
-         kineticLaw: String; newReverse: boolean) overload;
+         kineticLaw: String; newReverse: boolean); overload;
  var
    newRxn: SBMLReaction;
    len: integer;
@@ -182,7 +182,7 @@ procedure TModel.SBML_UpdateEvent();
    inc(self.numReactions);
  end;
 
- procedure TModel.addSBMLReaction(newReaction: SBMLReaction) overload;
+ procedure TModel.addSBMLReaction(newReaction: SBMLReaction); overload;
  var len: integer;
  begin
    len:= Length(self.sbmlreactions);
@@ -395,7 +395,7 @@ begin
   if self.getSpeciesNumb() > 0 then
     begin
       spAr := self.getSBMLdynamicSpeciesAr; // Do not include BCs and consts
-      self.s_NameValAr := TVarNameValAr.create();
+      self.s_NameValAr := TVarNameValList.create();
       for i := 0 to Length(spAr) - 1 do
         begin
           if spAr[i].isSetInitialAmount() then
@@ -430,7 +430,7 @@ procedure TModel.fillParameterArray();
 
 begin
    // Get parameter and compartment names and combine into one array, pVals[]:
-  self.p_NameValAr := TVarNameValAr.create();
+  self.p_NameValAr := TVarNameValList.create();
   for i := 0 to Length(self.getSBMLparameterAr())-1 do
       begin
       currNameVal := TVarNameVal.create;

@@ -2,12 +2,12 @@ unit uControllerMain;
 
 interface
 
-uses System.SysUtils, System.Classes, Dialogs, uSimulation, uModel, uSBMLClasses,
-     uODE_FormatUtility, WebLib.Forms, Web, uSBMLReader, uControllerNetwork,
-     uSBMLWriter, uNetwork, uSidewinderTypes;
+uses System.SysUtils, System.Classes, System.Generics.Collections, Dialogs,
+     uSimulation, uModel, uSBMLClasses, uODE_FormatUtility, WebLib.Forms, Web,
+     uSBMLReader, uControllerNetwork, uSBMLWriter, uNetwork, uSidewinderTypes;
 
 type
- TUpdateSimEvent = procedure( time:double; updatedVals: array of double ) of object;
+  TUpdateSimEvent = procedure( time:double; updatedVals: TVarNameValList ) of object;
  // Let listeners know of new simulation update event.
   TUpdateModelEvent = procedure( model: TModel ) of object; // SBML model loaded.
   TNetworkChangeEvent = procedure( sender: TObject ) of object; // Notify network has changed, may want to update model.
@@ -19,7 +19,6 @@ type
     writeSBMLFileName: String;
     numbRxns: Integer;
     modelLoaded: Boolean;
-   // sbmlFileLoaded: Boolean; // true if sbml file and model just loaded
     solverUsed: ODEsolver;
     runTime: Double; // Total runtime of simulation (sec)
     runSim: TSimulationJS;
@@ -34,6 +33,7 @@ type
     FNetworkChanged: TNetworkChangeEvent; // Notify listener that network has changed,
     FSBMLUpdate: TUpdateModelEvent;
     FSBMLUpdate2: TUpdateModelEvent;
+
     currNetworkCtrl : TController;
 
   public
@@ -58,8 +58,7 @@ type
     function IsModelLoaded(): Boolean;
     procedure clearModel();
     procedure clearSim();
-   // function IsNetworkUpdated(): Boolean;  // true: network changed, need to update model.
-    function hasNetworkChanged(): Boolean;  // true: network changed, need to update model.
+    function  hasNetworkChanged(): Boolean;  // true: network changed, need to update model.
     procedure SetTimerEnabled(bTimer: Boolean);
     procedure SetTimerInterval(nInterval: Integer);
     procedure loadSBML(sbmlStr: String);
@@ -77,9 +76,9 @@ type
     property OnSimUpdate: TUpdateSimEvent read FUpdate write FUpdate;
     property OnSBMLUpdate: TUpdateModelEvent read FSBMLUpdate write FSBMLUpdate;
     property OnSBMLUpdate2: TUpdateModelEvent read FSBMLUpdate2 write FSBMLUpdate2;
-    procedure UpdateVals( time: double; updatedVals: array of double);
+    procedure UpdateVals( time: double; updatedVals: TVarNameValList );
             // Send new values to listeners.
-    procedure getVals(newTime: Double; newVals: array of Double);
+    procedure getVals(newTime: Double; newVals: TVarNameValList);
             // Get new values from simulation run.
  end;
 
@@ -93,7 +92,6 @@ begin
   self.runTime := 500; // sec
   self.networkUpdate := false;
   self.saveSBMLFlag := false;
-  //self.createModel;    // Is this necessary here???
   self.currNetworkCtrl := networkCtrl;
   self.OnSBMLUpdate := networkCtrl.SBMLUpdated;
   networkCtrl.network.OnNetworkEvent := self.networkUpdated;
@@ -161,11 +159,12 @@ begin
 end;
 
 // return current time of run and variable values to listener:
-procedure TControllerMain.UpdateVals( time: double; updatedVals: array of double);
- begin
-   if Assigned(FUpdate) then
-     FUpdate(time, updatedVals);
- end;
+procedure TControllerMain.UpdateVals( time: double; updatedVals: TVarNameValList);
+begin
+  if Assigned(FUpdate) then
+    FUpdate(time, updatedVals);
+end;
+
 
   // Network has changed, notify any listeners
 procedure TControllerMain.networkUpdated(sender: TObject);
@@ -336,10 +335,10 @@ begin
   self.runSim.startTimer;
 end;
 
-procedure TControllerMain.getVals(newTime: Double; newVals: array of Double);
+procedure TControllerMain.getVals(newTime: Double; newVals: TVarNameValList);
 begin
   self.currTime := newTime;
-  self.UpdateVals(newTime, newVals); // pass on to listeners.
+  self.UpdateVals( newTime, newVals ); // pass on to listeners.
 end;
 
 procedure TControllerMain.loadSBML(sbmlStr: String );
@@ -353,7 +352,6 @@ begin
     self.createModel();
     self.currNetworkCtrl.network.clear; // clear out old network;
     SBMLReader := TSBMLRead.create(self.sbmlmodel, self.sbmlText );// Process text with libsbml.js
-   // self.sbmlFileLoaded := true;
     end
   else showMessage ('SBML text empty.');
 
