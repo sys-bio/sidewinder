@@ -289,8 +289,6 @@ type
     procedure getVals( newTime: Double; newVals: TVarNameValList);// Get new values (species amt) from simulation run
     procedure generateAutoLayout(sender: TObject); // network needs a new layout generated ( fruchterman_reingold)
 
-  //  procedure testIntListener( newVal: integer);
-
   end;
 
 var
@@ -1003,14 +1001,13 @@ begin
   self.adjustRightTabWPanels;
   self.mainController := TControllerMain.Create(self.networkController);
   self.mainController.setOnline(false);
- 
   self.mainController.setODEsolver;
   self.networkUpdated := false;
   self.saveSimResults := false;
   currentGeneration := 0;
   self.mainController.OnSBMLUpdate2 := self.PingSBMLLoaded;
   self.mainController.OnNetworkChange:= self.networkHasChanged;
-  self.mainController.OnSimUpdate := self.getVals; // notify when new Sim results
+  self.mainController.AddSimListener( @self.getVals ); // notify when new Sim results
   self.network.OnAutoLayoutEvent := self.generateAutoLayout;
 end;
 

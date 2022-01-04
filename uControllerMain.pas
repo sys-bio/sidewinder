@@ -25,15 +25,14 @@ type
     stepSize: Double; // (msec) (integration step)
     pixelStepAr: array of Integer; // pixel equiv of time (integration) step
     currTime: Double;
-   // online: Boolean; // Simulation running
     saveSBMLFlag: Boolean;
     ODEready: Boolean; // TRUE: ODE solver is setup.
     networkUpdate: Boolean; // Use to prevent circular update when network is changed.
-    FUpdate: TUpdateSimEvent;// Send Updated Sim values (time,species amts) to listeners.
-    FNetworkChanged: TNetworkChangeEvent; // Notify listener that network has changed,
-    FSBMLUpdate: TUpdateModelEvent;
-    FSBMLUpdate2: TUpdateModelEvent;
+    FSimUpdateAr: array of TUpdateSimEvent;// Send Updated Sim values (time,species amts) to listeners.
 
+    FNetworkChanged: TNetworkChangeEvent; // Notify listener that network has changed,
+    FSBMLUpdate: TUpdateModelEvent; // change to array of TUpdateModelEvent
+    FSBMLUpdate2: TUpdateModelEvent; // remove
     currNetworkCtrl : TController;
 
   public
@@ -73,13 +72,13 @@ type
     function  updateSpeciesNodeConc(node: TNode): boolean;
     procedure networkUpdated(sender: TObject); // Network has changed, update model
     property OnNetworkChange: TNetworkChangeEvent read FNetworkChanged write FNetworkChanged;
-    property OnSimUpdate: TUpdateSimEvent read FUpdate write FUpdate;
     property OnSBMLUpdate: TUpdateModelEvent read FSBMLUpdate write FSBMLUpdate;
     property OnSBMLUpdate2: TUpdateModelEvent read FSBMLUpdate2 write FSBMLUpdate2;
     procedure UpdateVals( time: double; updatedVals: TVarNameValList );
             // Send new values to listeners.
     procedure getVals(newTime: Double; newVals: TVarNameValList);
             // Get new values from simulation run.
+    procedure addSimListener( newListener: TUpdateSimEvent );
  end;
 
 implementation
@@ -95,6 +94,7 @@ begin
   self.currNetworkCtrl := networkCtrl;
   self.OnSBMLUpdate := networkCtrl.SBMLUpdated;
   networkCtrl.network.OnNetworkEvent := self.networkUpdated;
+
 end;
 
 procedure TControllerMain.resetCurrTime();
@@ -118,7 +118,6 @@ end;
 
 procedure TControllerMain.createModel();
 begin
-//console.log('TControllerMain.createModel');
   self.clearModel;
   self.sbmlmodel := TModel.create();
   self.sbmlmodel.OnPing := self.SBMLLoaded;  // Register callback function
@@ -155,14 +154,25 @@ begin
     begin
     self.runSim.Free;
     end;
- // self.currTime := 0;
 end;
 
 // return current time of run and variable values to listener:
 procedure TControllerMain.UpdateVals( time: double; updatedVals: TVarNameValList);
+var i: integer;
 begin
-  if Assigned(FUpdate) then
-    FUpdate(time, updatedVals);
+  if length(self.FSimUpdateAr) > 0 then
+  begin
+    for i := 0  to length(self.FSimUpdateAr) -1 do
+      self.FSimUpdateAr[i](time, updatedVals);
+  end;
+end;
+
+procedure TControllerMain.addSimListener( newListener: TUpdateSimEvent );
+var i: integer;
+begin
+  i := length(self.FSimUpdateAr);
+  setLength(self.FSimUpdateAr, i +1 );
+  self.FSimUpdateAr[i] := newListener;
 end;
 
 
