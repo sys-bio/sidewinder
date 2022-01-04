@@ -29,10 +29,8 @@ type
     ODEready: Boolean; // TRUE: ODE solver is setup.
     networkUpdate: Boolean; // Use to prevent circular update when network is changed.
     FSimUpdateAr: array of TUpdateSimEvent;// Send Updated Sim values (time,species amts) to listeners.
-
-    FNetworkChanged: TNetworkChangeEvent; // Notify listener that network has changed,
-    FSBMLUpdate: TUpdateModelEvent; // change to array of TUpdateModelEvent
-    FSBMLUpdate2: TUpdateModelEvent; // remove
+    FNetworkChangedAr: array of TNetworkChangeEvent; // Notify listener that network has changed
+    FSBMLUpdateAr: array of TUpdateModelEvent; // notify listeners of sbml model change
     currNetworkCtrl : TController;
 
   public
@@ -71,14 +69,13 @@ type
     function  getSimulation(): TSimulationJS;
     function  updateSpeciesNodeConc(node: TNode): boolean;
     procedure networkUpdated(sender: TObject); // Network has changed, update model
-    property OnNetworkChange: TNetworkChangeEvent read FNetworkChanged write FNetworkChanged;
-    property OnSBMLUpdate: TUpdateModelEvent read FSBMLUpdate write FSBMLUpdate;
-    property OnSBMLUpdate2: TUpdateModelEvent read FSBMLUpdate2 write FSBMLUpdate2;
     procedure UpdateVals( time: double; updatedVals: TVarNameValList );
             // Send new values to listeners.
     procedure getVals(newTime: Double; newVals: TVarNameValList);
             // Get new values from simulation run.
     procedure addSimListener( newListener: TUpdateSimEvent );
+    procedure addSBMLListener( newListener: TUpdateModelEvent );
+    procedure addNetworkListener( newListener: TNetworkChangeEvent );
  end;
 
 implementation
@@ -92,9 +89,8 @@ begin
   self.networkUpdate := false;
   self.saveSBMLFlag := false;
   self.currNetworkCtrl := networkCtrl;
-  self.OnSBMLUpdate := networkCtrl.SBMLUpdated;
+  self.addSBMLListener( @networkCtrl.SBMLUpdated );
   networkCtrl.network.OnNetworkEvent := self.networkUpdated;
-
 end;
 
 procedure TControllerMain.resetCurrTime();
@@ -104,16 +100,25 @@ end;
 
 // Grab SBML model information when notified by model of change:
 procedure TControllerMain.SBMLLoaded();
+var i: integer;
 begin
-  console.log('TControllerMain.SBMLLoaded. creating new simulation');
+ // console.log('TControllerMain.SBMLLoaded. creating new simulation');
   self.modelLoaded := true;
   self.createSimulation;
+  if length(self.FSBMLUpdateAr) > 0 then
+    begin
+    for i := 0 to length(self.FSBMLUpdateAr) -1 do
+      self.FSBMLUpdateAr[i](self.sbmlmodel);
+    end;
 
-  if Assigned(FSBMLUpdate) then
-    FSBMLUpdate(self.sbmlmodel);
+end;
 
-  if Assigned(FSBMLUpdate2) then
-    FSBMLUpdate2(self.sbmlmodel);
+procedure TControllerMain.addSBMLListener( newListener: TUpdateModelEvent );
+var i: integer;
+begin
+  i := length(self.FSBMLUpdateAr);
+  setLength(self.FSBMLUpdateAr, i +1 );
+  self.FSBMLUpdateAr[i] := newListener;
 end;
 
 procedure TControllerMain.createModel();
@@ -178,9 +183,9 @@ end;
 
   // Network has changed, notify any listeners
 procedure TControllerMain.networkUpdated(sender: TObject);
+var i: integer;
 begin
- // mUpdate := true; // default update model
-  console.log('TControllerMain.networkUpdated: Network changed');
+ // console.log('TControllerMain.networkUpdated: Network changed');
   if sender is TNode then
     begin
      console.log('TControllerMain.networkUpdated: Node conc changed');
@@ -191,10 +196,22 @@ begin
   else self.networkUpdate := true;      // after model updated, change to false.
   if self.networkUpdate then
     begin
-    if Assigned(FNetworkChanged) then
-      FNetworkChanged(sender);
+    if length(self.FNetworkChangedAr) > 0 then
+      begin
+      for i := 0  to length(self.FNetworkChangedAr) -1 do
+        self.FNetworkChangedAr[i](sender);
+      end;
+
     end;
 
+end;
+
+procedure TControllerMain.addNetworkListener( newListener: TNetworkChangeEvent );
+var i: integer;
+begin
+  i := length(self.FNetworkChangedAr);
+  setLength(self.FNetworkChangedAr, i +1 );
+  self.FNetworkChangedAr[i] := newListener;
 end;
 
 function TControllerMain.updateSpeciesNodeConc(node: TNode): boolean;

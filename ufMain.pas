@@ -1005,9 +1005,9 @@ begin
   self.networkUpdated := false;
   self.saveSimResults := false;
   currentGeneration := 0;
-  self.mainController.OnSBMLUpdate2 := self.PingSBMLLoaded;
-  self.mainController.OnNetworkChange:= self.networkHasChanged;
-  self.mainController.AddSimListener( @self.getVals ); // notify when new Sim results
+  self.mainController.addSBMLListener( @self.PingSBMLLoaded );
+  self.mainController.addNetworkListener( @self.networkHasChanged );
+  self.mainController.addSimListener( @self.getVals ); // notify when new Sim results
   self.network.OnAutoLayoutEvent := self.generateAutoLayout;
 end;
 
