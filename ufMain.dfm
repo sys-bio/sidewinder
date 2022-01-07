@@ -17,25 +17,9 @@ object mainForm: TmainForm
     BorderColor = clSilver
     BorderStyle = bsSingle
     ElementBodyClassName = 'card-body-10  bg-dark text-white'
-    object rtLabel1: TWebLabel
-      Left = 1536
-      Top = 15
-      Width = 62
-      Height = 13
-      Caption = 'Run time (s):'
-      Font.Charset = DEFAULT_CHARSET
-      Font.Color = clWhite
-      Font.Height = -11
-      Font.Name = 'Tahoma'
-      Font.Style = []
-      HeightPercent = 100.000000000000000000
-      ParentFont = False
-      Visible = False
-      WidthPercent = 100.000000000000000000
-    end
     object stepSizeLabel1: TWebLabel
-      Left = 1274
-      Top = 15
+      Left = 1614
+      Top = 24
       Width = 71
       Height = 13
       Caption = 'Step size (ms):'
@@ -47,6 +31,50 @@ object mainForm: TmainForm
       HeightPercent = 100.000000000000000000
       ParentFont = False
       Visible = False
+      WidthPercent = 100.000000000000000000
+    end
+    object lblStepSizeMin: TWebLabel
+      Left = 1236
+      Top = 25
+      Width = 12
+      Height = 13
+      Caption = '10'
+      ElementFont = efCSS
+      HeightStyle = ssAuto
+      HeightPercent = 100.000000000000000000
+      WidthPercent = 100.000000000000000000
+    end
+    object lblStepSizeMax: TWebLabel
+      Left = 1410
+      Top = 25
+      Width = 24
+      Height = 13
+      Caption = '1000'
+      ElementFont = efCSS
+      HeightStyle = ssAuto
+      HeightPercent = 100.000000000000000000
+      WidthPercent = 100.000000000000000000
+    end
+    object lblStepSize: TWebLabel
+      Left = 1275
+      Top = 5
+      Width = 83
+      Height = 13
+      Caption = 'Step Size (msec):'
+      ElementFont = efCSS
+      HeightStyle = ssAuto
+      HeightPercent = 100.000000000000000000
+      WidthPercent = 100.000000000000000000
+    end
+    object lblStepSizeVal: TWebLabel
+      Left = 1364
+      Top = 5
+      Width = 18
+      Height = 13
+      Caption = '100'
+      ElementFont = efCSS
+      HeightStyle = ssAuto
+      HeightPercent = 100.000000000000000000
       WidthPercent = 100.000000000000000000
     end
     object newNetworkBtn: TWebButton
@@ -85,6 +113,7 @@ object mainForm: TmainForm
       Top = 11
       Width = 120
       Height = 28
+      Hint = 'If network ready, start simulation'
       Caption = 'Setup Simulation'
       ChildOrder = 5
       ElementClassName = 'btn btn-danger btn-sm'
@@ -95,6 +124,7 @@ object mainForm: TmainForm
       Font.Style = [fsBold]
       HeightPercent = 100.000000000000000000
       ParentFont = False
+      ShowHint = True
       WidthPercent = 100.000000000000000000
       OnClick = onLineSimButtonClick
     end
@@ -113,12 +143,12 @@ object mainForm: TmainForm
       OnClick = btnAddPlotClick
     end
     object btnParamAddSlider: TWebButton
-      Left = 1090
+      Left = 1076
       Top = 10
-      Width = 143
+      Width = 133
       Height = 32
       Hint = 'Add parameter slider'
-      Caption = 'Add Parameter Slider'
+      Caption = 'Add Param Slider'
       ChildOrder = 6
       ElementClassName = 'btn btn-primary btn-sm'
       ElementFont = efCSS
@@ -134,20 +164,9 @@ object mainForm: TmainForm
       WidthPercent = 100.000000000000000000
       OnClick = btnParamAddSliderClick
     end
-    object rtLengthEdit1: TWebEdit
-      Left = 1604
-      Top = 12
-      Width = 33
-      Height = 22
-      ChildOrder = 2
-      HeightPercent = 100.000000000000000000
-      Text = '200'
-      Visible = False
-      WidthPercent = 100.000000000000000000
-    end
     object stepSizeEdit1: TWebEdit
-      Left = 1351
-      Top = 12
+      Left = 1691
+      Top = 24
       Width = 33
       Height = 22
       ChildOrder = 5
@@ -185,20 +204,6 @@ object mainForm: TmainForm
       WidthPercent = 100.000000000000000000
       OnClick = SBMLloadButtonClick
     end
-    object btnSimple: TWebButton
-      Left = 424
-      Top = 10
-      Width = 96
-      Height = 32
-      Caption = 'Load Simple'
-      ChildOrder = 11
-      ElementClassName = 'btn btn-primary btn-sm'
-      ElementFont = efCSS
-      HeightStyle = ssAuto
-      HeightPercent = 100.000000000000000000
-      WidthPercent = 100.000000000000000000
-      OnClick = btnSimpleClick
-    end
     object SaveSBMLButton: TWebButton
       Left = 536
       Top = 10
@@ -214,11 +219,12 @@ object mainForm: TmainForm
       OnClick = SaveSBMLButtonClick
     end
     object btnResetSimSpecies: TWebButton
-      Left = 792
+      Left = 840
       Top = 10
-      Width = 149
+      Width = 47
       Height = 32
-      Caption = 'Reset Simulation'
+      Hint = 'Reset node species to initial values.'
+      Caption = 'Sp IC'
       ChildOrder = 13
       ElementClassName = 'btn btn-primary btn-sm'
       ElementFont = efCSS
@@ -230,9 +236,43 @@ object mainForm: TmainForm
       HeightStyle = ssAuto
       HeightPercent = 100.000000000000000000
       ParentFont = False
+      ShowHint = True
       Visible = False
       WidthPercent = 100.000000000000000000
       OnClick = resetInitValsButtonClick
+    end
+    object trackBarStepSize: TWebTrackBar
+      Left = 1254
+      Top = 24
+      Width = 150
+      Height = 20
+      ElementClassName = 'custom-range'
+      HeightPercent = 100.000000000000000000
+      WidthPercent = 100.000000000000000000
+      ChildOrder = 13
+      ElementFont = efCSS
+      Max = 1000
+      Min = 10
+      Position = 100
+      Role = ''
+      OnChange = trackBarStepSizeChange
+    end
+    object btnParamReset: TWebButton
+      Left = 893
+      Top = 10
+      Width = 60
+      Height = 32
+      Hint = 'Reset parameters to original values'
+      Caption = 'Par IC'
+      ChildOrder = 16
+      ElementClassName = 'btn btn-primary btn-sm'
+      ElementFont = efCSS
+      HeightStyle = ssAuto
+      HeightPercent = 100.000000000000000000
+      ShowHint = True
+      Visible = False
+      WidthPercent = 100.000000000000000000
+      OnClick = btnParamResetClick
     end
   end
   object bottomWPanel: TWebPanel
@@ -248,7 +288,6 @@ object mainForm: TmainForm
     BorderStyle = bsSingle
     ChildOrder = 4
     ElementBodyClassName = 'card-body-10  bg-dark text-white'
-    ExplicitTop = 861
     object btnRandomNetwork: TWebButton
       Left = 404
       Top = 3
@@ -1249,7 +1288,7 @@ object mainForm: TmainForm
           760)
         object pnlSimResultsFile: TWebPanel
           Left = 24
-          Top = 481
+          Top = 401
           Width = 205
           Height = 73
           ElementClassName = 'card'

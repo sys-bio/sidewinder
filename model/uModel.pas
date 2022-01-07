@@ -77,17 +77,18 @@ type
    procedure setSBMLRenderInfo( newRender: TSBMLRenderInformation );
    function  getSBMLRenderInfo(): TSBMLRenderInformation;
 
-   function getS_Names(): array of String;
-   function getS_Vals(): array of Double; // remove at some point, only getS_initVals needed ?
-   function getS_initVals(): array of double;
+   function  getS_Names(): array of String;
+   function  getS_Vals(): array of Double; // remove at some point, only getS_initVals needed ?
+   function  getS_initVals(): array of double;
    procedure resetS_Vals();   // reset with species initial vals. Move this to Simulation class.
-   function getP_Names(): array of String;
-   function getP_Vals(): array of Double;
-   function getP_Val(pos: integer): Double;
-   function setP_Val(pos: integer; newVal: Double): Boolean;
+   function  getP_NameValAr(): TVarNameValList;
+   function  getP_Names(): array of String;
+   function  getP_Vals(): array of Double;
+   function  getP_Val(pos: integer): Double;
+   function  setP_Val(pos: integer; newVal: Double): Boolean;
    procedure changeParamVal(pos: Integer; newVal: Double);
    function  getReactions(): array of SBMLReaction;
-   function getReaction(i: integer): SBMLReaction;
+   function  getReaction(i: integer): SBMLReaction;
 
    property OnPing: TPingEvent read FPing write FPing;
    property OnPing2: TPingEvent read FPing2 write FPing2;
@@ -506,6 +507,11 @@ end;
 function TModel.getS_Vals(): array of Double;
 begin
   Result := self.s_Vals;
+end;
+
+function  TModel.getP_NameValAr(): TVarNameValList;
+begin
+  Result := self.p_NameValAr;
 end;
 
 function TModel.getP_Names(): array of String;

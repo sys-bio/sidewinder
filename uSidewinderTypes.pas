@@ -36,9 +36,13 @@ type
     public
       constructor create() overload;
       constructor create(newPair: TVarNameVal); overload;
+      procedure copy( orig: TVarNameValList );
+      function getNumPairs(): integer;
       procedure add(newPair: TVarNameVal);
       function delete(id: String): Boolean;
-      function getNameVal(id: String):TVarNameVal;
+      function getNameVal(index: integer):TVarNameVal;
+      procedure setVal( index: integer; newVal: double ); // set val at index
+      function getNameValById(id: String):TVarNameVal;
       function getNameAr(): array of String;
       function getValAr(): array of double;
   end;
@@ -99,6 +103,23 @@ implementation
    self.idValList.Add(newPair);
  end;
 
+ procedure TVarNameValList.copy( orig: TVarNameValList );
+ var i: integer;
+    newNameVal: TVarNameVal;
+ begin
+   for i := 0 to orig.getNumPairs -1 do
+     begin
+     newNameVal := TVarNameVal.create(orig.getNameVal(i));
+     self.idValList.Add(newNameVal);
+     end;
+
+ end;
+
+ function TVarNameValList.getNumPairs(): integer;
+ begin
+   Result := self.idValList.Count;
+ end;
+
  function TVarNameValList.delete(id: String): Boolean;
  var i: integer;
      found: Boolean;
@@ -116,7 +137,19 @@ implementation
    Result := found;
  end;
 
- function TVarNameValList.getNameVal(id: String): TVarNameVal;
+ function TVarNameValList.getNameVal(index: integer):TVarNameVal;
+ begin
+   if (self.idValList.count > index) and (index > -1) then
+      Result := self.idValList[index];
+ end;
+
+ procedure TVarNameValList.setVal( index: integer; newVal: double );
+ begin
+   if (self.idValList.count > index) and (index > -1) then
+     self.idValList[index].setVal(newVal);
+ end;
+
+ function TVarNameValList.getNameValById(id: String): TVarNameVal;
  var i: integer;
      found: Boolean;
  begin

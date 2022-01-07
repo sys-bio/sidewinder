@@ -21,8 +21,10 @@ private
   maxYValue: double;  // largest y val for plot
   yMax: integer;  // largest y 'pixel' val for plot.
   plotPosition: integer;
-  stepSize: double;
-  pixelStep: integer; // pixel equiv of time (integration) step
+  stepSize: double;  // can change during run.
+  stepSizeInit: double; // step size at plot initialization
+  runTime: double;
+  pixelStep: integer; // pixel equiv of time (integration) step, not needed?
   EUpdatePlot: TPlotMouseEvent;  // notify listener when plot needs to be edited
 
 public
@@ -42,19 +44,21 @@ public
     Shift: TShiftState; X, Y: Integer);
   procedure plotLegendPBOnPaint(sender: TObject);
   //procedure plotLegendPBOnMouseDown(sender: TObject);  not needed yet.
-  function getXScaleHeight(): integer;
+  function  getXScaleHeight(): integer;
   procedure setXScaleHeight( fractionHeight: double);
   procedure setPlotLegend(plotSpeciesList: TSpeciesList);
-  function getPlotLegendPB(): TWebPaintBox;
-  function getParentContainer(): TWebPanel;
+  function  getPlotLegendPB(): TWebPaintBox;
+  function  getParentContainer(): TWebPanel;
   procedure processPlotLegendPB(pSpCount: integer);
   procedure processPlotLegendBM( pSList: TSpeciesList);
   procedure editPlot();   // Notify listener that user clicked plot
   procedure configPbPlot( {totalPlots: integer});
+  procedure calcPixelStep(); // not needed ??
+  function  getInitStepSize(): double;
   procedure adjustPlotHeight(totalPlots: integer; newHeight: integer);
-  procedure initializePlot(runTime: double; newStepSize: double; plotSpeciesList: TSpeciesList);
-  procedure processOneScan( t_new: Double; y_new: array of Double;
-                        plotSpecies: TSpeciesList; currentGeneration: Integer );
+  procedure initializePlot(newRunTime: double; newStepSize: double; plotSpeciesList: TSpeciesList);
+  procedure processOneScan( t_new: Double; y_new: array of Double; plotSpecies: TSpeciesList;
+                            currentGeneration: Integer; currStepSize: double );
   property OnPlotUpdate: TPlotMouseEvent read EUpdatePlot write EUpdatePlot;
 end;
 
@@ -92,21 +96,22 @@ implementation
     self.plotWPanel.free;
 
   end;
-  procedure TPlotPanel.initializePlot(runTime: double; newStepSize: double; plotSpeciesList: TSpeciesList );
+  procedure TPlotPanel.initializePlot(newRunTime: double; newStepSize: double; plotSpeciesList: TSpeciesList );
   var newYMax : integer;
   begin
   //console.log( 'TPlotPanel.initializePlot');
 
-   // self.plotPB.Anchors := [akLeft,akRight,akTop];
     self.stepSize := newStepSize;
+    self.stepSizeInit := newStepSize;
+    self.runTime :=  newRunTime;
     self.plotPB.Tag := self.plotPosition;
     self.plotPB.Height := self.plotWPanel.Height - 10;
     self.plotLegendPB := TWebPaintBox.create(plotWPanel);
     self.plotLegendPB.parent := self.plotWPanel;
     self.setPlotWidth();
+
     if self.pixelStep < 0 then
       self.pixelStep := 0;
-    //self.xscaleHeight := round(0.15 * self.plotPB.Height);// make x-axis %15 of total height
     self.setXScaleHeight(XSCALE_RATIO); // make x-axis %15 of total height
     self.plotPB.OnPaint := plotPBOnPaint;
     self.plotPB.OnMouseDown := self.plotPBOnMouseDown;
@@ -115,20 +120,33 @@ implementation
     self.yMax := newYMax;
     self.plotGraph.resetGraph(self.plotGraph.bitmap.canvas);
     self.setPlotLegend(plotSpeciesList);
-
+                     // pass in initTime instead of zero, in case plot added later...
+    //self.plotGraph.initGraph(initTime, trunc(newRunTime), 0, newYMax, 0, self.plotPB.width, 0, self.plotPB.height,
+    //         self.xscaleHeight,  YSCALEWIDTH , stepSize);
     self.plotGraph.initGraph(0, 200, 0, newYMax, 0, self.plotPB.width, 0, self.plotPB.height,
              self.xscaleHeight,  YSCALEWIDTH , stepSize);
 
     // Display the plot:
-    self.processOneScan(0, self.plotInitVals, plotSpeciesList, 0 );
+    self.processOneScan(0, self.plotInitVals, plotSpeciesList, 0, stepSize );
     self.plotWPanel.visible := true;
     self.plotPB.visible := true;
    // Max viewable steps is PlotWebPB.width (1 pixel per step).
-    self.pixelStep := 0;  // Default number.
-    if runTime / stepSize < self.plotPB.width then
-      self.pixelStep := round(self.plotPB.width * stepSize / runTime)
+   // self.pixelStep := 0;  // Default number.
+   // self.calcPixelStep();
+
+  end;
+
+  procedure TPlotPanel.calcPixelStep();    // not needed?
+  begin
+    if self.runTime / self.stepSize < self.plotPB.width then
+      self.pixelStep := round((self.stepSize/self.stepSizeInit)*self.plotPB.width * self.stepSize / self.runTime)
     else
       self.pixelStep := 1;
+  end;
+
+  function  TPlotPanel.getInitStepSize(): double;
+  begin
+    Result := self.stepSizeInit;
   end;
 
   procedure TPlotPanel.plotPBOnPaint(sender: TObject);
@@ -258,11 +276,15 @@ implementation
 
 
   procedure TPlotPanel.processOneScan( t_new: Double; y_new: array of Double;
-               plotSpecies: TSpeciesList; currentGeneration: Integer );
+            plotSpecies: TSpeciesList; currentGeneration: Integer; currStepSize: double );
   var i: integer;
     plot_y: array of boolean;
+   // currentPixel: integer;
   begin
     SetLength(plot_y, length(y_new));
+    self.stepSize := currStepSize;
+    self.plotGraph.setStepSize(currStepSize);
+   // currentPixel := currentGeneration;
     for i := 0 to length(y_new) - 1 do
       begin
         if plotSpecies[i] = '' then

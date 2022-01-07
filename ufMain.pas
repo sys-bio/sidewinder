@@ -4,7 +4,7 @@ interface
 
 uses
   System.SysUtils, System.Classes, JS, Web, Types, WEBLib.Graphics,
-  WEBLib.Controls,
+  WEBLib.Controls, StrUtils,
   WEBLib.Forms, WEBLib.Dialogs, Vcl.Controls, Dialogs, WEBLib.ExtCtrls,
   WEBLib.WebCtrls,
   Vcl.StdCtrls, WEBLib.StdCtrls, WEBLib.Buttons, Vcl.Imaging.pngimage,
@@ -37,9 +37,7 @@ type
     yLbl: TWebLabel;
     zoomLbl: TWebLabel;
     zoomFactorLbl1: TWebLabel;
-    SBMLmodelMemo: TWebMemo;   // Displays simulation results
-    rtLengthEdit1: TWebEdit;   // Run time length, Not used for now.
-    rtLabel1: TWebLabel;       // Not used for now.
+    SBMLmodelMemo: TWebMemo;       // Not used for now.
     stepSizeLabel1: TWebLabel;
     stepSizeEdit1: TWebEdit;
     ZoomCntrlPanel: TWebPanel;
@@ -67,7 +65,6 @@ type
     netDrawScrollBarVert: TTMSFNCScrollBar;
     netDrawScrollBarHoriz: TTMSFNCScrollBar;
     splitter: TWebSplitter;
-    btnSimple: TWebButton;
     SaveSBMLButton: TWebButton;
     RNodeEditWPanel: TWebPanel;
     RRxnEditWPanel: TWebPanel;
@@ -132,6 +129,12 @@ type
     WebLabel3: TWebLabel;
     edtReactionWidth: TWebSpinEdit;
     WebLabel4: TWebLabel;
+    trackBarStepSize: TWebTrackBar;
+    lblStepSizeMin: TWebLabel;
+    lblStepSizeMax: TWebLabel;
+    lblStepSize: TWebLabel;
+    lblStepSizeVal: TWebLabel;
+    btnParamReset: TWebButton;
 
     procedure btnUniUniClick(Sender: TObject);
     procedure btnBiBiClick(Sender: TObject);
@@ -202,6 +205,8 @@ type
     procedure btnCloseReactionEditPanelClick(Sender: TObject);
     procedure btnReactionColorSelect(Sender: TObject);
     procedure edtReactionWidthChange(Sender: TObject);
+    procedure trackBarStepSizeChange(Sender: TObject);
+    procedure btnParamResetClick(Sender: TObject);
 
   private
     numbPlots: Integer; // Number of plots displayed
@@ -232,6 +237,7 @@ type
     procedure addParamSlider();
     procedure addAllParamSliders(); // add sliders without user intervention.
     procedure SetSliderParamValues(sn, paramForSlider: Integer);
+    procedure resetSliderPositions(); // Reset param position to init model param value.
     procedure selectParameter(sNumb: Integer); // Get parameter for slider
     procedure LoadJSONFile();
     procedure EditSliderList(sn: Integer);
@@ -566,6 +572,7 @@ begin
   self.deleteAllSliders;
   self.resetOnLineSimButton;
   self.btnResetSimSpecies.Visible := false;
+  self.btnParamReset.visible := false;
   self.MainController.loadSBML(AText);
 end;
 
@@ -594,13 +601,15 @@ begin
          begin
          MainController.setOnline(true);
 		     self.btnResetSimSpecies.Visible := false;
+         self.btnParamReset.visible := false;
          onLineSimButton.font.color := clred;
          onLineSimButton.ElementClassName := 'btn btn-success btn-sm';
          onLineSimButton.caption := 'Simulation: Pause';
          simResultsMemo.visible := true;
-         MainController.SetRunTime(200); // Hard coded for now.
-         self.rtLengthEdit1.Text := FloatToStr(MainController.getRunTime);
-         if self.MainController.getCurrTime = 0  then
+         self.mainController.SetRunTime(200);
+         self.mainController.SetStepSize(self.trackBarStepSize.position);
+       //  self.rtLengthEdit1.Text := FloatToStr(MainController.getRunTime);
+         if self.mainController.getCurrTime = 0  then
            self.InitSimResultsTable();  // Set table of Sim results.
          self.rightPanelType := SIMULATION_PANEL;
          self.setRightPanels;
@@ -639,6 +648,7 @@ begin
    begin
      MainController.setOnline(false);
      self.btnResetSimSpecies.Visible := true;
+     self.btnParamReset.visible := true;
      MainController.SetTimerEnabled(false); // Turn off web timer (Stop simulation)
      onLineSimButton.font.color := clgreen;
      onLineSimButton.ElementClassName := 'btn btn-danger btn-sm';
@@ -660,6 +670,7 @@ begin
   self.networkPB1.Invalidate;
   self.resetOnLineSimButton;
   self.btnResetSimSpecies.Visible := false;
+  self.btnParamReset.visible := false;
 end;
 
 procedure TMainForm.initializePlots();
@@ -692,12 +703,8 @@ end;
 procedure TMainForm.PingSBMLLoaded(newModel:TModel);
 begin
   // Loading new sbml model changes reaction network.
-  //console.log(' sbml model loaded ');
-
   self.networkPB1.invalidate;
   self.networkUpdated := true;
- 
-  
 end;
 
 procedure TMainForm.networkHasChanged(sender: TObject);
@@ -726,7 +733,6 @@ var i: integer;
 begin
  //console.log('TMainForm.RxnParamComboBoxChange');
  i := self.RxnParamComboBox.ItemIndex;
- //self.rxnParamEdit.text := floattostr(networkController.network.reactions[networkController.selectedReaction].state.rateParams[i].getValue);
  self.rxnParamEdit.text := floattostr(networkController.selectedObjects[0].reaction.state.rateParams[i].getValue);
 end;
 
@@ -910,6 +916,25 @@ begin
   self.selectParameter(length(sliderParamAr));
 end;
 
+procedure TMainForm.btnParamResetClick(Sender: TObject);
+begin
+  self.mainController.resetSimParamValues();
+  self.resetSliderPositions();
+end;
+
+procedure TMainForm.resetSliderPositions();
+var pVal: double; i: integer;
+    pName: string;
+begin
+  for i := 0 to length(self.sliderPTBarAr) - 1 do
+    begin
+      pName :=  self.mainController.getModel.getP_Names[self.sliderParamAr[i]];
+      pVal := self.mainController.getModel.getP_Vals[self.sliderParamAr[i]];
+      self.sliderPTBLabelAr[i].caption := pName + ': ' + FloatToStr(pVal);
+      self.sliderPTBarAr[i].Position := trunc((1 / SLIDER_RANGE_MULT) * 100);
+    end;
+end;
+
 procedure TMainForm.ParamSliderOnChange(Sender: TObject);
 var
   i, p: Integer;
@@ -926,16 +951,18 @@ begin
       newPVal := self.sliderPTBarAr[i].Position * 0.01 *
         (sliderPHighAr[i] - sliderPLowAr[i]);
       // get slider parameter position in p_vals array
+      self.sliderPTBLabelAr[i].Caption := floattostr(newPVal); // new
       if self.mainController.IsOnline then
         begin
           self.MainController.stopTimer;
           isRunning := true;
         end;
-
-      self.MainController.changeParameterVal(p, newPVal);
+     // self.MainController.changeParameterVal(p, newPVal); // changes model param value
+      self.MainController.changeSimParameterVal( p, newPVal );
       if isRunning then self.MainController.startTimer;
-      self.sliderPTBLabelAr[i].caption := self.MainController.getModel.getP_Names[self.sliderParamAr[i]] + ': '
-        + FloatToStr(self.MainController.getModel.getP_Vals[self.sliderParamAr[i]]);
+      self.sliderPTBLabelAr[i].caption :=
+           self.MainController.getModel.getP_Names[self.sliderParamAr[i]] + ': '
+                                                         + FloatToStr(newPVal);
     end;
 end;
 
@@ -1122,7 +1149,8 @@ begin
 
   for i := 0 to length(self.mainController.getModel.getS_Names) - 1 do
     begin
-      simRTStr := simRTStr + ', ' + self.mainController.getModel.getS_Names()[i];
+      if not containsText(self.mainController.getModel.getS_Names()[i], '_Null') then // do not show null nodes
+        simRTStr := simRTStr + ', ' + self.mainController.getModel.getS_Names()[i];
     end;
   simResultsMemo.Lines.Add(simRTStr);
  
@@ -1155,9 +1183,18 @@ begin
   networkPB1.Invalidate;
 end;
 
-procedure TMainForm.stepSizeEdit1Change(Sender: TObject);
+procedure TMainForm.stepSizeEdit1Change(Sender: TObject); // no longer needed
 begin
-  MainController.SetTimerInterval(strToInt(stepSizeEdit1.Text));
+ // MainController.SetTimerInterval(strToInt(stepSizeEdit1.Text));
+end;
+
+procedure TMainForm.trackBarStepSizeChange(Sender: TObject);
+var position: integer;
+begin
+  position := self.trackBarStepSize.Position;
+  //console.log('Position: ', inttostr( position ));
+  self.lblStepSizeVal.Caption := inttostr( position );
+  self.MainController.SetTimerInterval( position );
 end;
 
 // Get new values (species amt) from simulation run (ODE integrator)
@@ -1166,6 +1203,7 @@ var
   dataStr: String;
   i: Integer;
   newValsAr: array of double;
+  currentStepSize:double;
 begin
   // Update table of data;
   newValsAr := newVals.getValAr;
@@ -1173,20 +1211,27 @@ begin
   dataStr := floatToStrf(newTime, ffFixed, 4, 4) + ', ';
   for i := 0 to length(newValsAr) - 1 do
     begin
-      if i = length(newValsAr)-1 then
-        dataStr := dataStr + floatToStrf(newValsAr[i], ffExponent, 6, 2)
-      else
-        dataStr := dataStr + floatToStrf(newValsAr[i], ffExponent, 6, 2) + ', ';
+      if not containsText(newVals.getNameVal(i).getId, '_Null') then // do not show null nodes
+        begin
+        if i = length(newValsAr)-1 then
+          dataStr := dataStr + floatToStrf(newValsAr[i], ffExponent, 6, 2)
+        else
+          dataStr := dataStr + floatToStrf(newValsAr[i], ffExponent, 6, 2) + ', ';
+        end;
     end;
   simResultsMemo.Lines.Add(dataStr);
   // Update plots:
-  inc(self.currentGeneration);
-  for i := 0 to plotsPanelList.count -1 do
-    begin
-       plotsPanelList[i].processOneScan(newTime, newValsAr,self.plotSpecies[i],
-             currentGeneration );
-    end;
-
+  inc(self.currentGeneration);//
+  if plotsPanelList.count > 0 then
+  begin
+    currentStepSize := strtofloat(self.lblStepSizeVal.Caption) * 0.001;
+   // not correct: self.currentGeneration := self.currentGeneration + trunc(currentStepSize / self.plotsPanelList[0].getInitStepSize );
+    for i := 0 to plotsPanelList.count -1 do
+      begin
+      plotsPanelList[i].processOneScan(newTime, newValsAr,self.plotSpecies[i],
+             currentGeneration, currentStepSize );    // pass in current step size.
+      end;
+  end;
 end;
 
 procedure TMainForm.loadNetworkButtonClick(Sender: TObject);

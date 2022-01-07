@@ -16,7 +16,7 @@ type
     dydt: TDoubleDynArray;
     s_Vals: array of Double; // species, Changes, one to one correlation: s_Vals[n] <=> s_Names[n]
     s_Names: array of String; // Use species ID as name
-
+    p_NameValAr: TVarNameValList;  // user can change
     eqList: String;   // Euler, RK4 ODE eq list.
     LSODAeq: String;  // Formated ODE eq list for LSODA solver.
     step: double;       // time stepsize
@@ -30,6 +30,7 @@ type
     ODEready: Boolean; // TRUE: ODE solver is setup. NEEDED ??
     FUpdate: TUpdateValEvent;// Used to send Updated values (species amts) to listeners.
     procedure WebTimer1Timer(Sender: TObject);
+    procedure setStepSize(newStep: double);
 
    public
     p : TDoubleDynArray;   // System/Model Parameters
@@ -43,10 +44,10 @@ type
     property OnUpdate: TUpdateValEvent read FUpdate write FUpdate;
     { Notify listener of updated values }
     procedure updateVals(time:double; updatedVals: array of double);
-    procedure setStepSize(newStep: double);
-    function getStepSize(): double;
+  //  procedure setStepSize(newStep: double);
+    function  getStepSize(): double;
     procedure generateEquations(); // Take SBML model and generate eqs compatible for solver.
-    function IsOnline(): Boolean;
+    function  IsOnline(): Boolean;
     procedure SetOnline(bOnline: Boolean);
     procedure SetTimerEnabled(bTimer: Boolean);
     procedure SetTimerInterval(nInterval: Integer);
@@ -55,6 +56,7 @@ type
     procedure startSimulation();
     procedure updateSimulation();
     procedure resetSpeciesVals(newVals: array of double);
+    procedure updateP_Val( index: integer; newVal: double );
     procedure testLSODA();  // Solve test equations. All pascal code.
  end;
 
@@ -67,7 +69,9 @@ begin
   self.WebTimer1 := TWebTimer.Create(nil);
   self.WebTimer1.OnTimer := WebTimer1Timer;
   self.WebTimer1.Enabled := false;
-  self.WebTimer1.Interval := 100;  // default, msec
+  if nStepSize < 0.01 then    // nStepSize is sec, nothing smaller than 0.01 sec
+    self.WebTimer1.Interval := 100  // default, msec
+  else self.WebTimer1.Interval := trunc( nStepSize * 1000 );
   self.online := false;
   self.model := newModel;
   self.ny := length(self.model.getS_Vals);
@@ -79,8 +83,12 @@ begin
   self.np := length(self.model.getP_Vals);
   self.solverUsed:= solver;
   self.generateEquations();
-
   setLength(self.p,self.np);
+
+  self.p_NameValAr := TVarNameValList.create;
+  self.p_NameValAr.copy( self.model.getP_NameValAr ); // copy parameters from model
+  self.p := self.p_NameValAr.getValAr;  // get parameter values array for integrator
+  //self.p := self.model.getP_Vals();
   setLength(self.dydt,self.ny);
   self.step:= nStepSize;
   if self.step <=0 then
@@ -117,7 +125,8 @@ end;
 
 procedure TSimulationJS.startSimulation();
 begin
-  self.p := self.model.getP_Vals();
+ // self.p := self.model.getP_Vals();  // ....
+  self.p := self.p_NameValAr.getValAr;
   self.ODEready := true;
   self.updateSimulation;
 end;
@@ -132,7 +141,8 @@ begin
         begin
         self.paramUpdated := false;
         end;
-      self.nextEval(self.time, self.s_Vals, self.model.getP_Vals);
+  //    self.nextEval(self.time, self.s_Vals, self.model.getP_Vals);
+        self.nextEval(self.time, self.s_Vals, self.p);
     end
     // else error msg needed?
   else
@@ -330,6 +340,13 @@ var i: integer;
      FUpdate( time, updatedList );
      end;
  end;
+
+procedure TSimulationJS.updateP_Val( index: integer; newVal: double );
+begin
+  //self.p_NameValAr.setVal( index, newVal );
+  if (length(self.p) > index) and (index > -1) then
+    self.p[index] := newVal;
+end;
 
 procedure TSimulationJS.setODEsolver(solverToUse: ODESolver);
  begin

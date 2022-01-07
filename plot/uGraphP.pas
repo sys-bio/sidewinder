@@ -27,12 +27,9 @@ type
     graphScreenWidth, canvasHeight : integer;
     canvasWidth: integer;
     yAxisHt: integer; // height of yaxis in pixels.
-    //y_Mult: array of double; // array of y axis multipliers, default is 1. NOT used currently.
     step: double;     // step size
-    //simLength: double; // simulation length , not used
     xScaleHeight : integer;
-    yScaleWidth: integer; // new
-   // paintBox : TWebPaintBox;
+    yScaleWidth: integer;
     procedure drawGraph (canvas : TCanvas; x : TDataType;  y : TDouble_MAXSIZE_Array; size, startp, endp : integer);
     procedure change_xorigin (wxmin, wxmax : integer);
     procedure draw_x_axis (const x : TDataType; canvas : TCanvas; currTime: double);
@@ -51,7 +48,9 @@ type
     procedure setY_valsMax(max: double); // Use to set Y scale max for plot
     procedure xConvertFactors();
     procedure yConvertFactors();
-    function getY_valsMax(): double;
+    function  getY_valsMax(): double;
+    procedure setStepSize( newStepSize: double );
+    function  getStepSize(): double;
 
    end;
 
@@ -76,6 +75,7 @@ begin
   // y_vals should ideally be sized here but we don't know the size until addPoint
   // simLength := runTime; not used
   step := stepSize;
+ // console.log('TPlotGraph.initGraph, step: ', floattostr(self.step) );
   y_valsMax := wymax_n;  // Initial val, can be adjusted later.
   canvasHeight := symax_n - symin_n; // Get canvas height before adjusting symax
   canvasWidth  := sxmax_n - sxmin_n;
@@ -363,6 +363,17 @@ end;
 function TPlotGraph.getY_valsMax(): double;
 begin
   Result := self.y_valsMax
+end;
+
+procedure TPlotGraph.setStepSize( newStepSize: double );
+begin
+  self.step := newStepSize;
+  // console.log('TPlotGraph.setStepSize, step: ', floattostr(self.step) );
+end;
+
+function  TPlotGraph.getStepSize(): double;
+begin
+  Result := self.step;
 end;
 
 end.

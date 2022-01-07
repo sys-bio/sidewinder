@@ -61,7 +61,8 @@ type
     procedure loadSBML(sbmlStr: String);
     procedure saveSBML(fileName: String);
     procedure modelWritten(modelStr: String); // SBML string created and ready to use.
-    procedure changeParameterVal(pos: Integer; newVal: Double);
+    procedure changeParameterVal(pos: Integer; newVal: Double); // change model parameter value.
+    procedure changeSimParameterVal( pos: Integer; newVal: Double );
     procedure stopTimer();
     procedure startTimer();
     procedure resetCurrTime();
@@ -73,6 +74,7 @@ type
             // Send new values to listeners.
     procedure getVals(newTime: Double; newVals: TVarNameValList);
             // Get new values from simulation run.
+    procedure resetSimParamValues(); // Reset simulator p values to orig model p values.
     procedure addSimListener( newListener: TUpdateSimEvent );
     procedure addSBMLListener( newListener: TUpdateModelEvent );
     procedure addNetworkListener( newListener: TNetworkChangeEvent );
@@ -84,7 +86,7 @@ begin
   self.sbmlText := '';
   self.modelLoaded := false;
   self.resetCurrTime;
-  self.stepSize := 0.1; // 100 msec
+  self.stepSize := 0.1; // default, 100 msec
   self.runTime := 500; // sec
   self.networkUpdate := false;
   self.saveSBMLFlag := false;
@@ -137,9 +139,9 @@ end;
 
 procedure TControllerMain.createSimulation();
 begin
-//console.log('TControllerMain.createSimulation');
   self.clearSim;
   self.currTime := 0;
+ // console.log('StepSize when creating sim: ', floattostr(self.stepSize) );
   self.runSim := TSimulationJS.create(self.runTime, self.stepSize, self.SBMLmodel, self.solverUsed);
   self.runSim.OnUpdate := self.getVals; // register callback function.
 end;
@@ -185,10 +187,9 @@ end;
 procedure TControllerMain.networkUpdated(sender: TObject);
 var i: integer;
 begin
- // console.log('TControllerMain.networkUpdated: Network changed');
   if sender is TNode then
     begin
-     console.log('TControllerMain.networkUpdated: Node conc changed');
+     //console.log('TControllerMain.networkUpdated: Node conc changed');
      if self.sbmlmodel <> nil then
        self.networkUpdate := self.updateSpeciesNodeConc( sender as TNode )
      else self.networkUpdate := true;
@@ -225,7 +226,7 @@ var i: integer;
     aVal: double;
 begin
   Result := true;
-   console.log('TControllerMain.updateSpeciesNodeConc');
+   //console.log('TControllerMain.updateSpeciesNodeConc');
   for i := 0 to self.sbmlmodel.getSpeciesNumb -1 do
       begin
       if self.sbmlmodel.getSBMLspecies(i).getID = node.state.id then
@@ -333,7 +334,9 @@ end;
 
 procedure TControllerMain.SetTimerInterval(nInterval: Integer);
 begin
-  self.runSim.SetTimerInterval(nInterval);
+  self.SetStepSize( nInterval );
+  if self.runSim <> nil then
+    self.runSim.SetTimerInterval(nInterval);
 end;
 
 procedure TControllerMain.SetRunTime(newTime: Double);
@@ -415,6 +418,17 @@ begin
   self.sbmlmodel.changeParamVal(pos, newVal);
 end;
 
+procedure TControllerMain.changeSimParameterVal(pos: Integer; newVal: Double );
+begin
+  self.runSim.updateP_Val( pos, newVal );
+end;
+
+procedure TControllerMain.resetSimParamValues(); // grab model p values and pass to sim.
+var i: integer;
+begin
+  for i := 0 to self.sbmlmodel.getP_NameValAr.getNumPairs -1 do
+    self.changeSimParameterVal( i, self.sbmlmodel.getP_Vals()[i] );
+end;
 
 procedure TControllerMain.writeSimData(fileName: string; data: TStrings);
 var simData: string;
@@ -426,7 +440,7 @@ begin
      // console.log( '***** sim results:  ', data[i]);
       simData := simData + data[i] + sLineBreak;
     end;
-  console.log( ' end of results');
+  //console.log( ' end of results');
    try
      Application.DownloadTextFile(simData, fileName);
    except
