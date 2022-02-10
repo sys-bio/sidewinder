@@ -211,6 +211,8 @@ type
   private
     numbPlots: Integer; // Number of plots displayed
     numbSliders: Integer; // Number of parameter sliders
+//    simTimeMultiplier: double; // sim step multiplier.  NOT needed
+    stepSize: double; // default is 0.1
     rightPanelType: TPanelType;
     networkUpdated: boolean; // Network has changed, update model, plots, etc when convenient.
     rxnReactStoichLabels: TList<TWebLabel>;
@@ -325,15 +327,12 @@ begin
   btnNodeOutlineColor.Enabled :=false;
 end;
 
-
-
 procedure TMainForm.enableEditReactionPanel;
 begin
   edtReactionId.Enabled := true;
   btnReactionColor.Enabled := true;
   edtReactionWidth.Enabled := true;
 end;
-
 
 procedure TMainForm.disableEditReactionPanel;
 begin
@@ -606,8 +605,11 @@ begin
          onLineSimButton.ElementClassName := 'btn btn-success btn-sm';
          onLineSimButton.caption := 'Simulation: Pause';
          simResultsMemo.visible := true;
-         self.mainController.SetRunTime(200);
-         self.mainController.SetStepSize(self.trackBarStepSize.position);
+         self.mainController.SetRunTime(500);
+         // default timer interval is 100 msec:
+         // multiplier default is 10, range 1 - 50
+         self.mainController.SetTimerInterval(round(1000/self.trackBarStepSize.position));
+         self.mainController.SetStepSize(self.stepSize);
        //  self.rtLengthEdit1.Text := FloatToStr(MainController.getRunTime);
          if self.mainController.getCurrTime = 0  then
            self.InitSimResultsTable();  // Set table of Sim results.
@@ -623,6 +625,7 @@ begin
        onLineSimButton.font.color := clgreen;
        onLineSimButton.ElementClassName := 'btn btn-danger btn-sm';
        onLineSimButton.caption := 'Simulation: Play';
+
        // add a default plot:
        if self.numbPlots < 1 then
          begin
@@ -1003,7 +1006,7 @@ begin
   self.zoomTrackBar.Position := 10;
   self.netDrawScrollBarHoriz.Value := 0;
   self.netDrawScrollBarVert.Value := 0;
-
+  self.stepSize := 0.1;
   // This is to match the boostrap colors
   WebMainMenu.Appearance.BackgroundColor := RGB (50,56,62);
 
@@ -1031,7 +1034,7 @@ begin
   self.mainController.setODEsolver;
   self.networkUpdated := false;
   self.saveSimResults := false;
-  currentGeneration := 0;
+  self.currentGeneration := 0;
   self.mainController.addSBMLListener( @self.PingSBMLLoaded );
   self.mainController.addNetworkListener( @self.networkHasChanged );
   self.mainController.addSimListener( @self.getVals ); // notify when new Sim results
@@ -1185,16 +1188,16 @@ end;
 
 procedure TMainForm.stepSizeEdit1Change(Sender: TObject); // no longer needed
 begin
- // MainController.SetTimerInterval(strToInt(stepSizeEdit1.Text));
+ //  self.mainController.SetStepSize(strToInt(stepSizeEdit1.Text)*0.001);
+  // self.stepSize := strToInt(stepSizeEdit1.Text)*0.001 ;
 end;
 
 procedure TMainForm.trackBarStepSizeChange(Sender: TObject);
-var position: integer;
+  var position: double;
 begin
   position := self.trackBarStepSize.Position;
-  //console.log('Position: ', inttostr( position ));
-  self.lblStepSizeVal.Caption := inttostr( position );
-  self.MainController.SetTimerInterval( position );
+  self.lblStepSizeVal.Caption := floattostr( (position*0.1) ) + 'x';
+  self.MainController.SetTimerInterval( round(1000/position) ); //timer interval does change. Speeds up/down sim
 end;
 
 // Get new values (species amt) from simulation run (ODE integrator)
@@ -1221,15 +1224,14 @@ begin
     end;
   simResultsMemo.Lines.Add(dataStr);
   // Update plots:
-  inc(self.currentGeneration);//
+  inc(self.currentGeneration);
+
   if plotsPanelList.count > 0 then
   begin
-    currentStepSize := strtofloat(self.lblStepSizeVal.Caption) * 0.001;
-   // not correct: self.currentGeneration := self.currentGeneration + trunc(currentStepSize / self.plotsPanelList[0].getInitStepSize );
     for i := 0 to plotsPanelList.count -1 do
       begin
       plotsPanelList[i].processOneScan(newTime, newValsAr,self.plotSpecies[i],
-             currentGeneration, currentStepSize );    // pass in current step size.
+             self.currentGeneration );
       end;
   end;
 end;

@@ -21,6 +21,7 @@ type
     LSODAeq: String;  // Formated ODE eq list for LSODA solver.
     step: double;       // time stepsize
     time: double;       // Current time of run.
+   // stepMultiplier: double; // 'speed' up/down for each timer interval
     runTime: double;    // Length of simulation.
     solverUsed: ODESolver;
     lode: TLsoda;       // LSODA solver
@@ -69,9 +70,7 @@ begin
   self.WebTimer1 := TWebTimer.Create(nil);
   self.WebTimer1.OnTimer := WebTimer1Timer;
   self.WebTimer1.Enabled := false;
-  if nStepSize < 0.01 then    // nStepSize is sec, nothing smaller than 0.01 sec
-    self.WebTimer1.Interval := 100  // default, msec
-  else self.WebTimer1.Interval := trunc( nStepSize * 1000 );
+  self.WebTimer1.Interval := 100;  // default, msec
   self.online := false;
   self.model := newModel;
   self.ny := length(self.model.getS_Vals);
@@ -88,15 +87,16 @@ begin
   self.p_NameValAr := TVarNameValList.create;
   self.p_NameValAr.copy( self.model.getP_NameValAr ); // copy parameters from model
   self.p := self.p_NameValAr.getValAr;  // get parameter values array for integrator
-  //self.p := self.model.getP_Vals();
+
   setLength(self.dydt,self.ny);
+ // console.log(' nStepSize: ',nStepSize,' web interval: ',self.WebTimer1.Interval  );
   self.step:= nStepSize;
   if self.step <=0 then
-    self.step:= 1; //  Default
+    self.step:= 0.1; //  Default
 
   if runTime >0 then
     self.runTime:= runTime
-  else self.runTime:= 10;
+  else self.runTime:= 500;
 
   self.time:= 0;
 
@@ -136,7 +136,7 @@ begin
 //console.log( 'In  TSimulationJS.updateSimulation');
   if self.ODEready = true then
     begin
-      self.setStepSize(self.WebTimer1.Interval * 0.001); // 1 sec = 1000 msec;
+    //  self.setStepSize(self.WebTimer1.Interval * 0.001); // 1 sec = 1000 msec;
       if self.paramUpdated then
         begin
         self.paramUpdated := false;
@@ -349,20 +349,21 @@ begin
 end;
 
 procedure TSimulationJS.setODEsolver(solverToUse: ODESolver);
- begin
+begin
    self.solverUsed:= solverToUse;
- end;
+end;
 
 
 procedure TSimulationJS.setStepSize(newStep: double);
- begin
-    self.step:= newStep;
- end;
+begin
+  if newStep > 0.0 then self.step:= newStep
+  else self.step := 0.1;
+end;
 
 function TSimulationJS.getStepSize(): double;
- begin
+begin
   Result:= self.step;
- end;
+end;
 
 function TSimulationJS.IsOnline(): Boolean;
 begin
@@ -381,6 +382,7 @@ end;
 
 procedure TSimulationJS.SetTimerInterval(nInterval: Integer);
 begin
+ // console.log('SimultionJS.setTimerInterval: ', nInterval);
   self.WebTimer1.Interval := nInterval;
 end;
 

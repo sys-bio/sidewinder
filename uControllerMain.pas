@@ -47,7 +47,7 @@ type
     procedure SetRunTime(newTime: Double);
     function GetRunTime(): Double;
     function GetStepSize(): Double;
-    procedure SetStepSize(newStepSize: integer);
+    procedure SetStepSize(newStepSize: double); // default 0.1 = 100 msec
     function getCurrTime: Double;
     function IsOnline(): Boolean;
     procedure SetOnline(bOnline: Boolean);
@@ -57,7 +57,7 @@ type
     procedure clearSim();
     function  hasNetworkChanged(): Boolean;  // true: network changed, need to update model.
     procedure SetTimerEnabled(bTimer: Boolean);
-    procedure SetTimerInterval(nInterval: Integer);
+    procedure SetTimerInterval(nInterval: Integer);// nInterval is msec
     procedure loadSBML(sbmlStr: String);
     procedure saveSBML(fileName: String);
     procedure modelWritten(modelStr: String); // SBML string created and ready to use.
@@ -141,8 +141,12 @@ procedure TControllerMain.createSimulation();
 begin
   self.clearSim;
   self.currTime := 0;
+  if self.stepSize < 0.0 then self.stepSize := 0.1; // TODO fix this issue, why necessary?
+
+
  // console.log('StepSize when creating sim: ', floattostr(self.stepSize) );
   self.runSim := TSimulationJS.create(self.runTime, self.stepSize, self.SBMLmodel, self.solverUsed);
+ // set timerinterval ?
   self.runSim.OnUpdate := self.getVals; // register callback function.
 end;
 
@@ -226,7 +230,6 @@ var i: integer;
     aVal: double;
 begin
   Result := true;
-   //console.log('TControllerMain.updateSpeciesNodeConc');
   for i := 0 to self.sbmlmodel.getSpeciesNumb -1 do
       begin
       if self.sbmlmodel.getSBMLspecies(i).getID = node.state.id then
@@ -288,9 +291,11 @@ begin
   Result := self.StepSize;
 end;
 
-procedure TControllerMain.SetStepSize(newStepSize: integer);
+procedure TControllerMain.SetStepSize(newStepSize: double);
 begin
-  self.StepSize := newStepSize * 0.001;
+  if newStepSize > 0.0 then
+    self.StepSize := newStepSize
+  else self.stepSize := 0.1;
 end;
 
 function TControllerMain.IsOnline(): Boolean;
@@ -331,12 +336,12 @@ begin
   if bTimer then self.runSim.updateSimulation();
 
 end;
-
+                        // nInterval is msec
 procedure TControllerMain.SetTimerInterval(nInterval: Integer);
 begin
-  self.SetStepSize( nInterval );
+  //self.SetStepSize( nInterval );  // decouple stepsize from timer interval
   if self.runSim <> nil then
-    self.runSim.SetTimerInterval(nInterval);
+    self.runSim.SetTimerInterval(nInterval); // 100 = 100 msec
 end;
 
 procedure TControllerMain.SetRunTime(newTime: Double);
@@ -437,10 +442,9 @@ begin
   simData := '';
   for i := 0 to data.count -1 do
     begin
-     // console.log( '***** sim results:  ', data[i]);
       simData := simData + data[i] + sLineBreak;
     end;
-  //console.log( ' end of results');
+
    try
      Application.DownloadTextFile(simData, fileName);
    except

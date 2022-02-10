@@ -58,7 +58,7 @@ public
   procedure adjustPlotHeight(totalPlots: integer; newHeight: integer);
   procedure initializePlot(newRunTime: double; newStepSize: double; plotSpeciesList: TSpeciesList);
   procedure processOneScan( t_new: Double; y_new: array of Double; plotSpecies: TSpeciesList;
-                            currentGeneration: Integer; currStepSize: double );
+                            currentGeneration: Integer );
   property OnPlotUpdate: TPlotMouseEvent read EUpdatePlot write EUpdatePlot;
 end;
 
@@ -127,7 +127,7 @@ implementation
              self.xscaleHeight,  YSCALEWIDTH , stepSize);
 
     // Display the plot:
-    self.processOneScan(0, self.plotInitVals, plotSpeciesList, 0, stepSize );
+    self.processOneScan(0, self.plotInitVals, plotSpeciesList, 0 );
     self.plotWPanel.visible := true;
     self.plotPB.visible := true;
    // Max viewable steps is PlotWebPB.width (1 pixel per step).
@@ -276,15 +276,12 @@ implementation
 
 
   procedure TPlotPanel.processOneScan( t_new: Double; y_new: array of Double;
-            plotSpecies: TSpeciesList; currentGeneration: Integer; currStepSize: double );
+                        plotSpecies: TSpeciesList; currentGeneration: Integer );
   var i: integer;
     plot_y: array of boolean;
-   // currentPixel: integer;
+
   begin
     SetLength(plot_y, length(y_new));
-    self.stepSize := currStepSize;
-    self.plotGraph.setStepSize(currStepSize);
-   // currentPixel := currentGeneration;
     for i := 0 to length(y_new) - 1 do
       begin
         if plotSpecies[i] = '' then
@@ -295,7 +292,6 @@ implementation
       // Dynamically draw plots:
     self.plotGraph.addPoint(currentGeneration, y_new,  plot_y, true, t_new);
     self.plotPB.Canvas.draw (0, 0, self.plotGraph.bitmap);
-
   end;
 
 

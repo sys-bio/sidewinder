@@ -34,44 +34,46 @@ object mainForm: TmainForm
       WidthPercent = 100.000000000000000000
     end
     object lblStepSizeMin: TWebLabel
-      Left = 1236
+      Left = 1225
       Top = 25
-      Width = 12
+      Width = 22
       Height = 13
-      Caption = '10'
+      Caption = '0.1x'
       ElementFont = efCSS
       HeightStyle = ssAuto
       HeightPercent = 100.000000000000000000
       WidthPercent = 100.000000000000000000
     end
     object lblStepSizeMax: TWebLabel
-      Left = 1410
+      Left = 1405
       Top = 25
-      Width = 24
+      Width = 12
       Height = 13
-      Caption = '1000'
+      Caption = '3x'
       ElementFont = efCSS
       HeightStyle = ssAuto
       HeightPercent = 100.000000000000000000
       WidthPercent = 100.000000000000000000
     end
     object lblStepSize: TWebLabel
-      Left = 1275
+      Left = 1265
       Top = 5
-      Width = 83
+      Width = 97
       Height = 13
-      Caption = 'Step Size (msec):'
+      Hint = 'Speed up/down simulation'
+      Caption = 'Sim speed multiplier:'
       ElementFont = efCSS
       HeightStyle = ssAuto
       HeightPercent = 100.000000000000000000
+      ShowHint = False
       WidthPercent = 100.000000000000000000
     end
     object lblStepSizeVal: TWebLabel
-      Left = 1364
+      Left = 1373
       Top = 5
-      Width = 18
+      Width = 12
       Height = 13
-      Caption = '100'
+      Caption = '1x'
       ElementFont = efCSS
       HeightStyle = ssAuto
       HeightPercent = 100.000000000000000000
@@ -109,8 +111,8 @@ object mainForm: TmainForm
       OnClick = mnuSaveClick
     end
     object onLineSimButton: TWebButton
-      Left = 654
-      Top = 11
+      Left = 566
+      Top = 10
       Width = 120
       Height = 28
       Hint = 'If network ready, start simulation'
@@ -129,9 +131,9 @@ object mainForm: TmainForm
       OnClick = onLineSimButtonClick
     end
     object btnAddPlot: TWebButton
-      Left = 974
+      Left = 908
       Top = 10
-      Width = 96
+      Width = 77
       Height = 32
       Caption = 'Add Plot'
       ChildOrder = 5
@@ -143,7 +145,7 @@ object mainForm: TmainForm
       OnClick = btnAddPlotClick
     end
     object btnParamAddSlider: TWebButton
-      Left = 1076
+      Left = 1003
       Top = 10
       Width = 133
       Height = 32
@@ -205,7 +207,7 @@ object mainForm: TmainForm
       OnClick = SBMLloadButtonClick
     end
     object SaveSBMLButton: TWebButton
-      Left = 536
+      Left = 424
       Top = 10
       Width = 96
       Height = 32
@@ -219,7 +221,7 @@ object mainForm: TmainForm
       OnClick = SaveSBMLButtonClick
     end
     object btnResetSimSpecies: TWebButton
-      Left = 840
+      Left = 787
       Top = 10
       Width = 47
       Height = 32
@@ -242,23 +244,25 @@ object mainForm: TmainForm
       OnClick = resetInitValsButtonClick
     end
     object trackBarStepSize: TWebTrackBar
-      Left = 1254
+      Left = 1249
       Top = 24
       Width = 150
       Height = 20
+      Hint = 'Speed up/down simulation'
       ElementClassName = 'custom-range'
       HeightPercent = 100.000000000000000000
       WidthPercent = 100.000000000000000000
       ChildOrder = 13
       ElementFont = efCSS
-      Max = 1000
-      Min = 10
-      Position = 100
+      Max = 30
+      Min = 1
+      Position = 10
       Role = ''
+      ShowHint = True
       OnChange = trackBarStepSizeChange
     end
     object btnParamReset: TWebButton
-      Left = 893
+      Left = 842
       Top = 10
       Width = 60
       Height = 32
@@ -1288,7 +1292,7 @@ object mainForm: TmainForm
           760)
         object pnlSimResultsFile: TWebPanel
           Left = 24
-          Top = 401
+          Top = 361
           Width = 205
           Height = 73
           ElementClassName = 'card'
