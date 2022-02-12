@@ -65,7 +65,6 @@ object mainForm: TmainForm
       ElementFont = efCSS
       HeightStyle = ssAuto
       HeightPercent = 100.000000000000000000
-      ShowHint = False
       WidthPercent = 100.000000000000000000
     end
     object lblStepSizeVal: TWebLabel
@@ -110,7 +109,7 @@ object mainForm: TmainForm
       WidthPercent = 100.000000000000000000
       OnClick = mnuSaveClick
     end
-    object onLineSimButton: TWebButton
+    object btnOnLineSim: TWebButton
       Left = 566
       Top = 10
       Width = 120
@@ -128,7 +127,7 @@ object mainForm: TmainForm
       ParentFont = False
       ShowHint = True
       WidthPercent = 100.000000000000000000
-      OnClick = onLineSimButtonClick
+      OnClick = btnOnLineSimClick
     end
     object btnAddPlot: TWebButton
       Left = 908
@@ -139,8 +138,8 @@ object mainForm: TmainForm
       ChildOrder = 5
       ElementClassName = 'btn btn-primary btn-sm'
       ElementFont = efCSS
+      Enabled = False
       HeightPercent = 100.000000000000000000
-      Visible = False
       WidthPercent = 100.000000000000000000
       OnClick = btnAddPlotClick
     end
@@ -154,6 +153,7 @@ object mainForm: TmainForm
       ChildOrder = 6
       ElementClassName = 'btn btn-primary btn-sm'
       ElementFont = efCSS
+      Enabled = False
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -11
@@ -162,7 +162,6 @@ object mainForm: TmainForm
       HeightPercent = 100.000000000000000000
       ParentFont = False
       ShowHint = True
-      Visible = False
       WidthPercent = 100.000000000000000000
       OnClick = btnParamAddSliderClick
     end
@@ -243,7 +242,7 @@ object mainForm: TmainForm
       WidthPercent = 100.000000000000000000
       OnClick = resetInitValsButtonClick
     end
-    object trackBarStepSize: TWebTrackBar
+    object trackBarSimSpeed: TWebTrackBar
       Left = 1249
       Top = 24
       Width = 150
@@ -259,7 +258,7 @@ object mainForm: TmainForm
       Position = 10
       Role = ''
       ShowHint = True
-      OnChange = trackBarStepSizeChange
+      OnChange = trackBarSimSpeedChange
     end
     object btnParamReset: TWebButton
       Left = 842
@@ -277,6 +276,23 @@ object mainForm: TmainForm
       Visible = False
       WidthPercent = 100.000000000000000000
       OnClick = btnParamResetClick
+    end
+    object btnResetRun: TWebButton
+      Left = 700
+      Top = 10
+      Width = 77
+      Height = 25
+      Hint = 'Reset time, species and parameters to initial conditions.'
+      Caption = 'Reset all'
+      ChildOrder = 17
+      ElementClassName = 'btn btn-primary btn-sm'
+      ElementFont = efCSS
+      Enabled = False
+      HeightStyle = ssAuto
+      HeightPercent = 100.000000000000000000
+      ShowHint = True
+      WidthPercent = 100.000000000000000000
+      OnClick = btnResetRunClick
     end
   end
   object bottomWPanel: TWebPanel
@@ -1292,7 +1308,7 @@ object mainForm: TmainForm
           760)
         object pnlSimResultsFile: TWebPanel
           Left = 24
-          Top = 361
+          Top = 341
           Width = 205
           Height = 73
           ElementClassName = 'card'

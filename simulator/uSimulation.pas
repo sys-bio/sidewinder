@@ -21,7 +21,6 @@ type
     LSODAeq: String;  // Formated ODE eq list for LSODA solver.
     step: double;       // time stepsize
     time: double;       // Current time of run.
-   // stepMultiplier: double; // 'speed' up/down for each timer interval
     runTime: double;    // Length of simulation.
     solverUsed: ODESolver;
     lode: TLsoda;       // LSODA solver
@@ -45,7 +44,6 @@ type
     property OnUpdate: TUpdateValEvent read FUpdate write FUpdate;
     { Notify listener of updated values }
     procedure updateVals(time:double; updatedVals: array of double);
-  //  procedure setStepSize(newStep: double);
     function  getStepSize(): double;
     procedure generateEquations(); // Take SBML model and generate eqs compatible for solver.
     function  IsOnline(): Boolean;
@@ -54,10 +52,12 @@ type
     procedure SetTimerInterval(nInterval: Integer);
     procedure stopTimer();
     procedure startTimer();
+    function  getTime():double;
+    procedure setTime( newTime: double );
     procedure startSimulation();
     procedure updateSimulation();
-    procedure resetSpeciesVals(newVals: array of double);
     procedure updateP_Val( index: integer; newVal: double );
+    function  getP_Vals(): TVarNameValList;
     procedure testLSODA();  // Solve test equations. All pascal code.
  end;
 
@@ -97,7 +97,6 @@ begin
   if runTime >0 then
     self.runTime:= runTime
   else self.runTime:= 500;
-
   self.time:= 0;
 
   // lsoda setup
@@ -125,7 +124,6 @@ end;
 
 procedure TSimulationJS.startSimulation();
 begin
- // self.p := self.model.getP_Vals();  // ....
   self.p := self.p_NameValAr.getValAr;
   self.ODEready := true;
   self.updateSimulation;
@@ -141,28 +139,12 @@ begin
         begin
         self.paramUpdated := false;
         end;
-  //    self.nextEval(self.time, self.s_Vals, self.model.getP_Vals);
+     //   console.log('updateSimulation: s[0]: ',self.s_Vals[0]);
         self.nextEval(self.time, self.s_Vals, self.p);
     end
     // else error msg needed?
   else
     self.startSimulation();
-end;
-
-procedure TSimulationJS.resetSpeciesVals(newVals: array of double);
-var i: integer;
-begin
-  if Length( self.s_Vals ) <> Length( newVals ) then
-    begin
-    setLength( self.s_Vals, Length( newVals ) );
-    console.log('TSimulationJS.resetSpeciesVals: species count does not match');
-    end;
-
-  for i := 0 to Length( newVals )- 1 do
-    begin
-    self.s_Vals[i] := newVals[i];
-    end;
-
 end;
 
 procedure TSimulationJS.generateEquations();
@@ -204,7 +186,6 @@ begin
    if self.solverUsed = LSODAS then
    begin
     self.lode.p:= self.p; // set param vals.
-// console.log('simulation, self_p: ',self.lode.p[0]);
     tNext:= self.step;
     y:= TVector.create(Length(s));
     for i := 1 to Length(s) do
@@ -293,6 +274,7 @@ procedure  TSimulationJS.eval2 ( time:double; s: array of double);
      y: TVector;
      tNext: double;
 begin
+
    numSteps:= Round(self.runTime/self.step);  // change to small amt, maybe 5 steps?
    if self.solverUsed = LSODAS then
    begin
@@ -303,7 +285,6 @@ begin
       begin
         y[i]:= s[i-1];
       end;
-
     self.time:= time; // reset time to current time.
     self.lode.Execute (y, self.time, tNext);
     self.time := tNext;
@@ -343,9 +324,17 @@ var i: integer;
 
 procedure TSimulationJS.updateP_Val( index: integer; newVal: double );
 begin
-  //self.p_NameValAr.setVal( index, newVal );
+
   if (length(self.p) > index) and (index > -1) then
+    begin
     self.p[index] := newVal;
+    self.p_NameValAr.setVal( index, newVal );
+    end;
+end;
+
+function TSimulationJS.getP_Vals(): TVarNameValList;
+begin
+  Result := self.p_NameValAr;
 end;
 
 procedure TSimulationJS.setODEsolver(solverToUse: ODESolver);
@@ -353,6 +342,16 @@ begin
    self.solverUsed:= solverToUse;
 end;
 
+function  TSimulationJS.getTime():double;
+begin
+  Result := self.time;
+end;
+
+procedure TSimulationJS.setTime( newTime: double );
+begin
+  if newTime >= 0 then
+    self.time := newTime;
+end;
 
 procedure TSimulationJS.setStepSize(newStep: double);
 begin

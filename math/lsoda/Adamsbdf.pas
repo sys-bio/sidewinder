@@ -255,8 +255,6 @@ begin
  // FDerivatives := DummyFcn;  { Install the default fcn handler, in case user forgets }
 end;
 
-
-
 destructor TLsoda.destroy;
 var i : integer;
 begin

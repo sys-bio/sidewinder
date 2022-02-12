@@ -31,7 +31,7 @@ type
     btnSampleLayout: TWebButton;
     btnAbout: TWebButton;
     btnCenter: TWebButton;
-    onLineSimButton: TWebButton;
+    btnOnLineSim: TWebButton;
     WebPanel1: TWebPanel;
     xLbl: TWebLabel;
     yLbl: TWebLabel;
@@ -129,12 +129,13 @@ type
     WebLabel3: TWebLabel;
     edtReactionWidth: TWebSpinEdit;
     WebLabel4: TWebLabel;
-    trackBarStepSize: TWebTrackBar;
+    trackBarSimSpeed: TWebTrackBar;
     lblStepSizeMin: TWebLabel;
     lblStepSizeMax: TWebLabel;
     lblStepSize: TWebLabel;
     lblStepSizeVal: TWebLabel;
     btnParamReset: TWebButton;
+    btnResetRun: TWebButton;
 
     procedure btnUniUniClick(Sender: TObject);
     procedure btnBiBiClick(Sender: TObject);
@@ -165,7 +166,7 @@ type
     procedure netDrawScrollBarVertValueChanged(Sender: TObject; Value: Double);
     procedure netDrawScrollBarHorizValueChanged(Sender: TObject; Value: Double);
 
-    procedure onLineSimButtonClick(Sender: TObject);
+    procedure btnOnLineSimClick(Sender: TObject);
     procedure btnAddPlotClick(Sender: TObject);
     procedure btnParamAddSliderClick(Sender: TObject);
     procedure loadNetworkButtonClick(Sender: TObject);
@@ -205,8 +206,9 @@ type
     procedure btnCloseReactionEditPanelClick(Sender: TObject);
     procedure btnReactionColorSelect(Sender: TObject);
     procedure edtReactionWidthChange(Sender: TObject);
-    procedure trackBarStepSizeChange(Sender: TObject);
+    procedure trackBarSimSpeedChange(Sender: TObject);
     procedure btnParamResetClick(Sender: TObject);
+    procedure btnResetRunClick(Sender: TObject);
 
   private
     numbPlots: Integer; // Number of plots displayed
@@ -244,7 +246,7 @@ type
     procedure LoadJSONFile();
     procedure EditSliderList(sn: Integer);
             // delete, change param slider as needed using TWebListBox.
-    procedure resetOnLineSimButton(); // reset to default look and caption of 'Setup simulation'
+    procedure resetBtnOnLineSim(); // reset to default look and caption of 'Setup simulation'
     procedure deleteSlider(sn: Integer); // sn: slider index
     procedure deleteAllSliders();
     procedure adjustRightTabWPanels(); // Adjust all right panels
@@ -569,19 +571,23 @@ begin
   // Check if sbmlmodel already created, if so, destroy before creating ?
   self.deleteAllPlots;
   self.deleteAllSliders;
-  self.resetOnLineSimButton;
-  self.btnResetSimSpecies.Visible := false;
-  self.btnParamReset.visible := false;
+  self.resetBtnOnLineSim;
+  self.btnResetSimSpecies.enabled := false;
+  self.btnParamReset.enabled := false;
+  self.btnResetRun.enabled := false;
   self.MainController.loadSBML(AText);
 end;
 
-procedure TMainForm.resetOnLineSimButton();
+procedure TMainForm.resetBtnOnLineSim();
 begin
-  onLineSimButton.ElementClassName := 'btn btn-primary btn-sm';
-  onLineSimButton.caption := 'Setup Simulation';
+  self.btnOnLineSim.ElementClassName := 'btn btn-primary btn-sm';
+  self.btnOnLineSim.caption := 'Setup Simulation';
+  self.btnAddPlot.Enabled := false;
+  self.btnParamAddSlider.Enabled := false;
+  //onLineSimButton.Enabled := false;
 end;
 
-procedure TMainForm.onLineSimButtonClick(Sender: TObject);
+procedure TMainForm.btnOnLineSimClick(Sender: TObject);
 var
   i: Integer;
   yScaleWidth, newYMax : integer;
@@ -594,21 +600,24 @@ begin
 
  if MainController.isOnline = false then
    begin
+     self.btnAddPlot.Enabled := true;
+     self.btnParamAddSlider.Enabled := true;
      if self.networkUpdated = false then
        begin
        if self.mainController.IsModelLoaded then
          begin
          MainController.setOnline(true);
-		     self.btnResetSimSpecies.Visible := false;
-         self.btnParamReset.visible := false;
-         onLineSimButton.font.color := clred;
-         onLineSimButton.ElementClassName := 'btn btn-success btn-sm';
-         onLineSimButton.caption := 'Simulation: Pause';
+		     self.btnResetSimSpecies.Enabled := false;
+         self.btnParamReset.Enabled := false;
+         self.btnResetRun.Enabled := false;
+         self.btnOnLineSim.font.color := clred;
+         self.btnOnLineSim.ElementClassName := 'btn btn-success btn-sm';
+         self.btnOnLineSim.caption := 'Simulation: Pause';
          simResultsMemo.visible := true;
          self.mainController.SetRunTime(500);
          // default timer interval is 100 msec:
          // multiplier default is 10, range 1 - 50
-         self.mainController.SetTimerInterval(round(1000/self.trackBarStepSize.position));
+         self.mainController.SetTimerInterval(round(1000/self.trackBarSimSpeed.position));
          self.mainController.SetStepSize(self.stepSize);
        //  self.rtLengthEdit1.Text := FloatToStr(MainController.getRunTime);
          if self.mainController.getCurrTime = 0  then
@@ -622,10 +631,9 @@ begin
      else
        begin
        self.setUpSimulationUI;
-       onLineSimButton.font.color := clgreen;
-       onLineSimButton.ElementClassName := 'btn btn-danger btn-sm';
-       onLineSimButton.caption := 'Simulation: Play';
-
+       self.btnOnLineSim.font.color := clgreen;
+       self.btnOnLineSim.ElementClassName := 'btn btn-danger btn-sm';
+       self.btnOnLineSim.caption := 'Simulation: Play';
        // add a default plot:
        if self.numbPlots < 1 then
          begin
@@ -640,7 +648,7 @@ begin
          if length( self.mainController.getModel.getP_Names ) < 11 then
            begin
            self.addAllParamSliders;
-           self.btnParamAddSlider.Visible := false;
+           self.btnParamAddSlider.Enabled := false;
            end
          else self.btnParamAddSliderClick(nil);
          end
@@ -650,12 +658,13 @@ begin
  else  // stop simulation
    begin
      MainController.setOnline(false);
-     self.btnResetSimSpecies.Visible := true;
-     self.btnParamReset.visible := true;
-     MainController.SetTimerEnabled(false); // Turn off web timer (Stop simulation)
-     onLineSimButton.font.color := clgreen;
-     onLineSimButton.ElementClassName := 'btn btn-danger btn-sm';
-     onLineSimButton.caption := 'Simulation: Play';
+     self.btnResetSimSpecies.Enabled := true;
+     self.btnParamReset.Enabled := true;
+     self.btnResetRun.Enabled := true;
+     self.MainController.SetTimerEnabled(false); // Turn off web timer (Stop simulation)
+     self.btnOnLineSim.font.color := clgreen;
+     self.btnOnLineSim.ElementClassName := 'btn btn-danger btn-sm';
+     self.btnOnLineSim.caption := 'Simulation: Play';
      if self.saveSimResults then
        begin
        self.mainController.writeSimData(self.lblSimDataFileName.Caption, self.simResultsMemo.Lines);
@@ -671,9 +680,10 @@ begin
   self.deleteAllSliders;
   self.network.Clear;
   self.networkPB1.Invalidate;
-  self.resetOnLineSimButton;
-  self.btnResetSimSpecies.Visible := false;
-  self.btnParamReset.visible := false;
+  self.resetBtnOnLineSim;
+  self.btnResetSimSpecies.Enabled := false;
+  self.btnParamReset.Enabled := false;
+  self.btnResetRun.Enabled := false;
 end;
 
 procedure TMainForm.initializePlots();
@@ -686,7 +696,7 @@ begin
 end;
 
 procedure TMainForm.initializePlot( n: integer);
- var yScaleWidth, newYMax : integer;
+// var yScaleWidth, newYMax : integer;
 begin
   try
     self.plotsPanelList[n].initializePlot( MainController.getRunTime,
@@ -960,7 +970,6 @@ begin
           self.MainController.stopTimer;
           isRunning := true;
         end;
-     // self.MainController.changeParameterVal(p, newPVal); // changes model param value
       self.MainController.changeSimParameterVal( p, newPVal );
       if isRunning then self.MainController.startTimer;
       self.sliderPTBLabelAr[i].caption :=
@@ -1035,6 +1044,16 @@ begin
   self.networkUpdated := false;
   self.saveSimResults := false;
   self.currentGeneration := 0;
+  self.btnResetRun.Visible := true;
+  self.btnParamReset.Visible := true;
+  self.btnResetSimSpecies.Visible := true;
+  self.btnResetRun.Enabled := false;
+  self.btnParamReset.Enabled := false;
+  self.btnResetSimSpecies.Enabled := false;
+  self.btnParamAddSlider.Visible := true;
+  self.btnAddPlot.Visible := true;
+  self.btnParamAddSlider.Enabled := false;
+  self.btnAddPlot.Enabled := false;
   self.mainController.addSBMLListener( @self.PingSBMLLoaded );
   self.mainController.addNetworkListener( @self.networkHasChanged );
   self.mainController.addSimListener( @self.getVals ); // notify when new Sim results
@@ -1192,10 +1211,10 @@ begin
   // self.stepSize := strToInt(stepSizeEdit1.Text)*0.001 ;
 end;
 
-procedure TMainForm.trackBarStepSizeChange(Sender: TObject);
+procedure TMainForm.trackBarSimSpeedChange(Sender: TObject);
   var position: double;
 begin
-  position := self.trackBarStepSize.Position;
+  position := self.trackBarSimSpeed.Position;
   self.lblStepSizeVal.Caption := floattostr( (position*0.1) ) + 'x';
   self.MainController.SetTimerInterval( round(1000/position) ); //timer interval does change. Speeds up/down sim
 end;
@@ -1239,7 +1258,7 @@ end;
 procedure TMainForm.loadNetworkButtonClick(Sender: TObject);
 begin
   self.NetworkJSONOpenDialog.execute();
-  self.resetOnLineSimButton;
+  self.resetBtnOnLineSim;
 end;
 
 procedure TMainForm.mnuSaveClick(Sender: TObject);
@@ -1798,11 +1817,10 @@ begin
 
 end;
 
-          // Reset to initial conditions:
+          // Reset species amts to initial conditions:
 procedure TMainForm.resetInitValsButtonClick(Sender: TObject);
 begin
-  self.mainController.createSimulation();
-  // set cur time back to zero?
+  self.mainController.resetSimSpeciesValues();
 end;
 
 procedure TMainForm.adjustRightTabWPanels(); // Adjust all right panels to same width, height
@@ -2070,8 +2088,8 @@ end;
 procedure TMainForm.setUpSimulationUI();
 var i: integer;
 begin
-  btnParamAddSlider.visible := true;
-  btnAddPlot.visible := true;
+  btnParamAddSlider.Enabled := true;
+  btnAddPlot.Enabled := true;
 
   self.currentGeneration := 0; // reset current x axis point (pixel)
   if self.networkUpdated then // TODO: do not reset plots if species or param init vals have changed.
@@ -2158,6 +2176,15 @@ begin
        network.reactions[i].state.fillColor := btnReactionColor.color;
        end;
   networkPB1.Invalidate;
+end;
+
+procedure TMainForm.btnResetRunClick(Sender: TObject);
+begin
+  self.resetSliderPositions();
+  self.mainController.createSimulation();
+  self.initializePlots;
+  self.currentGeneration := 0;
+
 end;
 
 procedure TMainForm.edtReactionWidthChange(Sender: TObject);

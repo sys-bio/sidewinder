@@ -156,7 +156,7 @@ implementation
     plot_i := (Sender as TWebPaintBox).tag;
     if plot_i = self.plotPB.tag then           // necessary?
     begin
-      console.log('TPlotPanel.plotPBOnPaint, tag: ', plot_i);
+     // console.log('TPlotPanel.plotPBOnPaint, tag: ', plot_i);
       if self.plotGraph <> nil then
         if self.plotGraph.bitmap <> nil then
           self.plotPB.canvas.draw(0, 0, self.plotGraph.bitmap);
@@ -170,7 +170,7 @@ implementation
     plot_i := (Sender as TWebPaintBox).tag;
     if plot_i = self.plotLegendPB.tag then
     begin
-      console.log('TPlotPanel.plotLegendPBOnPaint, tag: ', plot_i);
+    //  console.log('TPlotPanel.plotLegendPBOnPaint, tag: ', plot_i);
       self.plotLegendPB.canvas.Draw(0, 0, self.plotLegendBMap);
     end;
   end;
@@ -217,7 +217,7 @@ implementation
       // Check if plotLegendBM created:
       if not Assigned(self.plotLegendBMap)then
       begin
-        console.log(' plot legend bitmap not created yet');
+       // console.log(' plot legend bitmap not created yet');
         self.plotLegendBMap := TBitMap.create;
       end;
 

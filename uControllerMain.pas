@@ -41,18 +41,19 @@ type
     procedure createSimulation();
     procedure SBMLLoaded(); // Notify when done loading libSBMLjs
     procedure setODESolver();
-    function getODESolver(): ODEsolver;
-    function getModel: TModel;
+    function  getODESolver(): ODEsolver;
+    function  getModel: TModel;
     procedure setModel(newModel: TModel);
     procedure SetRunTime(newTime: Double);
-    function GetRunTime(): Double;
-    function GetStepSize(): Double;
+    function  GetRunTime(): Double;
+    function  GetStepSize(): Double;
     procedure SetStepSize(newStepSize: double); // default 0.1 = 100 msec
-    function getCurrTime: Double;
-    function IsOnline(): Boolean;
+    function  getCurrTime: double;
+    procedure setCurrTime( newTime: double );
+    function  IsOnline(): Boolean;
     procedure SetOnline(bOnline: Boolean);
     procedure SetModelLoaded(bModelLoaded: boolean);
-    function IsModelLoaded(): Boolean;
+    function  IsModelLoaded(): Boolean;
     procedure clearModel();
     procedure clearSim();
     function  hasNetworkChanged(): Boolean;  // true: network changed, need to update model.
@@ -75,6 +76,7 @@ type
     procedure getVals(newTime: Double; newVals: TVarNameValList);
             // Get new values from simulation run.
     procedure resetSimParamValues(); // Reset simulator p values to orig model p values.
+    procedure resetSimSpeciesValues(); // Reset simulator s values to orig model values.
     procedure addSimListener( newListener: TUpdateSimEvent );
     procedure addSBMLListener( newListener: TUpdateModelEvent );
     procedure addNetworkListener( newListener: TNetworkChangeEvent );
@@ -142,8 +144,6 @@ begin
   self.clearSim;
   self.currTime := 0;
   if self.stepSize < 0.0 then self.stepSize := 0.1; // TODO fix this issue, why necessary?
-
-
  // console.log('StepSize when creating sim: ', floattostr(self.stepSize) );
   self.runSim := TSimulationJS.create(self.runTime, self.stepSize, self.SBMLmodel, self.solverUsed);
  // set timerinterval ?
@@ -315,7 +315,11 @@ begin
     Result := self.currTime;
 end;
 
-
+procedure TControllerMain.setCurrTime( newTime: double );
+begin
+  self.currTime := newTime;
+  self.runSim.setTime( newTime );
+end;
 procedure TControllerMain.SetModelLoaded(bModelLoaded: boolean);
 begin
   self.modelLoaded :=  bModelLoaded;
@@ -433,6 +437,23 @@ var i: integer;
 begin
   for i := 0 to self.sbmlmodel.getP_NameValAr.getNumPairs -1 do
     self.changeSimParameterVal( i, self.sbmlmodel.getP_Vals()[i] );
+end;
+
+procedure TControllerMain.resetSimSpeciesValues();
+var curTime: double;
+    i: integer;
+    curParamVals: array of double;
+begin
+  curTime := self.getCurrTime;
+  setLength( curParamVals,self.runSim.getP_Vals.getNumPairs );
+  curParamVals := self.runSim.getP_Vals.getValAr;
+  self.createSimulation();
+  self.setCurrTime(curTime);
+  for i := 0 to length(curParamVals) -1 do
+    begin
+      self.changeSimParameterVal(i,curParamVals[i]);
+    end;
+
 end;
 
 procedure TControllerMain.writeSimData(fileName: string; data: TStrings);
