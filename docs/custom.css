@@ -1,0 +1,31 @@
+
+.upload-btn-wrapper {
+  position: absolute;
+  overflow: hidden;
+  display: inline-block;
+  left: 225px;
+  top: 10px;
+}
+
+.btnOverlay {
+  border: 2px white;
+  color: white;
+  background-color: #007aff;
+  padding: 8px 20px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  pointer-events:none;
+}
+
+.upload-cover {
+  font-size: 100px;
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0;
+}
+
+.panel-color {
+
+}
