@@ -9,3 +9,7 @@ Build requirements:
 - TMS FNC UI pack, https://www.tmssoftware.com/site/tmsfncuipack.asp
 
 Note: For Web application to run you must manually copy the \SBML\libsbml.wasm file to the ..\TMSWeb\Debug\SBML\ directory. Delphi currently does not copy it over at build time.
+
+Current demo:
+-  https://sys-bio.github.io/sidewinder/  
+  
