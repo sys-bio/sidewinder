@@ -18,6 +18,7 @@ uses
   uParamSliderLayout, uSidewinderTypes, WEBLib.ComCtrls, WEBLib.Miletus, WEBLib.JQCtrls; //, VCL.TMSFNCCustomPicker, VCL.TMSFNCColorPicker;
 
 const EDITBOX_HT = 25;
+      DEBUG = true; // true then show debug console and any other debug related info
 
 type
   TPanelType = ( SIMULATION_PANEL, REACTION_PANEL, NODE_PANEL );
@@ -1058,6 +1059,9 @@ begin
   self.mainController.addNetworkListener( @self.networkHasChanged );
   self.mainController.addSimListener( @self.getVals ); // notify when new Sim results
   self.network.OnAutoLayoutEvent := self.generateAutoLayout;
+  if DEBUG then self.WebConsoleLog1.Visible := true
+  else self.WebConsoleLog1.Visible := false;
+
 end;
 
 procedure TMainForm.WebFormResize(Sender: TObject);
