@@ -254,7 +254,7 @@ begin
 end;
 
 procedure TNodeState.saveAsJSON (nodeObject : TJSONObject);
-var colorObject : TJSONObject;
+//var colorObject : TJSONObject;
 begin
   nodeObject.AddPair ('id', id);
   nodeObject.AddPair ('conc', TJSONNumber.Create(conc));  // to be added.
