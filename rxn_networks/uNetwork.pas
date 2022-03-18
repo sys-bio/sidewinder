@@ -182,6 +182,7 @@ type
                        var handleCoords: TPointF): Boolean;
 
        function    findNode (id : string; var index : integer) : boolean;
+       function    isNodeinNodeArray(node: TNode; nodeAr: array of TNode): integer; // returns index if found, -1 if not
        function    addNode (id : string) : TNode; overload;
        function    addNode (id : string; x, y : double) : TNode; overload;
        function    addNode (id : string; x, y, w, h : double) : TNode; overload;
@@ -505,7 +506,7 @@ var  newParam : TSBMLparameter;
 begin
   id := modelRxn.getId;
   rateParams := TList<TSBMLparameter>.create;
-
+  self.lineType := ltBezier;    // default
   // get reactants:
   self.nReactants := modelRxn.getNumReactants;
   createReactantSpace (nReactants);
@@ -1089,6 +1090,19 @@ begin
          end;
 end;
 
+// returns index if found, -1 if not. Note returns last match only.
+function TNetwork.isNodeinNodeArray(node: TNode; nodeAr: array of TNode): integer;
+var i: integer;
+begin
+  Result := -1;
+  for i := 0 to Length(nodeAr) - 1 do
+  begin
+    if node.state.id = nodeAr[0].state.id then
+      Result := i;
+  end;
+
+end;
+
 function TNetwork.addNode (id : string; x, y : double) : TNode;
 begin
   setlength (nodes, length (nodes) + 1);
@@ -1166,6 +1180,7 @@ begin
   nProducts := length (destNodes);
 
   reaction.state.arcCenter := computeCentroid (reaction);
+  //console.log('Arc center: ',reaction.state.arcCenter.x, ', ', reaction.state.arcCenter.y);
   cx := reaction.state.arcCenter.x; cy := reaction.state.arcCenter.y;
 
   setLength (reaction.state.reactantReactionArcs, nReactants);
