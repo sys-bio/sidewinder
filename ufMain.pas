@@ -972,6 +972,7 @@ begin
           isRunning := true;
         end;
       self.MainController.changeSimParameterVal( p, newPVal );
+      // recordValueEvent( self.MainController.getCurrTime, p, newPVal );
       if isRunning then self.MainController.startTimer;
       self.sliderPTBLabelAr[i].caption :=
            self.MainController.getModel.getP_Names[self.sliderParamAr[i]] + ': '
@@ -1995,8 +1996,11 @@ begin
         newStoichEdit.Top := self.StoicReactantsLabel.top + self.StoicReactantsLabel.height + round(spIndex*EDITBOX_HT);
 
         newStoichEdit.onExit := editRxnSrcStoichExit;
-        newStoichEdit.Text := networkController.selectedObjects[0].reaction.state.srcStoich[spIndex].toString();
-        rxnReactStoichEdits.add(newStoichEdit);
+        if length(networkController.selectedObjects[0].reaction.state.srcStoich) > spIndex  then
+          begin
+          newStoichEdit.Text := networkController.selectedObjects[0].reaction.state.srcStoich[spIndex].toString();
+          rxnReactStoichEdits.add(newStoichEdit);
+          end;
       end;
     end
     else
@@ -2009,8 +2013,11 @@ begin
        rxnProdStoichLabels.add(newStoichLabel);
        newStoichEdit.Top := self.StoichProductsLabel.top + self.StoichProductsLabel.height + round(spIndex*20);
        newStoichEdit.onExit := editRxnDestStoichExit;
-       newStoichEdit.Text := networkController.selectedObjects[0].reaction.state.destStoich[spIndex].toString();
-       rxnProdStoichEdits.add(newStoichEdit);
+       if length(networkController.selectedObjects[0].reaction.state.destStoich) > spIndex  then
+         begin
+         newStoichEdit.Text := networkController.selectedObjects[0].reaction.state.destStoich[spIndex].toString();
+         rxnProdStoichEdits.add(newStoichEdit);
+         end
       end;
     end;
 end;
