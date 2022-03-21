@@ -214,7 +214,6 @@ type
   private
     numbPlots: Integer; // Number of plots displayed
     numbSliders: Integer; // Number of parameter sliders
-//    simTimeMultiplier: double; // sim step multiplier.  NOT needed
     stepSize: double; // default is 0.1
     rightPanelType: TPanelType;
     networkUpdated: boolean; // Network has changed, update model, plots, etc when convenient.
@@ -640,7 +639,7 @@ begin
          begin
          if length( self.mainController.getModel.getS_Names ) < 10 then
            addPlotAll()
-         else self.btnAddPlotClick(nil);
+         //else self.btnAddPlotClick(nil);  // Issue slider form pops up before plot form closes.
          end
        else self.btnAddPlotClick(nil);
        // add default param sliders:
