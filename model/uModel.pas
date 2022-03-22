@@ -86,6 +86,7 @@ type
    function  getP_Vals(): array of Double;
    function  getP_Val(pos: integer): Double;
    function  setP_Val(pos: integer; newVal: Double): Boolean;
+   function  getNumModelEvents(): integer;  // events not currently supported
    procedure changeParamVal(pos: Integer; newVal: Double);
    function  getReactions(): array of SBMLReaction;
    function  getReaction(i: integer): SBMLReaction;
@@ -340,8 +341,13 @@ procedure TModel.SBML_UpdateEvent();
  begin
   len:= Length(modelParams);
   modelParams[len]:= TSBMLparameter.create(newParam);
-  if newParam.isSetName() then console.log('addSBMLparameter: ',newParam.getname());
+ // if newParam.isSetName() then console.log('addSBMLparameter: ',newParam.getname());
 
+ end;
+
+ function  TModel.getNumModelEvents(): integer;
+ begin
+   Result := self.numEvents;
  end;
 
  function  TModel.isParameterIdinList(id: string): boolean;
