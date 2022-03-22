@@ -1097,7 +1097,7 @@ begin
   Result := -1;
   for i := 0 to Length(nodeAr) - 1 do
   begin
-    if node.state.id = nodeAr[0].state.id then
+    if node.state.id = nodeAr[i].state.id then
       Result := i;
   end;
 

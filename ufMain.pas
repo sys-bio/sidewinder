@@ -721,6 +721,11 @@ begin
     notifyUser(' SBML Events not supported at this time. Load a different SBML Model');
     clearNetwork();
     end;
+  if newModel.getNumPiecewiseFuncs >0 then
+    begin
+    notifyUser(' SBML piecewise() function not supported at this time. Load a different SBML Model');
+    clearNetwork();
+    end;
 
   self.networkPB1.invalidate;
   self.networkUpdated := true;
@@ -1301,7 +1306,7 @@ procedure TMainForm.NetworkJSONOpenDialogGetFileAsText(Sender: TObject;
   AFileIndex: Integer; AText: string);
 begin
   try
-    self.clearNetwork; // added
+    self.clearNetwork;
     networkController.loadModel(AText);
   except
     on E: Exception do

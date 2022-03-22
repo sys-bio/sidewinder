@@ -11,6 +11,7 @@ type
    id, name: String;
    RateR, AssignmentR, AlgebraicR, ScalerR: boolean;
    isSpeciesConc, isParam: boolean;
+   piecewiseUsed: boolean; // law contains piecewise in formula
 
  public
    constructor Create(); overload;
@@ -41,7 +42,8 @@ type
    function getName(): String;
    procedure setName( name: String);
    function isSetName(): boolean;
-
+   procedure setPiecewise(piecewiseVal: boolean);
+   function  containsPiecewise(): boolean;
  end;
 
  {SBMLalgebraicrule = class(SBMLrule)
@@ -112,6 +114,7 @@ begin
    self.ScalerR:= cpyRule.isScaler;
    self.isSpeciesConc:= cpyRule.isSpeciesConcentration;
    self.isParam:= cpyRule.isParameter;
+   self.piecewiseUsed := cpyRule.containsPiecewise;
 end;
 
 function TSBMLRule.isRate(): boolean; //virtual; abstract; // rate rule
@@ -263,11 +266,20 @@ begin
   self.name:= name;
 end;
 
-
 function TSBMLRule.isSetName(): boolean;
 begin
   if self.name = '' then Result:= false
   else Result:= true;
+end;
+
+procedure TSBMLRule.setPiecewise(piecewiseVal: boolean);
+begin
+  self.piecewiseUsed := piecewiseVal;
+end;
+
+function  TSBMLRule.containsPiecewise(): boolean;
+begin
+  Result := self.piecewiseUsed;
 end;
 
 end.

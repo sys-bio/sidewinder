@@ -87,6 +87,7 @@ type
    function  getP_Val(pos: integer): Double;
    function  setP_Val(pos: integer; newVal: Double): Boolean;
    function  getNumModelEvents(): integer;  // events not currently supported
+   function  getNumPiecewiseFuncs(): integer;
    procedure changeParamVal(pos: Integer; newVal: Double);
    function  getReactions(): array of SBMLReaction;
    function  getReaction(i: integer): SBMLReaction;
@@ -348,6 +349,17 @@ procedure TModel.SBML_UpdateEvent();
  function  TModel.getNumModelEvents(): integer;
  begin
    Result := self.numEvents;
+ end;
+
+ function  TModel.getNumPiecewiseFuncs(): integer;
+ var i: integer;
+ begin
+   Result := 0;
+   for i := 0 to length(self.modelRules) -1 do
+     begin
+      if self.modelRules[i].containsPiecewise then inc(Result);
+     end;
+   // TODO: Need to check if piecewise in Reaction kineticLaw
  end;
 
  function  TModel.isParameterIdinList(id: string): boolean;
