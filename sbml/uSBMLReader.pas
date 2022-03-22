@@ -101,14 +101,22 @@ implementation
   // now it is safe to use the module
       const reader = new libsbml.SBMLReader();
       const doc = reader.readSBMLFromString(SBMLtext);
+      // error check:
+      var i;
+      const sbmlErrors = doc.getNumErrors();
+      for( i=0; i < sbmlErrors; i++ ) {
+        console.log( 'Read Sbml error: ', doc.getError(i) );
+      }
+
+
       doc.enablePackage(libsbml.LayoutExtension.prototype.getXmlnsL3V1V1(), 'layout', true);
       doc.enablePackage(libsbml.RenderExtension.prototype.getXmlnsL3V1V1(), 'render', true);
 
   // read with no errors .. TODO: Chk for sbml read errors
       const model = doc.getModel();
-      const lplugin = libsbml.castObject(model.findPlugin("layout"), libsbml.LayoutModelPlugin); // not used for getting layout.
+   //  const lplugin = libsbml.castObject(model.findPlugin("layout"), libsbml.LayoutModelPlugin); // not used for getting layout.
+   //   const rPluginList = libsbml.castObject(lpluginList.getPlugin("render"), libsbml.RenderListOfLayoutsPlugin);
 
-     // const layout = lplugin.createLayout();  //Not used for getting layout.
 
       const moreReading = new ProcessSBML(model, libsbml);
 
@@ -122,10 +130,10 @@ implementation
             if( jsLayout != undefined) {  // another chk
               newModel.setSBMLLayout(jsLayout);
             }
-            if( moreRead.isLocalRenderSet ) {
-              jsRenderInfo = moreReading.getRenderInformation( jsRenderInfo, jsRenderStyle,
-                jsLineEnding, jsRenderGroup, jsEllipse, jsRectangle, jsPolygon,
-                jsRenderPt, jsRender1D, jsColorDef, jsBBox, jsDims, jsPt );
+          if( moreReading.isLocalRenderSet ) {
+   // Commented out For now  jsRenderInfo = moreReading.getRenderInformation( jsRenderInfo, jsRenderStyle,
+          //      jsLineEnding, jsRenderGroup, jsEllipse, jsRectangle, jsPolygon,
+          //      jsRenderPt, jsRender1D, jsColorDef, jsBBox, jsDims, jsPt );
             }
           }
         }
