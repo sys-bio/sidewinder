@@ -716,6 +716,12 @@ end;
 procedure TMainForm.PingSBMLLoaded(newModel:TModel);
 begin
   // Loading new sbml model changes reaction network.
+  if newModel.getNumModelEvents > 0 then
+    begin
+    notifyUser(' SBML Events not supported at this time. Load a different SBML Model');
+    clearNetwork();
+    end;
+
   self.networkPB1.invalidate;
   self.networkUpdated := true;
 end;
