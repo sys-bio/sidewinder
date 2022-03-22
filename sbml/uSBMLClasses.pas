@@ -693,7 +693,7 @@ implementation
     len:= Length(paramIds);
     SetLength(paramIds,len+1);  // add new paramID to array
     paramIds[len]:= param;
-    console.log('kineticLaw.addParameter: ',param);
+   // console.log('kineticLaw.addParameter: ',param);
    end;
    function SBMLkineticlaw.getParameter(n: integer): String; // TSBMLparameter;
    begin

@@ -14,6 +14,7 @@ class ProcessSBML {
    if(this.model.getNumPlugins() >0) {
      this.SBMLLayOut = this.model.findPlugin('layout');
 
+// libsbml.RenderExtension.prototype.getXmlnsL3V1V1()
 
     if(this.model.hasPlugin('layout')) {
        console.log(' model has layout plugin' );
@@ -33,6 +34,7 @@ class ProcessSBML {
    tModela.numParams = this.model.getNumParameters();
    tModela.numCompartments = this.model.getNumCompartments();
    tModela.numEvents = this.model.getNumEvents();
+   console.log( 'Number of events: ', this.model.getNumEvents() );
    tModela.numRules = this.model.getNumRules();
    tModela.numbPlugins = this.model.getNumPlugins();
    console.log('Number of plugins: ', this.model.getNumPlugins());
@@ -56,7 +58,10 @@ getRules(tModela, tRule) {
          tRule.setRate(rule.isRate());
          if(rule.isSetFormula()) {
            tRule.setFormula(rule.getFormula());
-       //  console.log('Formula for Rule: ', tRule.getFormula());
+         //console.log('getRules:  Formula for Rule: ', tRule.getFormula());
+           if(rule.getFormula().includes("piecewise")) {
+             tRule.setPiecewise(true);
+           }
          }
          if (rule.isParameter()) {
            tRule.setParameter(true);
@@ -190,24 +195,19 @@ getRules(tModela, tRule) {
             tSpGlyph, tSpRefGlyph, tRxnGlyph, tTextGlyph) {
     var i;
   
-    console.log( 'Numb of layouts: ', this.numLayouts);
-
    // for(i=0; i< this.numLayouts; i++) {
-    for(i=0; i< 1; i++) { // cap at one for now, numLayouts reports 2 when there is one.
+    for(i=0; i< 1; i++) { // cap at one for now, numLayouts reports 2 when there is one?
       console.log(' Getting next layout #: ', i);
       const aLayout = this.newLayoutPlug.getLayout(i);
-    const rPlugin = this.libSBML.castObject(aLayout.getPlugin("render"), this.libSBML.RenderLayoutPlugin);
-    const numRenderPlug = rPlugin.getNumLocalRenderInformationObjects();
-    if( numRenderPlug > 0 ) {
-      this.localRenderInfo = rPlugin.getRenderInformation(numRenderPlug-1); // works for localInfo, not GlobalInfo
+      const rPlugin = this.libSBML.castObject(aLayout.getPlugin("render"), this.libSBML.RenderLayoutPlugin);
+      const numRenderPlug = rPlugin.getNumLocalRenderInformationObjects();
+      if( numRenderPlug > 0 ) {
+        this.localRenderInfo = rPlugin.getRenderInformation(numRenderPlug-1); // works for localInfo, not GlobalInfo
       this.isLocalRenderSet = true;
-    }
+      }
     // global:
-  //  const rGlobalPlugin = this.libSBML.castObject(aLayout.getPlugin("render"), this.libSBML.RenderListOfLayoutsPlugin);   // none found
- // bad   const rGlobalPlugin = this.libSBML.castObject(this.SBMLLayOut.getPlugin("render"), this.libSBML.RenderListOfLayoutsPlugin);
-// bad   const rGlobalRenderList = this.libSBML.castObject(this.SBMLLayOut.getPlugin("render"), this.libSBML.RenderListOfLayoutsPlugin);
-// bad const rGlobalRenderList = this.SBMLLayOut.asRenderListOfLayoutsPlugin();
-
+ //   const rGlobalPluginList = this.libSBML.castObject(aLayout.getPlugin("render"), this.libSBML.RenderListOfLayoutsPlugin);   // none found
+ 
  //   const numGlobalObj = rGlobalRenderList.getNumGlobalRenderInformationObjects();
  //   if( numGlobalObj > 0 ) {
  //     this.globalRenderInfo = rGlobalRenderList.getRenderGlobalInformation(numGlobalObj -1 );
@@ -443,21 +443,26 @@ getRules(tModela, tRule) {
          tEllipse, tRectangle, tPolygon, tRenderPt, tRender1D, tColorDef, tBBox,
          tDims, tPt )
    {
-
+     if( this.localRenderInfo.isSetId() ) {
+       tRenderInfo.setId( this.localRenderInfo.getId() );
+     }
+     tRenderInfo = this.getColorDefs( tRenderInfo, tColorDef );
+     tRenderInfo = this.getLineEndings(tRenderInfo, tLineEnding, tRenderGroup, tBBox, tPolygon,
+                  tRectangle, tRenderPt, tDims, tPt );
 
      return tRenderInfo;
    }
 
-   getColorDefs( nRendorInfo, tColorDef ) {
+   getColorDefs( nRenderInfo, tColorDef ) {
      var i;
      var numbObjs = 0;
      if( this.isLocalRenderSet ) {
-       nRenderInfo.setId( this.localRenderInfo.getId() );
+
        numbObjs = this.localRenderInfo.getNumColorDefinitions();
      } //else this.global
      for( i=0; i< numbObjs; i++ ) {
        const newColorDef = this.localRenderInfo.getColorDefinition(i);
-       if( tColorDef.isSetId() ) { tColorDef.setId( newColorDef.getId ); }
+       if( newColorDef.isSetId() ) { tColorDef.setId( newColorDef.getId() ); }
        const red =  newColorDef.getRed(); // int
        const blue = newColorDef.getBlue();
        const green = newColorDef.getGreen();
@@ -505,11 +510,14 @@ getRules(tModela, tRule) {
        nRenderGroup.setStartHead( sbmlRenderGroup.getStartHead() ); }
       // For shapes, get list of elements, save as polygon, regardless:
       const numElements = sbmlRenderGroup.getNumElements();
-      for( i=0; i < numElements; i++ ) {
+      for( var i=0; i < numElements; i++ ) {
         const element = sbmlRenderGroup.getElement( i );
         // May try to cast to polygon and see if easier:
         // void PrimitiveCaster();
-
+       // bad if( this.libSBML.isPolygon(element) ) {
+           if( element.isPolygon() ) {
+          const newPoly = this.libSBML.asPolygon(element);
+        }
         //  boolean isPolygon(Transformation2D p);
         //  Polygon asPolygon(Transformation2D p);
 
@@ -524,9 +532,9 @@ getRules(tModela, tRule) {
      var i;
      var numObjs;
      if( this.isLocalRenderSet ) {
-       numbObjs = this.localRenderInfo.getNumLineEndings();
+       numObjs = this.localRenderInfo.getNumLineEndings();
      } //else this.global
-     for( i=0; i< numbObjs; i++ ) {
+     for( i=0; i< numObjs; i++ ) {
        const newLineEnd = this.localRenderInfo.getLineEnding(i);
        tLineEnding.setId(newLineEnd.getId());
        tLineEnding.setRotationalMapping(newLineEnd.getIsEnabledRotationalMapping());
