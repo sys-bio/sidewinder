@@ -34,6 +34,7 @@ class ProcessSBML {
    tModela.numParams = this.model.getNumParameters();
    tModela.numCompartments = this.model.getNumCompartments();
    tModela.numEvents = this.model.getNumEvents();
+   console.log( 'Number of events: ', this.model.getNumEvents() );
    tModela.numRules = this.model.getNumRules();
    tModela.numbPlugins = this.model.getNumPlugins();
    console.log('Number of plugins: ', this.model.getNumPlugins());
@@ -57,7 +58,10 @@ getRules(tModela, tRule) {
          tRule.setRate(rule.isRate());
          if(rule.isSetFormula()) {
            tRule.setFormula(rule.getFormula());
-       //  console.log('Formula for Rule: ', tRule.getFormula());
+         //console.log('getRules:  Formula for Rule: ', tRule.getFormula());
+           if(rule.getFormula().includes("piecewise")) {
+             tRule.setPiecewise(true);
+           }
          }
          if (rule.isParameter()) {
            tRule.setParameter(true);
