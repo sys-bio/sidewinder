@@ -719,6 +719,8 @@ implementation
       self.rg.rPolygon := TSBMLRenderPolygon.create( newRG.getPolygon );
       self.rg.polygonSet := true;
     end;
+    self.rg.setEndHead(newRg.getEndHead);
+    self.rg.setStartHead(newRg.getStartHead);
 
   end;
 

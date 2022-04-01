@@ -397,11 +397,12 @@ class GenerateSBMLModel {
      }
      const newRG = newStyle.getRenderGroup();
      if( rxnType ) {
-       console.log('EndHead: ',sbmlStyle.getGroup().getEndHead() );
-       console.log('Found EndHead: ', newRG.getEndHead());
-       sbmlStyle.getGroup().setEndHead('arrowHeadREACTIONGLYPH'); // TODO: change to below line after it works.
-    //  sbmlStyle.getGroup().setEndHead(newRG.getEndHead()); // Missing from libsbmljs idl
-       console.log('EndHead3: ',sbmlStyle.getGroup().getEndHead() );
+     //  console.log('EndHead: ',sbmlStyle.getGroup().getEndHead() );
+     //  console.log('Found EndHead: ', newRG.getEndHead());
+     // sbmlStyle.getGroup().setEndHead('arrowHeadREACTIONGLYPH');
+       sbmlStyle.getGroup().setEndHead(newRG.getEndHead());
+     //  console.log('EndHead3: ',sbmlStyle.getGroup().getEndHead() );
+     // TODO: add setStartHead()
        rxnType = false;
      }
      if( newRG.isStrokeWidthSet() ) {

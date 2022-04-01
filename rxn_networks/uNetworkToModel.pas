@@ -30,11 +30,13 @@ public
                layoutWidth, layoutHeight: integer; rxnEndPts: array of TPointF);
 
   function getModel:TModel;
+  function  createSBMLBezierCurve( newRxnState: TReactionState;
+            newRxnCurve: TReactionCurve; srcSide: boolean): TSBMLLayoutCubicBezier;
   function getLayout(): TSBMLLayout;
   function getRenderInformation(): TSBMLRenderInformation;
   procedure setRxnArrowPts( newPts: array of TPointF );
  // procedure setModel(newModel: TModel);
- // procedure setNetwork(newNetwork: TNetwork);   // TODO
+ // procedure setNetwork(newNetwork: TNetwork);   // TODO ?
 
 end;
 
@@ -125,7 +127,7 @@ begin
     newSpecies.setHasOnlySubstanceUnits(false); // species units is conc.
     self.model.addSBMLspecies(newSpecies);
     newSpGlyph := TSBMLLayoutSpeciesGlyph.create(nodes[i].state.id);
-    newLayoutPt := TSBMLLayoutPoint.create(nodes[i].getCenter.x, nodes[i].getCenter.y);
+    newLayoutPt := TSBMLLayoutPoint.create( nodes[i].state.x , nodes[i].state.y );
     newDims := TSBMLLayoutDims.create(nodes[i].state.w, nodes[i].state.h);
     newSpGlyph.setBoundingBox(TSBMLLayoutBoundingBox.create(newLayoutPt, newDims));
     self.layout.addSpGlyph(newSpGlyph);
@@ -142,9 +144,6 @@ begin
 end;
 
 procedure TNetworkToModel.setReactions;
-// Currently: Rxn lines are used, no bezier curves (once bezier curve is implimented
-//            then need to change). One line from node to Rxn mass center. another line
-//            from rxn mass center to next node, etc ...
 var i, j, k, index: integer;
    newSpecReacts: array of TSBMLSpeciesReference;
    newSpecProds: array of TSBMLSpeciesReference;
@@ -162,6 +161,7 @@ var i, j, k, index: integer;
    spRefCenter: TSBMLLayoutPoint;
    spRefProdCenter: TSBMLLayoutPoint;  // Use for uni-uni reactions, one line segment.
    massCenter: TPointF;  //Rxn mass center.
+   nodeCenter: TPointF;
    uniUniRxn: boolean;
 
 begin
@@ -175,24 +175,14 @@ begin
     newRxnGlyph := TSBMLLayoutReactionGlyph.create(self.network.reactions[i].state.id);
     newRxnCurve := TSBMLLayoutCurve.create;
     newRxnCenterPt := TSBMLLayoutPoint.create( massCenter.x, massCenter.y );
-    // add reaction center to cubic bezier as start, end pt, base point 1, 2:
-    // future, once Cubic Bezier implimented.
-    {newCubicBezier := TSBMLLayoutCubicBezier.create();
-    newCubicBezier.setStart(st);
-    newCubicBezier.setEnd(end)
-    newCubicBezier.setBasePt1(pt1);
-    newCubicBezier.setBasePt2(pt2);
-    newRxnCurve.addCubicBezier(newCubicBezier);  }
 
     setLength(newSpecReacts,0);
     setLength(newSpecProds,0);
     for j := 0 to self.network.reactions[i].state.nReactants-1 do
     begin
       //if containsText(self.network.reactions[i].state.srcId[i], 'NULL') then break;
-
       k := length(newSpecReacts);
 
-     //
       if self.network.reactions[i].state.srcId[j] <> '' then
       begin
         setLength(newSpecReacts, k+1);
@@ -203,16 +193,26 @@ begin
         newDims := TSBMLLayoutDims.create(0,0); // Do not need boundingBox, use curve
         if self.network.findNode( self.network.reactions[i].state.srcId[j], index ) then
         begin
-          spRefCenter := TSBMLLayoutPoint.create(self.network.nodes[index].state.x +
-                                            (self.network.nodes[index].state.w)  ,
-                                             self.network.nodes[index].state.y +
-                                             (self.network.nodes[index].state.h) );
-         
-          if not uniUniRxn then
-          begin
-            newLineSeg := TSBMLLayoutLineSegment.create(newRxnCenterPt, spRefCenter);
-            newRxnCurve.addLineSegment(newLineSeg);
-          end;
+          nodeCenter :=  self.network.nodes[index].getCenter;
+          spRefCenter := TSBMLLayoutPoint.create(nodeCenter.x, nodeCenter.y);
+
+
+         // if not uniUniRxn then
+         // begin
+            if self.network.reactions[i].state.lineType = ltBezier then
+              begin
+              newCubicBezier := self.createSBMLBezierCurve(self.network.reactions[i].state,
+                                    self.network.reactions[i].state.reactantReactionArcs[j], true );
+              newCubicBezier.setId('bezier_' + self.network.reactions[i].state.srcId[j] +
+                   self.network.reactions[i].state.id);
+              newRxnCurve.addCubicBezier(newCubicBezier);
+              end
+            else  // assume ltLine
+              begin
+              newLineSeg := TSBMLLayoutLineSegment.create(newRxnCenterPt, spRefCenter);
+              newRxnCurve.addLineSegment(newLineSeg);
+              end;
+         // end;
 
         end
         else notifyUser('Node id not found: ' + self.network.reactions[i].state.srcId[j] );
@@ -248,12 +248,24 @@ begin
                                              self.network.nodes[index].state.y +
                                              (self.network.nodes[index].state.h) );
 
-          if uniUniRxn then
-            newLineSeg := TSBMLLayoutLineSegment.create(spRefCenter, spRefProdCenter)
-          else newLineSeg := TSBMLLayoutLineSegment.create(newRxnCenterPt, spRefProdCenter);
-          newLineSeg.setId('line_' + self.network.reactions[i].state.destId[j] +
+         // if uniUniRxn then
+         //   newLineSeg := TSBMLLayoutLineSegment.create(spRefCenter, spRefProdCenter)
+         // else newLineSeg := TSBMLLayoutLineSegment.create(newRxnCenterPt, spRefProdCenter);
+          if self.network.reactions[i].state.lineType = ltBezier then
+          begin
+            newCubicBezier := self.createSBMLBezierCurve(self.network.reactions[i].state,
+                      self.network.reactions[i].state.productReactionArcs[j], false );
+            newCubicBezier.setId('bezier_' + self.network.reactions[i].state.destId[j] +
+                   self.network.reactions[i].state.id);
+            newRxnCurve.addCubicBezier(newCubicBezier);
+          end
+          else
+            begin
+            newLineSeg := TSBMLLayoutLineSegment.create(newRxnCenterPt, spRefProdCenter);
+            newLineSeg.setId('line_' + self.network.reactions[i].state.destId[j] +
                    self.network.reactions[i].state.id );
-          newRxnCurve.addLineSegment(newLineSeg);
+            newRxnCurve.addLineSegment(newLineSeg);
+            end;
         end
         else notifyUser('Node id not found: ' + self.network.reactions[i].state.destId[j] );
         spRefCenter := TSBMLLayoutPoint.create(0,0);
@@ -360,13 +372,13 @@ begin
   newStyle := TSBMLRenderStyle.create;
   newStyle.setId('reactionStyle_' + rxnState.id);
   newStyle.addType(STYLE_TYPES[2]);
-  newStyle.addType(STYLE_TYPES[3]); // species reference as well?
   newStyle.addGoId( rxnGlyphId );
   newRg := TSBMLRenderGroup.create;
   newRg.setStrokeWidth( rxnState.thickness );
   newRg.setStrokeColor( fillColorDefId ); // same as fill
   newRg.setFillColor( fillColorDefId );
   newLineEndId := 'arrowHead' + STYLE_TYPES[2];
+  newRg.setEndHead(newLineEndId);
   for i := 0 to self.renderInfo.getNumbLineEndings -1 do
   begin
     if self.renderInfo.getLineEnding(i).getId = newLineEndId then rxnArrowAdded := true;
@@ -411,6 +423,25 @@ begin
   newRGroup.setPolygon( newPolygon );
   newLineEnd.setRenderGroup( newRGroup );
   Result := newLineEnd;
+end;
+
+function  TNetworkToModel.createSBMLBezierCurve( newRxnState: TReactionState;
+                            newRxnCurve: TReactionCurve; srcSide: boolean): TSBMLLayoutCubicBezier;
+begin
+  Result := TSBMLLayoutCubicBezier.create();
+  if srcSide then  // from src node to rxn center:
+    begin
+    Result.setStart( newRxnCurve.nodeIntersectionPt.x, newRxnCurve.nodeIntersectionPt.y );
+    Result.setEnd( newRxnState.arcCenter.x, newRxnState.arcCenter.y ) ;
+    end
+  else   // from rxn center to dest node:
+    begin
+    Result.setEnd( newRxnCurve.nodeIntersectionPt.x, newRxnCurve.nodeIntersectionPt.y );
+    Result.setStart( newRxnState.arcCenter.x, newRxnState.arcCenter.y ) ;
+    end;
+
+  Result.setBasePt1( newRxnCurve.h1.x, newRxnCurve.h1.y );
+  Result.setBasePt2( newRxnCurve.h2.x, newRxnCurve.h2.y );
 end;
 
 function TNetworkToModel.getModel: TModel;
