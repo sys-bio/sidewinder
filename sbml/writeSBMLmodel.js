@@ -392,14 +392,15 @@ class GenerateSBMLModel {
      }
      for( j=0; j <  newStyle.getNumbGoIds(); j++ ) {
  //    sbmlStyle.addId( newStyle.getGoId(j) ); // libsbmljs gives error
-     // need to fix in idl to accept id of graphical object that is using this style.
+     // TODO: need to fix in idl to accept id of graphical object that is using this style.
 
      }
      const newRG = newStyle.getRenderGroup();
      if( rxnType ) {
        console.log('EndHead: ',sbmlStyle.getGroup().getEndHead() );
-
-    // sbmlStyle.getGroup().setEndHead(rxnArrowHead); // Missing from libsbmljs idl
+       console.log('Found EndHead: ', newRG.getEndHead());
+       sbmlStyle.getGroup().setEndHead('arrowHeadREACTIONGLYPH'); // TODO: change to below line after it works.
+    //  sbmlStyle.getGroup().setEndHead(newRG.getEndHead()); // Missing from libsbmljs idl
        console.log('EndHead3: ',sbmlStyle.getGroup().getEndHead() );
        rxnType = false;
      }
