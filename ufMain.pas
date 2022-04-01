@@ -18,7 +18,7 @@ uses
   uParamSliderLayout, uSidewinderTypes, WEBLib.ComCtrls, WEBLib.Miletus, WEBLib.JQCtrls; //, VCL.TMSFNCCustomPicker, VCL.TMSFNCColorPicker;
 
 const EDITBOX_HT = 25;
-      DEBUG = true; // true then show debug console and any other debug related info
+      DEBUG = false; // true then show debug console and any other debug related info
 
 type
   TPanelType = ( SIMULATION_PANEL, REACTION_PANEL, NODE_PANEL );
@@ -714,19 +714,31 @@ begin
 end;
 
 procedure TMainForm.PingSBMLLoaded(newModel:TModel);
+var errList: string;
+    i: integer;
 begin
-  // Loading new sbml model changes reaction network.
+  if newModel.getNumSBMLErrors >0 then
+    begin
+    errList := '';
+    for i := 0 to newModel.getNumSBMLErrors -1 do
+      begin
+      errList := errList + newModel.getSBMLErrorStrs()[i] + #13#10 ; // new line char
+      end;
+    errList := errList +  'Please fix or load a new model.';
+    notifyUser(errList);
+    end;
+
   if newModel.getNumModelEvents > 0 then
     begin
     notifyUser(' SBML Events not supported at this time. Load a different SBML Model');
     clearNetwork();
-    end;
-  if newModel.getNumPiecewiseFuncs >0 then
+    end
+  else if newModel.getNumPiecewiseFuncs >0 then
     begin
     notifyUser(' SBML piecewise() function not supported at this time. Load a different SBML Model');
     clearNetwork();
     end;
-
+   // Loading new sbml model changes reaction network.
   self.networkPB1.invalidate;
   self.networkUpdated := true;
 end;
@@ -1304,14 +1316,18 @@ end;
 
 procedure TMainForm.NetworkJSONOpenDialogGetFileAsText(Sender: TObject;
   AFileIndex: Integer; AText: string);
+  var errorMsg: string;
 begin
   try
+    errorMsg := '';
     self.clearNetwork;
-    networkController.loadModel(AText);
+    errorMsg := networkController.loadModel(AText);
   except
     on E: Exception do
       notifyUser(E.message);
   end;
+  if errorMsg <> '' then
+    notifyUser(errorMsg);
   networkPB1.Invalidate;
 end;
 

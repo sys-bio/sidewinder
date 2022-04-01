@@ -167,7 +167,7 @@ type
        reactions : TListOfReactions;
        savedState : TNetworkSavedState;
 
-       procedure   loadModel (modelStr : string);
+       function    loadModel (modelStr : string): string;
        procedure   loadSBMLModel (model: TModel);
        function    convertToJSON : string;
        function    overNode (x, y : double; var node : TNode) : boolean; overload;
@@ -668,7 +668,8 @@ begin
     self.FAutoLayoutEvent(sender);
 end;
 
-procedure TNetwork.loadModel (modelStr : string);  // JSON string
+// Returns '' if no issue, else returns string describing problem
+function TNetwork.loadModel (modelStr : string): string;  // Loads JSON string
 var JSONRoot, JSONValue1, JSONNodeArray, JSONReactionArray : TJSONValue;
     node : TNode;
     reaction : TReaction;
@@ -679,18 +680,28 @@ var JSONRoot, JSONValue1, JSONNodeArray, JSONReactionArray : TJSONValue;
     pair : TJSONPair;
 begin
   clear;
-  JSONRoot := TJSONObject.parseJSONValue (modelStr);
-  pair := (JSONRoot as TJSONObject).Get('magicIdentifier');
-  if pair = nil then
-     raise Exception.Create ('JSON file not a valid network model');
+  Result := '';
+  try
+    JSONRoot := TJSONObject.parseJSONValue (modelStr);
+    pair := (JSONRoot as TJSONObject).Get('magicIdentifier');
+    if pair = nil then
+      Result := 'JSON file not a valid network model';
+  //   raise Exception.Create ('JSON file not a valid network model');
+  except
+    Result :='File string not valid JSON';
+  end;
+  if Result = '' then  // No issues yet
+    begin
+    if (pair.JSONValue as TJSONString).Value <> MAGIC_IDENTIFER then
+    Result := 'JSON file a value network model, but verison: ' + MAGIC_IDENTIFER + ' not supported';
+    // raise Exception.Create ('JSON file a value network model, but verison: ' + MAGIC_IDENTIFER + ' not supported');
+    end;
+  if Result = '' then  // No issues loading json string
+  begin
+    JSONValue1 :=(JSONRoot as TJSONObject).Get('id').JSONValue;
+    Id := (JSONValue1 as TJSONString).Value;
 
-  if (pair.JSONValue as TJSONString).Value <> MAGIC_IDENTIFER then
-     raise Exception.Create ('JSON file a value network model, but verison: ' + MAGIC_IDENTIFER + ' not supported');
-
-  JSONValue1 :=(JSONRoot as TJSONObject).Get('id').JSONValue;
-  Id := (JSONValue1 as TJSONString).Value;
-
-  if (JSONRoot as TJSONObject).Get ('nodes') <> nil then
+    if (JSONRoot as TJSONObject).Get ('nodes') <> nil then
       begin
       JSONNodeArray := (JSONRoot as TJSONObject).Get('nodes').JSONValue;
       ar := JSONNodeArray as TJSONArray;
@@ -700,15 +711,15 @@ begin
           nodeState.loadFromJSON (nj);
           addNode (nodeState);
           end;
-     end;
+      end;
 
   // Get the array of reactions
-  if (JSONRoot as TJSONObject).Get ('reactions') <> nil then
-     begin
-     JSONreactionArray := (JSONRoot as TJSONObject).Get('reactions').JSONValue;
+    if (JSONRoot as TJSONObject).Get ('reactions') <> nil then
+      begin
+      JSONreactionArray := (JSONRoot as TJSONObject).Get('reactions').JSONValue;
 
-     ar := JSONreactionArray as TJSONArray;
-     for i := 0 to ar.Count - 1 do
+      ar := JSONreactionArray as TJSONArray;
+      for i := 0 to ar.Count - 1 do
          begin
          nj := ar.Items[i] as TJSONObject;
          reactionState.loadFromJSON (nj);
@@ -732,8 +743,9 @@ begin
                     break;
                     end;
           end;
-     end;
-     self.networkEvent(nil); // Notify listener
+      end;
+      self.networkEvent(nil); // Notify listener
+  end;
 end;
 
 procedure TNetwork.loadSBMLModel (model : TModel);

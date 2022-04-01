@@ -1,8 +1,8 @@
 unit uModel;
 
 interface
-uses Web, JS, uSBMLClasses, uSBMLClasses.rule, uSBMLClasses.Layout,
-     uSBMLClasses.Render, uSidewinderTypes;
+uses Web, JS, System.Generics.Collections, uSBMLClasses, uSBMLClasses.rule,
+     uSBMLClasses.Layout, uSBMLClasses.Render, uSidewinderTypes;
 
 type
 
@@ -13,7 +13,7 @@ type
  // Reads SBML model parsed by libsbml.js module
  TModel = class
    private
-    errors, numReactions: integer;  // SBML reading errors, number of rxns in model.
+    numReactions: integer;  // number of rxns in model.
     numbPlugins: integer; // Not used
     numSpecies,{ numParams,} numCompartments: integer; // number of species,comps in model
     numEvents, numRules, numFuncDefs: integer;  // Currently not used.
@@ -26,6 +26,7 @@ type
     modelId: String; // optional model name
     modelLayout: TSBMLLayout;
     modelRendering: TSBMLRenderInformation;
+    strSBMLErrors: TList<string>; // SBML document errors
 
     // Arrays of Double used by ODE integrator, keep array of strings for mapping:
     s_Vals: array of Double; // Changes, one to one correlation: s_Vals[n] <=> s_Names[n]
@@ -91,6 +92,9 @@ type
    procedure changeParamVal(pos: Integer; newVal: Double);
    function  getReactions(): array of SBMLReaction;
    function  getReaction(i: integer): SBMLReaction;
+   procedure addSBMLErrorStr( newErr: string );
+   function  getSBMLErrorStrs(): TList<string>;
+   function  getNumSBMLErrors(): integer;
 
    property OnPing: TPingEvent read FPing write FPing;
    property OnPing2: TPingEvent read FPing2 write FPing2;
@@ -104,7 +108,8 @@ implementation
 
 constructor TModel.create();
 begin
-    errors:=0;
+  //  errors:=0;
+    self.strSBMLErrors := TList<string>.create;
     numReactions:= 0;
     numSpecies:= 0; numCompartments:= 0;
     numEvents:= 0; numRules:= 0; numFuncDefs:=0;
@@ -116,6 +121,19 @@ end;
 procedure TModel.setNumReactions (rnxNumb : integer);
 begin
   numReactions:= rnxNumb;
+end;
+
+procedure TModel.addSBMLErrorStr( newErr: string );
+begin
+  self.strSBMLErrors.Add(newErr);
+end;
+function  TModel.getSBMLErrorStrs(): TList<string>;
+begin
+  Result := self.strSBMLErrors;
+end;
+function  TModel.getNumSBMLErrors(): integer;
+begin
+  Result := self.strSBMLErrors.Count;
 end;
 
 

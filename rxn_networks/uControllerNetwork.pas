@@ -55,7 +55,7 @@ type
 
     procedure adjustMovedBezierHandle (reactionObj : TObjectInformation);
   public
-    procedure loadModel(modelStr: string);
+    function  loadModel(modelStr: string): string; // returns any error msg
     procedure loadSBMLModel(newSBMLmodel: TModel);
     procedure setAddNodeStatus;
     procedure setAddUniUniReaction;
@@ -185,9 +185,9 @@ begin
 
 end;
 
-procedure TController.loadModel(modelStr: string);
+function TController.loadModel(modelStr: string): string;
 begin
-  network.loadModel(modelStr); // JSON format.
+  Result := network.loadModel(modelStr); // JSON format.
 end;
 
 procedure TController.loadSBMLModel(newSBMLmodel: TModel);

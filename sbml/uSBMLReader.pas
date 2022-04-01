@@ -105,7 +105,8 @@ implementation
       var i;
       const sbmlErrors = doc.getNumErrors();
       for( i=0; i < sbmlErrors; i++ ) {
-        console.log( 'Read Sbml error: ', doc.getError(i) );
+        //console.log( 'Read Sbml error: ', doc.getError(i).getMessage() );
+        newModel.addSBMLErrorStr( doc.getError(i).getMessage() );
       }
 
 
