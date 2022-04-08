@@ -737,7 +737,12 @@ begin
     begin
     notifyUser(' SBML piecewise() function not supported at this time. Load a different SBML Model');
     clearNetwork();
+    end
+  else if newModel.getNumFuncDefs > 0 then
+    begin
+      notifyUser(' SBML FunctionDefinition not supported at this time. Load a different SBML Model' );
     end;
+
    // Loading new sbml model changes reaction network.
   self.networkPB1.invalidate;
   self.networkUpdated := true;
