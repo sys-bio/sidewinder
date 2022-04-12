@@ -601,13 +601,13 @@ var i, j, k, nodeIndex: integer;
     spGlyphId, spId: string;
     reactant: boolean;
 begin
+  self.calcArcCenterFromSBMLLayout(newGlyphRxn);
   for i := 0 to newGlyphRxn.getNumSpeciesRefGlyphs -1 do
     begin
       spGlyphId := '';
       spId := '';
       Result := false;
       reactant := false;
-      self.calcArcCenterFromSBMLLayout(newGlyphRxn);
       spRefGlyph := newGlyphRxn.getSpeciesRefGlyph(i);
       spGlyphId := spRefGlyph.getSpeciesGlyphId;
       for j := 0 to newSpGlyphList.Count -1 do
@@ -798,9 +798,8 @@ begin
         begin
         self.arcCenter.x := (rxnCurve.getLineSegment(0).getStartPt.getX + rxnCurve.getLineSegment(0).getEndPt.getX)/2;
         self.arcCenter.y := (rxnCurve.getLineSegment(0).getStartPt.getY + rxnCurve.getLineSegment(0).getEndPt.getY)/2;
-        end;
+        end
 
-      end
       else //assume 2 bezier curves and endpoint of first is arcCenter:
         begin
         if rxnCurve.getNumCubicBeziers > 1 then
@@ -809,7 +808,7 @@ begin
           self.arcCenter.y := rxnCurve.getCubicBezier(0).getEnd.getY;
           end;
         end;
-
+      end;
     end;
 end;
 
