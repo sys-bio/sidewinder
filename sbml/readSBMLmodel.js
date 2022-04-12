@@ -25,6 +25,7 @@ class ProcessSBML {
      else {
        this.newLayoutPlug = this.SBMLLayOut.asLayout();
        this.numLayouts = this.newLayoutPlug.getNumLayouts(); // why does it report 2 if only one?
+      //NO: this.numRenderPlugs = this.newLayoutPlug.getNumLocalRenderInformationObjects();
      }
    }
  }
@@ -39,7 +40,7 @@ class ProcessSBML {
    tModela.numbPlugins = this.model.getNumPlugins();
    console.log('Number of plugins: ', this.model.getNumPlugins());
 
-  //tModela.numFuncDefs = model.numFunctionDefinitions(); call wrong?? need to chk if exists first?
+   tModela.numFuncDefs = this.model.getNumFunctionDefinitions(); // TODO: store these?
    tModela.annotationStr = this.model.getNotesString();
    return tModela;
   }
@@ -336,7 +337,7 @@ getRules(tModela, tRule) {
      for(i=0; i< readLayout.getNumReactionGlyphs(); i++)
      {
        const curRxnGlyph = readLayout.getReactionGlyph(i);
-    //   sbmlRxnGlyph.clear();
+       sbmlRxnGlyph.clear();
        if(curRxnGlyph.isSetReactionId()) {sbmlRxnGlyph.setReactionId(curRxnGlyph.getReactionId()); }
        else { sbmlRxnGlyph.setReactionId(''); }
        // Grab reaction curve if exists.....
@@ -362,6 +363,7 @@ getRules(tModela, tRule) {
 
        for(j=0; j< curRxnGlyph.getNumSpeciesReferenceGlyphs(); j++)
        {
+         sbmlSpRefGlyph.clear();
          sbmlCurve.clear();
          const curSpRefGlyph = curRxnGlyph.getSpeciesReferenceGlyph(j);
          if(curSpRefGlyph.isSetSpeciesGlyphId()) {
@@ -369,27 +371,31 @@ getRules(tModela, tRule) {
          else { curSpRefGlyph.setSpeciesGlyphId(''); }
          if(curSpRefGlyph.isSetSpeciesReferenceId()) {
            sbmlSpRefGlyph.setSpeciesRefId(curSpRefGlyph.getSpeciesReferenceId()); }
-         else { curSpRefGlyph.setSpeciesRefId('');}
+         else { sbmlSpRefGlyph.setSpeciesRefId('');}
          if(curSpRefGlyph.isSetRole() ){
            sbmlSpRefGlyph.setRole(curSpRefGlyph.getRoleString()); }
          else {sbmlSpRefGlyph.setRole('undefined'); }
-         const curCurve = curSpRefGlyph.getCurve();
-         if(curCurve.isSetIdAttribute()) { sbmlCurve.setCurveId(curCurve.getId()); }
-         else { sbmlCurve.setCurveId(''); }
+         // If the curve is specified, it overrides the inherited bounding box:
+         if(curSpRefGlyph.isSetCurve()) {
+           const curCurve = curSpRefGlyph.getCurve();
+           if(curCurve.isSetIdAttribute()) { sbmlCurve.setCurveId(curCurve.getId()); }
+           else { sbmlCurve.setCurveId(''); }
      //    console.log(' curve segments: ', curCurve.getNumCurveSegments());
-         for(k=0; k< curCurve.getNumCurveSegments(); k++) {
-           const curCurveSeg = curCurve.getCurveSegment(k);
-           if(curCurveSeg.isCubicBezier()){
+           for(k=0; k< curCurve.getNumCurveSegments(); k++) {
+             const curCurveSeg = curCurve.getCurveSegment(k);
+             if(curCurveSeg.isCubicBezier()){
         //     console.log('Bezier curve ** ');
-             sbmlCubicB = this.assignCubicB(sbmlCubicB, curCurveSeg.asCubicBezier(), sbmlPt);
-             sbmlCurve.addCubicBezier(sbmlCubicB);
+               sbmlCubicB = this.assignCubicB(sbmlCubicB, curCurveSeg.asCubicBezier(), sbmlPt);
+               sbmlCurve.addCubicBezier(sbmlCubicB);
+             }
+             else {  // line segment:
+               sbmlLineSeg = this.assignLineSegment(sbmlLineSeg, curCurveSeg, sbmlPt);
+               sbmlCurve.addLineSegment(sbmlLineSeg);
+             }
            }
-           else {  // line segment:
-             sbmlLineSeg = this.assignLineSegment(sbmlLineSeg, curCurveSeg, sbmlPt);
-             sbmlCurve.addLineSegment(sbmlLineSeg);
-           }
+           sbmlSpRefGlyph.setCurve(sbmlCurve);
          }
-         sbmlSpRefGlyph.setCurve(sbmlCurve);
+         //else { sbmlSpRefGlyph.
          if(curSpRefGlyph.getBoundingBox() != null ) {
     //     console.log('spRefGlyphs, assignBBox() call.');
            sbmlBBox = this.assignBBox(sbmlBBox,curSpRefGlyph.getBoundingBox(),sbmlDims, sbmlPt);
@@ -399,7 +405,8 @@ getRules(tModela, tRule) {
        }
 
        nLayout.addRxnGlyph(sbmlRxnGlyph);
-       sbmlRxnGlyph.clear();
+      // sbmlRxnGlyph.clear();
+      console.log('end of getRxnGlyph');
      }
 
      return nLayout;
@@ -438,8 +445,8 @@ getRules(tModela, tRule) {
 
      return nLayout;
    }
-
-   getRenderInformation( tRenderInfo, tRenderStyle, tLineEnding, tRenderGroup,
+    // TODO: deal with global render info..
+   getSBMLRenderInformation( tRenderInfo, tRenderStyle, tLineEnding, tRenderGroup,
          tEllipse, tRectangle, tPolygon, tRenderPt, tRender1D, tColorDef, tBBox,
          tDims, tPt )
    {
@@ -447,8 +454,15 @@ getRules(tModela, tRule) {
        tRenderInfo.setId( this.localRenderInfo.getId() );
      }
      tRenderInfo = this.getColorDefs( tRenderInfo, tColorDef );
-     tRenderInfo = this.getLineEndings(tRenderInfo, tLineEnding, tRenderGroup, tBBox, tPolygon,
-                  tRectangle, tRenderPt, tDims, tPt );
+     tRenderInfo = this.getLineEndings(tRenderInfo, tLineEnding, tRenderGroup, tBBox,
+                                  tPolygon, tRectangle, tRenderPt, tDims, tPt );
+     for( vari=0; i< this.localRenderInfo.getNumStyles(); i++ ) {
+       const newRenderStyle = this.localRenderInfo.getStyle(i);
+       tRenderStyle = this.getStyle( newRenderStyle,tRenderStyle, tRenderGroup,
+                    tPolygon, tRectangle, tEllipse, tBBox, tRenderPt, tDims, tPt );
+       tRenderInfo.addStyle(tRenderStyle);
+
+     }
 
      return tRenderInfo;
    }
@@ -475,8 +489,9 @@ getRules(tModela, tRule) {
      return nRenderInfo;
    }
 
-   assignRenderGroup(nRenderGroup, sbmlRenderGroup,tPolygon, tRectangle, tRenderPt )
+   assignRenderGroup(nRenderGroup, sbmlRenderGroup, tPolygon, tRectangle, tRenderPt )
    {
+     nRenderGroup.clear();
      if( sbmlRenderGroup.isSetStrokeWidth() ) {
        nRenderGroup.setStrokeWidth( sbmlRenderGroup.getStrokeWidth() );
      }
@@ -494,7 +509,7 @@ getRules(tModela, tRule) {
      if( fontSz == 0 ){
        fontSz = sbmlFontSize.getRelativeValue(); }
      nRenderGroup.setFontSize( fontSz );
-     const fontStyle = sbmlRenderGroup.getFontStyle();  // integer : 1='normal', 2='italic'
+     const fontStyle = sbmlRenderGroup.getFontStyle();// integer : 1='normal', 2='italic'
      if( fontStyle == 2 ){
        nRenderGroup.setFontStyle('italic'); }
      else { nRenderGroup.setFontStyle('normal');}
@@ -511,13 +526,32 @@ getRules(tModela, tRule) {
       // For shapes, get list of elements, save as polygon, regardless:
       const numElements = sbmlRenderGroup.getNumElements();
       for( var i=0; i < numElements; i++ ) {
-        const element = sbmlRenderGroup.getElement( i );
+        const element = sbmlRenderGroup.getElement( i ); // element is Transformation2D
+        console.log(' Element name: ' );
+        // const polyE = this.libsbml.castObject(sbmlRenderGroup.getElement( i ), libsbml.polygon);
+     //    const polE2 = sbmlRenderGroup.getPolygon();
+       //const polyE = this.libsbml.castObject(sbmlRenderGroup.getElement( i ), libsbml.Polygon);
+       // const polyel = this.libsbml.castObject(sbmlRenderGroup.getElement( i ).asPolygon, libsbml.Polygon);
+       // const polye2 = sbmlRenderGroup.getElement( i ).isPolygon();
+        //const polygonE = this.libsbml.castObject(element, libsbml.Polygon);
+       //  const polygonE = this.libsbml.castObject(this.libsbml.asPolygon(element), this.libsbml.Polygon);
+         const polygonE2 = this.libsbml.asPolygon(element);
+
         // May try to cast to polygon and see if easier:
         // void PrimitiveCaster();
        // bad if( this.libSBML.isPolygon(element) ) {
-           if( element.isPolygon() ) {
-          const newPoly = this.libSBML.asPolygon(element);
-        }
+
+      //  if( element.isPolygon() ) {  //  <---
+      //    const newPoly = this.libSBML.asPolygon( element );
+      //    tPolygon = this.getPolygon( tPolygon, newPoly, tRenderPt );
+      //    nRenderGroup.setPolygon( tPolygon );
+      //  }
+      //  else if( element.isEllipse() ) {
+      //    const newEllipse = this.libSBML.asEllipse(element);
+      //  }
+      //  else if( element.isRectangle() ) {
+      //    const neRect = this.libSBML.asRectangle(element);
+      //  }
         //  boolean isPolygon(Transformation2D p);
         //  Polygon asPolygon(Transformation2D p);
 
@@ -526,34 +560,49 @@ getRules(tModela, tRule) {
      return nRenderGroup;
    }
 
-   getLineEndings(nRenderInfo, tLineEnding, tRenderGroup, tBBox, tPolygon,
+   getLineEndings(nRenderInfo, tLineE, tRenderGroup, tBBox, tPolygon,
                   tRectangle, tRenderPt, tDims, tPt )
    {
-     var i;
      var numObjs;
      if( this.isLocalRenderSet ) {
        numObjs = this.localRenderInfo.getNumLineEndings();
-     } //else this.global
-     for( i=0; i< numObjs; i++ ) {
-       const newLineEnd = this.localRenderInfo.getLineEnding(i);
-       tLineEnding.setId(newLineEnd.getId());
-       tLineEnding.setRotationalMapping(newLineEnd.getIsEnabledRotationalMapping());
+     }
+     else { numObjs = this.globalRenderInfo.getNumLineEndings(); }
+     for( let i=0; i< numObjs; i++ ) {
+       var newLineEnd;// = this.localRenderInfo.getLineEnding(i);
+       newLineEnd = this.localRenderInfo.getLineEnding(i);
+       tLineE.setId(newLineEnd.getId());
+       tLineE.setRotationalMapping(newLineEnd.getIsEnabledRotationalMapping());
        tBBox = this.assignBBox(tBBox, newLineEnd.getBoundingBox(), tDims, tPt);
-       tLineEnding.setBoundingBox( tBBox );
+       tLineE.setBoundingBox( tBBox );
        const newRenderGroup = newLineEnd.getGroup();
        tRenderGroup = this.assignRenderGroup(tRenderGroup, newRenderGroup,
                           tPolygon, tRectangle, tRenderPt );
-       tLineEnding.setRenderGroup( tRenderGroup );
-       nRenderInfo.addRenderGroup( tlineEnding );
-       tRenderGroup.clear();
+       tLineE.setRenderGroup( tRenderGroup );
+       console.log('tLineE- id: ',tLineE.getId() );
+     //   nRenderInfo.setRenderGroup( tlineEnding );
+       nRenderInfo.addLineEnding( tlineE ); //ReferenceError: tlineE is not defined
+      // tRenderGroup.clear(); // needed?
      }
      return nRenderInfo;
    }
 
-   getStyles( nRenderInfo, tRenderGroup, tPolygon, tRectangle, tEllipse )
+   getStyle( sbmlRenderStyle,nRenderStyle, tRenderGroup, tPolygon, tRectangle, tEllipse,
+    tBBox, tRenderPt, tDims, tPt )
    {
-
-     return nRenderInfo;
+     nRenderStyle.clear();
+     if( sbmlRenderStyle.isSetId() ) { nRenderStyle.setId(sbmlRenderStyle.getId()); }
+     for( let i =0; i < sbmlRenderStyle.getNumTypes(); i++ ) {
+       nRenderStyle.addType( sbmlRenderStyle.getType(i) );
+     }
+     for( let i=0; i < sbmlRenderStyle.getNumRoles(); i++ ) {
+       //TODO:
+       //nRenderStyle.addRole( sbmlRenderStyle.getRole(i) );
+     }
+     const sbmlRGroup = sbmlRenderStyle.getGroup();
+     tRenderGroup = this.assignRenderGroup(tRenderGroup, sbmlRGroup,tPolygon, tRectangle, tRenderPt );
+     nRenderStyle.setRenderGroup( tRenderGroup );
+     return nRenderStyle;
    }
 
    getGradientDefs(nRenderInfo ) {
@@ -575,6 +624,36 @@ getRules(tModela, tRule) {
 
    getPolygon( tPoly, sbmlPoly, tPt )
    {
+     tPoly.clear();
+     if( sbmlPoly.isSetId() ){ tPoly.setId( sbmlPoly.getId() ); }
+     if( sbmlPoly.isSetFill() ){ tPoly.setFill( sbmlPoly.getFill() ); }
+     if( sbmlPoly.isSetStroke() ){ tPoly.setStroke( sbmlPoly.getStroke() ); }
+     if( sbmlPoly.isSetStrokeWidth() ){ tPoly.setStrokeWidth( sbmlPoly.getStrokeWidth() ); }
+
+     for( let i=0; i < sbmlPoly.getNumElements(); i++ ) {
+       const newRPt = sbmlPoly.getElement(i);
+       const rAVectX = newRPt.getX();
+       const rAVectY = newRPt.getY();
+       // Assume no Z coord
+       // if( newRPt.isSetZ() ) { }
+       if( rAVectX.isetSetAbsoluteValue() ) {
+         tPt.setX( rAvectX.getAbsoluteValue() );
+         tPt.setRelCoordinate(false);
+       }
+       else {
+         tPt.setX( rAVectX.getRelativeValue() );
+         tPt.setRelCoordinate(true);
+       }
+
+       if( rAVectY.isetSetAbsoluteValue() ) {
+         tPt.setX( rAvectY.getAbsoluteValue() );
+       }
+       else {
+         tPt.setY( rAVectY.getRelativeValue() );
+         //tPt.setRelCoordinate(true); // assume X,Y are the same
+       }
+       tPoly.addPoint(tPt);
+     }
 
      return tPoly;
    }

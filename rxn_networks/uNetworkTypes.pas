@@ -8,6 +8,10 @@ const
    MaxControlPoints = 4;
 
 type
+  TParent = class (TObject)
+    selected : boolean;
+  end;
+
   TReactionType = (eUniUni, eUniBi, eAnyToAny);
 
   TPointF = record
