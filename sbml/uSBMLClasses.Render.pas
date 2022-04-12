@@ -59,6 +59,7 @@ interface
      x: double; // The absolute coordinate values are always with respect to the bounding box
      y: double; // of the layout object to which the render information applies.
    //z: double;  Not used
+     relCoordinate: boolean;
 
    public
      constructor create() overload;
@@ -70,6 +71,8 @@ interface
      function getX(): double;
      procedure setY( newVal: double );
      function getY(): double;
+     procedure setRelCoordinate(newVal: boolean);
+     function  isRelCoordinate(): boolean;
  end;
  {
  TSBMLRenderListOfElements = class
@@ -96,10 +99,11 @@ interface
      constructor create() overload;
      constructor create( cpy: TSBMLRenderPolygon ) overload;
      procedure setFill( newFill: string );
-     function getFill(): string; // fill color
+     function  getFill(): string; // fill color
      procedure addPt( newPt: TSBMLRenderPoint );
-     function getPt( index: integer ): TSBMLRenderPoint;
-     function getNumbPts(): integer;
+     function  getPt( index: integer ): TSBMLRenderPoint;
+     function  getNumbPts(): integer;
+     procedure clear();
  end;
 
  TSBMLRenderRectangle = class( TSBMLRenderPrimitive1D )
@@ -234,7 +238,7 @@ interface
   private
     id: string;
     typeList: TList<string {STYLE_TYPES}>; // Optional, Which glyph types to apply this style
-   // roleList: TList<string>; // not used, list of roles for which this style applies.
+   // roleList: TList<string>; // TODO:, list of roles for which this style applies.
     goIdList: TList<string>;// Optional, List of layout graphical object ids for which this style applies.
     rg: TSBMLRenderGroup;
   public
@@ -253,6 +257,7 @@ interface
     procedure addGoId( sNewId: string );  // add id og GO to list.
     function  getGoId( index: integer ): string;
     function  getNumbGoIds(): integer;
+    procedure clear();
 
  end;
  {
@@ -373,6 +378,7 @@ implementation
     self.id := '';
     self.x := 0;
     self.y := 0;
+    self.relCoordinate := false;
     //self.z := 0;
   end;
   constructor TSBMLRenderPoint.create( cpy: TSBMLRenderPoint ) overload;
@@ -380,6 +386,7 @@ implementation
     self.id := cpy.getId;
     self.x := cpy.getX;
     self.y := cpy.getY;
+    self.relCoordinate := cpy.isRelCoordinate;
   end;
 
   constructor TSBMLRenderPoint.create( newX, newY: double ) overload;
@@ -387,6 +394,15 @@ implementation
     self.id := '';
     self.x := newX;
     self.y := newY;
+  end;
+
+  procedure TSBMLRenderPoint.setRelCoordinate(newVal: boolean);
+  begin
+    self.relCoordinate := newVal;
+  end;
+  function TSBMLRenderPoint.isRelCoordinate(): boolean;
+  begin
+    Result := self.relCoordinate;
   end;
 
   procedure TSBMLRenderPoint.setId( newId: string );
@@ -690,6 +706,15 @@ implementation
     self.rg := TSBMLRenderGroup.create(cpy.getRenderGroup);
   end;
 
+  procedure TSBMLRenderStyle.clear();
+  begin
+    self.id := '';
+    self.rg.clear();
+    self.rg := nil;
+    self.typeList.Free;
+    self.goIdList.Free;
+  end;
+
   procedure TSBMLRenderStyle.setId( newId: string);
   begin
     self.id := newId;
@@ -925,6 +950,14 @@ implementation
         end;
     end
     else console.log( 'cpy is nil: TSBMLRenderPolygon.create' );
+  end;
+
+  procedure TSBMLRenderPolygon.clear();
+  begin
+    self.renderPtList.Free;
+    self.fill := '';
+    self.id := '';
+    self.stroke := '';
   end;
 
   procedure TSBMLRenderPolygon.setFill( newFill: string );
