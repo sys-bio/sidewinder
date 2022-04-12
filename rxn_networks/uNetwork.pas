@@ -102,8 +102,8 @@ type
       destPtr    : array of TNode;  // These are not saved to json as they are pointers
       rateLaw    : string;                // Mass action rate law for reaction
       srcStoich  : array of double; // src Stoichiometric coefficients of the rxn.
-      destStoich : array of double;// dest
-      lineType   : TReactionLineType;   // line, bezier or line segment
+      destStoich : array of double; // dest         ''
+      lineType   : TReactionLineType;  // line, bezier or line segment
       reactantReactionArcs : array of TReactionCurve;
       productReactionArcs  : array of TReactionCurve;
 
@@ -113,11 +113,19 @@ type
 
       procedure createReactantSpace (nReactants : integer);
       procedure createProductSpace (nProducts : integer);
-
+      function  processReactionSpeciesReferenceCurves(newGlyphRxn: TSBMLLayoutReactionGlyph;
+               newModelRxn: SBMLReaction; newSpGlyphList: TList<TSBMLLayoutSpeciesGlyph> ): boolean;
+      procedure processReactionCurves( newRxn: TSBMLLayoutReactionGlyph ;
+                                  intProdNodeIndex, intReactNodeIndex: integer );
+      procedure importSBMLBezierCurve( newBezier: TSBMLLayoutCubicBezier; intNode: integer;
+                                       reactantSide: boolean );
+      procedure convertSBMLLineToBezier( currentLine: TSBMLLayoutLineSegment;
+                 totalSegments: integer; intNode: integer; reactantSide: boolean );
+      procedure calcArcCenterFromSBMLLayout( newSBMLRxn: TSBMLLayoutReactionGlyph );
       procedure saveAsJSON (reactionObject : TJSONObject);
       procedure loadFromJSON (obj : TJSONObject);
-      procedure loadFromSBML (glyphRxn : TSBMLLayoutReactionGlyph; modelRxn: SBMLReaction;
-                            paramAr: array of TSBMLparameter; compAr: array of TSBMLcompartment);
+      procedure loadFromSBML (glyphRxn : TSBMLLayoutReactionGlyph; modelRxn: SBMLReaction; paramAr: array of TSBMLparameter;
+                    spGlyphList: TList<TSBMLLayoutSpeciesGlyph>; compAr: array of TSBMLcompartment);
       function getMassCenter(): TPointF; // Calc mass center for reaction, where each node has mass of 1.
       function clone : TReactionState;
   end;
@@ -194,6 +202,7 @@ type
        function    addReaction (state : TReactionState) : TReaction; overload;
        function    addReaction (reaction : TReaction) : integer; overload;
        procedure   updateReactions(node: TNode);  // Node Id changes
+
        function    addAnyToAnyReaction (id: string; sourceNodes, destNodes : array of TNode; var edgeIndex : integer) : TReaction;
        procedure   unSelectAll;
        procedure   unReactionSelect;
@@ -498,13 +507,18 @@ begin
 end;
 
 
-procedure TReactionState.loadFromSBML (glyphRxn : TSBMLLayoutReactionGlyph;
-            modelRxn: SBMLReaction; paramAr: array of TSBMLparameter; compAr: array of TSBMLcompartment);
+procedure TReactionState.loadFromSBML (glyphRxn : TSBMLLayoutReactionGlyph; modelRxn: SBMLReaction;
+                         paramAr: array of TSBMLparameter; spGlyphList: TList<TSBMLLayoutSpeciesGlyph>; compAr: array of TSBMLcompartment);
 var  newParam : TSBMLparameter;
      speciesName : string;
      i, j : integer;
+     intNumCurveSeg: integer; // number of line segments
+     intReactNode, intProdNode : integer; // node index.
 begin
   id := modelRxn.getId;
+  intReactNode := 0;
+  intProdNode := 0;
+  intNumCurveSeg := 0;
   rateParams := TList<TSBMLparameter>.create;
   self.lineType := ltBezier;    // default
   // get reactants:
@@ -550,42 +564,253 @@ begin
   fillColor := DEFAULT_REACTION_COLOR;
   thickness := DEFAULT_REACTION_THICKNESS;
 
-  // Do not need to set arcCenter, remove any arcCenter assignments:
-  // arc center: order of assignment:
+  // Rxn curve/line order of assignment:
   //  1.  default, if no layout info available.
-  //  2.  grab BasePoint 1 of cubicBez if exists
-  //  3.  grap 1st line segment, start point if exists
-  //  4.  Grab bounding box center point.
+  //  2.  If cubic beziers defined for TSBMLLayoutSpeciesReferenceGlyph.
+  //  3.  Cubic beziers defined for glyphRxn (TSBMLLayoutReactionGlyph).
+  //  4.  if no Cubic Beziers then look for line segments.
   arcCenter.x := 20; arcCenter.y := 20; // default, need something else here?
   if glyphRxn <> nil then  // check if any layout info available
   begin
-    if glyphRxn.getCurve <> nil then
-      begin
-        if glyphRxn.getCurve.getNumCubicBeziers > 0 then
-        begin
-          arcCenter.x := glyphRxn.getCurve.getCubicBezier(0).getBasePoint1.getX;
-          arcCenter.y := glyphRxn.getCurve.getCubicBezier(0).getBasePoint1.gety;
-        end
-        else
-        begin
-          if glyphRxn.getCurve.getNumCurveSegments > 0 then
-            begin
-              arcCenter.x := glyphRxn.getCurve.getLineSegment(0).getStartPt.getX;
-              arcCenter.y := glyphRxn.getCurve.getLineSegment(0).getStartPt.getY;
-            end;
-
-        end;
-      end
-    else
+    if processReactionSpeciesReferenceCurves(glyphRxn, modelRxn, spGlyphList ) = false then
     begin
-      if glyphRxn.boundingBoxIsSet then
+      if glyphRxn.getCurve <> nil then // Next try to get rxn curves with glyphRxn
+        begin
+        processReactionCurves( glyphRxn, intProdNode, intReactNode  );
+        end
+      else // no curves, set arcCenter as boundingBox center:
+        begin // TODO: need default reactionArc if none provided in layout....
+        if glyphRxn.boundingBoxIsSet then
+          begin
+          arcCenter.x := glyphRxn.getBoundingBox.getPoint.getX +
+                                   (glyphRxn.getBoundingBox.getDims.getWidth/2);
+          arcCenter.Y := glyphRxn.getBoundingBox.getPoint.getY +
+                                   (glyphRxn.getBoundingBox.getDims.getHeight/2);
+          end;
+        end;
+    end;
+    
+
+  end; // end of if glyphRxn <> nil
+end;
+
+function  TReactionState.processReactionSpeciesReferenceCurves(newGlyphRxn: TSBMLLayoutReactionGlyph;
+          newModelRxn: SBMLReaction; newSpGlyphList: TList<TSBMLLayoutSpeciesGlyph> ): boolean;
+var i, j, k, nodeIndex: integer;
+    spRefGlyph: TSBMLLayoutSpeciesReferenceGlyph;
+    spGlyphId, spId: string;
+    reactant: boolean;
+begin
+  for i := 0 to newGlyphRxn.getNumSpeciesRefGlyphs -1 do
+    begin
+      spGlyphId := '';
+      spId := '';
+      Result := false;
+      reactant := false;
+      self.calcArcCenterFromSBMLLayout(newGlyphRxn);
+      spRefGlyph := newGlyphRxn.getSpeciesRefGlyph(i);
+      spGlyphId := spRefGlyph.getSpeciesGlyphId;
+      for j := 0 to newSpGlyphList.Count -1 do
+        if newSpGlyphList[j].getId = spGlyphId then spId := newSpGlyphList[j].getSpeciesId;
+
+      for j := 0 to newModelRxn.getNumReactants -1 do
+        begin
+        if newModelRxn.getReactant(j).getSpecies = spId then
+          begin
+          reactant := true;
+          for k := 0 to self.nReactants -1 do
+            if self.srcId[k] = spId then nodeIndex := k;
+          end
+        else if not reactant then
+          begin
+          for k := 0 to self.nProducts -1 do
+            if self.destId[k] = spId then nodeIndex := k;
+          end;
+        end;
+      if spRefGlyph.isCurveSet then
+        begin
+          if spRefGlyph.getCurve.getNumCubicBeziers > 0 then
+            begin
+              Result := true;
+              for j := 0 to spRefGlyph.getCurve.getNumCubicBeziers -1 do
+                begin
+                self.importSBMLBezierCurve(spRefGlyph.getCurve.getCubicBezier(j),
+                                           nodeIndex, reactant );
+                end;
+            end
+          else // check if line segments, if so, process them:
+            begin
+            for j := 0 to spRefGlyph.getCurve.getNumCurveSegments -1 do
+              begin // Assume at least one segment for each species in rxn:
+              self.convertSBMLLineToBezier( spRefGlyph.getCurve.getLineSegment(j),
+                2, nodeIndex, reactant );
+              Result := true;
+              end;
+
+            end;
+        end;
+
+    end;
+end;
+
+procedure TReactionState.processReactionCurves( newRxn: TSBMLLayoutReactionGlyph ;
+                                  intProdNodeIndex, intReactNodeIndex: integer  );
+var i, intNumCurveSeg: integer;
+ begin
+   intNumCurveSeg := 0;
+   for i := 0 to newRxn.getCurve.getNumCubicBeziers - 1 do
+     begin
+     // TODO: what if only 1 bezier? Need to extrapolate arcCenter? Make 2?
+     // Assume rxn curve between nodes contains at most 2 subcurves
+     // Assume first bezier is a reactantReactionArc:
+     if ( arcCenter.x = newRxn.getCurve.getCubicBezier(i).getStart.getX ) and
+        ( arcCenter.y = newRxn.getCurve.getCubicBezier(i).getStart.gety ) then
+       begin  // productReactionArc
+       self.importSBMLBezierCurve(newRxn.getCurve.getCubicBezier(i) , intProdNodeIndex, false);
+       inc(intProdNodeIndex);
+       end
+     else     // reactantReactionArc:
+       begin
+       self.importSBMLBezierCurve(newRxn.getCurve.getCubicBezier(i) , intReactNodeIndex, true);
+       inc(intReactNodeIndex);
+       end;
+
+     end;
+
+    // Convert line segments to bezier curves:
+   intNumCurveSeg := newRxn.getCurve.getNumCurveSegments;
+
+   for i := 0 to intNumCurveSeg -1 do
+     begin
+     if (arcCenter.x = newRxn.getCurve.getLineSegment(i).getEndPt.getX) and
+       (arcCenter.y = newRxn.getCurve.getLineSegment(i).getEndPt.getY) then
+       begin     // add line from reactant to arcCenter
+       convertSBMLLineToBezier(newRxn.getCurve.getLineSegment(i), intNumCurveSeg,
+                                  intReactNodeIndex, true  );
+       inc(intReactNodeIndex);
+       end
+     else
+       begin     // add line from arcCenter to product
+       convertSBMLLineToBezier(newRxn.getCurve.getLineSegment(i), intNumCurveSeg,
+                                  intProdNodeIndex, false  );
+       inc(intProdNodeIndex);
+       end;
+     end;
+ end;
+
+
+procedure TReactionState.importSBMLBezierCurve( newBezier: TSBMLLayoutCubicBezier; intNode: integer;
+                                        reactantSide: boolean );
+begin
+  console.log(' Length of self.reactantReactionArcs', length(self.reactantReactionArcs));
+ //   console.log(' Length of self.productReactionArcs', length(self.productReactionArcs));
+   if reactantSide and (length(self.reactantReactionArcs) > intNode) then    // reactantReactionArc:
+     begin
+     self.reactantReactionArcs[intNode].nodeIntersectionPt.x := newBezier.getStart.getX;
+     self.reactantReactionArcs[intNode].nodeIntersectionPt.y := newBezier.getStart.getY;
+     self.reactantReactionArcs[intNode].h1.x :=
+                                      newBezier.getBasePoint1.getX;
+     self.reactantReactionArcs[intNode].h1.y :=
+                                      newBezier.getBasePoint1.getY;
+     self.reactantReactionArcs[intNode].h2.x :=
+                                      newBezier.getBasePoint2.getX;
+     self.reactantReactionArcs[intNode].h2.y :=
+                                      newBezier.getBasePoint2.getY;
+     self.reactantReactionArcs[intNode].arcDirection := adInArc;
+     self.reactantReactionArcs[intNode].Merged := false;
+     end
+  else       // productReactantArc
+    begin
+    if length(self.productReactionArcs) > intNode then
       begin
-        arcCenter.x := glyphRxn.getBoundingBox.getPoint.getX;
-        arcCenter.Y := glyphRxn.getBoundingBox.getPoint.getY;
+      self.productReactionArcs[intNode].nodeIntersectionPt.x :=
+                                      newBezier.getEnd.getX;
+      self.productReactionArcs[intNode].nodeIntersectionPt.y :=
+                                      newBezier.getEnd.getY;
+      self.productReactionArcs[intNode].h1.x :=
+                                      newBezier.getBasePoint1.getX;
+      self.productReactionArcs[intNode].h1.y :=
+                                      newBezier.getBasePoint1.getY;
+      self.productReactionArcs[intNode].h2.x :=
+                                     newBezier.getBasePoint2.getX;
+      self.productReactionArcs[intNode].h2.y :=
+                                      newBezier.getBasePoint2.getY;
+      self.productReactionArcs[intNode].arcDirection := adOutArc;
+      self.productReactionArcs[intNode].Merged := false;
+
       end;
     end;
-  end;
+end;
 
+procedure TReactionState.convertSBMLLineToBezier( currentLine: TSBMLLayoutLineSegment;
+                totalSegments: integer; intNode: integer; reactantSide: boolean );
+begin
+  if totalSegments = 1 then   // break up segment into two arcs:
+    begin // product arc:
+    self.productReactionArcs[intNode].nodeIntersectionPt.x := currentLine.getEndPt.getX;
+    self.productReactionArcs[intNode].nodeIntersectionPt.y := currentLine.getEndPt.getY;
+    self.productReactionArcs[intNode].arcDirection := adOutArc;
+    self.productReactionArcs[intNode].Merged := false;
+       // reactant arc:
+    self.reactantReactionArcs[intNode].nodeIntersectionPt.x := currentLine.getStartPt.getX;
+    self.reactantReactionArcs[intNode].nodeIntersectionPt.y := currentLine.getStartPt.getY;
+    self.reactantReactionArcs[intNode].arcDirection := adInArc;
+    self.reactantReactionArcs[intNode].Merged := false;
+    end
+  else
+    begin
+    if reactantSide and (length( self.reactantReactionArcs ) > intNode) then
+      begin // reactant arc:
+      self.reactantReactionArcs[intNode].nodeIntersectionPt.x := currentLine.getStartPt.getX;
+      self.reactantReactionArcs[intNode].nodeIntersectionPt.y := currentLine.getStartPt.getY;
+      self.reactantReactionArcs[intNode].arcDirection := adInArc;
+      self.reactantReactionArcs[intNode].Merged := false;
+      end
+    else   // product arc:
+      if length( self.productReactionArcs ) > intNode then
+        begin
+        self.productReactionArcs[intNode].nodeIntersectionPt.x := currentLine.getEndPt.getX;
+        self.productReactionArcs[intNode].nodeIntersectionPt.y := currentLine.getEndPt.getY;
+        self.productReactionArcs[intNode].arcDirection := adOutArc;
+        self.productReactionArcs[intNode].Merged := false;
+        end;
+    end;
+
+end;
+
+procedure TReactionState.calcArcCenterFromSBMLLayout( newSBMLRxn: TSBMLLayoutReactionGlyph );
+var i: integer;
+    rxnCurve: TSBMLLayoutCurve;
+begin
+  if newSBMLRxn.boundingBoxIsSet then
+    begin  // get center of reaction BBox:
+    self.arcCenter.x := newSBMLRxn.getBoundingBox.getPoint.getX +
+                       (newSBMLRxn.getBoundingBox.getDims.getWidth/2);
+    self.arcCenter.Y := newSBMLRxn.getBoundingBox.getPoint.getY +
+                       (newSBMLRxn.getBoundingBox.getDims.getHeight/2);
+    end
+  else
+    begin
+    if newSBMLRxn.isCurveSet() then
+      begin
+      rxnCurve := newSBMLRxn.getCurve();
+      if rxnCurve.getNumCurveSegments = 1 then
+        begin
+        self.arcCenter.x := (rxnCurve.getLineSegment(0).getStartPt.getX + rxnCurve.getLineSegment(0).getEndPt.getX)/2;
+        self.arcCenter.y := (rxnCurve.getLineSegment(0).getStartPt.getY + rxnCurve.getLineSegment(0).getEndPt.getY)/2;
+        end;
+
+      end
+      else //assume 2 bezier curves and endpoint of first is arcCenter:
+        begin
+        if rxnCurve.getNumCubicBeziers > 1 then
+          begin
+          self.arcCenter.x := rxnCurve.getCubicBezier(0).getEnd.getX;
+          self.arcCenter.y := rxnCurve.getCubicBezier(0).getEnd.getY;
+          end;
+        end;
+
+    end;
 end;
 
 /// Calc mass center for reaction state, where each node has mass of 1.
@@ -802,7 +1027,7 @@ begin
             if reactionGlyphId = model.getReaction(j).getID then
             begin
               reactionState.loadFromSBML (reactionGlyph, model.getReaction(j),
-                   model.getSBMLparameterAr, model.getSBMLcompartmentsArr());
+                   model.getSBMLparameterAr, modelLayout.getSpGlyphList, model.getSBMLcompartmentsArr());
               reaction := addReaction (reactionState);
              // Set the node pointers based on the node Ids
               for k := 0 to reaction.state.nReactants - 1 do
@@ -827,9 +1052,10 @@ begin
              // ************************
           end;
       end;
+   console.log('Done loading SBML network layout');
 end;
 
-
+    // No SBML layout present:
 procedure TNetwork.autoBuildNetworkFromSBML(model: TModel);
  var i, j, k, l, index: integer;
    spAr: array of string;
@@ -859,7 +1085,7 @@ procedure TNetwork.autoBuildNetworkFromSBML(model: TModel);
     for j := 0 to model.getNumReactions - 1 do
         begin
           reactionState.loadFromSBML (nil, model.getReaction(j), model.getSBMLparameterAr,
-                                model.getSBMLcompartmentsArr());
+                                nil, model.getSBMLcompartmentsArr());
 
           reaction := addReaction (reactionState);
           reaction.state.arcCenter.x := 20 + j*2;

@@ -205,7 +205,7 @@ type
  TSBMLLayoutSpeciesReferenceGlyph = class(TSBMLLayoutGraphicalObject)
  private
    specGlyphId: string;  // id of speciesGlyph associated with this obj
-   specRefId: string;  // id of species reference used in reaction
+   specRefId: string;  // id of species reference used in reaction ?? needed?
    role: string;       // optional, default is 'undefined'
    curve: TSBMLLayoutCurve;  // optionally use use in place of bounding box
    curveFlag: boolean;
@@ -213,17 +213,18 @@ type
    constructor create() overload;
    constructor create(newSpRefId: string) overload;
    constructor create(cpy: TSBMLLayoutSpeciesReferenceGlyph) overload;
-   function getSpeciesGlyphId(): string;
+   procedure clear();
+   function  getSpeciesGlyphId(): string;
    procedure setSpeciesGlyphId(newId: string);
-   function getSpeciesRefId(): string;
+   function  getSpeciesRefId(): string;
    procedure setSpeciesRefId(newId: string);
-   function getRole(): string; // Currently does not check for allowed values.
+   function  getRole(): string; // Currently does not check for allowed values.
    // Allowed values are “substrate”, “product”, “sidesubstrate”, “sideproduct”, “modifier”,
    // “activator”, “inhibitor” and “undefined”.
    procedure setRole(newRole: string);
    procedure setCurve(newCurve: TSBMLLayoutCurve);
-   function getCurve(): TSBMLLayoutCurve;
-   function isCurveSet(): boolean;
+   function  getCurve(): TSBMLLayoutCurve;
+   function  isCurveSet(): boolean;
 
  end;
 
@@ -286,26 +287,27 @@ type
    procedure setDims(newDims: TSBMLLayoutDims);
   // procedure setDims(w: double; h: double) overload;
    //Note: javascript grabs the first overload function
-   function getDims(): TSBMLLayoutDims;
+   function  getDims(): TSBMLLayoutDims;
    procedure addGraphObj(newGO: TSBMLLayoutGraphicalObject);
-   function getNumAddionalGraphObjs(): integer;
-   function getAdditionalGraphObj(index:integer): TSBMLLayoutGraphicalObject;
-   function deleteAdditionalGraphObj(index: integer): boolean;
+   function  getNumAddionalGraphObjs(): integer;
+   function  getAdditionalGraphObj(index:integer): TSBMLLayoutGraphicalObject;
+   function  deleteAdditionalGraphObj(index: integer): boolean;
    procedure addGenGlyph(newGenG: TSBMLLayoutGeneralGlyph);
-   function getNumGenGlyphs(): integer;
-   function getGenGlyph(index:integer): TSBMLLayoutGeneralGlyph;
-   function deleteGenGlyph(index: integer): boolean;
+   function  getNumGenGlyphs(): integer;
+   function  getGenGlyph(index:integer): TSBMLLayoutGeneralGlyph;
+   function  deleteGenGlyph(index: integer): boolean;
    procedure addSpGlyph(newSpG: TSBMLLayoutSpeciesGlyph);
-   function getNumSpGlyphs(): integer;
-   function getSpGlyph(index: integer): TSBMLLayoutSpeciesGlyph;
-   function deleteSpGlyph(index: integer): boolean;
+   function  getNumSpGlyphs(): integer;
+   function  getSpGlyph(index: integer): TSBMLLayoutSpeciesGlyph;
+   function  getSpGlyphList(): TList<TSBMLLayoutSpeciesGlyph>;
+   function  deleteSpGlyph(index: integer): boolean;
    procedure addCompGlyph(newCompG: TSBMLLayoutCompartmentGlyph);
-   function getNumCompGlyphs(): integer;
-   function getCompGlyph(index: integer): TSBMLLayoutCompartmentGlyph;
-   function deleteCompGlyph(index: integer): boolean;
+   function  getNumCompGlyphs(): integer;
+   function  getCompGlyph(index: integer): TSBMLLayoutCompartmentGlyph;
+   function  deleteCompGlyph(index: integer): boolean;
    procedure addRxnGlyph(newRxnG: TSBMLLayoutReactionGlyph);
-   function getNumRxnGlyphs(): integer;
-   function getRxnGlyph(index: integer): TSBMLLayoutReactionGlyph;
+   function  getNumRxnGlyphs(): integer;
+   function  getRxnGlyph(index: integer): TSBMLLayoutReactionGlyph;
    function deleteRxnGlyph(index: integer): boolean;
    procedure addTextGlyph(newTextG: TSBMLLayoutTextGlyph);
    function getNumTextGlyphs(): integer;
@@ -943,6 +945,17 @@ var
     else self.curveFlag := false;
   end;
 
+  procedure TSBMLLayoutSpeciesReferenceGlyph.clear;
+  begin
+    self.id := 'specRefGlyph';
+    self.specGlyphId := '';
+    self.specRefId :='';
+    self.role := 'undefined';
+    self.curve.Free;
+    self.boundingBox.Free;
+    self.curveFlag := false;
+  end;
+
   function TSBMLLayoutSpeciesReferenceGlyph.getSpeciesGlyphId(): string;
   begin
     Result := self.specGlyphId;
@@ -1288,6 +1301,11 @@ var
   function TSBMLLayout.getSpGlyph(index: Integer): TSBMLLayoutSpeciesGlyph;
   begin
     Result := self.speciesGlyphList[index];
+  end;
+
+  function  TSBMLLayout.getSpGlyphList(): TList<TSBMLLayoutSpeciesGlyph>;
+  begin
+    Result := self.speciesGlyphList;
   end;
 
   function TSBMLLayout.deleteSpGlyph(index: integer): boolean;
