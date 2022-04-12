@@ -61,6 +61,8 @@ type
    function  isParameterIdinList(id: string): boolean;
    function  getSBMLmodelRules():array of TSBMLrule;
    procedure addSBMLrule( newR: TSBMLrule);
+   procedure setNumFuncDefs( newNum: integer );
+   function  getNumFuncDefs(): integer;
    function  getSpeciesNumb(): integer;
    procedure addSBMLspecies(newSpecies: TSBMLSpecies);
    function  getSBMLspecies(i:integer): TSBMLSpecies; overload;
@@ -114,11 +116,12 @@ begin
     numSpecies:= 0; numCompartments:= 0;
     numEvents:= 0; numRules:= 0; numFuncDefs:=0;
     modelRules:= nil;
+    self.numFuncDefs := 0;
     modelId := '';
 end;
 
 
-procedure TModel.setNumReactions (rnxNumb : integer);
+procedure TModel.setNumReactions (rnxNumb : integer); // remove, use addSBMLReaction
 begin
   numReactions:= rnxNumb;
 end;
@@ -235,6 +238,16 @@ procedure TModel.SBML_UpdateEvent();
  procedure TModel.setModelId(newId: string);
  begin
    self.modelId := newId;
+ end;
+
+ procedure TModel.setNumFuncDefs( newNum: integer );
+ begin
+   self.numFuncDefs := newNum;
+ end;
+
+ function TModel.getNumFuncDefs: Integer;
+ begin
+   Result := self.numFuncDefs;
  end;
 
  function TModel.getSpeciesNumb(): integer;
