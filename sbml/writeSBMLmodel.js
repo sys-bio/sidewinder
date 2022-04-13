@@ -249,18 +249,20 @@ class GenerateSBMLModel {
      const sbmlRxnGlyph = this.libSBMLlayout.createReactionGlyph();
      sbmlRxnGlyph.setReactionId( curRxnGlyph.getReactionId() );
      sbmlRxnGlyph.setId( curRxnGlyph.getId() );
+
      var j;
      for( j=0; j < curRxnGlyph.getNumSpeciesRefGlyphs(); j++ ) {
        const curSpRefGlyph = curRxnGlyph.getSpeciesRefGlyph(j);
        const sbmlSpRefGlyph = this.libSBMLlayout.createSpeciesReferenceGlyph();
        sbmlSpRefGlyph.setSpeciesGlyphId( curSpRefGlyph.getSpeciesGlyphId() );
        sbmlSpRefGlyph.setSpeciesReferenceId( curSpRefGlyph.getSpeciesRefId() );
-       // sbmlSpRefGlyph.setRole( curSpRefGlyph.getRole() );  NOT used,
-         // need to convert to SpeciesReferenceRole_t enum
+       sbmlSpRefGlyph.setRole( curSpRefGlyph.getRole() );
+      //sbmlSpRefGlyph.setRole(1);
+         // need to convert to SpeciesReferenceRole_t enum ?
        sbmlSpRefGlyph.setId( curSpRefGlyph.getId() );
 
        if( curSpRefGlyph.isCurveSet() ) {
-         const curCurve = curSpRefGlyph.getCurve;
+         const curCurve = curSpRefGlyph.getCurve();
          if( curCurve.getNumCubicBeziers() >0 ) {
            var k;
            for( k=0; k < curCurve.getNumCubicBeziers(); k++ ) {
@@ -284,6 +286,13 @@ class GenerateSBMLModel {
          this.processBoundingBox( curBBox, sbmlBBox );
        }
      } // getNumSpeciesRefGlyphs
+
+   // TODO: ISSUE: ReactionGlyph appears to inherit from Sbase, not GraphicalObject so no BoundingBox
+//     if( curRxnGlyph.boundingBoxIsSet() ) {
+  //     const curBBox = curRxnGlyph.getBoundingBox();
+  //     const sbmlRxnBBox = sbmlRxnGlyph.getBoundingBox(); // pointer to reactionGlyph bounding box
+  //     this.processBoundingBox( curBBox, sbmlRxnBBox );
+  //   }
      if( curRxnGlyph.isCurveSet() ) {
        const curCurve = curRxnGlyph.getCurve();
        if( curCurve.getNumCubicBeziers() >0 ) {
@@ -377,9 +386,9 @@ class GenerateSBMLModel {
          sbmlPt.setY(new this.libSBML.RelAbsVector( curPt.getY(), 0));
        }
      }
+     // else if rectangle, ellipse .....
    }
 
-   var rxnType = false;
      // create styles:
    for( i=0; i < this.modelRendering.getNumberStyles(); i++ ) {
      const newStyle = this.modelRendering.getStyle(i);
@@ -388,22 +397,23 @@ class GenerateSBMLModel {
 
      for( j=0; j < newStyle.getNumbTypes(); j++ ) {
        sbmlStyle.addType( newStyle.getType(j) );
-       if( newStyle.getType(j) == 'REACTIONGLYPH') { rxnType = true; }
      }
+     for(j=0; j < newStyle.getNumbRoles(); j++) {
+       sbmlStyle.addRole(newStyle.getRole(j));
+     }
+
      for( j=0; j <  newStyle.getNumbGoIds(); j++ ) {
- //    sbmlStyle.addId( newStyle.getGoId(j) ); // libsbmljs gives error
+     //  sbmlStyle.addGoId( newStyle.getGoId(j) ); // libsbmljs gives error
      // TODO: need to fix in idl to accept id of graphical object that is using this style.
 
      }
      const newRG = newStyle.getRenderGroup();
-     if( rxnType ) {
-     //  console.log('EndHead: ',sbmlStyle.getGroup().getEndHead() );
-     //  console.log('Found EndHead: ', newRG.getEndHead());
-     // sbmlStyle.getGroup().setEndHead('arrowHeadREACTIONGLYPH');
+
+     if( newRG.getEndHead() !='' ) {
        sbmlStyle.getGroup().setEndHead(newRG.getEndHead());
-     //  console.log('EndHead3: ',sbmlStyle.getGroup().getEndHead() );
-     // TODO: add setStartHead()
-       rxnType = false;
+     }
+     if( newRG.getStartHead() !='' ) {
+       sbmlStyle.getGroup().setStartHead(newRG.getStartHead());
      }
      if( newRG.isStrokeWidthSet() ) {
        sbmlStyle.getGroup().setStrokeWidth( newRG.getStrokeWidth() );

@@ -155,10 +155,11 @@ var i, j, k, index: integer;
    newSpRefGlyph: TSBMLLayoutSpeciesReferenceGlyph;
    newRxnCenterPt: TSBMLLayoutPoint;
    newDims: TSBMLLayoutDims;
-   newRxnCurve: TSBMLLayoutCurve;
+   newRxnCurve, newRxnGlyphCurve : TSBMLLayoutCurve;
    newLineSeg: TSBMLLayoutLineSegment;
    newCubicBezier: TSBMLLayoutCubicBezier;
    spRefCenter: TSBMLLayoutPoint;
+   rxnArcCenter: TSBMLLayoutPoint;
    spRefProdCenter: TSBMLLayoutPoint;  // Use for uni-uni reactions, one line segment.
    massCenter: TPointF;  //Rxn mass center.
    nodeCenter: TPointF;
@@ -173,7 +174,7 @@ begin
 
     massCenter := self.network.reactions[i].state.getMassCenter; // update massCenter;
     newRxnGlyph := TSBMLLayoutReactionGlyph.create(self.network.reactions[i].state.id);
-    newRxnCurve := TSBMLLayoutCurve.create;
+    //newRxnCurve := TSBMLLayoutCurve.create;
     newRxnCenterPt := TSBMLLayoutPoint.create( massCenter.x, massCenter.y );
 
     setLength(newSpecReacts,0);
@@ -186,10 +187,11 @@ begin
       if self.network.reactions[i].state.srcId[j] <> '' then
       begin
         setLength(newSpecReacts, k+1);
+        newRxnCurve := TSBMLLayoutCurve.create; // create bezier for newSpRefGlyph
         newSpRefId := self.network.reactions[i].state.srcId[j] + self.network.reactions[i].state.id;
         newSpRefGlyph := TSBMLLayoutSpeciesReferenceGlyph.create(newSpRefId);
         newSpRefGlyph.setSpeciesGlyphId('speciesGlyph' + self.network.reactions[i].state.srcId[j]);
-        newSpRefGlyph.setRole('substrate');
+        newSpRefGlyph.setRole(SPECIES_ROLE_SUBSTRATE);
         newDims := TSBMLLayoutDims.create(0,0); // Do not need boundingBox, use curve
         if self.network.findNode( self.network.reactions[i].state.srcId[j], index ) then
         begin
@@ -217,7 +219,7 @@ begin
         end
         else notifyUser('Node id not found: ' + self.network.reactions[i].state.srcId[j] );
         newSpRefGlyph.setBoundingBox(TSBMLLayoutBoundingBox.create(spRefCenter, newDims));
-
+        newSpRefGlyph.setCurve(newRxnCurve);
         newRxnGlyph.addSpeciesRefGlyph(newSpRefGlyph);
         if length( self.network.reactions[i].state.srcStoich ) > 0 then
           newSpecReacts[k] := TSBMLSpeciesReference.create( newSpRefId,
@@ -232,6 +234,7 @@ begin
     for j := 0 to self.network.reactions[i].state.nProducts-1 do
     begin
       k := length(newSpecProds);
+      newRxnCurve := TSBMLLayoutCurve.create; // create bezier for newSpRefGlyph
       if self.network.reactions[i].state.destId[j] <> '' then
       begin
         index := -1;
@@ -239,7 +242,7 @@ begin
         newSpRefId := self.network.reactions[i].state.destId[j] + self.network.reactions[i].state.id;
         newSpRefGlyph := TSBMLLayoutSpeciesReferenceGlyph.create(newSpRefId);
         newSpRefGlyph.setSpeciesGlyphId('speciesGlyph' + self.network.reactions[i].state.destId[j]);
-        newSpRefGlyph.setRole('product');
+        newSpRefGlyph.setRole(SPECIES_ROLE_PRODUCT);
         newDims := TSBMLLayoutDims.create(0,0);
         if self.network.findNode( self.network.reactions[i].state.destId[j], index ) then
         begin
@@ -270,6 +273,7 @@ begin
         else notifyUser('Node id not found: ' + self.network.reactions[i].state.destId[j] );
         spRefCenter := TSBMLLayoutPoint.create(0,0);
         newSpRefGlyph.setBoundingBox(TSBMLLayoutBoundingBox.create(spRefCenter, newDims));
+        newSpRefGlyph.setCurve(newRxnCurve);
         newRxnGlyph.addSpeciesRefGlyph(newSpRefGlyph);
         if length( self.network.reactions[i].state.destStoich ) > 0 then
           newSpecProds[k] := TSBMLSpeciesReference.create(newSpRefId,
@@ -292,7 +296,13 @@ begin
     newReaction.setKineticLaw(newLaw);
     newReaction.setCompartment(DEFAULT_COMP);
     self.model.addSBMLReaction(newReaction);
-    newRxnGlyph.setCurve(newRxnCurve);
+    //newRxnGlyph.setCurve(newRxnCurve);
+    rxnArcCenter := TSBMLLayoutPoint.create(self.network.reactions[i].state.arcCenter.x,
+                     self.network.reactions[i].state.arcCenter.y );
+    newRxnGlyph.setBoundingBox(TSBMLLayoutBoundingBox.create(rxnArcCenter, newDims)); //libsbmljs does not support
+    newRxnGlyphCurve := TSBMLLayoutCurve.create;
+    newRxnGlyphCurve.addLineSegment(TSBMLLayoutLineSegment.create(rxnArcCenter,rxnArcCenter)); // point
+    newRxnGlyph.setCurve(newRxnGlyphCurve);
     self.setReactionRendering( self.network.reactions[i].state, newRxnGlyph.getId );
     self.layout.addRxnGlyph(newRxnGlyph);
   end;
@@ -369,15 +379,18 @@ begin
  // console.log('Fill color: ', colorStr );
   fillColorDefId :=  'fillColorReaction_' + rxnGlyphId;
   self.renderInfo.addColorDef(TSBMLRenderColorDefinition.create( colorStr, fillColorDefId) );
-  newStyle := TSBMLRenderStyle.create;
-  newStyle.setId('reactionStyle_' + rxnState.id);
-  newStyle.addType(STYLE_TYPES[2]);
+
+  // product species ref glyph style:
+  newStyle := TSBMLRenderStyle.create; // for species reference glyphs
+  newStyle.setId('reaction_product_Style_' + rxnState.id);
+  newStyle.addType(STYLE_TYPES[3]); // SPECIESREFERENCEGLYPH
+  newStyle.addRole('product'); //'product'
   newStyle.addGoId( rxnGlyphId );
   newRg := TSBMLRenderGroup.create;
   newRg.setStrokeWidth( rxnState.thickness );
   newRg.setStrokeColor( fillColorDefId ); // same as fill
   newRg.setFillColor( fillColorDefId );
-  newLineEndId := 'arrowHead' + STYLE_TYPES[2];
+  newLineEndId := 'arrowHead_' + 'product';
   newRg.setEndHead(newLineEndId);
   for i := 0 to self.renderInfo.getNumbLineEndings -1 do
   begin
@@ -388,6 +401,24 @@ begin
     self.renderInfo.addLineEnding( self.generateRxnLineEnding( newLineEndId, fillColorDefId, rxnState ) );
   newStyle.setRenderGroup( TSBMLRenderGroup.create(newRg) );
   self.renderInfo.addStyle( TSBMLRenderStyle.create(newStyle) );
+
+  // reactant species ref glyph style:
+  newStyle.clear;
+  newStyle.Free;
+  newRg.clear;
+  newRg.Free;
+  newStyle := TSBMLRenderStyle.create; // for species reference glyphs
+  newStyle.setId('reaction_reactant_Style_' + rxnState.id);
+  newStyle.addType(STYLE_TYPES[3]); // SPECIESREFERENCEGLYPH
+  newStyle.addRole('reactant'); //'product'
+  newStyle.addGoId( rxnGlyphId );
+  newRg := TSBMLRenderGroup.create;
+  newRg.setStrokeWidth( rxnState.thickness );
+  newRg.setStrokeColor( fillColorDefId ); // same as fill
+  newRg.setFillColor( fillColorDefId );
+  newStyle.setRenderGroup( TSBMLRenderGroup.create(newRg) );
+  self.renderInfo.addStyle( TSBMLRenderStyle.create(newStyle) );
+
 end;
 
 function TNetworkToModel.generateRxnLineEnding( id: string; fColorDefId: string;

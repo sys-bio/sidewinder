@@ -10,7 +10,11 @@ interface
 //  Web quote: There is no real function overloading in JavaScript since it allows you to pass
 //   any number of parameters of any type. You have to check inside the function
 //   for how many arguments have been passed in and what type they are.
+
 type
+ TSPECIES_REF_ROLE = ( SPECIES_ROLE_UNDEFINED, SPECIES_ROLE_SUBSTRATE, SPECIES_ROLE_PRODUCT,
+                SPECIES_ROLE_SIDESUBSTRATE, SPECIES_ROLE_SIDEPRODUCT, SPECIES_ROLE_MODIFIER,
+                SPECIES_ROLE_ACTIVATOR, SPECIES_ROLE_INHIBITOR, SPECIES_ROLE_INVALID );
  TSBMLLayoutDims = class
    private
      id: string;  // optional
@@ -206,7 +210,7 @@ type
  private
    specGlyphId: string;  // id of speciesGlyph associated with this obj
    specRefId: string;  // id of species reference used in reaction ?? needed?
-   role: string;       // optional, default is 'undefined'
+   role: TSPECIES_REF_ROLE;       // optional, default is 'undefined'
    curve: TSBMLLayoutCurve;  // optionally use use in place of bounding box
    curveFlag: boolean;
  public
@@ -218,10 +222,10 @@ type
    procedure setSpeciesGlyphId(newId: string);
    function  getSpeciesRefId(): string;
    procedure setSpeciesRefId(newId: string);
-   function  getRole(): string; // Currently does not check for allowed values.
+   function  getRole(): TSPECIES_REF_ROLE;
    // Allowed values are “substrate”, “product”, “sidesubstrate”, “sideproduct”, “modifier”,
    // “activator”, “inhibitor” and “undefined”.
-   procedure setRole(newRole: string);
+   procedure setRole(newRole: TSPECIES_REF_ROLE);
    procedure setCurve(newCurve: TSBMLLayoutCurve);
    function  getCurve(): TSBMLLayoutCurve;
    function  isCurveSet(): boolean;
@@ -915,7 +919,7 @@ var
     inherited create('specRefGlyph');
     self.specGlyphId := '';
     self.specRefId := '';
-    self.role := 'undefined';
+    self.role := SPECIES_ROLE_UNDEFINED;
     self.curve := nil;
     self.curveFlag := false;
   end;
@@ -925,7 +929,7 @@ var
     inherited create('specRefGlyph'+ newSpRefId);
     self.specGlyphId := '';
     self.specRefId := newSpRefId;
-    self.role := 'undefined';
+    self.role := SPECIES_ROLE_UNDEFINED;
     self.curve := nil;
     self.curveFlag := false;
   end;
@@ -950,7 +954,7 @@ var
     self.id := 'specRefGlyph';
     self.specGlyphId := '';
     self.specRefId :='';
-    self.role := 'undefined';
+    self.role := SPECIES_ROLE_UNDEFINED; //'undefined';
     self.curve.Free;
     self.boundingBox.Free;
     self.curveFlag := false;
@@ -972,13 +976,13 @@ var
   begin
     self.specRefId := newId;
   end;
-  function TSBMLLayoutSpeciesReferenceGlyph.getRole(): string;
+  function TSBMLLayoutSpeciesReferenceGlyph.getRole(): TSPECIES_REF_ROLE;
   begin
     Result := self.role;
   end;
-  procedure TSBMLLayoutSpeciesReferenceGlyph.setRole(newRole: string);
+  procedure TSBMLLayoutSpeciesReferenceGlyph.setRole(newRole: TSPECIES_REF_ROLE);
   begin
-    self.role := newRole; //TODO: chk if valid role.
+    self.role := newRole;
   end;
 
   function TSBMLLayoutSpeciesReferenceGlyph.isCurveSet(): boolean;
@@ -1007,6 +1011,11 @@ var
 var
   i: Integer;
   begin
+    if cpy.boundingBoxIsSet then
+      begin
+      self.boundingBox := TSBMLLayoutBoundingBox.create(cpy.getBoundingBox);
+      self.boundingBoxSet := true;
+      end;
     self.rxnId := cpy.getReactionId;
     if cpy.isCurveSet then
       begin

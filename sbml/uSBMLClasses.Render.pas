@@ -238,7 +238,7 @@ interface
   private
     id: string;
     typeList: TList<string {STYLE_TYPES}>; // Optional, Which glyph types to apply this style
-   // roleList: TList<string>; // TODO:, list of roles for which this style applies.
+    roleList: TList<string>; // TODO:, list of roles for which this style applies.
     goIdList: TList<string>;// Optional, List of layout graphical object ids for which this style applies.
     rg: TSBMLRenderGroup;
   public
@@ -251,9 +251,9 @@ interface
     function addType( sNewType: string ): boolean;
     function  getType( index: integer ): string;
     function  getNumbTypes(): integer;
-   // procedure addRole( newRole: string);
-   // function  getRole( index: integer ): string;
-   // function  getNumbRoles(): integer;
+    procedure addRole( newRole: string);
+    function  getRole( index: integer ): string;
+    function  getNumbRoles(): integer;
     procedure addGoId( sNewId: string );  // add id og GO to list.
     function  getGoId( index: integer ): string;
     function  getNumbGoIds(): integer;
@@ -686,6 +686,7 @@ implementation
     self.id := '';
     self.typeList := TList<string>.create;
     self.goIdList := TList<string>.create;
+    self.roleList := TList<string>.create;
 
   end;
 
@@ -695,13 +696,18 @@ implementation
     self.id := cpy.getId;
     self.typeList := TList<string>.create;
     self.goIdList := TList<string>.create;
+    self.roleList := TList<string>.create;
     for i := 0 to cpy.getNumbTypes -1 do
       begin
-        self.typeList.Add( cpy.getType(i) );
+      self.typeList.Add(cpy.getType(i));
       end;
     for i := 0 to cpy.getNumbGoIds -1 do
       begin
-        self.goIdList.Add( cpy.getGoId(i) );
+      self.goIdList.Add(cpy.getGoId(i));
+      end;
+    for i := 0 to cpy.getNumbRoles - 1 do
+      begin
+      self.roleList.Add(cpy.getRole(i));
       end;
     self.rg := TSBMLRenderGroup.create(cpy.getRenderGroup);
   end;
@@ -723,6 +729,19 @@ implementation
   function  TSBMLRenderStyle.getId(): string;
   begin
     Result := self.id;
+  end;
+
+  procedure TSBMLRenderStyle.addRole( newRole: string);
+  begin
+    self.roleList.Add(newRole);
+  end;
+  function  TSBMLRenderStyle.getRole( index: integer ): string;
+  begin
+    Result := self.roleList[index];
+  end;
+  function  TSBMLRenderStyle.getNumbRoles(): integer;
+  begin
+    Result := self.roleList.Count;
   end;
 
   procedure TSBMLRenderStyle.setRenderGroup( newRG: TSBMLRenderGroup );
@@ -775,9 +794,8 @@ implementation
   begin
     Result := self.typeList.Count;
   end;
-   // procedure addRole( newRole: string);
-   // function  getRole( index: integer ): string;
-   // function  getNumbRoles(): integer;
+
+
   procedure TSBMLRenderStyle.addGoId( sNewId: string );  // add id og GO to list.
   begin
     self.goIdList.Add( sNewId );
