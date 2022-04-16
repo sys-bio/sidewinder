@@ -715,10 +715,17 @@ implementation
   procedure TSBMLRenderStyle.clear();
   begin
     self.id := '';
-    self.rg.clear();
-    self.rg := nil;
+    if self.rg <> nil then
+      begin
+      self.rg.clear();
+      self.rg := nil;
+      end;
     self.typeList.Free;
     self.goIdList.Free;
+    self.roleList.Free;
+    self.typeList := TList<string>.create;
+    self.goIdList := TList<string>.create;
+    self.roleList := TList<string>.create;
   end;
 
   procedure TSBMLRenderStyle.setId( newId: string);
@@ -792,7 +799,9 @@ implementation
   end;
   function  TSBMLRenderStyle.getNumbTypes(): integer;
   begin
-    Result := self.typeList.Count;
+    if self.typeList <> nil then
+       Result := self.typeList.Count
+    else Result := 0;
   end;
 
 

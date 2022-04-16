@@ -10,7 +10,8 @@ interface
 //  Web quote: There is no real function overloading in JavaScript since it allows you to pass
 //   any number of parameters of any type. You have to check inside the function
 //   for how many arguments have been passed in and what type they are.
-
+const STRING_SPECIES_REF_ROLES: array[0..8] of string = ( 'undefined', 'substrate', 'product', 'sidesubstrate',
+    'sideproduct', 'modifier', 'activator', 'inhibitor', 'invalid');// string version of TSPECIES_REF_ROLE
 type
  TSPECIES_REF_ROLE = ( SPECIES_ROLE_UNDEFINED, SPECIES_ROLE_SUBSTRATE, SPECIES_ROLE_PRODUCT,
                 SPECIES_ROLE_SIDESUBSTRATE, SPECIES_ROLE_SIDEPRODUCT, SPECIES_ROLE_MODIFIER,
