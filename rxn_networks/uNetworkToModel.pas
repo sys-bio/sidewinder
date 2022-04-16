@@ -331,8 +331,8 @@ begin
   // species glyph style:
   newStyle := TSBMLRenderStyle.create;
   newStyle.setId('speciesStyle_' + spState.id);
-  newStyle.addType(STYLE_TYPES[1]);  // either Type or GoId is used when saving SBML, not both
-  newStyle.addGoId( specGlypId );
+  //newStyle.addType(STYLE_TYPES[1]);  // either Type or GoId is used when saving SBML, not both
+  newStyle.addGoId( specGlypId ); // each species node can have different fill/outline color
   newRect := TSBMLRenderRectangle.create(); // use default x, y
   newRect.setHeight(spState.h);
   newRect.setWidth(spState.w);
@@ -355,7 +355,7 @@ begin
   newStyle := TSBMLRenderStyle.create;
   newStyle.setId( 'textStyle_' + spState.id );
   newStyle.addType(STYLE_TYPES[4]);
-  newStyle.addGoId( specTextGlyphId );
+ // newStyle.addGoId( specTextGlyphId ); // all Text glyphs are the same
   newRg := TSBMLRenderGroup.create;
   newRg.setFontStyle('normal');
   newRg.setFontSize(DEFAULT_FONT_SIZE + 2);// need scaling factor here: trunc( DEFAULT_FONT_SIZE * scalingFactor )
@@ -383,7 +383,7 @@ begin
   // product species ref glyph style:
   newStyle := TSBMLRenderStyle.create; // for species reference glyphs
   newStyle.setId('reaction_product_Style_' + rxnState.id);
-  newStyle.addType(STYLE_TYPES[3]); // SPECIESREFERENCEGLYPH
+  //newStyle.addType(STYLE_TYPES[3]); // SPECIESREFERENCEGLYPH
   newStyle.addRole('product'); //'product'
   newStyle.addGoId( rxnGlyphId );
   newRg := TSBMLRenderGroup.create;
@@ -409,7 +409,7 @@ begin
   newRg.Free;
   newStyle := TSBMLRenderStyle.create; // for species reference glyphs
   newStyle.setId('reaction_reactant_Style_' + rxnState.id);
-  newStyle.addType(STYLE_TYPES[3]); // SPECIESREFERENCEGLYPH
+  //newStyle.addType(STYLE_TYPES[3]); // SPECIESREFERENCEGLYPH
   newStyle.addRole('reactant'); //'product'
   newStyle.addGoId( rxnGlyphId );
   newRg := TSBMLRenderGroup.create;
