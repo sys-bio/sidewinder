@@ -395,17 +395,15 @@ class GenerateSBMLModel {
      const sbmlStyle = this.libSBMLrInfo.createStyle( newStyle.getId() );
      var j;
 
-     for( j=0; j < newStyle.getNumbTypes(); j++ ) {
+     for( j=0; j < newStyle.getNumbTypes(); j++ ) { // optional, may not be present
        sbmlStyle.addType( newStyle.getType(j) );
      }
-     for(j=0; j < newStyle.getNumbRoles(); j++) {
+     for(j=0; j < newStyle.getNumbRoles(); j++) { // optional, may not be present
        sbmlStyle.addRole(newStyle.getRole(j));
      }
 
-     for( j=0; j <  newStyle.getNumbGoIds(); j++ ) {
-     //  sbmlStyle.addGoId( newStyle.getGoId(j) ); // libsbmljs gives error
-     // TODO: need to fix in idl to accept id of graphical object that is using this style.
-
+     for( j=0; j <  newStyle.getNumbGoIds(); j++ ) { // optional, may not be present
+       sbmlStyle.addId( newStyle.getGoId(j) );
      }
      const newRG = newStyle.getRenderGroup();
 
