@@ -357,7 +357,8 @@ end;
 
 procedure TMainForm.btnAboutClick(Sender: TObject);
 begin
-  notifyUser('Version 0.1');
+  //notifyUser('Version 0.1');
+  notifyUser('Version 0.2: LayoutRender debug');
 end;
 
 procedure TMainForm.btnAddNodeClick(Sender: TObject);
