@@ -129,16 +129,18 @@ implementation
             if( jsLayout != undefined) {  // another chk
               newModel.setSBMLLayout(jsLayout);
             }
-      //    if( moreReading.isLocalRenderSet ) {   Do not read render for now...
-        //    jsRenderInfo = moreReading.getSBMLRenderInformation( jsRenderInfo, jsRenderStyle,
-        //        jsLineEnding, jsRenderGroup, jsEllipse, jsRectangle, jsPolygon,
-        //        jsRenderPt, jsRender1D, jsColorDef, jsBBox, jsDims, jsPt );
-        //    }
+          }
+          if( moreReading.isLocalRenderSet ) {
+            jsRenderInfo = moreReading.getSBMLRenderInformation( jsRenderInfo, jsRenderStyle,
+                jsLineEnding, jsRenderGroup, jsEllipse, jsRectangle, jsPolygon,
+                jsRenderPt, jsRender1D, jsColorDef, jsBBox, jsDims, jsPt );
+            if( jsRenderInfo != undefined ) {
+              newModel.setSBMLRenderInfo(jsRenderInfo);
+            }
           }
         }
 
       }
-
 
       newModel = moreReading.getNumbers(newModel);
       newModel = moreReading.getRules(newModel,jsRule);
