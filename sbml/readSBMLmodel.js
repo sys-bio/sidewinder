@@ -10,6 +10,11 @@ class ProcessSBML {
    this.model = libSBMLModel; // Model from libSBML doc.getModel()
    this.isLocalRenderSet = false;
    this.isGlobalRenderSet = false;
+   this.glyphIds = new Array();
+   this.spRefRoles = ['substrate', 'product', 'sidesubstrate', 'sideproduct', 'modifier',
+                      'activator', 'inhibitor', 'undefined'];
+   this.glyphTypes = ['COMPARTMENTGLYPH', 'SPECIESGLYPH', 'REACTIONGLYPH',
+     'SPECIESREFERENCEGLYPH', 'TEXTGLYPH', 'GENERALGLYPH', 'GRAPHICALOBJECT', 'ANY'];
    console.log(' # ofplugins: ', this.model.getNumPlugins() );
    if(this.model.getNumPlugins() >0) {
      this.SBMLLayOut = this.model.findPlugin('layout');
@@ -297,6 +302,7 @@ getRules(tModela, tRule) {
      for(i=0; i< sbmlLayout.getNumCompartmentGlyphs(); i++) {
        const curComp = sbmlLayout.getCompartmentGlyph(i);
        sbmlCompGlyph.setId(curComp.getId());
+       this.glyphIds.push(curComp.getId());
        if( curComp.isSetCompartmentId()) {
          sbmlCompGlyph.setCompId(curComp.getCompartmentId());
        }
@@ -318,6 +324,7 @@ getRules(tModela, tRule) {
      for(i = 0; i< sbmlLayout.getNumSpeciesGlyphs(); i++) {
        const curSpGlyph = sbmlLayout.getSpeciesGlyph(i);
        sbmlSpGlyph.setId(curSpGlyph.getId());
+       this.glyphIds.push(curSpGlyph.getId());
        if(curSpGlyph.isSetSpeciesId()) {
          sbmlSpGlyph.setSpeciesId(curSpGlyph.getSpeciesId());
        }
@@ -338,6 +345,10 @@ getRules(tModela, tRule) {
      {
        const curRxnGlyph = readLayout.getReactionGlyph(i);
        sbmlRxnGlyph.clear();
+       if( curRxnGlyph.isSetIdAttribute() ) {
+         sbmlRxnGlyph.setId(curRxnGlyph.getId());
+         this.glyphIds.push(curRxnGlyph.getId());
+       }
        if(curRxnGlyph.isSetReactionId()) {sbmlRxnGlyph.setReactionId(curRxnGlyph.getReactionId()); }
        else { sbmlRxnGlyph.setReactionId(''); }
        // Grab reaction curve if exists.....
@@ -366,6 +377,10 @@ getRules(tModela, tRule) {
          sbmlSpRefGlyph.clear();
          sbmlCurve.clear();
          const curSpRefGlyph = curRxnGlyph.getSpeciesReferenceGlyph(j);
+         if( curSpRefGlyph.isSetIdAttribute() ) {
+           sbmlSpRefGlyph.setId(curSpRefGlyph.getId());
+           this.glyphIds.push(curSpRefGlyph.getId());
+         }
          if(curSpRefGlyph.isSetSpeciesGlyphId()) {
            sbmlSpRefGlyph.setSpeciesGlyphId(curSpRefGlyph.getSpeciesGlyphId()); }
          else { curSpRefGlyph.setSpeciesGlyphId(''); }
@@ -415,13 +430,13 @@ getRules(tModela, tRule) {
    getTextGlyphs(nLayout, readLayout, sbmlDims, sbmlPt, sbmlBBox, sbmlGraphObj, sbmlTextGlyph )
    {
      var i;
- //    console.log('Number of text glyphs: ', readLayout.getNumTextGlyphs());
 
      for( i=0; i< readLayout.getNumTextGlyphs(); i++)
      {
        const curTextGlyph = readLayout.getTextGlyph(i);
        if(curTextGlyph.isSetIdAttribute()) {
          sbmlTextGlyph.setId(curTextGlyph.getId());
+         this.glyphIds.push(curTextGlyph.getId());
        }
        else { sbmlTextGlyph.setId(''); }
        if(curTextGlyph.isSetText()) {
@@ -456,7 +471,7 @@ getRules(tModela, tRule) {
      tRenderInfo = this.getColorDefs( tRenderInfo, tColorDef );
      tRenderInfo = this.getLineEndings(tRenderInfo, tLineEnding, tRenderGroup, tBBox,
                                   tPolygon, tRectangle, tRenderPt, tDims, tPt );
-     for( vari=0; i< this.localRenderInfo.getNumStyles(); i++ ) {
+     for( var i=0; i< this.localRenderInfo.getNumStyles(); i++ ) {
        const newRenderStyle = this.localRenderInfo.getStyle(i);
        tRenderStyle = this.getStyle( newRenderStyle,tRenderStyle, tRenderGroup,
                     tPolygon, tRectangle, tEllipse, tBBox, tRenderPt, tDims, tPt );
@@ -496,14 +511,12 @@ getRules(tModela, tRule) {
        nRenderGroup.setStrokeWidth( sbmlRenderGroup.getStrokeWidth() );
      }
      if( sbmlRenderGroup.isSetStroke() ) {
-       nRenderGroup.setStrokeWidth( sbmlRenderGroup.getStroke() );
+       nRenderGroup.setStrokeColor( sbmlRenderGroup.getStroke() );
      }
      if( sbmlRenderGroup.isSetFillColor() ) {
        nRenderGroup.setFillColor( sbmlRenderGroup.getFillColor() );
      }
-     if( sbmlRenderGroup.isSetStrokeWidth() ) {
-       nRenderGroup.setStrokeWidth( sbmlRenderGroup.getStrokeWidth );
-     }
+  
      const sbmlFontSize = sbmlRenderGroup.getFontSize(); // RelAbsVector
      var fontSz = sbmlFontSize.getAbsoluteValue();
      if( fontSz == 0 ){
@@ -535,8 +548,8 @@ getRules(tModela, tRule) {
        // const polye2 = sbmlRenderGroup.getElement( i ).isPolygon();
         //const polygonE = this.libsbml.castObject(element, libsbml.Polygon);
        //  const polygonE = this.libsbml.castObject(this.libsbml.asPolygon(element), this.libsbml.Polygon);
-         const polygonE2 = this.libsbml.asPolygon(element);
-
+       //  const polygonE2 = this.libsbml.asPolygon(element);
+      // -->   const sbmlPolygon = sbmlLineEnd.getGroup().createPolygon();    // try
         // May try to cast to polygon and see if easier:
         // void PrimitiveCaster();
        // bad if( this.libSBML.isPolygon(element) ) {
@@ -581,7 +594,7 @@ getRules(tModela, tRule) {
        tLineE.setRenderGroup( tRenderGroup );
        console.log('tLineE- id: ',tLineE.getId() );
      //   nRenderInfo.setRenderGroup( tlineEnding );
-       nRenderInfo.addLineEnding( tlineE ); //ReferenceError: tlineE is not defined
+    //   nRenderInfo.addLineEnding( tlineE ); //ReferenceError: tlineE is not defined
       // tRenderGroup.clear(); // needed?
      }
      return nRenderInfo;
@@ -593,12 +606,27 @@ getRules(tModela, tRule) {
      nRenderStyle.clear();
      if( sbmlRenderStyle.isSetId() ) { nRenderStyle.setId(sbmlRenderStyle.getId()); }
      for( let i =0; i < sbmlRenderStyle.getNumTypes(); i++ ) {
-       nRenderStyle.addType( sbmlRenderStyle.getType(i) );
+       for( let j=0; j < this.glyphTypes.length; j ++) {
+         if(sbmlRenderStyle.isInTypeList(this.glyphTypes[j])) {
+           nRenderStyle.addType(this.glyphTypes[j]);
+         }
+       }
      }
      for( let i=0; i < sbmlRenderStyle.getNumRoles(); i++ ) {
-       //TODO:
-       //nRenderStyle.addRole( sbmlRenderStyle.getRole(i) );
+       for( let j=0; j < this.spRefRoles.length; j ++) {
+         if(sbmlRenderStyle.isInRoleList(this.spRefRoles[j])) {
+           nRenderStyle.addRole(this.spRefRoles[j]);
+         }
+       }
      }
+     for( let i=0; i< sbmlRenderStyle.getNumIds(); i++ ) {
+       for( let j=0; j < this.glyphIds.length; j++ ) {
+         if(sbmlRenderStyle.isInIdList( this.glyphIds[j] )) {
+           nRenderStyle.addGoId( this.glyphIds[j] );
+         }
+       }
+     }
+
      const sbmlRGroup = sbmlRenderStyle.getGroup();
      tRenderGroup = this.assignRenderGroup(tRenderGroup, sbmlRGroup,tPolygon, tRectangle, tRenderPt );
      nRenderStyle.setRenderGroup( tRenderGroup );
