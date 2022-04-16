@@ -14,7 +14,7 @@ interface
 
 Uses SysUtils, Classes, Types, libthreejs, WEBLib.Graphics, Math, WEBLib.Utils,
      WEBLib.JSON, Web, System.Generics.Collections, uNetworkTypes, uBuildRateLaw,
-     uSBMLClasses, uModel, uSBMLClasses.Layout;
+     uSBMLClasses, uModel, uSBMLClasses.Layout, uSBMLClasses.Render;
 
 const
   // The following constant is the distance between the outer
@@ -63,7 +63,8 @@ type
 
        procedure saveAsJSON (nodeObject : TJSONObject);
        procedure loadFromJSON (obj : TJSONObject);
-       procedure loadFromSBML (obj : TSBMLLayoutSpeciesGlyph; initVal: double);
+       procedure loadFromSBML (obj : TSBMLLayoutSpeciesGlyph; initVal: double; nodeStyle: TSBMLRenderStyle;
+                         nodeColorDefList: TList<TSBMLRenderColorDefinition>);
        function  clone : TNodeState;
   end;
 
@@ -177,6 +178,10 @@ type
 
        function    loadModel (modelStr : string): string;
        procedure   loadSBMLModel (model: TModel);
+       function    getSpeciesRenderStyle(newSpeciesGlyph:TSBMLLayoutSpeciesGlyph;
+                          newModel: TModel): TSBMLRenderStyle;
+       function    getColorDefs(newStyle: TSBMLRenderStyle;
+            newRenderInfo: TSBMLRenderInformation): TList<TSBMLRenderColorDefinition>;
        function    convertToJSON : string;
        function    overNode (x, y : double; var node : TNode) : boolean; overload;
        function    overNode (x, y : double; var index : integer) : TNode; overload;
@@ -293,8 +298,9 @@ begin
    outlineThickness := strtoint (obj.GetJsonValue ('outlineThickness'));
 end;
 
-// TODO: update to read in SBML Render info for color, thickness
-procedure TNodeState.loadFromSBML (obj : TSBMLLayoutSpeciesGlyph; initVal: double);
+procedure TNodeState.loadFromSBML (obj : TSBMLLayoutSpeciesGlyph; initVal: double;
+  nodeStyle: TSBMLRenderStyle; nodeColorDefList: TList<TSBMLRenderColorDefinition>);
+var i: integer;
 begin
   id := obj.getSpeciesId;
   conc := initVal;
@@ -302,10 +308,30 @@ begin
   y := obj.getBoundingBox().getPoint().getY;
   h := obj.getBoundingBox().getDims().getHeight;
   w := obj.getBoundingBox().getDims().getWidth;
-  // default values, Currently no sbml Render package used:
-  fillColor := RGB(255,204,153);// clWebPeachPuff;
-  outlineColor := RGB(255,102,0);
-  outlineThickness := DEFAULT_NODE_OUTLINE_THICKNESS;  //3;
+
+  if nodeStyle <> nil then
+    begin
+    for i := 0 to nodeColorDefList.Count -1 do
+      begin
+      if nodeStyle.getRenderGroup.getStrokeColor = nodeColorDefList[i].getId then
+        self.outlineColor := HexToTColor( nodeColorDefList[i].getValue() );
+      if nodeStyle.getRenderGroup.getFillColor = nodeColorDefList[i].getId then
+        self.fillColor := HexToTColor( nodeColorDefList[i].getValue() );
+      end;
+
+      self.outLineThickness := nodeStyle.getRenderGroup.getStrokeWidth;
+      if self.outlineThickness < 1 then self.outlineThickness := DEFAULT_NODE_OUTLINE_THICKNESS;
+
+     // TODO: render node shape
+    end
+  else // default values:
+    begin
+    fillColor := RGB(255,204,153);// clWebPeachPuff;
+    outlineColor := RGB(255,102,0);
+    outlineThickness := DEFAULT_NODE_OUTLINE_THICKNESS;  //3;
+    // TODO call function to draw default node shape
+    end;
+
 end;
 
 procedure TReactionState.saveAsJSON (reactionObject : TJSONObject);
@@ -985,6 +1011,8 @@ end;
 procedure TNetwork.buildNetworkFromSBMLLayout(model: TModel);
 var i, j, k, l: integer;
    modelLayout: TSBMLLayout;
+   modelRender: TSBMLRenderInformation;
+   nodeStyle: TSBMLRenderStyle;
    speciesGlyph: TSBMLLayoutSpeciesGlyph;
    reactionGlyph: TSBMLLayoutReactionGlyph;
    reactionGlyphId: string; // name of reaction, used to find reaction details.
@@ -994,8 +1022,13 @@ var i, j, k, l: integer;
    reaction : TReaction;
    nodeState : TNodeState;
    reactionState: TReactionState;
+   nodeColorDefList: TList<TSBMLRenderColorDefinition>;
 begin
+    modelRender := nil;
     modelLayout := model.getSBMLLayout;
+    if model.getSBMLRenderInfo <> nil then
+      modelRender := model.getSBMLRenderInfo;
+
     // Do not get layout dimensions? not really necessary?
     // if needed then need to set NetworkPB to width and height.
     for i := 0 to modelLayout.getNumSpGlyphs - 1 do
@@ -1012,7 +1045,13 @@ begin
           end;
 
         end;
-        nodeState.loadFromSBML (speciesGlyph, initVal);
+        if modelRender <> nil then
+          begin
+          nodeStyle := self.getSpeciesRenderStyle(speciesGlyph, model);
+          nodeColorDefList := getColorDefs(nodeStyle, modelRender);
+          nodeState.loadFromSBML (speciesGlyph, initVal, nodeStyle, nodeColorDefList);
+          end
+        else nodeState.loadFromSBML (speciesGlyph, initVal, nil, nil);
         addNode (nodeState);
       end;
 
@@ -1052,6 +1091,38 @@ begin
           end;
       end;
    console.log('Done loading SBML network layout');
+end;
+
+function TNetwork.getColorDefs(newStyle: TSBMLRenderStyle;
+            newRenderInfo: TSBMLRenderInformation): TList<TSBMLRenderColorDefinition>;
+var i: integer;
+begin
+  if newStyle <> nil then
+    begin
+    Result := TList<TSBMLRenderColorDefinition>.create;
+    for i := 0 to newRenderInfo.getNumbColorDefs -1 do
+      begin
+      if newStyle.getRenderGroup.getStrokeColor = newRenderInfo.getColorDef(i).getId then
+        Result.Add(newRenderInfo.getColorDef(i))
+      else if newStyle.getRenderGroup.getFillColor = newRenderInfo.getColorDef(i).getId then
+        Result.Add(newRenderInfo.getColorDef(i));
+
+      end;
+    end
+  else Result := nil;
+end;
+
+
+function TNetwork.getSpeciesRenderStyle(newSpeciesGlyph:TSBMLLayoutSpeciesGlyph;
+                          newModel: TModel): TSBMLRenderStyle;
+var i, j: integer;
+    renderStyle: TSBMLRenderStyle;
+    glyphId: string;
+begin
+  glyphId := newSpeciesGlyph.getId;
+  Result := nil;
+  Result := newModel.getRenderStyle( glyphId, 'SPECIESGLYPH', '' );
+
 end;
 
     // No SBML layout present:
