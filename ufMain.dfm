@@ -1308,7 +1308,7 @@ object mainForm: TmainForm
           760)
         object pnlSimResultsFile: TWebPanel
           Left = 24
-          Top = 341
+          Top = 201
           Width = 205
           Height = 73
           ElementClassName = 'card'
@@ -1833,6 +1833,7 @@ object mainForm: TmainForm
     Top = 8
     object File1: TMenuItem
       Caption = 'File'
+      Visible = False
       object mniNew: TMenuItem
         Caption = 'New'
         OnClick = mniNewClick
@@ -1859,6 +1860,7 @@ object mainForm: TmainForm
     end
     object edit1: TMenuItem
       Caption = 'Edit'
+      Visible = False
       object Undo1: TMenuItem
         Caption = 'Undo'
       end
@@ -1878,6 +1880,7 @@ object mainForm: TmainForm
     end
     object Help1: TMenuItem
       Caption = 'Help'
+      Visible = False
       object mnuAbout: TMenuItem
         Caption = 'About'
       end
