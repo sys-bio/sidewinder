@@ -70,7 +70,7 @@ begin
   SpPlotCG.Height := 30*length(speciesList);
   // okButton1.Top := SpPlotCG.Height + 30;
   for i := 0 to length(speciesList)-1 do
-      SpPlotCG.Items.Add ('&nbsp; ' + speciesList[i]);
+    SpPlotCG.Items.Add ('&nbsp; ' + speciesList[i]);
 end;
 
 
