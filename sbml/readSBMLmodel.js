@@ -19,8 +19,8 @@ class ProcessSBML {
    if(this.model.getNumPlugins() >0) {
      this.SBMLLayOut = this.model.findPlugin('layout');
 
-// libsbml.RenderExtension.prototype.getXmlnsL3V1V1()
-
+   // this.SBMLGlobalRender = libsbml.RenderExtension.prototype.getXmlnsL3V1V1()
+   
     if(this.model.hasPlugin('layout')) {
        console.log(' model has layout plugin' );
     }
@@ -30,7 +30,7 @@ class ProcessSBML {
      else {
        this.newLayoutPlug = this.SBMLLayOut.asLayout();
        this.numLayouts = this.newLayoutPlug.getNumLayouts(); // why does it report 2 if only one?
-      //NO: this.numRenderPlugs = this.newLayoutPlug.getNumLocalRenderInformationObjects();
+
      }
    }
  }
@@ -206,9 +206,11 @@ getRules(tModela, tRule) {
       console.log(' Getting next layout #: ', i);
       const aLayout = this.newLayoutPlug.getLayout(i);
       const rPlugin = this.libSBML.castObject(aLayout.getPlugin("render"), this.libSBML.RenderLayoutPlugin);
-      const numRenderPlug = rPlugin.getNumLocalRenderInformationObjects();
-      if( numRenderPlug > 0 ) {
-        this.localRenderInfo = rPlugin.getRenderInformation(numRenderPlug-1); // works for localInfo, not GlobalInfo
+
+
+      const numLocalRenderPlug = rPlugin.getNumLocalRenderInformationObjects();
+      if( numLocalRenderPlug > 0 ) {
+        this.localRenderInfo = rPlugin.getRenderInformation(numLocalRenderPlug-1); // works for localInfo, not GlobalInfo
       this.isLocalRenderSet = true;
       }
     // global:

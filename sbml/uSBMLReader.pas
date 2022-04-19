@@ -115,8 +115,6 @@ implementation
       doc.enablePackage(libsbml.RenderExtension.prototype.getXmlnsL3V1V1(), 'render', true);
 
       const model = doc.getModel();
-   //  const lplugin = libsbml.castObject(model.findPlugin("layout"), libsbml.LayoutModelPlugin); // not used for getting layout.
-
       const moreReading = new ProcessSBML(model, libsbml);
 
       if(model.getNumPlugins() >0) {
