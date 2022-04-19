@@ -211,6 +211,7 @@ type
        function    addAnyToAnyReaction (id: string; sourceNodes, destNodes : array of TNode; var edgeIndex : integer) : TReaction;
        procedure   unSelectAll;
        procedure   unReactionSelect;
+       function    adjustNetworkCenterOffset (w, h : integer): TPointF;// get center offset for centering network
        procedure   centerNetwork (w, h : integer);
        procedure   clear;
        function    hasReactions (node : TNode) : boolean;
@@ -1758,19 +1759,30 @@ begin
       node.addReactionSelected := false;
 end;
 
-
-procedure TNetwork.centerNetwork (w, h : integer);
-var i, j : integer;
+function TNetwork.adjustNetworkCenterOffset (w, h : integer): TPointF;
+var i: integer;
     sumx, sumy, cx, cy : double;
 begin
   sumx := 0; sumy := 0;
   for i := 0 to length (nodes) - 1 do
       begin
-      sumx := sumx + nodes[i].state.x;
-      sumy := sumy + nodes[i].state.y;
+      sumx := sumx + nodes[i].state.x ;
+      sumy := sumy + nodes[i].state.y ;
       end;
   cx := sumx/length (nodes);
   cy := sumy/length (nodes);
+  Result.x := cx;    // center point offset
+  Result.y := cy;
+end;
+
+procedure TNetwork.centerNetwork (w, h : integer);
+var i, j : integer;
+    cx, cy : double;
+    centerOffset: TPointF;
+begin
+  centerOffset := self.adjustNetworkCenterOffset(w, h);
+  cx := centerOffset.x;
+  cy := centerOffset.y;
 
 for i := 0 to length (nodes) - 1 do
     begin
