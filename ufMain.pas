@@ -18,6 +18,7 @@ uses
   uParamSliderLayout, uSidewinderTypes, WEBLib.ComCtrls, WEBLib.Miletus, WEBLib.JQCtrls; //, VCL.TMSFNCCustomPicker, VCL.TMSFNCColorPicker;
 
 const EDITBOX_HT = 25;
+      ZOOM_SCALE = 20;
       DEBUG = false; // true then show debug console and any other debug related info
 
 type
@@ -424,6 +425,7 @@ begin
     begin
       // lb.Lines.Add (inttostr (trunc (network.nodes[i].state.x)) + ', ' + inttostr (trunc (network.nodes[i].state.x)));
     end;
+
   networkPB1.Invalidate;
 end;
 
@@ -744,6 +746,13 @@ begin
       notifyUser(' SBML FunctionDefinition not supported at this time. Load a different SBML Model' );
     end;
 
+  if newModel.getSBMLLayout <> nil then
+    begin
+    //console.log(' layout Width: ', trunc(newModel.getSBMLLayout.getDims.getWidth));
+    self.networkPB1.Width := trunc(newModel.getSBMLLayout.getDims.getWidth);
+    self.networkPB1.Height := trunc(newModel.getSBMLLayout.getDims.getHeight);
+    end;
+
    // Loading new sbml model changes reaction network.
   self.networkPB1.invalidate;
   self.networkUpdated := true;
@@ -1010,21 +1019,22 @@ end;
 
 procedure TMainForm.zoomTrackBarChange(Sender: TObject);
 begin
-  networkCanvas.scalingFactor := zoomTrackBar.Position / 10;
+  networkCanvas.scalingFactor := zoomTrackBar.Position / ZOOM_SCALE;
   networkPB1.Invalidate;
-  zoomFactorLbl1.caption := FloatToStr(zoomTrackBar.Position / 10);
+  zoomFactorLbl1.caption := FloatToStr(zoomTrackBar.Position / ZOOM_SCALE);
 end;
 
 function TMainForm.ScreenToWorld (X, Y: Double): TPointF;
 begin
-  result.X := (X + origin.X) / (zoomTrackBar.Position / 10);
-  result.Y := (Y + origin.Y) / (zoomTrackBar.Position / 10);
+  result.X := (X + origin.X) / (zoomTrackBar.Position / ZOOM_SCALE);
+  result.Y := (Y + origin.Y) / (zoomTrackBar.Position / ZOOM_SCALE);
 end;
 
 procedure TMainForm.netDrawScrollBarHorizValueChanged(Sender: TObject;
   Value: Double);
 begin
   origin.X := Value;
+  console.log('netDrawScrollBarHorizValue: ', Value);
   networkCanvas.origin.X := Value;
   networkPB1.Invalidate;
 end;
@@ -1042,7 +1052,8 @@ begin
   self.numbPlots := 0;
   self.numbSliders := 0;
   self.zoomTrackBar.left := 20;
-  self.zoomTrackBar.Position := 10;
+  self.zoomTrackBar.Position := 20;
+  self.zoomTrackBar.Min := 5;
   self.netDrawScrollBarHoriz.Value := 0;
   self.netDrawScrollBarVert.Value := 0;
   self.stepSize := 0.1;
@@ -1188,7 +1199,7 @@ end;
 function TMainForm.WorldToScreen(wx: Integer): Integer;
 begin
   raise Exception.create('WorldtoScreen needs to be updated');
-  result := trunc(wx * zoomTrackBar.Position / 10);
+  result := trunc(wx * zoomTrackBar.Position / ZOOM_SCALE);
 end;
 
 
