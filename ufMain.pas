@@ -17,7 +17,8 @@ uses
   uODE_FormatUtility, uGraphP, Vcl.Menus, WEBLib.Menus, ufVarSelect, uPlotPanel,
   uParamSliderLayout, uSidewinderTypes, WEBLib.ComCtrls, WEBLib.Miletus, WEBLib.JQCtrls; //, VCL.TMSFNCCustomPicker, VCL.TMSFNCColorPicker;
 
-const EDITBOX_HT = 25;
+const SIDEWINDER_VERSION = 'Version 0.2: LayoutRender debug';
+      EDITBOX_HT = 25;
       ZOOM_SCALE = 20;
       DEBUG = false; // true then show debug console and any other debug related info
 
@@ -358,8 +359,8 @@ end;
 
 procedure TMainForm.btnAboutClick(Sender: TObject);
 begin
-  //notifyUser('Version 0.1');
-  notifyUser('Version 0.2: LayoutRender debug');
+  notifyUser(SIDEWINDER_VERSION);
+  //notifyUser('Version 0.2: LayoutRender debug');
 end;
 
 procedure TMainForm.btnAddNodeClick(Sender: TObject);
