@@ -158,8 +158,8 @@ var startPt, endPt : TPointF;
     srcPtIntersect, destPtIntersect : TPointF;
     pSrc, pDest : TPointF;
 begin
-  pSrc  := minusPt (scalePt (reaction.state.srcPtr[0].getCenter, scalingFactor), origin);
-  pDest := minusPt (scalePt (reaction.state.destPtr[0].getCenter,scalingFactor), origin);
+  pSrc  := minusPt (scalePt (reaction.state.srcPtr[0].state.getCenter, scalingFactor), origin);
+  pDest := minusPt (scalePt (reaction.state.destPtr[0].state.getCenter,scalingFactor), origin);
 
   computeLineIntersection (reaction.state.srcPtr[0], scalingFactor, srcPtIntersect, Line (pSrc, pDest));
   computeLineIntersection (reaction.state.destPtr[0], scalingFactor, destPtIntersect, Line (pSrc, pDest));
@@ -257,7 +257,7 @@ begin
 
   // We will draw an arc form the node to the arc center
   // First calculate the center of the src node, then the arc centre
-  pSrc := scalePt(node.getCenter(), scalingFactor);
+  pSrc := scalePt(node.state.getCenter(), scalingFactor);
   pDest := scalePt(centroid, scalingFactor);
 
   // Compute the points along the bezier from node center to centroid
@@ -316,7 +316,7 @@ begin
   h1 := scalePt(reaction.state.productReactionArcs[arcId].h1, scalingFactor);
   h2 := scalePt(reaction.state.productReactionArcs[arcId].h2, scalingFactor);
   pSrc := scalePt(centroid, scalingFactor);
-  pDest := scalePt(node.getCenter, scalingFactor);
+  pDest := scalePt(node.state.getCenter, scalingFactor);
 
   computeBezierPoints([pSrc, h1, h2, pDest]);
 
@@ -378,7 +378,7 @@ begin
 
   node := reaction.state.srcPtr[arcId];
 
-  pSrc     := scalePt(node.getCenter, scalingFactor);
+  pSrc     := scalePt(node.state.getCenter, scalingFactor);
   centroid := scalePt (centroid, scalingFactor);
   if computeLineIntersection(node, scalingFactor, pt, line(pSrc, centroid)) then
      begin
@@ -415,7 +415,7 @@ begin
 
   node := reaction.state.destPtr[arcId];
 
-  pDest := scalePt(node.getCenter, scalingFactor);
+  pDest := scalePt(node.state.getCenter, scalingFactor);
   centroid := scalePt (centroid, scalingFactor);
 
   if computeLineIntersection(Node, scalingFactor, pt, line(centroid, pDest)) then

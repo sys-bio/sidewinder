@@ -128,14 +128,14 @@ begin
 
   for i := 0 to nSrcNodes - 1 do
       begin
-      pt := reaction.state.srcPtr[i].getCenter;
+      pt := reaction.state.srcPtr[i].state.getCenter;
       arcCentre.x := arcCentre.x + pt.x;
       arcCentre.y := arcCentre.y + pt.y;
       end;
 
   for i := 0 to nDestNodes - 1 do
       begin
-     pt := reaction.state.destPtr[i].getCenter;
+     pt := reaction.state.destPtr[i].state.getCenter;
      ArcCentre.x := ArcCentre.x + pt.x;
      ArcCentre.y := ArcCentre.y + pt.y;
      end;

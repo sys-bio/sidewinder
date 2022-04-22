@@ -14,7 +14,7 @@ interface
 
 Uses SysUtils, Classes, Types, libthreejs, WEBLib.Graphics, Math, WEBLib.Utils,
      WEBLib.JSON, Web, System.Generics.Collections, uNetworkTypes, uBuildRateLaw,
-     uSBMLClasses, uModel, uSBMLClasses.Layout, uSBMLClasses.Render;
+     uSBMLClasses, uModel, uSBMLClasses.Layout, uSBMLClasses.Render, uSidewinderTypes;
 
 const
   // The following constant is the distance between the outer
@@ -60,7 +60,7 @@ type
        x, y, w, h : double;
        fillColor, outlineColor : TColor;
        outlineThickness : integer;
-
+       function  getCenter : TPointF;
        procedure saveAsJSON (nodeObject : TJSONObject);
        procedure loadFromJSON (obj : TJSONObject);
        procedure loadFromSBML (obj : TSBMLLayoutSpeciesGlyph; initVal: double; nodeStyle: TSBMLRenderStyle;
@@ -80,7 +80,6 @@ type
        function    overNode (x, y : double) : boolean;
        function    overControlRectangle (x, y : double;  var selectedNodeGrabRectangle : integer) : boolean;
        function    isInRectangle (selectionRect : TCanvasRectF) : boolean;
-       function    getCenter : TPointF;
        function    getNodeBoundingBox : TBoundingBoxSegments;
        function    computeStartingPoint (endPt : TPointF) : TPointF;
        procedure   unSelect;
@@ -123,6 +122,7 @@ type
       procedure convertSBMLLineToBezier( currentLine: TSBMLLayoutLineSegment;
                  totalSegments: integer; intNode: integer; reactantSide: boolean );
       procedure calcArcCenterFromSBMLLayout( newSBMLRxn: TSBMLLayoutReactionGlyph );
+      function  setBezierHandles(): boolean;
       procedure saveAsJSON (reactionObject : TJSONObject);
       procedure loadFromJSON (obj : TJSONObject);
       procedure loadFromSBML (glyphRxn : TSBMLLayoutReactionGlyph; modelRxn: SBMLReaction; paramAr: array of TSBMLparameter;
@@ -315,9 +315,11 @@ begin
     for i := 0 to nodeColorDefList.Count -1 do
       begin
       if nodeStyle.getRenderGroup.getStrokeColor = nodeColorDefList[i].getId then
-        self.outlineColor := HexToTColor( nodeColorDefList[i].getValue() );
+        self.outlineColor := HexToTColor( nodeColorDefList[i].getValue() )
+      else self.outlineColor := RGB(255,102,0); // default
       if nodeStyle.getRenderGroup.getFillColor = nodeColorDefList[i].getId then
-        self.fillColor := HexToTColor( nodeColorDefList[i].getValue() );
+        self.fillColor := HexToTColor( nodeColorDefList[i].getValue() )
+      else self.fillColor := RGB(255,204,153);  // default
       end;
 
       self.outLineThickness := nodeStyle.getRenderGroup.getStrokeWidth;
@@ -333,6 +335,12 @@ begin
     // TODO call function to draw default node shape
     end;
 
+end;
+
+function TNodeState.getCenter : TPointF;
+begin
+  result.X := self.x + (self.w / 2);
+  result.Y := self.y + (self.h / 2);
 end;
 
 procedure TReactionState.saveAsJSON (reactionObject : TJSONObject);
@@ -596,7 +604,7 @@ begin
   //  2.  If cubic beziers defined for TSBMLLayoutSpeciesReferenceGlyph.
   //  3.  Cubic beziers defined for glyphRxn (TSBMLLayoutReactionGlyph).
   //  4.  if no Cubic Beziers then look for line segments.
-  arcCenter.x := 20; arcCenter.y := 20; // default, need something else here?
+  arcCenter.x := 0; arcCenter.y := 0; // default, need something else here?
   if glyphRxn <> nil then  // check if any layout info available
   begin
     if processReactionSpeciesReferenceCurves(glyphRxn, modelRxn, spGlyphList ) = false then
@@ -619,24 +627,31 @@ begin
     
 
   end; // end of if glyphRxn <> nil
-end;
 
+
+end;
+         // Returns true if curve for reaction glyph was found and processed.
 function  TReactionState.processReactionSpeciesReferenceCurves(newGlyphRxn: TSBMLLayoutReactionGlyph;
           newModelRxn: SBMLReaction; newSpGlyphList: TList<TSBMLLayoutSpeciesGlyph> ): boolean;
 var i, j, k, nodeIndex: integer;
     spRefGlyph: TSBMLLayoutSpeciesReferenceGlyph;
     spGlyphId, spId: string;
     reactant: boolean;
+    arcCenterFound: boolean;
+    strMsg: string;
 begin
+  arcCenterFound := false;
   self.calcArcCenterFromSBMLLayout(newGlyphRxn);
+  if (self.arcCenter.x < 1) and (self.arcCenter.y < 1) then arcCenterFound := false
+  else arcCenterFound := true;
   for i := 0 to newGlyphRxn.getNumSpeciesRefGlyphs -1 do
     begin
       spGlyphId := '';
-      spId := '';
+      spId := '';   // Actual species id used in reaction
       Result := false;
       reactant := false;
       spRefGlyph := newGlyphRxn.getSpeciesRefGlyph(i);
-      spGlyphId := spRefGlyph.getSpeciesGlyphId;
+      spGlyphId := spRefGlyph.getSpeciesGlyphId; // species glyph id used to find spId
       for j := 0 to newSpGlyphList.Count -1 do
         if newSpGlyphList[j].getId = spGlyphId then spId := newSpGlyphList[j].getSpeciesId;
 
@@ -648,12 +663,20 @@ begin
           for k := 0 to self.nReactants -1 do
             if self.srcId[k] = spId then nodeIndex := k;
           end
-        else if not reactant then
-          begin
-          for k := 0 to self.nProducts -1 do
-            if self.destId[k] = spId then nodeIndex := k;
-          end;
         end;
+      if not reactant then
+        begin
+          for j := 0 to newModelRxn.getNumProducts -1 do
+            begin
+            if newModelRxn.getProduct(j).getSpecies = spId then
+              begin
+              reactant := false;
+              for k := 0 to self.nProducts -1 do
+                if self.destId[k] = spId then nodeIndex := k;
+              end;
+            end;
+        end;
+
       if spRefGlyph.isCurveSet then
         begin
           if spRefGlyph.getCurve.getNumCubicBeziers > 0 then
@@ -661,17 +684,63 @@ begin
               Result := true;
               for j := 0 to spRefGlyph.getCurve.getNumCubicBeziers -1 do
                 begin
-                self.importSBMLBezierCurve(spRefGlyph.getCurve.getCubicBezier(j),
+                if spRefGlyph.getCurve.getNumCubicBeziers = 1 then
+                  begin
+                  if arcCenterFound = false then
+                    begin
+                    if reactant then
+                      begin
+                      self.arcCenter.x := spRefGlyph.getCurve.getCubicBezier(0).getEnd.getX;
+                      self.arcCenter.y := spRefGlyph.getCurve.getCubicBezier(0).getEnd.getY;
+                      end
+                    else  // product, RXN arcCenter is beginning of bezier:
+                      begin
+                      self.arcCenter.x := spRefGlyph.getCurve.getCubicBezier(0).getStart.getX;
+                      self.arcCenter.y := spRefGlyph.getCurve.getCubicBezier(0).getStart.getY;
+                      end;
+                    arcCenterFound := true;
+                    end;
+                  self.importSBMLBezierCurve(spRefGlyph.getCurve.getCubicBezier(j),
                                            nodeIndex, reactant );
+                  end
+                  else
+                    begin
+                    strMsg := 'More than one bezier curve used for ' + spId +
+                ' side of reaction: ' + newModelRxn.getID + '. Please use only one.';
+                    NotifyUser(strMsg);
+                    end;
                 end;
             end
-          else // check if line segments, if so, process them:
+          else // check if line segment, if so, process them:
             begin
             for j := 0 to spRefGlyph.getCurve.getNumCurveSegments -1 do
-              begin // Assume at least one segment for each species in rxn:
-              self.convertSBMLLineToBezier( spRefGlyph.getCurve.getLineSegment(j),
-                2, nodeIndex, reactant );
-              Result := true;
+              begin // Assume one segment for each species in rxn:
+              if spRefGlyph.getCurve.getNumCurveSegments = 1 then
+                begin
+                if arcCenterFound = false then
+                  begin
+                  if reactant then
+                    begin
+                    self.arcCenter.x := spRefGlyph.getCurve.getLineSegment(0).getEndPt.getX;
+                    self.arcCenter.y := spRefGlyph.getCurve.getLineSegment(0).getEndPt.getY;
+                    end
+                  else  // product, RXN arcCenter is beginning of line segment:
+                    begin
+                    self.arcCenter.x := spRefGlyph.getCurve.getLineSegment(0).getStartPt.getX;
+                    self.arcCenter.y := spRefGlyph.getCurve.getLineSegment(0).getStartPt.getY;
+                    end;
+                  arcCenterFound := true;
+                  end;
+                self.convertSBMLLineToBezier( spRefGlyph.getCurve.getLineSegment(j),
+                  2, nodeIndex, reactant );
+                Result := true;
+                end
+                else
+                  begin
+                  strMsg := 'More than one line segment used for ' + spId +
+                ' side of reaction: ' + newModelRxn.getID + '. Please use bezier curve.';
+                  NotifyUser(strMsg);
+                  end;
               end;
 
             end;
@@ -729,8 +798,7 @@ var i, intNumCurveSeg: integer;
 procedure TReactionState.importSBMLBezierCurve( newBezier: TSBMLLayoutCubicBezier; intNode: integer;
                                         reactantSide: boolean );
 begin
-  console.log(' Length of self.reactantReactionArcs', length(self.reactantReactionArcs));
- //   console.log(' Length of self.productReactionArcs', length(self.productReactionArcs));
+ // console.log(' Length of self.reactantReactionArcs', length(self.reactantReactionArcs));
    if reactantSide and (length(self.reactantReactionArcs) > intNode) then    // reactantReactionArc:
      begin
      self.reactantReactionArcs[intNode].nodeIntersectionPt.x := newBezier.getStart.getX;
@@ -764,7 +832,7 @@ begin
                                       newBezier.getBasePoint2.getY;
       self.productReactionArcs[intNode].arcDirection := adOutArc;
       self.productReactionArcs[intNode].Merged := false;
-
+     // self.setBezierHandles;   // self.srcPt = nil, not assigned yet
       end;
     end;
 end;
@@ -783,6 +851,7 @@ begin
     self.reactantReactionArcs[intNode].nodeIntersectionPt.y := currentLine.getStartPt.getY;
     self.reactantReactionArcs[intNode].arcDirection := adInArc;
     self.reactantReactionArcs[intNode].Merged := false;
+   // self.setBezierHandles;
     end
   else
     begin
@@ -800,11 +869,13 @@ begin
         self.productReactionArcs[intNode].nodeIntersectionPt.y := currentLine.getEndPt.getY;
         self.productReactionArcs[intNode].arcDirection := adOutArc;
         self.productReactionArcs[intNode].Merged := false;
+      //  self.setBezierHandles;
         end;
     end;
 
 end;
 
+  // Calc rxn arc center from SBML ReactionGlyph BBox or curve
 procedure TReactionState.calcArcCenterFromSBMLLayout( newSBMLRxn: TSBMLLayoutReactionGlyph );
 var i: integer;
     rxnCurve: TSBMLLayoutCurve;
@@ -827,12 +898,22 @@ begin
         self.arcCenter.y := (rxnCurve.getLineSegment(0).getStartPt.getY + rxnCurve.getLineSegment(0).getEndPt.getY)/2;
         end
 
-      else //assume 2 bezier curves and endpoint of first is arcCenter:
+      else //assume 2 bezier curves, endpoint of first is arcCenter:
         begin
         if rxnCurve.getNumCubicBeziers > 1 then
-          begin
+          begin //assume 2 bezier curves and endpoint of first is arcCenter:
           self.arcCenter.x := rxnCurve.getCubicBezier(0).getEnd.getX;
           self.arcCenter.y := rxnCurve.getCubicBezier(0).getEnd.getY;
+          end
+        else  // Set arcCenter to midpoint of start and endpoints:
+          begin
+          if rxnCurve.getNumCubicBeziers = 1 then
+            begin
+            self.arcCenter.x := (rxnCurve.getCubicBezier(0).getStart.getX +
+                            rxnCurve.getCubicBezier(0).getEnd.getX)/2;
+            self.arcCenter.y := (rxnCurve.getCubicBezier(0).getStart.getY +
+                            rxnCurve.getCubicBezier(0).getEnd.getY)/2;
+            end;
           end;
         end;
       end;
@@ -1086,6 +1167,7 @@ begin
                       reaction.state.destPtr[k] := nodes[l];
                       break;
                     end;
+              reaction.state.setBezierHandles; // node ptrs have been set.
             end;
 
              // ************************
@@ -1490,7 +1572,7 @@ begin
 
   reaction.state.arcCenter := computeCentroid (reaction);
   //console.log('Arc center: ',reaction.state.arcCenter.x, ', ', reaction.state.arcCenter.y);
-  cx := reaction.state.arcCenter.x; cy := reaction.state.arcCenter.y;
+  //cx := reaction.state.arcCenter.x; cy := reaction.state.arcCenter.y;
 
   setLength (reaction.state.reactantReactionArcs, nReactants);
   setLength (reaction.state.productReactionArcs, nProducts);
@@ -1502,12 +1584,34 @@ begin
 
   // Set up start handles on each reactant, these are between
   // the the node and arc center but shifted towards the arccenter
-  for i := 0 to nReactants - 1 do
+  reaction.state.setBezierHandles;
+
+  // If we want line segments they go here.
+  // ...... (See uNetwork.pas in pathwayDesigner line 2311)
+end;
+
+
+function TReactionState.setBezierHandles({ sourceNodes, destNodes : array of TNode}): boolean;
+var nReactants, nProducts : integer;
+    cx, cy, sumX, sumY, centerX, centerY : double;
+    i , reactantCount, productCount: integer;
+    nDestCount : integer;
+    startPt, pt : TPointF;
+begin
+  // Set up start handles on each reactant, these are between
+  // the the node and arc center but shifted towards the arccenter
+  cx := self.arcCenter.x; cy := self.arcCenter.y;
+  reactantCount := self.nReactants;
+  productCount := self.nProducts;
+  for i := 0 to reactantCount - 1 do
+    begin
+    if self.srcPtr[i] <> nil then
       begin
-      pt := sourceNodes[i].getCenter;
-      reaction.state.reactantReactionArcs[i].h1.x := pt.x + (cx - pt.x) / 1.25;
-      reaction.state.reactantReactionArcs[i].h1.y := pt.y + (cy - pt.y) / 1.25;
+      pt := self.srcPtr[i].state.getCenter;
+      self.reactantReactionArcs[i].h1.x := pt.x + (cx - pt.x) / 1.25;
+      self.reactantReactionArcs[i].h1.y := pt.y + (cy - pt.y) / 1.25;
       end;
+    end;
 
   // Compute the common position of the inner control point on the
   // reactant side, the opposite inner control point will be
@@ -1515,47 +1619,51 @@ begin
   // on the reactant side the centroid between teh reactants and arccenter
 
   sumX := 0; sumY := 0;
-  for i := 0 to nReactants - 1 do
+  for i := 0 to reactantCount - 1 do
+    begin
+    if self.srcPtr[i] <> nil then
       begin
-      pt := sourceNodes[i].getCenter;
+      pt := self.srcPtr[i].state.getCenter;
       sumX := sumX + pt.x;
       sumY := sumY + pt.y;
       end;
+    end;
   // Don't forget to add the centroid
   sumX := sumX + cx; sumY := sumY + cy;
-  centerX := sumx/(nReactants+1);
-  centerY := sumy/(nReactants+1);
+  centerX := sumx/(reactantCount+1);
+  centerY := sumy/(reactantCount+1);
 
-  for i := 0 to nReactants -1 do
+  for i := 0 to reactantCount -1 do
       begin
-      reaction.state.reactantReactionArcs[i].h2.x := centerX;
-      reaction.state.reactantReactionArcs[i].h2.y := centerY;
+      self.reactantReactionArcs[i].h2.x := centerX;
+      self.reactantReactionArcs[i].h2.y := centerY;
       end;
 
   // Set up start handles on each product, shift handles twards the arccenter
-  for i := 0 to nProducts - 1 do
+  for i := 0 to productCount - 1 do
+    begin
+    if self.destPtr[i] <> nil then
       begin
-      pt := destNodes[i].getCenter;
-      reaction.state.productReactionArcs[i].h2.x := cx + (pt.x - cx) / 3.25;
-      reaction.state.productReactionArcs[i].h2.y := cy + (pt.y - cy) / 3.25;
+      pt := self.destPtr[i].state.getCenter;
+      self.productReactionArcs[i].h2.x := cx + (pt.x - cx) / 3.25;
+      self.productReactionArcs[i].h2.y := cy + (pt.y - cy) / 3.25;
       end;
+    end;
 
   // Next compute the collinear coordinate for the inner control points of the products
   nDestCount := 0;
-  for i := 0 to nProducts - 1 do
+  for i := 0 to productCount - 1 do
       begin
-      reaction.state.productReactionArcs[i].h1.x := 2*cx - reaction.state.reactantReactionArcs[0].h2.x;
-      reaction.state.productReactionArcs[i].h1.y := 2*cy - reaction.state.reactantReactionArcs[0].h2.y;
+      self.productReactionArcs[i].h1.x := 2*cx - self.reactantReactionArcs[0].h2.x;
+      self.productReactionArcs[i].h1.y := 2*cy - self.reactantReactionArcs[0].h2.y;
       end;
 
   // Record fact that handles are merged
-  for i := 0 to nProducts - 1 do
-      reaction.state.productReactionArcs[i].Merged := true;
+  for i := 0 to productCount - 1 do
+      self.productReactionArcs[i].Merged := true;
 
-  // If we want line segments they go here.
-  // ...... (See uNetwork.pas in pathwayDesigner line 2311)
+  Result := true;
 end;
-
 
 function TNetwork.addAnyToAnyReaction (id: string; sourceNodes, destNodes : array of TNode; var edgeIndex : integer) : TReaction;
 var newReaction : TReaction;
@@ -1839,13 +1947,6 @@ end;
 function TNode.getCurrentState : TNodeState;
 begin
   result := state;
-end;
-
-
-function TNode.getCenter : TPointF;
-begin
-  result.X := state.x + (state.w / 2);
-  result.Y := state.y + (state.h / 2);
 end;
 
 

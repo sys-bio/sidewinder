@@ -83,8 +83,8 @@ begin
                     begin
                     if network.nodes[v] <> network.nodes[u] then
                        begin
-                       dx := network.nodes[v].getCenter().x - network.nodes[u].getCenter().x;
-                       dy := network.nodes[v].getCenter().y - network.nodes[u].getCenter().y;
+                       dx := network.nodes[v].state.getCenter().x - network.nodes[u].state.getCenter().x;
+                       dy := network.nodes[v].state.getCenter().y - network.nodes[u].state.getCenter().y;
                        delta := sqrt(dx*dx+dy*dy);
                        if delta <> 0 then
                           begin

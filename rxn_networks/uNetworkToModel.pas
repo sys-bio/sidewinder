@@ -195,7 +195,7 @@ begin
         newDims := TSBMLLayoutDims.create(0,0); // Do not need boundingBox, use curve
         if self.network.findNode( self.network.reactions[i].state.srcId[j], index ) then
         begin
-          nodeCenter :=  self.network.nodes[index].getCenter;
+          nodeCenter :=  self.network.nodes[index].state.getCenter;
           spRefCenter := TSBMLLayoutPoint.create(nodeCenter.x, nodeCenter.y);
 
 
