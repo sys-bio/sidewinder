@@ -20,7 +20,7 @@ private
   procedure setCompartments; // Currently only one, unit compartment
   procedure setSpeciesRendering( spState: TNodeState; specGlypId: string;
                                  specTextGlyphId:string );
-  procedure setReactionRendering( rxnState: TReactionState; rxnGlyphId: string );
+  procedure setReactionRendering( rxnState: TReactionState; rxnSpRefGlyphId: string; reactant: boolean );
   function generateRxnLineEnding( id: string; fColorDefId: string;
                             rxnState: TReactionState ): TSBMLRenderLineEnding;
   procedure normalizeLineEndingPts( pts: array of TPointF );
@@ -190,6 +190,7 @@ begin
         newRxnCurve := TSBMLLayoutCurve.create; // create bezier for newSpRefGlyph
         newSpRefId := self.network.reactions[i].state.srcId[j] + self.network.reactions[i].state.id;
         newSpRefGlyph := TSBMLLayoutSpeciesReferenceGlyph.create(newSpRefId);
+        self.setReactionRendering( self.network.reactions[i].state, newSpRefGlyph.getId, true );
         newSpRefGlyph.setSpeciesGlyphId('speciesGlyph' + self.network.reactions[i].state.srcId[j]);
         newSpRefGlyph.setRole(SPECIES_ROLE_SUBSTRATE);
         newDims := TSBMLLayoutDims.create(0,0); // Do not need boundingBox, use curve
@@ -241,6 +242,7 @@ begin
         setLength(newSpecProds, k+1);
         newSpRefId := self.network.reactions[i].state.destId[j] + self.network.reactions[i].state.id;
         newSpRefGlyph := TSBMLLayoutSpeciesReferenceGlyph.create(newSpRefId);
+        self.setReactionRendering( self.network.reactions[i].state, newSpRefGlyph.getId, false );
         newSpRefGlyph.setSpeciesGlyphId('speciesGlyph' + self.network.reactions[i].state.destId[j]);
         newSpRefGlyph.setRole(SPECIES_ROLE_PRODUCT);
         newDims := TSBMLLayoutDims.create(0,0);
@@ -296,14 +298,12 @@ begin
     newReaction.setKineticLaw(newLaw);
     newReaction.setCompartment(DEFAULT_COMP);
     self.model.addSBMLReaction(newReaction);
-    //newRxnGlyph.setCurve(newRxnCurve);
     rxnArcCenter := TSBMLLayoutPoint.create(self.network.reactions[i].state.arcCenter.x,
                      self.network.reactions[i].state.arcCenter.y );
     newRxnGlyph.setBoundingBox(TSBMLLayoutBoundingBox.create(rxnArcCenter, newDims)); //libsbmljs does not support
     newRxnGlyphCurve := TSBMLLayoutCurve.create;
     newRxnGlyphCurve.addLineSegment(TSBMLLayoutLineSegment.create(rxnArcCenter,rxnArcCenter)); // point
     newRxnGlyph.setCurve(newRxnGlyphCurve);
-    self.setReactionRendering( self.network.reactions[i].state, newRxnGlyph.getId );
     self.layout.addRxnGlyph(newRxnGlyph);
   end;
 
@@ -346,7 +346,6 @@ begin
   newRg.setStrokeWidth( spState.outlineThickness );
   newRg.setStrokeColor( olColorDefId );
   newRg.setFillColor( fillColorDefId );
-  //newRg.setFontSize(DEFAULT_FONT_SIZE +4) ; // Not needed here
   newStyle.setRenderGroup( newRg );
   self.renderInfo.addStyle( TSBMLRenderStyle.create(newStyle) );
   // Text glyph style:
@@ -363,7 +362,7 @@ begin
   self.renderInfo.addStyle( TSBMLRenderStyle.create(newStyle) );
 end;
 
-procedure TNetworkToModel.setReactionRendering( rxnState: TReactionState; rxnGlyphId: string );
+procedure TNetworkToModel.setReactionRendering( rxnState: TReactionState; rxnSpRefGlyphId: string; reactant: boolean );
 var newStyle: TSBMLRenderStyle;
     newRG: TSBMLRenderGroup;
     newFillColor: TColor;
@@ -376,46 +375,35 @@ begin
   rxnArrowAdded := false;
   newFillColor := rxnState.fillColor;
   colorStr := colorToHex( newFillColor ); // no # in front of hex number
- // console.log('Fill color: ', colorStr );
-  fillColorDefId :=  'fillColorReaction_' + rxnGlyphId;
+  fillColorDefId :=  'fillColorReaction_' + rxnSpRefGlyphId;
   self.renderInfo.addColorDef(TSBMLRenderColorDefinition.create( colorStr, fillColorDefId) );
 
-  // product species ref glyph style:
   newStyle := TSBMLRenderStyle.create; // for species reference glyphs
-  newStyle.setId('reaction_product_Style_' + rxnState.id);
-  //newStyle.addType(STYLE_TYPES[3]); // SPECIESREFERENCEGLYPH
-  newStyle.addRole('product'); //'product'
-  newStyle.addGoId( rxnGlyphId );
   newRg := TSBMLRenderGroup.create;
   newRg.setStrokeWidth( rxnState.thickness );
   newRg.setStrokeColor( fillColorDefId ); // same as fill
   newRg.setFillColor( fillColorDefId );
-  newLineEndId := 'arrowHead_' + 'product';
-  newRg.setEndHead(newLineEndId);
-  for i := 0 to self.renderInfo.getNumbLineEndings -1 do
-  begin
-    if self.renderInfo.getLineEnding(i).getId = newLineEndId then rxnArrowAdded := true;
-  end;
+  newStyle.addGoId( rxnSpRefGlyphId );
+  if reactant then
+    begin
+    newStyle.setId('reaction_reactant_Style_' + rxnState.id);
+    //newStyle.addType(STYLE_TYPES[3]); // SPECIESREFERENCEGLYPH
+    newStyle.addRole('reactant');
+    end
+  else    // product species ref glyph style:
+    begin
+    newStyle.setId('reaction_product_Style_' + rxnState.id);
+    newStyle.addRole('product');
+    newLineEndId := 'arrowHead_' + 'product';
+    newRg.setEndHead(newLineEndId);
+    for i := 0 to self.renderInfo.getNumbLineEndings -1 do
+      begin
+      if self.renderInfo.getLineEnding(i).getId = newLineEndId then rxnArrowAdded := true;
+       if rxnArrowAdded = false then
+         self.renderInfo.addLineEnding( self.generateRxnLineEnding( newLineEndId, fillColorDefId, rxnState ) );
+      end;
+    end;
 
-  if rxnArrowAdded = false then
-    self.renderInfo.addLineEnding( self.generateRxnLineEnding( newLineEndId, fillColorDefId, rxnState ) );
-  newStyle.setRenderGroup( TSBMLRenderGroup.create(newRg) );
-  self.renderInfo.addStyle( TSBMLRenderStyle.create(newStyle) );
-
-  // reactant species ref glyph style:
-  newStyle.clear;
-  newStyle.Free;
-  newRg.clear;
-  newRg.Free;
-  newStyle := TSBMLRenderStyle.create; // for species reference glyphs
-  newStyle.setId('reaction_reactant_Style_' + rxnState.id);
-  //newStyle.addType(STYLE_TYPES[3]); // SPECIESREFERENCEGLYPH
-  newStyle.addRole('reactant'); //'product'
-  newStyle.addGoId( rxnGlyphId );
-  newRg := TSBMLRenderGroup.create;
-  newRg.setStrokeWidth( rxnState.thickness );
-  newRg.setStrokeColor( fillColorDefId ); // same as fill
-  newRg.setFillColor( fillColorDefId );
   newStyle.setRenderGroup( TSBMLRenderGroup.create(newRg) );
   self.renderInfo.addStyle( TSBMLRenderStyle.create(newStyle) );
 

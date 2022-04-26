@@ -114,7 +114,8 @@ type
       procedure createReactantSpace (nReactants : integer);
       procedure createProductSpace (nProducts : integer);
       function  processReactionSpeciesReferenceCurves(newGlyphRxn: TSBMLLayoutReactionGlyph;
-               newModelRxn: SBMLReaction; newSpGlyphList: TList<TSBMLLayoutSpeciesGlyph> ): boolean;
+               newModelRxn: SBMLReaction; newSpGlyphList: TList<TSBMLLayoutSpeciesGlyph>;
+               reactionRenderInfo: TSBMLRenderInformation ): boolean;
       procedure processReactionCurves( newRxn: TSBMLLayoutReactionGlyph ;
                                   intProdNodeIndex, intReactNodeIndex: integer );
       procedure importSBMLBezierCurve( newBezier: TSBMLLayoutCubicBezier; intNode: integer;
@@ -125,8 +126,9 @@ type
       function  setBezierHandles(): boolean;
       procedure saveAsJSON (reactionObject : TJSONObject);
       procedure loadFromJSON (obj : TJSONObject);
-      procedure loadFromSBML (glyphRxn : TSBMLLayoutReactionGlyph; modelRxn: SBMLReaction; paramAr: array of TSBMLparameter;
-                    spGlyphList: TList<TSBMLLayoutSpeciesGlyph>; compAr: array of TSBMLcompartment);
+      procedure loadFromSBML (glyphRxn : TSBMLLayoutReactionGlyph; modelRxn: SBMLReaction;
+         paramAr: array of TSBMLparameter; spGlyphList: TList<TSBMLLayoutSpeciesGlyph>;
+         compAr: array of TSBMLcompartment; modelRender: TSBMLRenderInformation);
       function getMassCenter(): TPointF; // Calc mass center for reaction, where each node has mass of 1.
       function clone : TReactionState;
   end;
@@ -543,12 +545,14 @@ end;
 
 
 procedure TReactionState.loadFromSBML (glyphRxn : TSBMLLayoutReactionGlyph; modelRxn: SBMLReaction;
-                         paramAr: array of TSBMLparameter; spGlyphList: TList<TSBMLLayoutSpeciesGlyph>; compAr: array of TSBMLcompartment);
+         paramAr: array of TSBMLparameter; spGlyphList: TList<TSBMLLayoutSpeciesGlyph>;
+         compAr: array of TSBMLcompartment; modelRender: TSBMLRenderInformation);
 var  newParam : TSBMLparameter;
      speciesName : string;
      i, j : integer;
      intNumCurveSeg: integer; // number of line segments
      intReactNode, intProdNode : integer; // node index.
+     rxnStyle: TSBMLRenderStyle;
 begin
   id := modelRxn.getId;
   intReactNode := 0;
@@ -596,8 +600,6 @@ begin
     end;
 
   rateLaw := modelRxn.getKineticLaw.getFormula;
-  fillColor := DEFAULT_REACTION_COLOR;
-  thickness := DEFAULT_REACTION_THICKNESS;
 
   // Rxn curve/line order of assignment:
   //  1.  default, if no layout info available.
@@ -606,9 +608,9 @@ begin
   //  4.  if no Cubic Beziers then look for line segments.
   arcCenter.x := 0; arcCenter.y := 0; // default, need something else here?
   if glyphRxn <> nil then  // check if any layout info available
-  begin
-    if processReactionSpeciesReferenceCurves(glyphRxn, modelRxn, spGlyphList ) = false then
     begin
+    if processReactionSpeciesReferenceCurves(glyphRxn, modelRxn, spGlyphList, modelRender ) = false then
+      begin
       if glyphRxn.getCurve <> nil then // Next try to get rxn curves with glyphRxn
         begin
         processReactionCurves( glyphRxn, intProdNode, intReactNode  );
@@ -621,26 +623,41 @@ begin
                                    (glyphRxn.getBoundingBox.getDims.getWidth/2);
           arcCenter.Y := glyphRxn.getBoundingBox.getPoint.getY +
                                    (glyphRxn.getBoundingBox.getDims.getHeight/2);
+          end
+        else  // TODO: calc default arcCenter:
+          begin
+          // arcCenter := computeCentroid(reaction: TReaction): TPointF;
           end;
         end;
+
+      end;
+
+
+    end // end of if glyphRxn <> nil
+  else
+    begin
+    fillColor := DEFAULT_REACTION_COLOR;
+    thickness := DEFAULT_REACTION_THICKNESS;
     end;
-    
-
-  end; // end of if glyphRxn <> nil
-
 
 end;
-         // Returns true if curve for reaction glyph was found and processed.
+       // Returns true if curve for reaction was found and processed.
 function  TReactionState.processReactionSpeciesReferenceCurves(newGlyphRxn: TSBMLLayoutReactionGlyph;
-          newModelRxn: SBMLReaction; newSpGlyphList: TList<TSBMLLayoutSpeciesGlyph> ): boolean;
+          newModelRxn: SBMLReaction; newSpGlyphList: TList<TSBMLLayoutSpeciesGlyph>;
+          reactionRenderInfo: TSBMLRenderInformation ): boolean;
 var i, j, k, nodeIndex: integer;
     spRefGlyph: TSBMLLayoutSpeciesReferenceGlyph;
-    spGlyphId, spId: string;
+    spRefGlyphStyle: TSBMLRenderStyle;  // Style associated with species reference Glyph
+    spGlyphId, spId: string; // SpeciesGlyph id, species id
     reactant: boolean;
+    colorFound: boolean;
+
     arcCenterFound: boolean;
     strMsg: string;
 begin
   arcCenterFound := false;
+  colorFound := false;
+
   self.calcArcCenterFromSBMLLayout(newGlyphRxn);
   if (self.arcCenter.x < 1) and (self.arcCenter.y < 1) then arcCenterFound := false
   else arcCenterFound := true;
@@ -651,6 +668,34 @@ begin
       Result := false;
       reactant := false;
       spRefGlyph := newGlyphRxn.getSpeciesRefGlyph(i);
+      if i = 0 then  // Only use style from first spRefGlyph to draw reaction line:
+        begin
+        spRefGlyphStyle := reactionRenderInfo.getGlyphRenderStyle(newGlyphRxn.getSpeciesRefGlyph(i).getId,
+              'SPECIESREFERENCEGLYPH',newGlyphRxn.getSpeciesRefGlyph(i).getRole );
+        if spRefGlyphStyle <> nil then
+          begin
+          if spRefGlyphStyle.getRenderGroup <> nil then
+            begin
+            for j := 0 to reactionRenderInfo.getNumbColorDefs -1 do
+              begin
+              if spRefGlyphStyle.getRenderGroup.getFillColor = reactionRenderInfo.getColorDef(j).getId then
+                begin
+                self.fillColor := HexToTColor( reactionRenderInfo.getColorDef(j).getValue() );
+                colorFound := true;
+                end;
+            end;
+            self.thickness := spRefGlyphStyle.getRenderGroup.getStrokeWidth;
+            if self.thickness < 1 then self.thickness := DEFAULT_REACTION_THICKNESS;
+            if colorFound = false then
+              self.fillColor := DEFAULT_REACTION_COLOR;
+            end;
+          end
+        else
+          begin
+          self.fillColor := DEFAULT_REACTION_COLOR;
+          self.thickness := DEFAULT_REACTION_THICKNESS;
+          end;
+        end;
       spGlyphId := spRefGlyph.getSpeciesGlyphId; // species glyph id used to find spId
       for j := 0 to newSpGlyphList.Count -1 do
         if newSpGlyphList[j].getId = spGlyphId then spId := newSpGlyphList[j].getSpeciesId;
@@ -702,12 +747,14 @@ begin
                     end;
                   self.importSBMLBezierCurve(spRefGlyph.getCurve.getCubicBezier(j),
                                            nodeIndex, reactant );
+                  Result := true;
                   end
                   else
                     begin
                     strMsg := 'More than one bezier curve used for ' + spId +
                 ' side of reaction: ' + newModelRxn.getID + '. Please use only one.';
                     NotifyUser(strMsg);
+                    Result := false;
                     end;
                 end;
             end
@@ -721,6 +768,7 @@ begin
                   begin
                   if reactant then
                     begin
+
                     self.arcCenter.x := spRefGlyph.getCurve.getLineSegment(0).getEndPt.getX;
                     self.arcCenter.y := spRefGlyph.getCurve.getLineSegment(0).getEndPt.getY;
                     end
@@ -735,12 +783,13 @@ begin
                   2, nodeIndex, reactant );
                 Result := true;
                 end
-                else
-                  begin
-                  strMsg := 'More than one line segment used for ' + spId +
+              else
+                begin
+                strMsg := 'More than one line segment used for ' + spId +
                 ' side of reaction: ' + newModelRxn.getID + '. Please use bezier curve.';
-                  NotifyUser(strMsg);
-                  end;
+                NotifyUser(strMsg);
+                end;
+                Result := false;
               end;
 
             end;
@@ -1095,6 +1144,7 @@ var i, j, k, l: integer;
    modelLayout: TSBMLLayout;
    modelRender: TSBMLRenderInformation;
    nodeStyle: TSBMLRenderStyle;
+   rxnStyle: TSBMLRenderStyle; // Reaction curve
    speciesGlyph: TSBMLLayoutSpeciesGlyph;
    reactionGlyph: TSBMLLayoutReactionGlyph;
    reactionGlyphId: string; // name of reaction, used to find reaction details.
@@ -1141,13 +1191,14 @@ begin
     for i := 0 to modelLayout.getNumRxnGlyphs - 1 do
       begin
         reactionGlyph := modelLayout.getRxnGlyph(i);
+      //  rxnStyle := model.getRenderStyle(reactionGlyph.getId, STYLE_TYPES[2],nil);  //not necessary?
         reactionGlyphId := reactionGlyph.getReactionId;
         for j := 0 to model.getNumReactions - 1 do
           begin
             if reactionGlyphId = model.getReaction(j).getID then
             begin
               reactionState.loadFromSBML (reactionGlyph, model.getReaction(j),
-                   model.getSBMLparameterAr, modelLayout.getSpGlyphList, model.getSBMLcompartmentsArr());
+                   model.getSBMLparameterAr, modelLayout.getSpGlyphList, model.getSBMLcompartmentsArr(), model.getSBMLRenderInfo);
               reaction := addReaction (reactionState);
              // Set the node pointers based on the node Ids
               for k := 0 to reaction.state.nReactants - 1 do
@@ -1238,7 +1289,7 @@ procedure TNetwork.autoBuildNetworkFromSBML(model: TModel);
     for j := 0 to model.getNumReactions - 1 do
         begin
           reactionState.loadFromSBML (nil, model.getReaction(j), model.getSBMLparameterAr,
-                                nil, model.getSBMLcompartmentsArr());
+                                nil, model.getSBMLcompartmentsArr(), nil);
 
           reaction := addReaction (reactionState);
           reaction.state.arcCenter.x := 20 + j*2;
