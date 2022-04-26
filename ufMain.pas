@@ -17,10 +17,10 @@ uses
   uODE_FormatUtility, uGraphP, Vcl.Menus, WEBLib.Menus, ufVarSelect, uPlotPanel,
   uParamSliderLayout, uSidewinderTypes, WEBLib.ComCtrls, WEBLib.Miletus, WEBLib.JQCtrls; //, VCL.TMSFNCCustomPicker, VCL.TMSFNCColorPicker;
 
-const SIDEWINDER_VERSION = 'Version 0.2: LayoutRender debug';
+const SIDEWINDER_VERSION = 'Version 0.3: LayoutRender debug';
       EDITBOX_HT = 25;
       ZOOM_SCALE = 20;
-      DEBUG = false; // true then show debug console and any other debug related info
+      DEBUG = false; // true then show debug console output and any other debug related info
 
 type
   TPanelType = ( SIMULATION_PANEL, REACTION_PANEL, NODE_PANEL );
@@ -730,23 +730,26 @@ begin
       end;
     errList := errList +  'Please fix or load a new model.';
     notifyUser(errList);
-    end;
-
-  if newModel.getNumModelEvents > 0 then
-    begin
-    notifyUser(' SBML Events not supported at this time. Load a different SBML Model');
     clearNetwork();
     end
-  else if newModel.getNumPiecewiseFuncs >0 then
-    begin
-    notifyUser(' SBML piecewise() function not supported at this time. Load a different SBML Model');
-    clearNetwork();
-    end
-  else if newModel.getNumFuncDefs > 0 then
-    begin
+  else
+  begin
+    if newModel.getNumModelEvents > 0 then
+      begin
+      notifyUser(' SBML Events not supported at this time. Load a different SBML Model');
+      clearNetwork();
+      end
+    else if newModel.getNumPiecewiseFuncs >0 then
+      begin
+      notifyUser(' SBML piecewise() function not supported at this time. Load a different SBML Model');
+      clearNetwork();
+      end
+    else if newModel.getNumFuncDefs > 0 then
+      begin
       notifyUser(' SBML FunctionDefinition not supported at this time. Load a different SBML Model' );
-    end;
-
+      clearNetwork();
+      end;
+  end;
   if newModel.getSBMLLayout <> nil then
     begin
     //console.log(' layout Width: ', trunc(newModel.getSBMLLayout.getDims.getWidth));

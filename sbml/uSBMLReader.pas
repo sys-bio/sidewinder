@@ -170,6 +170,15 @@ implementation
                newModel.setSBMLLayout(jsLayout);
                }
              }
+             if( moreReading.isLocalRenderSet ) {
+               jsRenderInfo = moreReading.getSBMLRenderInformation( jsRenderInfo, jsRenderStyle,
+                jsLineEnding, jsRenderGroup, jsEllipse, jsRectangle, jsPolygon,
+                jsRenderPt, jsRender1D, jsColorDef, jsBBox, jsDims, jsPt );
+               if( jsRenderInfo != undefined ) {
+                 newModel.setSBMLRenderInfo(jsRenderInfo);
+               }
+             }
+
            }
          }
          newModel = moreReading.getNumbers(newModel);
