@@ -291,7 +291,8 @@ interface
    function  getNumberStyles(): integer;
    procedure addStyle( newStyle: TSBMLRenderStyle );
    function  getStyle( index: integer ): TSBMLRenderStyle;
-
+   function  getGlyphRenderStyle(newGlyphId: string; newGlyphType: string;
+                          newGlyphRole: TSPECIES_REF_ROLE ): TSBMLRenderStyle;
 
  end;
 
@@ -904,6 +905,52 @@ implementation
     Result := self.lineEndingList[index];
   end;
 
+  function  TSBMLRenderInformation.getGlyphRenderStyle(newGlyphId: string; newGlyphType: string;
+                          newGlyphRole: TSPECIES_REF_ROLE ): TSBMLRenderStyle;
+  var i,j: integer;
+      strGlyphRole: string;
+ begin
+  // See SBML Render Spec: C.2 Style Resolution for details.
+  strGlyphRole := STRING_SPECIES_REF_ROLES[0]; // 'undefined'
+  Result := nil;
+  if ord(newGlyphRole) < length(STRING_SPECIES_REF_ROLES) then
+    strGlyphRole := STRING_SPECIES_REF_ROLES[ord(newGlyphRole)];
+
+  for i := 0 to self.getNumberStyles -1 do
+    begin
+      for j := 0 to self.getStyle(i).getNumbGoIds -1 do
+        begin
+        if self.getStyle(i).getGoId(j) = newGlyphId then
+          begin
+          Result := self.getStyle(i);
+          exit;
+          end;
+
+        end;
+      if strGlyphRole <> '' then
+      begin
+        for j := 0 to self.getStyle(j).getNumbRoles -1 do
+          begin
+          if self.getStyle(j).getRole(j) = strGlyphRole then
+            begin
+            Result := self.getStyle(i);
+            exit;
+            end;
+
+          end;
+      end;
+
+      for j := 0 to self.getStyle(i).getNumbTypes -1 do
+        begin
+        if self.getStyle(i).getType(j) = newGlyphType then
+          Result := self.getStyle(i);
+        end;
+
+    end;
+
+
+
+ end;
 
   constructor TSBMLRenderPrimitive1D.create() overload;
   begin
