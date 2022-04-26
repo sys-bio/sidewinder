@@ -304,7 +304,10 @@ end;
 procedure TNodeState.loadFromSBML (obj : TSBMLLayoutSpeciesGlyph; initVal: double;
   nodeStyle: TSBMLRenderStyle; nodeColorDefList: TList<TSBMLRenderColorDefinition>);
 var i: integer;
+    strokeCFound, fillCFound: boolean;
 begin
+  strokeCFound := false;
+  fillCFound := false;
   id := obj.getSpeciesId;
   conc := initVal;
   x := obj.getBoundingBox().getPoint().getX;
@@ -317,13 +320,21 @@ begin
     for i := 0 to nodeColorDefList.Count -1 do
       begin
       if nodeStyle.getRenderGroup.getStrokeColor = nodeColorDefList[i].getId then
-        self.outlineColor := HexToTColor( nodeColorDefList[i].getValue() )
-      else self.outlineColor := RGB(255,102,0); // default
+        begin
+        self.outlineColor := HexToTColor( nodeColorDefList[i].getValue() );
+        strokeCFound := true;
+        end;
       if nodeStyle.getRenderGroup.getFillColor = nodeColorDefList[i].getId then
-        self.fillColor := HexToTColor( nodeColorDefList[i].getValue() )
-      else self.fillColor := RGB(255,204,153);  // default
+        begin
+        self.fillColor := HexToTColor( nodeColorDefList[i].getValue() );
+        fillCFound := true;
+        end;
       end;
 
+      if strokeCFound = false then
+        self.outlineColor := RGB(255,102,0); // default
+      if fillCFound = false then
+        self.fillColor := RGB(255,204,153);  // default
       self.outLineThickness := nodeStyle.getRenderGroup.getStrokeWidth;
       if self.outlineThickness < 1 then self.outlineThickness := DEFAULT_NODE_OUTLINE_THICKNESS;
 
