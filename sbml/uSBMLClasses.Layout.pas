@@ -1047,6 +1047,8 @@ var
         self.deleteSpeciesRefGlyph(i);
       end;
     end;
+    self.speciesRefGlyphList.Free;
+    self.speciesRefGlyphList := TList<TSBMLLayoutSpeciesReferenceGlyph>.create;
     if self.curve <> nil then
       self.curve.clear;
     //inherited:
