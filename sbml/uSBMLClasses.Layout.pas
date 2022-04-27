@@ -172,9 +172,13 @@ type
    function boundingBoxIsSet(): boolean;
  end;
 
+ // 3.11 The GeneralGlyph class: Used to facilitate the representation of elements
+ // other than Compartment, Species and Reaction.
  TSBMLLayoutGeneralGlyph = class(TSBMLLayoutGraphicalObject)
  private
    notes: string;
+ //TODO: curve: TSBMLLayoutCurve;// describes a curve for the center piece of an additional relationship
+ //TODO: curveFlag: boolean;
  public
    constructor create(newId: string) overload;
    constructor create(cpy: TSBMLLayoutGeneralGlyph) overload;
@@ -211,8 +215,8 @@ type
  private
    specGlyphId: string;  // id of speciesGlyph associated with this obj
    specRefId: string;  // id of species reference used in reaction ?? needed?
-   role: TSPECIES_REF_ROLE;       // optional, default is 'undefined'
-   curve: TSBMLLayoutCurve;  // optionally use use in place of bounding box
+   role: TSPECIES_REF_ROLE;  // optional, default is 'undefined'
+   curve: TSBMLLayoutCurve;  // optionally use in place of bounding box
    curveFlag: boolean;
  public
    constructor create() overload;
@@ -226,7 +230,9 @@ type
    function  getRole(): TSPECIES_REF_ROLE;
    // Allowed values are “substrate”, “product”, “sidesubstrate”, “sideproduct”, “modifier”,
    // “activator”, “inhibitor” and “undefined”.
+   function getStringRole(): string;
    procedure setRole(newRole: TSPECIES_REF_ROLE);
+   function  setStrRole(newRole: string): boolean;
    procedure setCurve(newCurve: TSBMLLayoutCurve);
    function  getCurve(): TSBMLLayoutCurve;
    function  isCurveSet(): boolean;
@@ -237,7 +243,7 @@ type
  private
    rxnId: string;  // id of reaction
    speciesRefGlyphList: TList<TSBMLLayoutSpeciesReferenceGlyph>;
-   curve: TSBMLLayoutCurve;
+   curve: TSBMLLayoutCurve; // center piece of a reaction, or use bounding box
    curveFlag: boolean;
  public
    constructor create(newRxnId: string) overload;
@@ -249,6 +255,7 @@ type
    function getSpeciesRefGlyph(index: integer): TSBMLLayoutSpeciesReferenceGlyph;
    procedure addSpeciesRefGlyph(newGlyph: TSBMLLayoutSpeciesReferenceGlyph);
    function deleteSpeciesRefGlyph(index: integer): boolean;
+   function getReactionCenterPoint(): TSBMLLayoutPoint;
    procedure setCurve(newCurve: TSBMLLayoutCurve);
    function getCurve(): TSBMLLayoutCurve;
    function isCurveSet(): boolean;
@@ -257,8 +264,8 @@ type
  // spec 3.12
  TSBMLLayoutTextGlyph = class(TSBMLLayoutGraphicalObject)
  private
-   text: string;
-   originOfText: string;// id of an entity in the SBML model. Use this instead of text.
+   text: string; // optional, if this exists then do not use originOfText
+   originOfText: string;// id of an entity in the SBML model.
    graphicalObjId: string; // corresponds to another graphical object id.
  public
    constructor create() overload;
@@ -985,6 +992,25 @@ var
   begin
     self.role := newRole;
   end;
+     // Not tested:
+  function TSBMLLayoutSpeciesReferenceGlyph.setStrRole(newRole: string): boolean;
+  var i: integer;
+  begin
+    Result := false;
+    for i := 0 to Length(STRING_SPECIES_REF_ROLES) -1 do
+    begin
+      if LowerCase(newRole) = STRING_SPECIES_REF_ROLES[i] then
+        begin
+        self.role := TSPECIES_REF_ROLE(i);
+        Result := true;
+        end;
+    end;
+  end;
+
+  function TSBMLLayoutSpeciesReferenceGlyph.getStringRole: string;
+  begin
+    Result := STRING_SPECIES_REF_ROLES[ord(self.role)];
+  end;
 
   function TSBMLLayoutSpeciesReferenceGlyph.isCurveSet(): boolean;
   begin
@@ -1108,6 +1134,57 @@ var
   begin
     Result := self.curve;
   end;
+
+  function TSBMLLayoutReactionGlyph.getReactionCenterPoint(): TSBMLLayoutPoint;
+  var i: integer;
+    rxnCurve: TSBMLLayoutCurve;
+    centerPt: TSBMLLayoutPoint;
+  begin
+  centerPt := TSBMLLayoutPoint.create;
+  if self.isCurveSet() then
+    begin
+    rxnCurve := self.getCurve();
+    if rxnCurve.getNumCurveSegments = 1 then
+      begin
+      centerPt.setX((rxnCurve.getLineSegment(0).getStartPt.getX +
+                                   rxnCurve.getLineSegment(0).getEndPt.getX)/2);
+      centerPt.setY((rxnCurve.getLineSegment(0).getStartPt.getY +
+                                   rxnCurve.getLineSegment(0).getEndPt.getY)/2);
+      end
+
+    else //assume 2 bezier curves, endpoint of first is arcCenter:
+      begin // Typically bezier curves are not use to define center area of reaction.
+      if rxnCurve.getNumCubicBeziers > 1 then
+        begin //assume 2 bezier curves and endpoint of first is arcCenter:
+        centerPt.setX( rxnCurve.getCubicBezier(0).getEnd.getX );
+        centerPt.setY( rxnCurve.getCubicBezier(0).getEnd.getY );
+        end
+      else  // Set arcCenter to midpoint of start and endpoints:
+        begin
+        if rxnCurve.getNumCubicBeziers = 1 then
+          begin
+          centerPt.setX( (rxnCurve.getCubicBezier(0).getStart.getX +
+                            rxnCurve.getCubicBezier(0).getEnd.getX)/2 );
+          centerPt.setY( (rxnCurve.getCubicBezier(0).getStart.getY +
+                            rxnCurve.getCubicBezier(0).getEnd.getY)/2 );
+          end;
+        end;
+      end;
+    end
+  else
+    begin
+    if self.boundingBoxIsSet then
+      begin  // get center of reaction BBox:
+        centerPt.setX( self.getBoundingBox.getPoint.getX +
+                       (self.getBoundingBox.getDims.getWidth/2) );
+        centerPt.setY( self.getBoundingBox.getPoint.getY +
+                       (self.getBoundingBox.getDims.getHeight/2) );
+      end;
+    end;
+  Result := centerPt;
+end;
+
+
 
   constructor TSBMLLayoutTextGlyph.create() overload;
   begin

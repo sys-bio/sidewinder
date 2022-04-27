@@ -937,10 +937,18 @@ end;
 
   // Calc rxn arc center from SBML ReactionGlyph BBox or curve
 procedure TReactionState.calcArcCenterFromSBMLLayout( newSBMLRxn: TSBMLLayoutReactionGlyph );
-var i: integer;
-    rxnCurve: TSBMLLayoutCurve;
+var //i: integer;
+    //rxnCurve: TSBMLLayoutCurve;
+    newCenterPt: TSBMLLayoutPoint;
 begin
-  if newSBMLRxn.boundingBoxIsSet then
+  newCenterPt := newSBMLRxn.getReactionCenterPoint;
+  if newCenterPt <> nil then
+    begin
+    self.arcCenter.x := newCenterPt.getX;
+    self.arcCenter.y := newCenterPt.getY;
+    end;
+
+ { if newSBMLRxn.boundingBoxIsSet then
     begin  // get center of reaction BBox:
     self.arcCenter.x := newSBMLRxn.getBoundingBox.getPoint.getX +
                        (newSBMLRxn.getBoundingBox.getDims.getWidth/2);
@@ -977,7 +985,7 @@ begin
           end;
         end;
       end;
-    end;
+    end; }
 end;
 
 /// Calc mass center for reaction state, where each node has mass of 1.
