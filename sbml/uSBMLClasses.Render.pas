@@ -74,7 +74,7 @@ interface
      procedure setRelCoordinate(newVal: boolean);
      function  isRelCoordinate(): boolean;
  end;
- {
+ {TODO:
  TSBMLRenderListOfElements = class
    private
      id: string;
@@ -89,6 +89,19 @@ interface
      function getPt( index: integer ): TSBMLRenderPoint;
      function getNumbPts(): integer;
  end;     }
+
+ { TODO:
+ TSBMLRenderCurve = class( TSBMLRenderPrimitive1D )
+   private
+     startHead: string;
+     endHead: string;
+     listOfElements: TSBMLRenderListOfElements;
+     listOfCurveSegments: TSBMLLayoutCurve;
+   public
+     constructor create() overload;
+     constructor create( cpy: TSBMLRenderCurve ) overload;
+ end;
+ }
 
  TSBMLRenderPolygon = class( TSBMLRenderPrimitive1D )
    private
@@ -183,6 +196,7 @@ interface
      polygonSet: boolean;
      rEllipse: TSBMLRenderEllipse;    // optional
      ellipseSet: boolean;
+   //  TODO: rCurve: TSBMLRenderCurve;
    public
      constructor create() overload;
      constructor create( cpy: TSBMLRenderGroup ) overload;
