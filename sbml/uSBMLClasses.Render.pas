@@ -919,6 +919,7 @@ implementation
     Result := self.lineEndingList[index];
   end;
 
+  // Given a glyph id, glyph role, or glyph type, return a matching Render Style, if it exists.
   function  TSBMLRenderInformation.getGlyphRenderStyle(newGlyphId: string; newGlyphType: string;
                           newGlyphRole: TSPECIES_REF_ROLE ): TSBMLRenderStyle;
   var i,j: integer;
@@ -941,6 +942,7 @@ implementation
           end;
 
         end;
+
       if strGlyphRole <> STRING_SPECIES_REF_ROLES[0] then
       begin
         for j := 0 to self.getStyle(i).getNumbRoles -1 do
@@ -950,7 +952,6 @@ implementation
             Result := self.getStyle(i);
             exit;
             end;
-
           end;
       end;
 
@@ -961,9 +962,6 @@ implementation
         end;
 
     end;
-
-
-
  end;
 
   constructor TSBMLRenderPrimitive1D.create() overload;
