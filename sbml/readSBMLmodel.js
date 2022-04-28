@@ -538,39 +538,29 @@ getRules(tModela, tRule) {
        nRenderGroup.setEndHead( sbmlRenderGroup.getEndHead() ); }
      if( sbmlRenderGroup.isSetStartHead() ) {
        nRenderGroup.setStartHead( sbmlRenderGroup.getStartHead() ); }
-      // For shapes, get list of elements, save as polygon, regardless:
-      const numElements = sbmlRenderGroup.getNumElements();
-      for( var i=0; i < numElements; i++ ) {
-        const element = sbmlRenderGroup.getElement( i ); // element is Transformation2D
-        console.log(' Element name: ' );
-        // const polyE = this.libsbml.castObject(sbmlRenderGroup.getElement( i ), libsbml.polygon);
-     //    const polE2 = sbmlRenderGroup.getPolygon();
-       //const polyE = this.libsbml.castObject(sbmlRenderGroup.getElement( i ), libsbml.Polygon);
-       // const polyel = this.libsbml.castObject(sbmlRenderGroup.getElement( i ).asPolygon, libsbml.Polygon);
-       // const polye2 = sbmlRenderGroup.getElement( i ).isPolygon();
-        //const polygonE = this.libsbml.castObject(element, libsbml.Polygon);
-       //  const polygonE = this.libsbml.castObject(this.libsbml.asPolygon(element), this.libsbml.Polygon);
-       //  const polygonE2 = this.libsbml.asPolygon(element);
-      // -->   const sbmlPolygon = sbmlLineEnd.getGroup().createPolygon();    // try
-        // May try to cast to polygon and see if easier:
-        // void PrimitiveCaster();
-       // bad if( this.libSBML.isPolygon(element) ) {
 
-      //  if( element.isPolygon() ) {  //  <---
-      //    const newPoly = this.libSBML.asPolygon( element );
-      //    tPolygon = this.getPolygon( tPolygon, newPoly, tRenderPt );
-      //    nRenderGroup.setPolygon( tPolygon );
-      //  }
-      //  else if( element.isEllipse() ) {
-      //    const newEllipse = this.libSBML.asEllipse(element);
-      //  }
-      //  else if( element.isRectangle() ) {
-      //    const neRect = this.libSBML.asRectangle(element);
-      //  }
-        //  boolean isPolygon(Transformation2D p);
-        //  Polygon asPolygon(Transformation2D p);
-
+      const numElements = sbmlRenderGroup.getNumElements(); // not necessary/used?
+      const newPoly = sbmlRenderGroup.polygons;
+      if(newPoly != 0) {
+        console.log('Polygons present in Render group');
       }
+      const newRects = sbmlRenderGroup.rectangles;
+      if(newRects > 0) {
+        console.log(' Rectangles present in Render group' );
+      }
+      const newEllipses = sbmlRenderGroup.ellipses;
+      if(newEllipses >0) {
+        console.log(' Ellipses present in Render group' );
+      }
+      const newCurves = sbmlRenderGroup.curves;
+      if(newCurves >0) {
+        console.log(' Curves present in Render group' );
+      }
+      const newTexts = sbmlRenderGroup.texts;
+      if(newTexts >0) {
+        console.log(' Text present in Render group' );
+      }
+
 
      return nRenderGroup;
    }
