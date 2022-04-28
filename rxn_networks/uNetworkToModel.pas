@@ -394,14 +394,16 @@ begin
     begin
     newStyle.setId('reaction_product_Style_' + rxnState.id);
     newStyle.addRole('product');
-    newLineEndId := 'arrowHead_' + 'product';
+    newLineEndId := 'arrowHead_' + 'product'+ rxnState.id; // <-- different arrows for diff rxns.
     newRg.setEndHead(newLineEndId);
     for i := 0 to self.renderInfo.getNumbLineEndings -1 do
       begin
-      if self.renderInfo.getLineEnding(i).getId = newLineEndId then rxnArrowAdded := true;
-       if rxnArrowAdded = false then
-         self.renderInfo.addLineEnding( self.generateRxnLineEnding( newLineEndId, fillColorDefId, rxnState ) );
+      if self.renderInfo.getLineEnding(i).getId = newLineEndId then
+        rxnArrowAdded := true;
       end;
+    if rxnArrowAdded = false then
+      self.renderInfo.addLineEnding( self.generateRxnLineEnding( newLineEndId,
+                                                  fillColorDefId, rxnState ) );
     end;
 
   newStyle.setRenderGroup( TSBMLRenderGroup.create(newRg) );
