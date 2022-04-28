@@ -941,11 +941,11 @@ implementation
           end;
 
         end;
-      if strGlyphRole <> '' then
+      if strGlyphRole <> STRING_SPECIES_REF_ROLES[0] then
       begin
-        for j := 0 to self.getStyle(j).getNumbRoles -1 do
+        for j := 0 to self.getStyle(i).getNumbRoles -1 do
           begin
-          if self.getStyle(j).getRole(j) = strGlyphRole then
+          if self.getStyle(i).getRole(j) = strGlyphRole then
             begin
             Result := self.getStyle(i);
             exit;
