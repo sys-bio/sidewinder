@@ -2,7 +2,8 @@ unit uNetworkToModel;
  // *** Currently only one-way reactions.
 interface
 uses Types, Web, JS, WEBLib.Graphics, strUtils, uModel, uSBMLClasses, uNetwork,
-   uSBMLClasses.Layout, uSBMLClasses.Render, uNetworkCanvas, uNetworkTypes, uSidewinderTypes;
+   uSBMLClasses.Layout, uSBMLClasses.Render, uNetworkCanvas, uNetworkTypes,
+   uSidewinderTypes;
 
 const DEFAULT_COMP = 'unit_compartment';
 type
@@ -72,14 +73,9 @@ var i: integer;
     minX, minY: double;
     maxX, maxY: double;
 begin
-  if length(pts) > 0 then
-  begin
-    minX := pts[0].x; minY := pts[0].y;
-    maxX := pts[0].x; maxY := pts[0].y;
-  end;
-
+  minX := 0; minY := 0; maxX := 0; maxY := 0;
   setLength( self.rxnArrowPts, length(pts) );
-  for i := 1 to length(pts)-1 do
+  for i := 0 to length(pts)-1 do
     begin
       if pts[i].x < minX then minX := pts[i].x;
       if pts[i].y < minY then minY := pts[i].y;
@@ -417,14 +413,19 @@ var newLineEnd: TSBMLRenderLineEnding;
     newPolygon: TSBMLRenderPolygon;
     newRGroup: TSBMLRenderGroup;
     newBBox: TSBMLLayoutBoundingBox;
-    i: integer;
-    x,y: double;
+    i,j: integer;
+    x,y, lineSlope: double;
+
 begin
+
+  lineSlope := 0;
   newLineEnd := TSBMLRenderLineEnding.create(id);
   newBBox := TSBMLLayoutBoundingBox.create();
   newBBox.setDims(self.arrowBBoxDims);
-  x := self.arrowBBoxDims.getWidth/2;
-  y := self.arrowBBoxDims.getHeight/2;
+  x := - self.arrowBBoxDims.getWidth/2;
+  y := - self.arrowBBoxDims.getHeight/2;
+  j := length(rxnState.productReactionArcs);
+
   newBBox.setPoint(x,y);
   newLineEnd.setBoundingBox(newBBox);
   newRGroup := TSBMLRenderGroup.create();

@@ -76,6 +76,7 @@ begin
   Result.y := 2;
 end;
 
+// Adjust arrow to slope of reaction line. Need arrow tip , or center pt if not arrow:
 function TReactionRender.translateArrow(tip : TPointF; dxdt, dydt : double): TList<TPoint>;
 var i: integer;
     alpha, cosine, sine : double;
@@ -86,7 +87,7 @@ var i: integer;
 begin
   Result := TList<TPoint>.create;
   initPts := TList<TPoint>.create;
-  alpha := -Angle(dxdt, dydt);  //(x,y)
+  alpha := -Angle(dxdt, dydt);  //get angle based on slope of arrow
   cosine := cos (alpha); sine := sin (alpha);
   scale := 1;    // not used for now
   for i := 0 to self.arrowPts.count -1 do
