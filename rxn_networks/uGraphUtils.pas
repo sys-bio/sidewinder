@@ -30,6 +30,7 @@ function  ptOnBezier (p : array of TPointF; pt : TPointF; var t : double) : Bool
 //function  overControlRectangle (x, y : double; const state : TNodeState; var selectedNodeGrabRectangle : integer) : boolean;
 function  getControlRects (x, y, w, h : double) : TRectangularArray;
 function  ptInRectF (rect : TCanvasRectF; pt : TPointF) : boolean;
+function  getSlope(startPt, endPt: TPointF): double;
 
 implementation
 
@@ -83,6 +84,10 @@ begin
   result := sqrt (sqr(x2-x1) + sqr (y2-y1));
 end;
 
+function  getSlope(startPt, endPt: TPointF): double;
+begin
+  Result := (endPt.y - startPt.y)/(endPt.x - startPt.x);
+end;
 
 // www.jeffreythompson.org/collision-detection/line-point.php
 function ptOnLine (p1, p2 : TPointF; px, py : double) : boolean;
