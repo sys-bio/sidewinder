@@ -239,7 +239,8 @@ begin        // Note: no # added to front of hex string.
 end;
 
 function HexToTColor(sColor : string) : TColor;
-begin
+begin  // Note opacity (alpha) is not implemented here ( 2 rightmost hex digits ).
+  // TODO: check if rightmost 2 hexdigits are present and remove.
    result :=  RGB( StrToInt('$'+Copy(sColor, 1, 2)),
                    StrToInt('$'+Copy(sColor, 3, 2)),
                    StrToInt('$'+Copy(sColor, 5, 2)) ) ;
