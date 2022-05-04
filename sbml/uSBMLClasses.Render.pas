@@ -26,8 +26,8 @@ interface
     constructor create( newColorStr: string; newId: string ) overload;
     procedure setId( sNewId: string);
     function  getId(): string;
-    procedure setValue( sNewValue: string );
-    function  getValue(): string; // if only 6 hex digits then alpha assumed #FF
+    procedure setValue( sNewValue: string );// if only 6 hex digits then alpha assumed #FF
+    function  getValue(): string;           //               "
     procedure setValueRGBAInts( red, green, blue, alpha: integer );
     function  containsValue( sCmpValue: string ): boolean;
     procedure clear();
@@ -105,9 +105,12 @@ interface
 
  TSBMLRenderPolygon = class( TSBMLRenderPrimitive1D )
    private
-     fill: string;
-     renderPtList: TList<TSBMLRenderPoint>;
+     fill: string; // Not needed ?
      // Not using TSBMLRenderListOfElements for now.
+     renderPtList: TList<TSBMLRenderPoint>;
+    // curveSegmentList: TList<TSBMLLayoutLineSegment>;
+    // cubicBezierList: TList<TSBMLLayoutCubicBezier>;
+
    public
      constructor create() overload;
      constructor create( cpy: TSBMLRenderPolygon ) overload;
@@ -234,7 +237,7 @@ interface
 
  TSBMLRenderLineEnding = class( TSBMLRenderPrimitive1D )
    private
-     endBBox: TSBMLLayoutBoundingBox;
+     endBBox: TSBMLLayoutBoundingBox; // position pt is upper right corner of BB with x axis parallel to slope of line
      endRenderGroup: TSBMLRenderGroup;
      enableRotationalMapping: boolean;
    public
@@ -1041,6 +1044,7 @@ implementation
   procedure TSBMLRenderPolygon.clear();
   begin
     self.renderPtList.Free;
+    self.renderPtList := TList<TSBMLRenderPoint>.create;
     self.fill := '';
     self.id := '';
     self.stroke := '';

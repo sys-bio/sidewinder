@@ -541,8 +541,11 @@ getRules(tModela, tRule) {
 
       const numElements = sbmlRenderGroup.getNumElements(); // not necessary/used?
       const newPoly = sbmlRenderGroup.polygons;
-      if(newPoly != 0) {
+      //if(newPoly.length > 0) {
+      for( var i = 0; i < newPoly.length ; i++ ){  // assume only one polygon ber render group.
+        tPolygon = this.getPolygon(tPolygon, newPoly[i], tRenderPt);
         console.log('Polygons present in Render group');
+        nRenderGroup.setPolygon(tPolygon);
       }
       const newRects = sbmlRenderGroup.rectangles;
       if(newRects > 0) {
@@ -645,19 +648,17 @@ getRules(tModela, tRule) {
    getPolygon( tPoly, sbmlPoly, tPt )
    {
      tPoly.clear();
-     if( sbmlPoly.isSetId() ){ tPoly.setId( sbmlPoly.getId() ); }
-     if( sbmlPoly.isSetFill() ){ tPoly.setFill( sbmlPoly.getFill() ); }
-     if( sbmlPoly.isSetStroke() ){ tPoly.setStroke( sbmlPoly.getStroke() ); }
-     if( sbmlPoly.isSetStrokeWidth() ){ tPoly.setStrokeWidth( sbmlPoly.getStrokeWidth() ); }
 
      for( let i=0; i < sbmlPoly.getNumElements(); i++ ) {
        const newRPt = sbmlPoly.getElement(i);
-       const rAVectX = newRPt.getX();
-       const rAVectY = newRPt.getY();
+       const elementName = newRPt.getElementName();
+       const rAVectX = newRPt.x();
+       const rAVectY = newRPt.y();
        // Assume no Z coord
        // if( newRPt.isSetZ() ) { }
-       if( rAVectX.isetSetAbsoluteValue() ) {
-         tPt.setX( rAvectX.getAbsoluteValue() );
+
+       if( rAVectX.getAbsoluteValue() > 0 ) {
+         tPt.setX( rAVectX.getAbsoluteValue() );
          tPt.setRelCoordinate(false);
        }
        else {
@@ -665,14 +666,15 @@ getRules(tModela, tRule) {
          tPt.setRelCoordinate(true);
        }
 
-       if( rAVectY.isetSetAbsoluteValue() ) {
-         tPt.setX( rAvectY.getAbsoluteValue() );
+       if( rAVectY.getAbsoluteValue() > 0 ) {
+         tPt.setY( rAVectY.getAbsoluteValue() );
+         tPt.setRelCoordinate(false);
        }
        else {
          tPt.setY( rAVectY.getRelativeValue() );
-         //tPt.setRelCoordinate(true); // assume X,Y are the same
+         //tPt.setRelCoordinate(true);
        }
-       tPoly.addPoint(tPt);
+       tPoly.addPt(tPt);
      }
 
      return tPoly;
