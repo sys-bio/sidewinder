@@ -17,11 +17,13 @@ object mainForm: TmainForm
     BorderColor = clSilver
     BorderStyle = bsSingle
     ElementBodyClassName = 'card-body-10  bg-dark text-white'
+    ExplicitLeft = -24
     object stepSizeLabel1: TWebLabel
-      Left = 1614
-      Top = 24
+      Left = 1398
+      Top = 25
       Width = 71
       Height = 13
+      Hint = 'Changing step size resets simulation'
       Caption = 'Step size (ms):'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWhite
@@ -30,11 +32,11 @@ object mainForm: TmainForm
       Font.Style = []
       HeightPercent = 100.000000000000000000
       ParentFont = False
-      Visible = False
+      ShowHint = True
       WidthPercent = 100.000000000000000000
     end
     object lblStepSizeMin: TWebLabel
-      Left = 1225
+      Left = 1169
       Top = 25
       Width = 22
       Height = 13
@@ -45,7 +47,7 @@ object mainForm: TmainForm
       WidthPercent = 100.000000000000000000
     end
     object lblStepSizeMax: TWebLabel
-      Left = 1405
+      Left = 1353
       Top = 25
       Width = 12
       Height = 13
@@ -56,8 +58,8 @@ object mainForm: TmainForm
       WidthPercent = 100.000000000000000000
     end
     object lblStepSize: TWebLabel
-      Left = 1265
-      Top = 5
+      Left = 1197
+      Top = 6
       Width = 97
       Height = 13
       Hint = 'Speed up/down simulation'
@@ -68,8 +70,8 @@ object mainForm: TmainForm
       WidthPercent = 100.000000000000000000
     end
     object lblStepSizeVal: TWebLabel
-      Left = 1373
-      Top = 5
+      Left = 1309
+      Top = 6
       Width = 12
       Height = 13
       Caption = '1x'
@@ -166,14 +168,15 @@ object mainForm: TmainForm
       OnClick = btnParamAddSliderClick
     end
     object stepSizeEdit1: TWebEdit
-      Left = 1691
+      Left = 1475
       Top = 24
       Width = 33
       Height = 22
+      Hint = 'Changing step size resets simulation'
       ChildOrder = 5
       HeightPercent = 100.000000000000000000
+      ShowHint = True
       Text = '100'
-      Visible = False
       WidthPercent = 100.000000000000000000
       OnChange = stepSizeEdit1Change
     end
@@ -243,7 +246,7 @@ object mainForm: TmainForm
       OnClick = resetInitValsButtonClick
     end
     object trackBarSimSpeed: TWebTrackBar
-      Left = 1249
+      Left = 1197
       Top = 24
       Width = 150
       Height = 20
@@ -1308,7 +1311,7 @@ object mainForm: TmainForm
           760)
         object pnlSimResultsFile: TWebPanel
           Left = 24
-          Top = 201
+          Top = 121
           Width = 205
           Height = 73
           ElementClassName = 'card'

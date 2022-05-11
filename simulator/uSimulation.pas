@@ -30,7 +30,7 @@ type
     ODEready: Boolean; // TRUE: ODE solver is setup. NEEDED ??
     FUpdate: TUpdateValEvent;// Used to send Updated values (species amts) to listeners.
     procedure WebTimer1Timer(Sender: TObject);
-    procedure setStepSize(newStep: double);
+
 
    public
     p : TDoubleDynArray;   // System/Model Parameters
@@ -45,6 +45,7 @@ type
     { Notify listener of updated values }
     procedure updateVals(time:double; updatedVals: array of double);
     function  getStepSize(): double;
+    procedure setStepSize(newStep: double);
     procedure generateEquations(); // Take SBML model and generate eqs compatible for solver.
     function  IsOnline(): Boolean;
     procedure SetOnline(bOnline: Boolean);
@@ -164,7 +165,7 @@ end;
 
 procedure TSimulationJS.nextEval(newTime: double; s: array of double; newPVals: array of double);
 begin
-  self.setStepSize(self.step);
+//??  self.setStepSize(self.step);
   self.p := newPVals;
    // Get last time and s values and pass into eval2:
   if length(s) > 0 then

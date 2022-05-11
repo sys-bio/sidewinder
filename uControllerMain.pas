@@ -294,7 +294,11 @@ end;
 procedure TControllerMain.SetStepSize(newStepSize: double);
 begin
   if newStepSize > 0.0 then
-    self.StepSize := newStepSize
+    begin
+    self.stepSize := newStepSize;
+    if self.runSim <> nil then
+      self.runSim.setStepSize(newStepSize);
+    end
   else self.stepSize := 0.1;
 end;
 

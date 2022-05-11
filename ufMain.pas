@@ -262,10 +262,14 @@ type
     procedure setUpSimulationUI(); // Set up sim related buttons, plots, etc
     procedure addRxnStoichEdit(spIndex: integer; rxnReactant: boolean);
     procedure refreshPlotAndSliderPanels();
+    procedure refreshPlotPanels();
+    procedure refreshSliderPanels();
     procedure clearNetwork(); // clear network canvas and delete all nodes, edges
 
     procedure enableEditNodePanel;
     procedure disableEditNodePanel;
+    function enableStepSizeEdit(): boolean; // true: success
+    function disableStepSizeEdit(): boolean;// true: success
 
     procedure enableEditReactionPanel;
     procedure disableEditReactionPanel;
@@ -588,6 +592,7 @@ begin
   self.btnOnLineSim.caption := 'Setup Simulation';
   self.btnAddPlot.Enabled := false;
   self.btnParamAddSlider.Enabled := false;
+  self.enableStepSizeEdit;
   //onLineSimButton.Enabled := false;
 end;
 
@@ -606,6 +611,7 @@ begin
    begin
      self.btnAddPlot.Enabled := true;
      self.btnParamAddSlider.Enabled := true;
+     self.enableStepSizeEdit;
      if self.networkUpdated = false then
        begin
        if self.mainController.IsModelLoaded then
@@ -614,6 +620,7 @@ begin
 		     self.btnResetSimSpecies.Enabled := false;
          self.btnParamReset.Enabled := false;
          self.btnResetRun.Enabled := false;
+         self.disableStepSizeEdit;
          self.btnOnLineSim.font.color := clred;
          self.btnOnLineSim.ElementClassName := 'btn btn-success btn-sm';
          self.btnOnLineSim.caption := 'Simulation: Pause';
@@ -665,6 +672,7 @@ begin
      self.btnResetSimSpecies.Enabled := true;
      self.btnParamReset.Enabled := true;
      self.btnResetRun.Enabled := true;
+     self.enableStepSizeEdit;
      self.MainController.SetTimerEnabled(false); // Turn off web timer (Stop simulation)
      self.btnOnLineSim.font.color := clgreen;
      self.btnOnLineSim.ElementClassName := 'btn btn-danger btn-sm';
@@ -1100,6 +1108,7 @@ begin
   self.btnAddPlot.Visible := true;
   self.btnParamAddSlider.Enabled := false;
   self.btnAddPlot.Enabled := false;
+  self.enableStepSizeEdit;
   self.mainController.addSBMLListener( @self.PingSBMLLoaded );
   self.mainController.addNetworkListener( @self.networkHasChanged );
   self.mainController.addSimListener( @self.getVals ); // notify when new Sim results
@@ -1130,9 +1139,11 @@ begin
 end;
 
 procedure TMainForm.refreshPlotAndSliderPanels();
-var i: integer;
+//var i: integer;
 begin
-  if assigned(self.plotsPanelList) then
+  self.refreshPlotPanels;
+  self.refreshSliderPanels;
+{  if assigned(self.plotsPanelList) then
  begin
    if self.plotsPanelList.count >0 then
    begin
@@ -1145,9 +1156,9 @@ begin
           self.plotsPanelList[i].setPlotLegend(self.plotSpecies[i]);
        end;
    end;
- end;
+ end; }
  // param sliders:
- if assigned(self.pnlSliderAr) then
+ {if assigned(self.pnlSliderAr) then
    begin
      for i := 0 to Length(self.pnlSliderAr) - 1 do
      begin
@@ -1156,8 +1167,42 @@ begin
        configPSliderTBar(i, self.pnlSliderContainer.width, self.sliderPTBarAr,
              self.sliderPHLabelAr, self.sliderPLLabelAr, self.sliderPTBLabelAr);
      end;
-   end;
+   end;  }
 
+end;
+
+procedure TMainForm.refreshPlotPanels;
+var i: integer;
+begin
+ if assigned(self.plotsPanelList) then
+   begin
+     if self.plotsPanelList.count >0 then
+     begin
+     //console.log(' PlotWPanel width: ', plotsPanelList[0].plotWPanel.width, 'plot PB width: ', plotsPanelList[0].plotPB.width);
+     for i := 0 to self.plotsPanelList.count -1 do
+       begin
+          plotsPanelList[i].setPlotPBWidth();
+          plotsPanelList[i].initializePlot( MainController.getRunTime,
+                             MainController.getStepSize, self.plotSpecies[i]);
+          self.plotsPanelList[i].setPlotLegend(self.plotSpecies[i]);
+       end;
+     end;
+   end;
+end;
+
+procedure TMainForm.refreshSliderPanels;
+var i: integer;
+begin
+  if assigned(self.pnlSliderAr) then
+    begin
+    for i := 0 to Length(self.pnlSliderAr) - 1 do
+      begin
+      configPSliderPanel(i, 0, self.pnlSliderContainer.width, SLIDERPHEIGHT,
+                         self.pnlSliderAr);
+      configPSliderTBar(i, self.pnlSliderContainer.width, self.sliderPTBarAr,
+             self.sliderPHLabelAr, self.sliderPLLabelAr, self.sliderPTBLabelAr);
+      end;
+    end;
 end;
 
 procedure TMainForm.RPanelTabSetClick(Sender: TObject);
@@ -1256,8 +1301,16 @@ end;
 
 procedure TMainForm.stepSizeEdit1Change(Sender: TObject); // no longer needed
 begin
- //  self.mainController.SetStepSize(strToInt(stepSizeEdit1.Text)*0.001);
-  // self.stepSize := strToInt(stepSizeEdit1.Text)*0.001 ;
+  self.mainController.SetStepSize(strToInt(stepSizeEdit1.Text)*0.001);
+  self.stepSize := strToInt(stepSizeEdit1.Text)*0.001 ;
+  //self.refreshPlotPanels;
+  if self.mainController.IsModelLoaded then
+  begin
+    self.mainController.createSimulation();
+    self.initializePlots;
+    self.currentGeneration := 0;
+  end;
+
 end;
 
 procedure TMainForm.trackBarSimSpeedChange(Sender: TObject);
@@ -2240,6 +2293,7 @@ end;
 procedure TMainForm.btnResetRunClick(Sender: TObject);
 begin
   self.resetSliderPositions();
+  self.enableStepSizeEdit;
   self.mainController.createSimulation();
   self.initializePlots;
   self.currentGeneration := 0;
@@ -2255,6 +2309,20 @@ begin
        network.reactions[i].state.thickness := edtReactionWidth.Value;
        end;
   networkPB1.Invalidate;
+end;
+
+function TMainForm.enableStepSizeEdit(): boolean; // true: success
+begin
+  self.stepSizeLabel1.Enabled := true;
+  self.stepSizeEdit1.Enabled := true;
+  Result := true;
+end;
+function TMainForm.disableStepSizeEdit(): boolean;// true: success
+begin
+  self.stepSizeLabel1.Enabled := false;
+  self.stepSizeEdit1.Enabled := false;
+  Result := true;
+
 end;
 
 end.
