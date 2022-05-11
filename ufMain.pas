@@ -17,7 +17,7 @@ uses
   uODE_FormatUtility, uGraphP, Vcl.Menus, WEBLib.Menus, ufVarSelect, uPlotPanel,
   uParamSliderLayout, uSidewinderTypes, WEBLib.ComCtrls, WEBLib.Miletus, WEBLib.JQCtrls; //, VCL.TMSFNCCustomPicker, VCL.TMSFNCColorPicker;
 
-const SIDEWINDER_VERSION = 'Version 0.3: LayoutRender debug';
+const SIDEWINDER_VERSION = 'Version 0.31: LayoutRender debug';
       EDITBOX_HT = 25;
       ZOOM_SCALE = 20;
       DEBUG = false; // true then show debug console output and any other debug related info
@@ -880,7 +880,8 @@ begin
   networkPB1.Invalidate;
   if (networkController.selectedObjects.Count > 0) and (networkController.selectedObjects[0].objType = oNode) then
     begin
-      editNodeId.Text := networkController.selectedObjects[0].node.state.id;
+     // editNodeId.Text := networkController.selectedObjects[0].node.state.id;
+     editNodeId.Text := networkController.selectedObjects[0].node.state.species;
       editNodeConc.Text := networkCOntroller.selectedObjects[0].node.state.conc.ToString;
       pnlNodePanel.visible := true;
       self.rightPanelType := NODE_PANEL;
