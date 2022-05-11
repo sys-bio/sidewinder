@@ -103,7 +103,7 @@ end;
 
 // Layout: creates species and text glyphs:
 procedure TNetworkToModel.setSpecies();
-var i: integer;
+var i,j : integer;
     newSpecies: TSBMLSpecies;
     nodes: TListOfNodes;
     newSpGlyph: TSBMLLayoutSpeciesGlyph;
@@ -113,16 +113,30 @@ var i: integer;
     newColorDef: TSBMLRenderColorDefinition;
     newStyle: TSBMLRenderStyle;
     newRG: TSBMLRenderGroup;
+    aliasSp: boolean;
 begin
   nodes := self.network.nodes;
   for i := 0 to Length(nodes)-1 do
   begin
-    newSpecies := TSBMLSpecies.create(nodes[i].state.id);
-    newSpecies.setInitialConcentration(nodes[i].state.conc);
-    newSpecies.setCompartment(DEFAULT_COMP);
-    newSpecies.setHasOnlySubstanceUnits(false); // species units is conc.
-    self.model.addSBMLspecies(newSpecies);
+    aliasSp := false;
+   // newSpecies := TSBMLSpecies.create(nodes[i].state.id);
+   // Check if alias node,then do not create new species:
+    for j := 0 to i-1 do   // check if species already added
+      begin
+      if nodes[i].state.species = nodes[j].state.species then
+        aliasSp := true;
+      end;
+    if not aliasSp then
+      begin
+      newSpecies := TSBMLSpecies.create(nodes[i].state.species);
+      newSpecies.setInitialConcentration(nodes[i].state.conc);
+      newSpecies.setCompartment(DEFAULT_COMP);
+      newSpecies.setHasOnlySubstanceUnits(false); // species units is conc.
+      self.model.addSBMLspecies(newSpecies);
+      end;
+
     newSpGlyph := TSBMLLayoutSpeciesGlyph.create(nodes[i].state.id);
+    newSpGlyph.setSpeciesId(nodes[i].state.species);
     newLayoutPt := TSBMLLayoutPoint.create( nodes[i].state.x , nodes[i].state.y );
     newDims := TSBMLLayoutDims.create(nodes[i].state.w, nodes[i].state.h);
     newSpGlyph.setBoundingBox(TSBMLLayoutBoundingBox.create(newLayoutPt, newDims));
@@ -156,7 +170,7 @@ var i, j, k, index: integer;
    newCubicBezier: TSBMLLayoutCubicBezier;
    spRefCenter: TSBMLLayoutPoint;
    rxnArcCenter: TSBMLLayoutPoint;
-   spRefProdCenter: TSBMLLayoutPoint;  // Use for uni-uni reactions, one line segment.
+   spRefProdCenter: TSBMLLayoutPoint;// Use for uni-uni reactions, one line segment.
    massCenter: TPointF;  //Rxn mass center.
    nodeCenter: TPointF;
    uniUniRxn: boolean;
@@ -170,7 +184,6 @@ begin
 
     massCenter := self.network.reactions[i].state.getMassCenter; // update massCenter;
     newRxnGlyph := TSBMLLayoutReactionGlyph.create(self.network.reactions[i].state.id);
-    //newRxnCurve := TSBMLLayoutCurve.create;
     newRxnCenterPt := TSBMLLayoutPoint.create( massCenter.x, massCenter.y );
 
     setLength(newSpecReacts,0);
@@ -179,7 +192,6 @@ begin
     begin
       //if containsText(self.network.reactions[i].state.srcId[i], 'NULL') then break;
       k := length(newSpecReacts);
-
       if self.network.reactions[i].state.srcId[j] <> '' then
       begin
         setLength(newSpecReacts, k+1);
@@ -195,34 +207,32 @@ begin
           nodeCenter :=  self.network.nodes[index].state.getCenter;
           spRefCenter := TSBMLLayoutPoint.create(nodeCenter.x, nodeCenter.y);
 
-
-         // if not uniUniRxn then
-         // begin
-            if self.network.reactions[i].state.lineType = ltBezier then
-              begin
-              newCubicBezier := self.createSBMLBezierCurve(self.network.reactions[i].state,
-                                    self.network.reactions[i].state.reactantReactionArcs[j], true );
-              newCubicBezier.setId('bezier_' + self.network.reactions[i].state.srcId[j] +
-                   self.network.reactions[i].state.id);
-              newRxnCurve.addCubicBezier(newCubicBezier);
-              end
-            else  // assume ltLine
-              begin
-              newLineSeg := TSBMLLayoutLineSegment.create(newRxnCenterPt, spRefCenter);
-              newRxnCurve.addLineSegment(newLineSeg);
-              end;
-         // end;
+          if self.network.reactions[i].state.lineType = ltBezier then
+            begin
+            newCubicBezier := self.createSBMLBezierCurve(self.network.reactions[i].state,
+                                  self.network.reactions[i].state.reactantReactionArcs[j], true );
+            newCubicBezier.setId('bezier_' + self.network.reactions[i].state.srcId[j] +
+                 self.network.reactions[i].state.id);
+            newRxnCurve.addCubicBezier(newCubicBezier);
+            end
+          else  // assume ltLine
+            begin
+            newLineSeg := TSBMLLayoutLineSegment.create(newRxnCenterPt, spRefCenter);
+            newRxnCurve.addLineSegment(newLineSeg);
+            end;
 
         end
         else notifyUser('Node id not found: ' + self.network.reactions[i].state.srcId[j] );
         newSpRefGlyph.setBoundingBox(TSBMLLayoutBoundingBox.create(spRefCenter, newDims));
         newSpRefGlyph.setCurve(newRxnCurve);
         newRxnGlyph.addSpeciesRefGlyph(newSpRefGlyph);
+
         if length( self.network.reactions[i].state.srcStoich ) > 0 then
           newSpecReacts[k] := TSBMLSpeciesReference.create( newSpRefId,
                             self.network.reactions[i].state.srcStoich[j] )
         else newSpecReacts[k] := TSBMLSpeciesReference.create(newSpRefId);
-        newSpecReacts[k].setSpecies(self.network.reactions[i].state.srcId[j]);
+       // need to get species id from node.state.species:
+        newSpecReacts[k].setSpecies(self.network.reactions[i].state.srcPtr[j].state.species);
         newSpecReacts[k].setConstant(true);  // default: const stoich coeff
       end;
     end;
@@ -249,9 +259,6 @@ begin
                                              self.network.nodes[index].state.y +
                                              (self.network.nodes[index].state.h) );
 
-         // if uniUniRxn then
-         //   newLineSeg := TSBMLLayoutLineSegment.create(spRefCenter, spRefProdCenter)
-         // else newLineSeg := TSBMLLayoutLineSegment.create(newRxnCenterPt, spRefProdCenter);
           if self.network.reactions[i].state.lineType = ltBezier then
           begin
             newCubicBezier := self.createSBMLBezierCurve(self.network.reactions[i].state,
@@ -273,11 +280,13 @@ begin
         newSpRefGlyph.setBoundingBox(TSBMLLayoutBoundingBox.create(spRefCenter, newDims));
         newSpRefGlyph.setCurve(newRxnCurve);
         newRxnGlyph.addSpeciesRefGlyph(newSpRefGlyph);
+
         if length( self.network.reactions[i].state.destStoich ) > 0 then
           newSpecProds[k] := TSBMLSpeciesReference.create(newSpRefId,
                         self.network.reactions[i].state.destStoich[j] )
         else newSpecProds[k] := TSBMLSpeciesReference.create( newSpRefId );
-        newSpecProds[k].setSpecies(self.network.reactions[i].state.destId[j]);
+        // need to get species id from node.state.species:
+        newSpecProds[k].setSpecies(self.network.reactions[i].state.destPtr[j].state.species);
         newSpecProds[k].setConstant(true); // default: const stoich coeff
       end;
     end;
@@ -413,18 +422,15 @@ var newLineEnd: TSBMLRenderLineEnding;
     newPolygon: TSBMLRenderPolygon;
     newRGroup: TSBMLRenderGroup;
     newBBox: TSBMLLayoutBoundingBox;
-    i,j: integer;
-    x,y, lineSlope: double;
+    i: integer;
+    x,y: double;
 
 begin
-
-  lineSlope := 0;
   newLineEnd := TSBMLRenderLineEnding.create(id);
   newBBox := TSBMLLayoutBoundingBox.create();
   newBBox.setDims(self.arrowBBoxDims);
   x := - self.arrowBBoxDims.getWidth/2;
   y := - self.arrowBBoxDims.getHeight/2;
-  j := length(rxnState.productReactionArcs);
 
   newBBox.setPoint(x,y);
   newLineEnd.setBoundingBox(newBBox);
@@ -443,6 +449,7 @@ begin
   newPolygon.setStroke( fColorDefId );
   newPolygon.setStrokeWidth( rxnState.thickness );
   newRGroup.setPolygon( newPolygon );
+  newLineEnd.setRotationalMapping(true);
   newLineEnd.setRenderGroup( newRGroup );
   Result := newLineEnd;
 end;

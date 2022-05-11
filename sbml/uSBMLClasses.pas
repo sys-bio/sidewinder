@@ -175,8 +175,8 @@ type
   reversible: boolean;
   kineticlaw: SBMLkineticlaw;
   kineticLawFlagSet: boolean;
-  products: array of String;   // remove at some point
-  reactants: array of String;  // remove at "
+ // products: array of String;   // remove at some point
+ // reactants: array of String;  // remove at "
 
   numbProducts, numbReactants: integer;
   rxnProducts: array of TSBMLSpeciesReference;
@@ -188,8 +188,8 @@ type
   constructor create(id:String; prod: array of TSBMLSpeciesReference; reactant: array of TSBMLSpeciesReference); Overload;
   constructor create(id:String); Overload;
   function getID():String;   // from model.getReaction(i).getId()
-  function getProducts(): array of String;   // remove at some pointGet products (species) for reaction
-  function getReactants(): array of String;  // remove at some pointGet reactants (species) for reaction
+//  function getProducts(): array of String;   // remove at some pointGet products (species) for reaction
+//  function getReactants(): array of String;  // remove at some pointGet reactants (species) for reaction
   function getProduct(index: integer):TSBMLSpeciesReference;
   function getReactant(index: integer): TSBMLSpeciesReference;
   function getCompartment(): String;
@@ -197,8 +197,8 @@ type
   function isSetCompartment(): boolean;
   function getReversible(): boolean;
   procedure setReversible(r: boolean);
-  procedure setProducts(prod: array of String);  // remove at some point
-  procedure setReactants(reactant: array of String);  // remove at some point
+//  procedure setProducts(prod: array of String);  // remove at some point
+//  procedure setReactants(reactant: array of String);  // remove at some point
   function getrxnProducts(): array of TSBMLSpeciesReference;   // Get products (species) for reaction
   function getrxnReactants(): array of TSBMLSpeciesReference;  // Get reactants (species) for reaction
   procedure setrxnProducts(prod: array of TSBMLSpeciesReference);
@@ -388,7 +388,7 @@ implementation
   constructor TSBMLSpeciesReference.create(newId:String; stoich: double); Overload;
   begin
      id:= newId;
-     species:= '' ; // Cannot be the same as id
+     species:= '' ; // Cannot be the same as id ?
      stoichValue:= stoich;
      idSetFlag:= true;
      speciesSetFlag:= true;
@@ -710,8 +710,8 @@ implementation
   rxnNameFlagSet:= false;
   compartment:= '';
   compartmentFlagSet:= false;
-  products:= Copy(prod, 0, Length(prod));  // list of species
-  reactants:= Copy(reactant, 0, Length(reactant)); // list of species
+ // products:= Copy(prod, 0, Length(prod));  // list of species
+ // reactants:= Copy(reactant, 0, Length(reactant)); // list of species
   numbProducts:= Length(prod);
   numbReactants:= Length(reactant);
   kineticlaw:= nil;
@@ -747,8 +747,8 @@ implementation
   rxnNameFlagSet:= false;
   compartment:= '';
   compartmentFlagSet:= false;
-  products:= nil;
-  reactants:= nil;
+ // products:= nil;
+ // reactants:= nil;
   numbProducts:= 0;
   numbReactants:= 0;
   kineticLawStr:= '';
@@ -770,7 +770,7 @@ implementation
  begin
    Result:= compartmentFlagSet;
  end;
-
+ {
  procedure SBMLReaction.setProducts(prod: array of string);
  begin
   products:= Copy(prod, 0, Length(prod));  // list of species
@@ -780,11 +780,12 @@ implementation
  begin
   reactants:= Copy(reactant, 0, Length(reactant)); // list of species
  end;
-
+ }
  function SBMLReaction.getID(): String;
  begin
   Result:=rxnID;
  end;
+ {
  function SBMLReaction.getProducts(): array of String;
  begin
   Result:= products;
@@ -793,7 +794,7 @@ implementation
  begin
   Result:= reactants;
  end;
-
+   }
  function SBMLReaction.getrxnProducts(): array of TSBMLSpeciesReference;   // Get products (species) for reaction
  begin
  //console.log('GetrxnProducts: number of products:',Length(rxnproducts));

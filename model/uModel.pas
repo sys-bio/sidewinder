@@ -656,7 +656,7 @@ begin
     begin
       self.getReaction(0).getKineticLaw.setFormula('k1 * G1');
       self.getReaction(0).getReactant(0).setId('G1');
-      self.getReaction(0).getReactants()[0] := 'G1';
+   //   self.getReaction(0).getReactants()[0] := 'G1';
       self.getSBMLSpecies(0).setId('G1');
     end;
 

@@ -260,7 +260,8 @@ end;
 
 procedure TController.setNodeId(Id: string);
 var
-  index: integer;
+  i, index: integer;
+  oldSpeciesId: string;
 begin
   if selectedObjects.count = 0 then
      exit;
@@ -271,8 +272,22 @@ begin
       showmessage('A node of that name already exists');
       exit;
     end;
+  oldSpeciesId := selectedObjects[0].node.state.species;
+  selectedObjects[0].node.state.species := Id;
+  if selectedObjects[0].node.state.Id = oldSpeciesId then
+    selectedObjects[0].node.state.Id := Id;
+  for i := 0 to length(network.nodes) -1 do
+    begin
+      if network.nodes[i].state.species = oldSpeciesId then
+        begin
+        network.nodes[i].state.species := Id;
+        if network.nodes[i].state.Id = oldSpeciesId then
+          network.nodes[i].state.Id := Id;
+         network.updateReactions(network.nodes[i]);
+        end;
+    end;
 
-  selectedObjects[0].node.state.Id := Id;
+ // selectedObjects[0].node.state.Id := Id;
   // Update reactions that have this node:
   network.updateReactions(selectedObjects[0].node);
   network.networkEvent(nil);
@@ -280,7 +295,7 @@ end;
 
 procedure TController.setNodeConc(conc: string);
 var
-  index: integer;
+  i, index: integer;
   newConc: double;
 begin
   if selectedObjects.count = 0 then
@@ -295,6 +310,16 @@ begin
       showmessage('Concentration must be a number');
   end;
   selectedObjects[0].node.state.conc := newConc;
+  for i := 0 to length(network.nodes) -1 do
+    begin
+    if selectedObjects[0].node.state.species = network.nodes[i].state.species then
+      begin
+      network.nodes[i].state.conc := newConc;
+      network.networkEvent( network.nodes[i] );
+      end;
+
+    end;
+
   network.networkEvent( selectedObjects[0].node ); // pass updated node to listener
 end;
 

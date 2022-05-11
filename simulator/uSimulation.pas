@@ -139,7 +139,7 @@ begin
         begin
         self.paramUpdated := false;
         end;
-     //   console.log('updateSimulation: s[0]: ',self.s_Vals[0]);
+      //  console.log('updateSimulation: self.time, s[0]: ',self.time,', ',self.s_Vals[0]);
         self.nextEval(self.time, self.s_Vals, self.p);
     end
     // else error msg needed?

@@ -500,10 +500,10 @@ end;
     // Run Simulation using info from odeFormat:
    odeEqSet:= odeEqSet + ' return dydt_s ;' ;
    odeEqSet2:= odeEqSet2 + ' return dydt_s;';  // Add eqs LSODA list.
-   console.log('*** Final odeEqSetVal: *****');
-   console.log(odeEqSet);
-   console.log(' ** LSODA eqs: **');
-   console.log(odeEqSet2);
+  // console.log('*** Final odeEqSetVal: *****');
+  // console.log(odeEqSet);
+  // console.log(' ** LSODA eqs: **');
+  // console.log(odeEqSet2);
  end;
 
  function TFormatODEs.spBoundaryCondition(speciesId: String): boolean;

@@ -181,8 +181,8 @@ begin
   bitmap.canvas.Brush.Style := bsClear;
 
   // Center x and y relative to top left corner adjusted by size of text
-  p := scaleWorldDim_X (node.state.w) / 2 - (bitmap.canvas.TextWidth (node.state.Id) / 2);
-  q := scaleWorldDim_Y (node.state.h) / 2 - (bitmap.canvas.TextHeight (node.state.Id) / 2);
+  p := scaleWorldDim_X (node.state.w) / 2 - (bitmap.canvas.TextWidth (node.state.species) / 2);
+  q := scaleWorldDim_Y (node.state.h) / 2 - (bitmap.canvas.TextHeight (node.state.species) / 2);
 
   relativeDisplacment := 8/100; // 8/100 = 8% adjustment
   xp := scaledX + p;
@@ -209,7 +209,7 @@ begin
   //end;
 
   //if shapeObj.captionVisible then
-  bitmap.canvas.TextOut (trunc (xp), trunc (yp), node.state.id);
+  bitmap.canvas.TextOut (trunc (xp), trunc (yp), node.state.species);
 
   //extValue.absoluteCoordinateX := trunc (xp);
   //textValue.absoluteCoordinateY := trunc (yp);
@@ -238,7 +238,6 @@ begin
   oldWidth := bitmap.canvas.pen.Width;
   oldColor := bitmap.canvas.pen.color;
 
-  //bitmap.canvas.Font.Size := trunc (bitmap.canvas.Font.Size * scalingFactor);
   bitmap.canvas.Font.Size := trunc (DEFAULT_FONT_SIZE * scalingFactor);
   if bitmap.canvas.Font.Size = 0 then bitmap.canvas.Font.Size := 2;
 
@@ -252,7 +251,7 @@ begin
         scaledH := scaleWorldDim_Y (network.nodes[i].state.h);
 
         // Get the size of the text
-        sizeOfText := bitmap.canvas.TextExtent (network.nodes[i].state.id);
+        sizeOfText := bitmap.canvas.TextExtent (network.nodes[i].state.species);
 
         if sizeOfText.cx/scalingFactor + 1 >= network.nodes[i].state.w then
            network.nodes[i].state.w := unscale (SizeOfText.cx) + 0.1*unscale (sizeOfText.cx);

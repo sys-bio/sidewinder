@@ -56,6 +56,7 @@ type
   // This is used to support undo operations and json reading and writing
   TNodeState = record
        id : string;
+       species: string; // typically id and species are the same (aliases will not be)
        conc: double;   // conc of species, assume unit volume
        x, y, w, h : double;
        fillColor, outlineColor : TColor;
@@ -106,6 +107,7 @@ type
       lineType   : TReactionLineType;  // line, bezier or line segment
       reactantReactionArcs : array of TReactionCurve;
       productReactionArcs  : array of TReactionCurve;
+      rxnLineEnding : TList<TPointF>; // Typically an arrow polygon
 
       rateParams : TList<TSBMLparameter>; // rate and param consts,
       fillColor  : TColor;
@@ -275,7 +277,8 @@ end;
 procedure TNodeState.saveAsJSON (nodeObject : TJSONObject);
 //var colorObject : TJSONObject;
 begin
-  nodeObject.AddPair ('id', id);
+  nodeObject.AddPair ('id', self.id);
+  nodeObject.AddPair('species',self.species);
   nodeObject.AddPair ('conc', TJSONNumber.Create(conc));  // to be added.
   nodeObject.AddPair ('x', TJSONNumber.Create (x));
   nodeObject.AddPair ('y', TJSONNumber.Create (y));
@@ -290,16 +293,17 @@ end;
 
 procedure TNodeState.loadFromJSON (obj : TJSONObject);
 begin
-   id := obj.GetJSONValue('id');
-   conc := strtofloat (obj.GetJSonValue('conc'));  // to be added
-   x := strtofloat (obj.GetJSONValue ('x'));
-   y := strtofloat (obj.GetJsonValue ('y'));
-   h := strtofloat (obj.GetJSONValue ('h'));
-   w := strtofloat (obj.GetJsonValue ('w'));
+   self.id := obj.GetJSONValue('id');
+   self.species := obj.GetJSONValue('species');
+   self.conc := strtofloat (obj.GetJSonValue('conc'));  // to be added
+   self.x := strtofloat (obj.GetJSONValue ('x'));
+   self.y := strtofloat (obj.GetJsonValue ('y'));
+   self.h := strtofloat (obj.GetJSONValue ('h'));
+   self.w := strtofloat (obj.GetJsonValue ('w'));
 
-   fillColor := loadColorFromJSON (obj, 'fillColor');
-   outlineColor :=  loadColorFromJSON (obj, 'outlineColor');
-   outlineThickness := strtoint (obj.GetJsonValue ('outlineThickness'));
+   self.fillColor := loadColorFromJSON (obj, 'fillColor');
+   self.outlineColor :=  loadColorFromJSON (obj, 'outlineColor');
+   self.outlineThickness := strtoint (obj.GetJsonValue ('outlineThickness'));
 end;
 
 procedure TNodeState.loadFromSBML (obj : TSBMLLayoutSpeciesGlyph; initVal: double;
@@ -309,12 +313,13 @@ var i: integer;
 begin
   strokeCFound := false;
   fillCFound := false;
-  id := obj.getSpeciesId;
-  conc := initVal;
-  x := obj.getBoundingBox().getPoint().getX;
-  y := obj.getBoundingBox().getPoint().getY;
-  h := obj.getBoundingBox().getDims().getHeight;
-  w := obj.getBoundingBox().getDims().getWidth;
+  self.id := obj.getId;
+  self.species := obj.getSpeciesId;
+  self.conc := initVal;
+  self.x := obj.getBoundingBox().getPoint().getX;
+  self.y := obj.getBoundingBox().getPoint().getY;
+  self.h := obj.getBoundingBox().getDims().getHeight;
+  self.w := obj.getBoundingBox().getDims().getWidth;
 
   if nodeStyle <> nil then
     begin
@@ -374,7 +379,7 @@ begin
   for i := 0 to nReactants - 1 do
       begin
       jso := TJsonObject.Create();
-      jso.AddPair ('species', srcPtr[i].state.id);
+      jso.AddPair ('species', srcPtr[i].state.id); // this may be an alias node
       jso.AddPair ('stoichiometry', TJSONNumber.Create (srcStoich[i]));
 
       controlPt := TJSONArray.Create;
@@ -396,7 +401,7 @@ begin
   for i := 0 to nProducts - 1 do
       begin
       jso := TJsonObject.Create();
-      jso.AddPair ('species', destPtr[i].state.id);
+      jso.AddPair ('species', destPtr[i].state.id); // this may be an alias node.
       jso.AddPair ('stoichiometry', TJSONNumber.Create (destStoich[i]));
 
       controlPt := TJSONArray.Create;
@@ -561,12 +566,14 @@ procedure TReactionState.loadFromSBML (glyphRxn : TSBMLLayoutReactionGlyph; mode
          compAr: array of TSBMLcompartment; modelRender: TSBMLRenderInformation);
 var  newParam : TSBMLparameter;
      speciesName : string;
+     spGlyphId: string;
      i, j : integer;
      intNumCurveSeg: integer; // number of line segments
      intReactNode, intProdNode : integer; // node index.
      rxnStyle: TSBMLRenderStyle;
 begin
   id := modelRxn.getId;
+  speciesName := '';
   intReactNode := 0;
   intProdNode := 0;
   intNumCurveSeg := 0;
@@ -578,7 +585,20 @@ begin
 
   for i := 0 to modelRxn.getNumReactants - 1 do
       begin
-      srcId[i] := modelRxn.getReactant(i).getSpecies;
+      srcId[i] := '';
+      if glyphRxn <> nil then
+        begin
+        for j := 0 to glyphRxn.getNumSpeciesRefGlyphs -1 do
+          begin
+          speciesName := '';
+          spGlyphId := '';
+          spGlyphId := glyphRxn.getSpeciesRefGlyph(j).getSpeciesGlyphId;
+          speciesName := getSpeciesIdFromSpGlyphId(spGlyphId, spGlyphList);
+          if speciesName = modelRxn.getReactant(i).getSpecies then
+            srcId[i] := spGlyphId;
+          end;
+        end;
+      if srcId[i] = '' then srcId[i] := modelRxn.getReactant(i).getSpecies;
       srcStoich[i] := modelRxn.getReactant(i).getStoichiometry;
       end;
 
@@ -587,10 +607,24 @@ begin
   createProductSpace (nProducts);
 
   for i := 0 to modelRxn.getNumProducts - 1 do
+    begin
+    destId[i] := '';
+    if glyphRxn <> nil then
       begin
-      destId[i] := modelRxn.getProduct(i).getSpecies;
-      destStoich[i] := modelRxn.getProduct(i).getStoichiometry;
+      for j := 0 to glyphRxn.getNumSpeciesRefGlyphs -1 do
+          begin
+          speciesName := '';
+          spGlyphId := '';
+          spGlyphId := glyphRxn.getSpeciesRefGlyph(j).getSpeciesGlyphId;
+          speciesName := getSpeciesIdFromSpGlyphId(spGlyphId, spGlyphList);
+          if speciesName = modelRxn.getProduct(i).getSpecies then
+            destId[i] := spGlyphId;
+          end;
       end;
+
+    if destId[i] = '' then destId[i] := modelRxn.getProduct(i).getSpecies;
+    destStoich[i] := modelRxn.getProduct(i).getStoichiometry;
+    end;
 
   // For now, just grab all parameters, not just ones used in reactions:
   // Grab parameters that are used in reaction:
@@ -709,8 +743,6 @@ begin
           end;
         end;
       spGlyphId := spRefGlyph.getSpeciesGlyphId; // species glyph id used to find spId
-      for j := 0 to newSpGlyphList.Count -1 do
-        if newSpGlyphList[j].getId = spGlyphId then spId := newSpGlyphList[j].getSpeciesId;
 
       for j := 0 to newModelRxn.getNumReactants -1 do
         begin
@@ -718,7 +750,7 @@ begin
           begin
           reactant := true;
           for k := 0 to self.nReactants -1 do
-            if self.srcId[k] = spId then nodeIndex := k;
+            if self.srcId[k] = spGlyphId then nodeIndex := k;
           end
         end;
       if not reactant then
@@ -729,7 +761,7 @@ begin
               begin
               reactant := false;
               for k := 0 to self.nProducts -1 do
-                if self.destId[k] = spId then nodeIndex := k;
+                if self.destId[k] = spGlyphId then nodeIndex := k;
               end;
             end;
         end;
@@ -949,44 +981,6 @@ begin
     self.arcCenter.y := newCenterPt.getY;
     end;
 
- { if newSBMLRxn.boundingBoxIsSet then
-    begin  // get center of reaction BBox:
-    self.arcCenter.x := newSBMLRxn.getBoundingBox.getPoint.getX +
-                       (newSBMLRxn.getBoundingBox.getDims.getWidth/2);
-    self.arcCenter.Y := newSBMLRxn.getBoundingBox.getPoint.getY +
-                       (newSBMLRxn.getBoundingBox.getDims.getHeight/2);
-    end
-  else
-    begin
-    if newSBMLRxn.isCurveSet() then
-      begin
-      rxnCurve := newSBMLRxn.getCurve();
-      if rxnCurve.getNumCurveSegments = 1 then
-        begin
-        self.arcCenter.x := (rxnCurve.getLineSegment(0).getStartPt.getX + rxnCurve.getLineSegment(0).getEndPt.getX)/2;
-        self.arcCenter.y := (rxnCurve.getLineSegment(0).getStartPt.getY + rxnCurve.getLineSegment(0).getEndPt.getY)/2;
-        end
-
-      else //assume 2 bezier curves, endpoint of first is arcCenter:
-        begin
-        if rxnCurve.getNumCubicBeziers > 1 then
-          begin //assume 2 bezier curves and endpoint of first is arcCenter:
-          self.arcCenter.x := rxnCurve.getCubicBezier(0).getEnd.getX;
-          self.arcCenter.y := rxnCurve.getCubicBezier(0).getEnd.getY;
-          end
-        else  // Set arcCenter to midpoint of start and endpoints:
-          begin
-          if rxnCurve.getNumCubicBeziers = 1 then
-            begin
-            self.arcCenter.x := (rxnCurve.getCubicBezier(0).getStart.getX +
-                            rxnCurve.getCubicBezier(0).getEnd.getX)/2;
-            self.arcCenter.y := (rxnCurve.getCubicBezier(0).getStart.getY +
-                            rxnCurve.getCubicBezier(0).getEnd.getY)/2;
-            end;
-          end;
-        end;
-      end;
-    end; }
 end;
 
 /// Calc mass center for reaction state, where each node has mass of 1.
@@ -1292,7 +1286,8 @@ procedure TNetwork.autoBuildNetworkFromSBML(model: TModel);
     spAr := model.getS_Names;
     for j := 0 to Length(spAr) -1 do
       begin
-        nodeState.id := spAr[j];
+        nodeState.id := spAr[j]; // default
+        nodeState.species := spAr[j];
         nodeState.conc := model.getS_initVals[j];
         nodeState.x := 20 + j; // default values
         nodeState.y := 60 + j; //   "
@@ -1392,6 +1387,7 @@ procedure TNetwork.autoBuildNetworkFromSBML(model: TModel);
  var nodeState: TNodeState;
  begin
    nodeState.id := rxnId + NULL_NODE_TAG;
+   nodeState.species := rxnId + NULL_NODE_TAG;
    nodeState.conc := 0.0;
    nodeState.x := 22 + 2*num ; // default values
    nodeState.y := 62 + 2*num; //   "
@@ -1574,7 +1570,8 @@ begin
   result := nodes[length (nodes)-1];
   result.state.x := x; result.state.y := y;
   result.state.outlineThickness :=  DEFAULT_NODE_OUTLINE_THICKNESS;
-  result.state.Id := Id;
+  result.state.id := id;
+  result.state.species := id; // default
   self.networkEvent(nil); // Notify listener
 end;
 
@@ -1587,7 +1584,8 @@ begin
   result.state.x := x; result.state.y := y;
   result.state.h := h; result.state.w := w;
   result.state.outlineThickness :=  DEFAULT_NODE_OUTLINE_THICKNESS;
-  result.state.Id := Id;
+  result.state.id := id;
+  result.state.species := id;  // default
   self.networkEvent(nil); // Notify listener
 end;
 
@@ -1999,6 +1997,7 @@ end;
 constructor TNode.create (id : string);
 begin
   self.state.id := id;
+  self.state.species := id; // default
   self.state.conc := 0.0;
   state.w := 60; state.h := 40;
   selected := false;

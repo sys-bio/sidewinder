@@ -327,6 +327,10 @@ type
    function deleteTextGlyph(index: integer): boolean;
 
  end;
+
+ // helper functions:
+ function getSpeciesIdFromSpGlyphId(spGlyphId: string; spGlyphList: TList<TSBMLLayoutSpeciesGlyph>): string;
+
 implementation
 
   constructor TSBMLLayoutDims.create() overload;
@@ -1504,5 +1508,16 @@ end;
     Result := success;
   end;
 
+
+  function getSpeciesIdFromSpGlyphId(spGlyphId: string; spGlyphList: TList<TSBMLLayoutSpeciesGlyph>): string;
+  var i: integer;
+  begin
+  Result := '';
+  for i := 0 to spGlyphList.Count -1 do
+    begin
+    if spGlyphList[i].getId = spGlyphId then
+      Result := spGlyphList[i].getSpeciesId;
+    end;
+  end;
 
 end.
