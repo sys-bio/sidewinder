@@ -701,9 +701,12 @@ end;
 procedure TMainForm.initializePlots();
   var i: Integer;
 begin
-  for i := 0 to plotsPanelList.Count - 1 do
+  if plotsPanelList <> nil then
     begin
+    for i := 0 to plotsPanelList.Count - 1 do
+      begin
       self.initializePlot(i);
+      end;
     end;
 end;
 
@@ -1307,7 +1310,8 @@ begin
   if self.mainController.IsModelLoaded then
   begin
     self.mainController.createSimulation();
-    self.initializePlots;
+    if self.numbPlots >0 then
+      self.initializePlots;
     self.currentGeneration := 0;
   end;
 
