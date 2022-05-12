@@ -1303,10 +1303,22 @@ begin
 end;
 
 procedure TMainForm.stepSizeEdit1Change(Sender: TObject); // no longer needed
+var newStep: integer;
 begin
-  self.mainController.SetStepSize(strToInt(stepSizeEdit1.Text)*0.001);
-  self.stepSize := strToInt(stepSizeEdit1.Text)*0.001 ;
-  //self.refreshPlotPanels;
+  try
+    newStep := strToInt(stepSizeEdit1.Text);
+    if newStep >0 then
+      begin
+      self.stepSize := newStep * 0.001;
+      self.mainController.SetStepSize(self.stepSize);
+      end
+    else notifyUser ('Step size must be a positive integer');
+
+  except
+       on Exception: EConvertError do
+         notifyUser ('Step size must be a positive integer');
+  end;
+
   if self.mainController.IsModelLoaded then
   begin
     self.mainController.createSimulation();
@@ -1519,7 +1531,7 @@ procedure TMainForm.selectPlotSpecies(plotnumb: Integer);
           strList[lgth] := curStr;
         end;
     end;
-
+    (AForm as TVarSelectForm).Top := trunc(self.Height*0.2); // put popup %20 from top
     (AForm as TVarSelectForm).speciesList := strList;
     (AForm as TVarSelectForm).fillSpeciesCG();
   end;
@@ -1529,6 +1541,7 @@ begin
   fPlotSpecies.Popup := true;
   fPlotSpecies.ShowClose := false;
   fPlotSpecies.PopupOpacity := 0.3;
+  //fPlotSpecies.Top := trunc(self.Height*0.2); // put popup %20 from top
   fPlotSpecies.Border := fbDialogSizeable;
   fPlotSpecies.caption := 'Species to plot:';
   fPlotSpecies.ShowModal(@AfterShowModal);
@@ -1800,6 +1813,7 @@ var
 // async called OnCreate for TParamSliderSForm
   procedure AfterCreate(AForm: TObject);
   begin
+    (AForm as TVarSelectForm).Top := trunc(self.Height*0.2); // put popup %20 from top
     (AForm as TVarSelectForm).speciesList := self.mainController.getModel.getP_Names;
     (AForm as TVarSelectForm).fillSpeciesCG();
   end;

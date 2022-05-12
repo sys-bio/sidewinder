@@ -18,6 +18,7 @@ type
     procedure WebFormShow(Sender: TObject);
     procedure okButton1Click(Sender: TObject);
     procedure SpPlotCGCheckClick(Sender: TObject; AIndex: Integer);
+    function  setChkGrpWidth(): integer; // adjusts width based on longest string in speciesList
   //
   private
     { Private declarations }
@@ -62,12 +63,29 @@ begin
     else SpPlotCG.Checked[i] := false;
 end;
 
+function  TVarSelectForm.setChkGrpWidth(): integer;
+var i, maxLength: integer;
+begin
+  maxLength := 0;
+  for i := 0 to length(self.speciesList) -1 do
+    begin
+    if length(self.speciesList[i]) > maxLength then
+      maxLength := length(self.speciesList[i]);
+    end;
+  if maxLength < 10 then
+    maxLength := 10;
+  result := maxLength * 7;
+end;
 
 procedure TVarSelectForm.fillSpeciesCG();
 var i : integer;
 begin
-  // Adjust checkgroup height as List may not fit with default height
+  if length(speciesList) > 10 then
+    self.Height := 20*length(speciesList);  //15
+
+  // Adjust chkgrp height as List may not fit with default height:
   SpPlotCG.Height := 30*length(speciesList);
+  self.SpPlotCG.Width := self.setChkGrpWidth ;// Adjust chkgrp width to fit longest string
   // okButton1.Top := SpPlotCG.Height + 30;
   for i := 0 to length(speciesList)-1 do
     SpPlotCG.Items.Add ('&nbsp; ' + speciesList[i]);

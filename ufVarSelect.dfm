@@ -28,7 +28,7 @@ object VarSelectForm: TVarSelectForm
   end
   object SpPlotCG: TWebCheckGroup
     Left = 8
-    Top = 30
+    Top = 31
     Width = 140
     Height = 91
     HeightPercent = 100.000000000000000000

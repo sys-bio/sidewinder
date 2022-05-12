@@ -1467,6 +1467,7 @@ object mainForm: TmainForm
         OnMouseMove = networkPB1MouseMove
         OnMouseUp = networkPB1MouseUp
         OnMouseWheel = networkPB1MouseWheel
+        ExplicitTop = 6
       end
       object netDrawScrollBarVert: TTMSFNCScrollBar
         Left = 756
