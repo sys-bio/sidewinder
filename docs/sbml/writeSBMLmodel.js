@@ -369,7 +369,7 @@ class GenerateSBMLModel {
      const curLineEnd = this.modelRendering.getLineEnding( i );
      const sbmlLineEnd = this.libSBMLrInfo.createLineEnding();
      sbmlLineEnd.setId(curLineEnd.getId());
-     sbmlLineEnd.setEnableRotationalMapping(true);
+     sbmlLineEnd.setEnableRotationalMapping(curLineEnd.isSetRotationalMapping());
      const curBBox = curLineEnd.getBoundingBox();
      const sbmlBBox = sbmlLineEnd.getBoundingBox();
      this.processBoundingBox( curBBox, sbmlBBox );
