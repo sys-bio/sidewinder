@@ -833,6 +833,7 @@ end;
 
 procedure TMainForm.RxnParamEditExit(Sender: TObject);
 var newVal: double;
+    paramId: string;
     reaction : TReaction;
 begin
   reaction := self.networkController.selectedObjects[0].reaction;
@@ -840,7 +841,8 @@ begin
     begin
       newVal := strtofloat(self.RxnParamEdit.text);
       reaction.state.rateParams[self.RxnParamComboBox.ItemIndex].setValue(newVal);
-      self.networkController.network.networkEvent(nil);   // notify listener that network changed. TODO: Move to network class ( add add setValue to networkController)
+      self.networkController.updateParamVal(reaction.state.rateParams[self.RxnParamComboBox.ItemIndex].getId, newVal);
+     // self.networkController.network.networkEvent(nil);   // notify listener that network changed. TODO: Move to network class ( add add setValue to networkController)
     end;
   except
     on Exception : EConvertError do

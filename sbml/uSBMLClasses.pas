@@ -141,17 +141,17 @@ type
    id: String;
    name: String;
    formula: String;  // math expression converted to String by libSBML
-   paramIds: array of String; // Store parameter ids used in kinetic law.
+   paramIds: array of String; // TODO: Store parameter ids (local parameter) used in kinetic law.
    numParams: integer;
    nameFlagSet: boolean;
 
   public
    constructor create(); Overload;
    constructor create(newId: String; newFormula: String; paramArr: array of String); Overload;
-   function getNumParameters(): integer;
-   procedure setNumParameters(i:integer);
-   function addParameter(param: String): String;
-   function getParameter(n: integer): String;
+   function getNumParameters(): integer;  // Not used
+   procedure setNumParameters(i:integer); // Not used
+   function addParameter(param: String): String;  // Not used
+   function getParameter(n: integer): String;  // Not used
   // function removeParameter(n: integer): String;
 
    function getId(): String;
@@ -699,7 +699,7 @@ implementation
    begin
      Result:= paramIds[n];
    end;
-  // function removeParameter(n: integer): String; // TSBMLparameter;
+  // function removeParameter(n: integer): String;
 
  // **************************************************************
  constructor SBMLReaction.create(id:String; prod: array of String; reactant: array of String); // remove at some point

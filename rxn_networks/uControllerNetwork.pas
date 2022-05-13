@@ -70,6 +70,7 @@ type
     procedure setNodeConc(conc: string);
     procedure addReaction(Id: string; srcNodes, destNodes: array of TNode);
     procedure setReactionId(Id: string);
+    procedure updateParamVal( pId: string; newVal: double);
     procedure setReactionSpecStoich(spIndex: integer; stoichVal: double; src: boolean);
     procedure prepareUndo;
     procedure undo;
@@ -345,6 +346,11 @@ begin
     end;
 
   network.networkEvent( selectedObjects[0].node ); // pass updated node to listener
+end;
+
+procedure TController.updateParamVal( pId: string; newVal: double);
+begin
+  self.network.updateReactionParamVal(pId, newVal);
 end;
 
 function TController.getRxnArrowPts(): array of TPointF;

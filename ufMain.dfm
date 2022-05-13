@@ -17,7 +17,6 @@ object mainForm: TmainForm
     BorderColor = clSilver
     BorderStyle = bsSingle
     ElementBodyClassName = 'card-body-10  bg-dark text-white'
-    ExplicitLeft = -24
     object stepSizeLabel1: TWebLabel
       Left = 1398
       Top = 25
@@ -1311,8 +1310,8 @@ object mainForm: TmainForm
           216
           760)
         object pnlSimResultsFile: TWebPanel
-          Left = 24
-          Top = 121
+          Left = 8
+          Top = 681
           Width = 205
           Height = 73
           ElementClassName = 'card'
@@ -1468,7 +1467,6 @@ object mainForm: TmainForm
         OnMouseMove = networkPB1MouseMove
         OnMouseUp = networkPB1MouseUp
         OnMouseWheel = networkPB1MouseWheel
-        ExplicitTop = 6
       end
       object netDrawScrollBarVert: TTMSFNCScrollBar
         Left = 756

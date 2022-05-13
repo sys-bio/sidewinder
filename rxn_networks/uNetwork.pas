@@ -212,7 +212,7 @@ type
        function    addReaction (state : TReactionState) : TReaction; overload;
        function    addReaction (reaction : TReaction) : integer; overload;
        procedure   updateReactions(node: TNode);  // Node Id changes
-
+       procedure   updateReactionParamVal( paramId: string; newVal: double );
        function    addAnyToAnyReaction (id: string; sourceNodes, destNodes : array of TNode; var edgeIndex : integer) : TReaction;
        procedure   unSelectAll;
        procedure   unReactionSelect;
@@ -567,9 +567,9 @@ procedure TReactionState.loadFromSBML (glyphRxn : TSBMLLayoutReactionGlyph; mode
          paramAr: array of TSBMLparameter; spGlyphList: TList<TSBMLLayoutSpeciesGlyph>;
          compAr: array of TSBMLcompartment; modelRender: TSBMLRenderInformation);
 var  newParam : TSBMLparameter;
-     speciesName : string;
+     speciesName, paramName : string;
      spGlyphId: string;
-     i, j : integer;
+     i, j, k : integer;
      intNumCurveSeg: integer; // number of line segments
      intReactNode, intProdNode : integer; // node index.
      rxnStyle: TSBMLRenderStyle;
@@ -632,8 +632,10 @@ begin
   // Grab parameters that are used in reaction:
   for j := 0 to Length(paramAr) - 1 do
     begin
+      paramName := paramAr[j].getId;
+      if modelRxn.getKineticLaw.getFormula.Contains(paramName) then
+        rateParams.Add(paramAr[j]);
       // console.log('param: ',modelRxn.getKineticLaw.getParameter(i),', model param: ',paramAr[j].getId);
-      rateParams.Add(paramAr[j]);
     end;
 
   // Currently just add all compartments as params:
@@ -1658,6 +1660,23 @@ begin
   self.networkEvent(nil);
 end;
 
+procedure TNetwork.updateReactionParamVal( paramId: string; newVal: double );
+var i, j: integer;
+begin
+  for i := 0 to length(self.reactions) - 1 do
+  begin
+    for j := 0 to self.reactions[i].state.rateParams.Count -1 do
+      begin
+      if self.reactions[i].state.rateParams[j].getId = paramId then
+        begin
+        self.reactions[i].state.rateParams[j].setValue(newVal);
+        end;
+
+      end;
+  end;
+
+  self.networkEvent(nil);
+end;
 
 procedure TNetwork.computeAnyToAnyCoordinates (reaction : TReaction; sourceNodes, destNodes : array of TNode);
 var nReactants, nProducts : integer;

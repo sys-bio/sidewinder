@@ -185,7 +185,9 @@ getRules(tModela, tRule) {
       if (this.model.getReaction(i).isSetReversible()) {
         rxnReversible = this.model.getReaction(i).getReversible(); }
       else { rxnReversible = true; } // level 2 default is true
-    
+      // Note: we do not check for localParameters to add to kinetic law.
+      // Assume reaction only uses global parameters.
+      // this.model.getReaction(i).getKineticLaw().getNumLocalParameters();
    //console.log('--> kinetic law: ',this.model.getReaction(i).getKineticLaw().getFormula());
       tModela.addSBMLReaction(this.model.getReaction(i).getId(), products, prodStoich,
                               reactants, reactStoich, kineticForm, rxnReversible);
