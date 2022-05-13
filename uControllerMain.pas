@@ -344,10 +344,10 @@ begin
   if bTimer then self.runSim.updateSimulation();
 
 end;
-                        // nInterval is msec
+       // nInterval is msec
 procedure TControllerMain.SetTimerInterval(nInterval: Integer);
 begin
-  //self.SetStepSize( nInterval );  // decouple stepsize from timer interval
+    // decouple stepsize from timer interval
   if self.runSim <> nil then
     self.runSim.SetTimerInterval(nInterval); // 100 = 100 msec
 end;
@@ -355,6 +355,8 @@ end;
 procedure TControllerMain.SetRunTime(newTime: Double);
 begin
   self.runTime := newTime;
+  if self.runSim <> nil then
+    self.runSim.setRunTime(newTime);
 end;
 
 function TControllerMain.GetRunTime(): Double;

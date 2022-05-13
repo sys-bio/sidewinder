@@ -5,7 +5,7 @@ interface
 uses SysUtils, Classes, System.UITypes, contnrs, Types, WebLib.ExtCtrls,
   WebLib.Utils, WebLib.Buttons, WebLib.Graphics, WebLib.Controls,
   Vcl.StdCtrls, WebLib.StdCtrls, uNetwork, Dialogs, uSelectedObjects, Math,
-  uNetworkCanvas, uModel, uNetworkToModel, uNetworkTypes;
+  uNetworkCanvas, uModel, uNetworkToModel, uNetworkTypes, uSidewinderTypes;
 
 const
   NOT_SELECTED = -1;
@@ -329,6 +329,11 @@ begin
   prepareUndo;
   try
     newConc := StrToFloat(conc);
+    if newConc <0 then
+      begin
+      notifyUser('Concentration must be greater than zero ( >0 )');
+      exit;
+      end;
   except
     on Exception: EConvertError do
       // ShowMessage(Exception.Message);

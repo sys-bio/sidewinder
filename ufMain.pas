@@ -18,6 +18,7 @@ uses
   uParamSliderLayout, uSidewinderTypes, WEBLib.ComCtrls, WEBLib.Miletus, WEBLib.JQCtrls; //, VCL.TMSFNCCustomPicker, VCL.TMSFNCColorPicker;
 
 const SIDEWINDER_VERSION = 'Version 0.32 alpha';
+      DEFAULT_RUNTIME = 10000;
       EDITBOX_HT = 25;
       ZOOM_SCALE = 20;
       MAX_STR_LENGTH = 50;  // Max User inputed string length for Rxn/spec/param id
@@ -214,6 +215,7 @@ type
     procedure btnParamResetClick(Sender: TObject);
     procedure btnResetRunClick(Sender: TObject);
     procedure edtReactionIdExit(Sender: TObject);
+    procedure stepSizeEdit1Exit(Sender: TObject);
 
   private
     numbPlots: Integer; // Number of plots displayed
@@ -635,7 +637,7 @@ begin
          self.btnOnLineSim.ElementClassName := 'btn btn-success btn-sm';
          self.btnOnLineSim.caption := 'Simulation: Pause';
          simResultsMemo.visible := true;
-         self.mainController.SetRunTime(500);
+         self.mainController.SetRunTime(DEFAULT_RUNTIME);
          // default timer interval is 100 msec:
          // multiplier default is 10, range 1 - 50
          self.mainController.SetTimerInterval(round(1000/self.trackBarSimSpeed.position));
@@ -1314,9 +1316,9 @@ begin
   networkPB1.Invalidate;
 end;
 
-procedure TMainForm.stepSizeEdit1Change(Sender: TObject); // no longer needed
+procedure TMainForm.stepSizeEdit1Change(Sender: TObject); // use stepSizeEdit1Exit
 var newStep: integer;
-begin
+begin {
   try
     newStep := strToInt(stepSizeEdit1.Text);
     if newStep >0 then
@@ -1338,7 +1340,34 @@ begin
       self.initializePlots;
     self.currentGeneration := 0;
   end;
+          }
+end;
 
+procedure TMainForm.stepSizeEdit1Exit(Sender: TObject);
+var newStep: integer;
+    dblNewStep: double;
+begin
+  try
+    dblNewStep := strToFloat(stepSizeEdit1.Text);
+    if dblNewStep >0 then
+      begin
+      self.stepSize := dblNewStep * 0.001;
+      self.mainController.SetStepSize(self.stepSize);
+      end
+    else notifyUser ('Step size must be a positive number integer');
+
+  except
+       on Exception: EConvertError do
+         notifyUser ('Step size must be a positive number integer');
+  end;
+
+  if self.mainController.IsModelLoaded then
+  begin
+    self.mainController.createSimulation();
+    if self.numbPlots >0 then
+      self.initializePlots;
+    self.currentGeneration := 0;
+  end;
 end;
 
 procedure TMainForm.trackBarSimSpeedChange(Sender: TObject);

@@ -54,6 +54,7 @@ type
     procedure stopTimer();
     procedure startTimer();
     function  getTime():double;
+    procedure setRuntime( newRunTime: double );
     procedure setTime( newTime: double );
     procedure startSimulation();
     procedure updateSimulation();
@@ -354,6 +355,11 @@ begin
     self.time := newTime;
 end;
 
+procedure TSimulationJS.setRuntime( newRunTime: double );
+begin
+  if newRunTime >0 then
+    self.runTime := newRunTime;
+end;
 procedure TSimulationJS.setStepSize(newStep: double);
 begin
   if newStep > 0.0 then self.step:= newStep

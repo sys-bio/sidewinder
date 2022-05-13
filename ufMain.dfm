@@ -178,6 +178,7 @@ object mainForm: TmainForm
       Text = '100'
       WidthPercent = 100.000000000000000000
       OnChange = stepSizeEdit1Change
+      OnExit = stepSizeEdit1Exit
     end
     object loadNetworkButton: TWebButton
       Left = 220
