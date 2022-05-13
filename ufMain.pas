@@ -17,9 +17,10 @@ uses
   uODE_FormatUtility, uGraphP, Vcl.Menus, WEBLib.Menus, ufVarSelect, uPlotPanel,
   uParamSliderLayout, uSidewinderTypes, WEBLib.ComCtrls, WEBLib.Miletus, WEBLib.JQCtrls; //, VCL.TMSFNCCustomPicker, VCL.TMSFNCColorPicker;
 
-const SIDEWINDER_VERSION = 'Version 0.31: LayoutRender debug';
+const SIDEWINDER_VERSION = 'Version 0.32 alpha';
       EDITBOX_HT = 25;
       ZOOM_SCALE = 20;
+      MAX_STR_LENGTH = 50;  // Max User inputed string length for Rxn/spec/param id
       DEBUG = false; // true then show debug console output and any other debug related info
 
 type
@@ -212,6 +213,7 @@ type
     procedure trackBarSimSpeedChange(Sender: TObject);
     procedure btnParamResetClick(Sender: TObject);
     procedure btnResetRunClick(Sender: TObject);
+    procedure edtReactionIdExit(Sender: TObject);
 
   private
     numbPlots: Integer; // Number of plots displayed
@@ -542,9 +544,17 @@ end;
 
 
 procedure TMainForm.editNodeIdExit(Sender: TObject);
+var newId, cutNewId: string;
 begin
 //console.log('editNodeIdExit ');
-  networkController.setNodeId(editNodeId.Text);
+  newId := editNodeId.Text;
+  if length(newId) > MAX_STR_LENGTH then
+    begin
+      cutNewId := newId.Substring(0, MAX_STR_LENGTH);
+      networkController.setNodeId(cutNewId);
+      self.editNodeId.Text := cutNewId;
+    end
+  else networkController.setNodeId(newId);
   networkPB1.Invalidate;
 end;
 
@@ -2316,6 +2326,20 @@ begin
   self.initializePlots;
   self.currentGeneration := 0;
 
+end;
+
+procedure TMainForm.edtReactionIdExit(Sender: TObject);
+var newId, cutNewId: string;
+begin
+  newId := self.edtReactionId.Text;
+  if length(newId) > MAX_STR_LENGTH then
+    begin
+      cutNewId := newId.Substring(0, MAX_STR_LENGTH);
+      networkController.setReactionId(cutNewId);
+      self.edtReactionId.Text := cutNewId;
+    end
+  else networkController.setReactionId(newId);
+  networkPB1.Invalidate;
 end;
 
 procedure TMainForm.edtReactionWidthChange(Sender: TObject);

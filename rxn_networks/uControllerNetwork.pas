@@ -69,6 +69,7 @@ type
     procedure setNodeId(Id: string);
     procedure setNodeConc(conc: string);
     procedure addReaction(Id: string; srcNodes, destNodes: array of TNode);
+    procedure setReactionId(Id: string);
     procedure setReactionSpecStoich(spIndex: integer; stoichVal: double; src: boolean);
     procedure prepareUndo;
     procedure undo;
@@ -242,6 +243,30 @@ begin
   network.addAnyToAnyReaction (Id, srcNodes, destNodes, reactionIndex);
 end;
 
+procedure TController.setReactionId(Id: string);
+var i, index: integer;
+   newKinLaw, oldReactionId, trimmedId: string;
+begin
+   if selectedObjects.count = 0 then
+     exit;
+
+  prepareUndo;
+  if network.findReaction(Id, index) then
+    begin
+      showmessage('A reaction of that name already exists');
+      exit;
+    end;
+  oldReactionId := selectedObjects[0].reaction.state.id;
+  trimmedId := StringReplace(trim(id),' ','_',[rfReplaceAll]); // replace spaces
+  selectedObjects[0].reaction.state.id := trimmedId;
+  newKinLaw := selectedObjects[0].reaction.state.rateLaw.Replace(oldReactionId, trimmedId);
+  self.network.strReplaceParamName(oldReactionId, trimmedId);
+  selectedObjects[0].reaction.state.rateLaw := newKinLaw;
+  network.networkEvent(nil);
+
+end;
+
+
 function TController.addNode(Id: string; x, y: double): TNode;
 var index: integer;
 begin
@@ -261,33 +286,32 @@ end;
 procedure TController.setNodeId(Id: string);
 var
   i, index: integer;
-  oldSpeciesId: string;
+  oldSpeciesId, trimmedId: string;
 begin
   if selectedObjects.count = 0 then
      exit;
-
+  trimmedId := StringReplace(trim(id),' ','_',[rfReplaceAll]); // replace spaces
   prepareUndo;
-  if network.findNode(Id, index) then
+  if network.findNode(trimmedId, index) then
     begin
       showmessage('A node of that name already exists');
       exit;
     end;
   oldSpeciesId := selectedObjects[0].node.state.species;
-  selectedObjects[0].node.state.species := Id;
+  selectedObjects[0].node.state.species := trimmedId;
   if selectedObjects[0].node.state.Id = oldSpeciesId then
-    selectedObjects[0].node.state.Id := Id;
+    selectedObjects[0].node.state.Id := trimmedId;
   for i := 0 to length(network.nodes) -1 do
     begin
       if network.nodes[i].state.species = oldSpeciesId then
         begin
-        network.nodes[i].state.species := Id;
+        network.nodes[i].state.species := trimmedId;
         if network.nodes[i].state.Id = oldSpeciesId then
-          network.nodes[i].state.Id := Id;
+          network.nodes[i].state.Id := trimmedId;
          network.updateReactions(network.nodes[i]);
         end;
     end;
 
- // selectedObjects[0].node.state.Id := Id;
   // Update reactions that have this node:
   network.updateReactions(selectedObjects[0].node);
   network.networkEvent(nil);

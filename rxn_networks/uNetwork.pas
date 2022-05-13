@@ -208,6 +208,7 @@ type
 
        procedure   computeAnyToAnyCoordinates (reaction : TReaction; sourceNodes, destNodes : array of TNode);
 
+       function    findReaction(id: string; var index: integer): boolean;
        function    addReaction (state : TReactionState) : TReaction; overload;
        function    addReaction (reaction : TReaction) : integer; overload;
        procedure   updateReactions(node: TNode);  // Node Id changes
@@ -219,6 +220,7 @@ type
        procedure   centerNetwork (w, h : integer);
        procedure   clear;
        function    hasReactions (node : TNode) : boolean;
+       function    strReplaceParamName(oldSubStr: string; newSubStr: string): boolean; // simple string replace.
        function    getCurrentState : TNetworkSavedState;
        procedure   loadState (networkState : TNetworkSavedState);
        property OnNetworkEvent: TNetworkEvent read FNetworkEvent write FNetworkEvent;
@@ -1548,6 +1550,18 @@ begin
          end;
 end;
 
+function TNetwork.findReaction(id: string; var index: integer): boolean;
+var i: integer;
+begin
+  result := False;
+  for i := 0 to length (self.reactions) - 1 do
+    if self.reactions[i].state.id = id then
+       begin
+       index := i;
+       result := True;
+       end;
+end;
+
 // returns index if found, -1 if not. Note returns last match only.
 function TNetwork.isNodeinNodeArray(node: TNode; nodeAr: array of TNode): integer;
 var i: integer;
@@ -1626,6 +1640,22 @@ begin
   reactions[length (reactions)-1] := reaction;
   result := length (reactions);
   self.networkEvent(nil); // Notify listener
+end;
+
+ // Note: newSubStr should have all spaces replaced with '_'
+function TNetwork.strReplaceParamName(oldSubStr: string; newSubStr: string): boolean;
+var i, j: integer;
+    newId: string;
+begin
+  for i := 0 to length(self.reactions) - 1 do
+  begin
+    for j := 0 to self.reactions[i].state.rateParams.Count -1 do
+      begin
+      newId := stringReplace(self.reactions[i].state.rateParams[j].getId, oldSubStr, newSubStr, [rfReplaceAll]);
+      self.reactions[i].state.rateParams[j].setId(newId);
+      end;
+  end;
+  self.networkEvent(nil);
 end;
 
 

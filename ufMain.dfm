@@ -1191,6 +1191,7 @@ object mainForm: TmainForm
           HeightPercent = 100.000000000000000000
           SpellCheck = False
           WidthPercent = 100.000000000000000000
+          OnExit = edtReactionIdExit
         end
         object btnReactionColor: TWebColorPicker
           AlignWithMargins = True
