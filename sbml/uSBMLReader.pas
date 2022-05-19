@@ -2,7 +2,7 @@ unit uSBMLReader;
 
 interface
 uses Web, JS,  uSBMLClasses, uSBMLClasses.rule, uModel, uSBMLClasses.Layout,
- uSBMLClasses.Render;
+ uSBMLClasses.Render, uSBMLClasses.FuncDefinition;
 
 type
   TSBMLLoadedEvent = procedure(model: TModel) of object;  // Notify when done loading
@@ -26,8 +26,8 @@ implementation
     jsComp: TJSObject;
     newParam: TSBMLparameter;
     jsParam: TJSObject;
-    newRule: TSBMLRule;
-    jsRule: TJSObject;
+    newRule: TSBMLRule; jsRule: TJSObject;
+    newFuncDef: TSBMLFuncDefinition; jsFuncDef: TJSObject;
     newLayout: TSBMLLayout; jsLayout: TJSObject;
     newDims: TSBMLLayoutDims; jsDims: TJSObject;
     newPt: TSBMLLayoutPoint; jsPt: TJSObject;
@@ -60,8 +60,10 @@ implementation
     jsComp:= JS.ToObject(newComp);
     newParam:= TSBMLparameter.create(); // a new parameter
     jsParam:= JS.ToObject(newParam);
-    newRule:= TSBMLRule.create;
+    newRule:= TSBMLRule.create();
     jsRule:= JS.ToObject(newRule);
+    newFuncDef := TSBMLFuncDefinition.create();
+    jsFuncDef := JS.toObject(newFuncDef);
     // Layout variables:
     newLayout := TSBMLLayout.create;
     jsLayout := JS.toObject(newLayout);
@@ -145,6 +147,9 @@ implementation
       newModel = moreReading.getSpecies(newModel, jsSpecies );
       newModel = moreReading.getCompartments(newModel, jsComp);
       newModel = moreReading.getParameters(newModel, jsParam);
+
+      newModel = moreReading.getFuncDefs(newModel, jsFuncDef);
+
       newModel = moreReading.getReactions(newModel);
       newModel.SBML_UpdateEvent();  // libsbml loaded and model processed.
      libsbml.destroy(doc);

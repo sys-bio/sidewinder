@@ -22,7 +22,7 @@ const SIDEWINDER_VERSION = 'Version 0.32 alpha';
       EDITBOX_HT = 25;
       ZOOM_SCALE = 20;
       MAX_STR_LENGTH = 50;  // Max User inputed string length for Rxn/spec/param id
-      DEBUG = false; // true then show debug console output and any other debug related info
+      DEBUG = true; // true then show debug console output and any other debug related info
 
 type
   TPanelType = ( SIMULATION_PANEL, REACTION_PANEL, NODE_PANEL );
@@ -767,11 +767,11 @@ begin
       notifyUser(' SBML piecewise() function not supported at this time. Load a different SBML Model');
       clearNetwork();
       end
-    else if newModel.getNumFuncDefs > 0 then
+  {  else if newModel.getNumFuncDefs > 0 then
       begin
       notifyUser(' SBML FunctionDefinition not supported at this time. Load a different SBML Model' );
       clearNetwork();
-      end;
+      end; }
   end;
   if newModel.getSBMLLayout <> nil then
     begin
