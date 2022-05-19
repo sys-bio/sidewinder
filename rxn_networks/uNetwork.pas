@@ -14,7 +14,8 @@ interface
 
 Uses SysUtils, Classes, Types, libthreejs, WEBLib.Graphics, Math, WEBLib.Utils,
      WEBLib.JSON, Web, System.Generics.Collections, uNetworkTypes, uBuildRateLaw,
-     uSBMLClasses, uModel, uSBMLClasses.Layout, uSBMLClasses.Render, uSidewinderTypes;
+     uSBMLClasses, uModel, uSBMLClasses.Layout, uSBMLClasses.Render,
+     uSBMLClasses.FuncDefinition, uSidewinderTypes;
 
 const
   // The following constant is the distance between the outer
@@ -129,8 +130,13 @@ type
       procedure saveAsJSON (reactionObject : TJSONObject);
       procedure loadFromJSON (obj : TJSONObject);
       procedure loadFromSBML (glyphRxn : TSBMLLayoutReactionGlyph; modelRxn: SBMLReaction;
-         paramAr: array of TSBMLparameter; spGlyphList: TList<TSBMLLayoutSpeciesGlyph>;
-         compAr: array of TSBMLcompartment; modelRender: TSBMLRenderInformation);
+         paramAr: array of TSBMLparameter; funcDefList: TList<TSBMLFuncDefinition>;
+         spGlyphList: TList<TSBMLLayoutSpeciesGlyph>; compAr: array of TSBMLcompartment;
+         modelRender: TSBMLRenderInformation);
+
+      // Convert any SBML func defs that are used for reaction kinetic laws:
+      function convertFuncDefsToKineticLaws(funcDefList: TList<TSBMLFuncDefinition>;
+                strKinLaw: string ): string; // Returns updated kinetic law
       function getMassCenter(): TPointF; // Calc mass center for reaction, where each node has mass of 1.
       function clone : TReactionState;
   end;
@@ -182,6 +188,8 @@ type
 
        function    loadModel (modelStr : string): string;
        procedure   loadSBMLModel (model: TModel);
+
+       // TODO: attach assignments to nodes??
        function    getSpeciesRenderStyle(newSpeciesGlyph:TSBMLLayoutSpeciesGlyph;
                           newModel: TModel): TSBMLRenderStyle;
        function    getColorDefs(newStyle: TSBMLRenderStyle;
@@ -564,10 +572,12 @@ end;
 
 
 procedure TReactionState.loadFromSBML (glyphRxn : TSBMLLayoutReactionGlyph; modelRxn: SBMLReaction;
-         paramAr: array of TSBMLparameter; spGlyphList: TList<TSBMLLayoutSpeciesGlyph>;
-         compAr: array of TSBMLcompartment; modelRender: TSBMLRenderInformation);
+         paramAr: array of TSBMLparameter; funcDefList: TList<TSBMLFuncDefinition>;
+         spGlyphList: TList<TSBMLLayoutSpeciesGlyph>; compAr: array of TSBMLcompartment;
+         modelRender: TSBMLRenderInformation);
 var  newParam : TSBMLparameter;
      speciesName, paramName : string;
+     updatedKineticLaw: string; // kinetic law with funcDef id replaced with funcDef equation.
      spGlyphId: string;
      i, j, k : integer;
      intNumCurveSeg: integer; // number of line segments
@@ -627,8 +637,9 @@ begin
     if destId[i] = '' then destId[i] := modelRxn.getProduct(i).getSpecies;
     destStoich[i] := modelRxn.getProduct(i).getStoichiometry;
     end;
-
-  // For now, just grab all parameters, not just ones used in reactions:
+  updatedKineticLaw := '';
+  updatedKineticLaw := self.convertFuncDefsToKineticLaws( funcDefList,
+                                           modelRxn.getKineticLaw.getFormula);
   // Grab parameters that are used in reaction:
   for j := 0 to Length(paramAr) - 1 do
     begin
@@ -649,7 +660,8 @@ begin
       rateParams.Add(newParam);
     end;
 
-  rateLaw := modelRxn.getKineticLaw.getFormula;
+  //rateLaw := modelRxn.getKineticLaw.getFormula;
+  rateLaw := updatedKineticLaw;
 
   // Rxn curve/line order of assignment:
   //  1.  default, if no layout info available.
@@ -682,7 +694,6 @@ begin
 
       end;
 
-
     end // end of if glyphRxn <> nil
   else
     begin
@@ -691,6 +702,35 @@ begin
     end;
 
 end;
+
+ // Convert any SBML func defs that are used for reaction kinetic laws:
+function TReactionState.convertFuncDefsToKineticLaws(funcDefList: TList<TSBMLFuncDefinition>;
+                strKinLaw: string ): string;
+var i: integer;
+   strNewKLaw: string;
+   formula: string;
+begin
+  strNewKLaw := '';
+  strNewKLaw := strKinLaw;
+  console.log(' Initial NewFormula:', strNewKLaw);
+  if funcDefList <> nil then
+    begin
+    for i := 0 to funcDefList.count -1 do
+      begin
+      formula := '';
+      if strNewKLaw.Contains(funcDefList[i].getId) then
+        begin
+        formula := '(' + funcDefList[i].getFuncFormula + ')';
+        strNewKLaw := strNewKLaw.Replace(funcDefList[i].getFullFuncLabel, formula);
+        console.log(' Current NewFormula:', strNewKLaw);
+        end;
+
+      end;
+    end;
+  console.log(' Final NewFormula:', strNewKLaw);
+  Result := strNewKLaw;
+end;
+
        // Returns true if curve for reaction was found and processed.
 function  TReactionState.processReactionSpeciesReferenceCurves(newGlyphRxn: TSBMLLayoutReactionGlyph;
           newModelRxn: SBMLReaction; newSpGlyphList: TList<TSBMLLayoutSpeciesGlyph>;
@@ -1216,7 +1256,9 @@ begin
             if reactionGlyphId = model.getReaction(j).getID then
             begin
               reactionState.loadFromSBML (reactionGlyph, model.getReaction(j),
-                   model.getSBMLparameterAr, modelLayout.getSpGlyphList, model.getSBMLcompartmentsArr(), model.getSBMLRenderInfo);
+                   model.getSBMLparameterAr, model.getFuncDefList,
+                   modelLayout.getSpGlyphList, model.getSBMLcompartmentsArr(),
+                   model.getSBMLRenderInfo);
               reaction := addReaction (reactionState);
              // Set the node pointers based on the node Ids
               for k := 0 to reaction.state.nReactants - 1 do
@@ -1308,7 +1350,7 @@ procedure TNetwork.autoBuildNetworkFromSBML(model: TModel);
     for j := 0 to model.getNumReactions - 1 do
         begin
           reactionState.loadFromSBML (nil, model.getReaction(j), model.getSBMLparameterAr,
-                                nil, model.getSBMLcompartmentsArr(), nil);
+                             nil, nil, model.getSBMLcompartmentsArr(), nil);
 
           reaction := addReaction (reactionState);
           reaction.state.arcCenter.x := 20 + j*2;
