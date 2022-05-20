@@ -6,28 +6,27 @@ type
 
  TSBMLFuncDefinition = class
  private
- id, name: string;
- varList: TList<string>; // Holds species, params, compartment ids used in function.
- strFuncFormula: string; // String holding function equation (function body).
- strFullFuncLabel: string;  //Full func label ex: func01(x, y, x), used to find
-                    // and replace function in kinetic law or other assignment as needed.
+  id, name: string;
+  varList: TList<string>; // Holds species, params, compartment ids used in function.
+  strFuncFormula: string; // String holding function equation (function body).
+  strFullFuncLabel: string;  //Full func label ex: func01(x, y, x), used to find
+                   // and replace function in kinetic law or other assignment as needed.
 
  public
- constructor create() overload;
- constructor create( funcCopy: TSBMLFuncDefinition ) overload;
- procedure clear();
- procedure setId( newId: string );
- function  getId(): string;
- procedure setName( newName: string );
- function  getName(): string;
- procedure addVar( newVar: string );
- function  getVar( index: integer ): string;
- function  getNumVars(): integer;
- function  getFuncFormula(): string;
- procedure setFuncFormula( newFormula: string );
- function  getFullFuncLabel(): string;
- procedure setFullFuncLabel( newLabel: string );
-
+  constructor create() overload;
+  constructor create( funcCopy: TSBMLFuncDefinition ) overload;
+  procedure clear();
+  procedure setId( newId: string );
+  function  getId(): string;
+  procedure setName( newName: string );
+  function  getName(): string;
+  procedure addVar( newVar: string );
+  function  getVar( index: integer ): string;
+  function  getNumVars(): integer;
+  function  getFuncFormula(): string;
+  procedure setFuncFormula( newFormula: string );
+  function  getFullFuncLabel(): string;
+  procedure setFullFuncLabel( newLabel: string );
 
  end;
 
