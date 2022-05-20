@@ -68,6 +68,7 @@ type
     procedure addNode(x, y: double); overload;
     procedure setNodeId(Id: string);
     procedure setNodeConc(conc: string);
+    procedure setNodeBoundarySp(bSp: boolean); // true: node is boundary species
     procedure addReaction(Id: string; srcNodes, destNodes: array of TNode);
     procedure setReactionId(Id: string);
     procedure updateParamVal( pId: string; newVal: double);
@@ -352,6 +353,15 @@ begin
 
   network.networkEvent( selectedObjects[0].node ); // pass updated node to listener
 end;
+
+procedure TController.setNodeBoundarySp(bSp: boolean);
+begin
+   if selectedObjects.count = 0 then
+    exit;
+  prepareUndo;
+  selectedObjects[0].node.state.boundarySp := bSp;
+end;
+
 
 procedure TController.updateParamVal( pId: string; newVal: double);
 begin

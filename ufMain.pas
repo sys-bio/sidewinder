@@ -22,7 +22,7 @@ const SIDEWINDER_VERSION = 'Version 0.32 alpha';
       EDITBOX_HT = 25;
       ZOOM_SCALE = 20;
       MAX_STR_LENGTH = 50;  // Max User inputed string length for Rxn/spec/param id
-      DEBUG = true; // true then show debug console output and any other debug related info
+      DEBUG = false; // true then show debug console output and any other debug related info
 
 type
   TPanelType = ( SIMULATION_PANEL, REACTION_PANEL, NODE_PANEL );
@@ -141,6 +141,7 @@ type
     lblStepSizeVal: TWebLabel;
     btnParamReset: TWebButton;
     btnResetRun: TWebButton;
+    checkBoxBoundarySp: TWebCheckBox;
 
     procedure btnUniUniClick(Sender: TObject);
     procedure btnBiBiClick(Sender: TObject);
@@ -216,6 +217,7 @@ type
     procedure btnResetRunClick(Sender: TObject);
     procedure edtReactionIdExit(Sender: TObject);
     procedure stepSizeEdit1Exit(Sender: TObject);
+    procedure checkBoxBoundarySpClick(Sender: TObject);
 
   private
     numbPlots: Integer; // Number of plots displayed
@@ -326,6 +328,7 @@ procedure TMainForm.enableEditNodePanel;
 begin
   editNodeId.Enabled := true;
   editNodeConc.Enabled := true;
+  self.checkBoxBoundarySp.Enabled := false; // Do not enable until we have reaction eq editing
   btnNodeFillColor.Enabled := true;
   btnNodeOutlineColor.Enabled := true;
 end;
@@ -335,6 +338,7 @@ procedure TMainForm.disableEditNodePanel;
 begin
   editNodeId.Enabled := false;
   editNodeConc.Enabled := false;
+  self.checkBoxBoundarySp.Enabled := false;
   btnNodeFillColor.Enabled := false;
   btnNodeOutlineColor.Enabled :=false;
 end;
@@ -696,6 +700,12 @@ begin
    end;
 end;
 
+procedure TMainForm.checkBoxBoundarySpClick(Sender: TObject);
+begin
+  networkController.setNodeBoundarySp(self.checkBoxBoundarySp.Checked);
+  networkPB1.Invalidate;
+end;
+
 procedure TMainForm.clearNetwork();
 begin
   self.mainController.clearModel;
@@ -772,12 +782,16 @@ begin
       notifyUser(' SBML FunctionDefinition not supported at this time. Load a different SBML Model' );
       clearNetwork();
       end; }
+
   end;
-  if newModel.getSBMLLayout <> nil then
+  if assigned(newModel.getSBMLLayout) then  // may want try/catch for layout not existing
     begin
+    if newModel.getSBMLLayout <> nil then
+      begin
     //console.log(' layout Width: ', trunc(newModel.getSBMLLayout.getDims.getWidth));
-    self.networkPB1.Width := trunc(newModel.getSBMLLayout.getDims.getWidth);
-    self.networkPB1.Height := trunc(newModel.getSBMLLayout.getDims.getHeight);
+      self.networkPB1.Width := trunc(newModel.getSBMLLayout.getDims.getWidth);
+      self.networkPB1.Height := trunc(newModel.getSBMLLayout.getDims.getHeight);
+      end;
     end;
 
    // Loading new sbml model changes reaction network.
@@ -908,6 +922,7 @@ begin
      // editNodeId.Text := networkController.selectedObjects[0].node.state.id;
      editNodeId.Text := networkController.selectedObjects[0].node.state.species;
       editNodeConc.Text := networkCOntroller.selectedObjects[0].node.state.conc.ToString;
+      self.checkBoxBoundarySp.Checked := networkCOntroller.selectedObjects[0].node.state.boundarySp;
       pnlNodePanel.visible := true;
       self.rightPanelType := NODE_PANEL;
       self.RRxnEditWPanel.visible := false;
@@ -1130,6 +1145,8 @@ begin
   self.mainController.addNetworkListener( @self.networkHasChanged );
   self.mainController.addSimListener( @self.getVals ); // notify when new Sim results
   self.network.OnAutoLayoutEvent := self.generateAutoLayout;
+  //self.checkBoxBoundarySp.Visible := false; // Do not make visible until reaction editing possible?
+
   if DEBUG then self.WebConsoleLog1.Visible := true
   else self.WebConsoleLog1.Visible := false;
 

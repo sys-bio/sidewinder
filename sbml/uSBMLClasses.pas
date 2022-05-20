@@ -12,7 +12,8 @@ type
    amtConst: boolean; // if amt constant.
    hasOnlySubstanceUnits: boolean;   // 4.6.5 The hasOnlySubstanceUnits attribute
    initAmtFlag, initConcFlag: boolean;
-   compFlag, boundCondFlag, constFlag: boolean;
+   //compFlag, boundCondFlag, constFlag: boolean;
+   compFlag, constFlag: boolean;
    idFlag, nameFlag: boolean;
 
    public
@@ -230,7 +231,7 @@ implementation
     name:= '';
     idFlag:= false;
     boundCond:= false; amtConst:= false; initAmtFlag:= false; initConcFlag:= false;
-    compFlag:= false; boundCondFlag:= false; constFlag:= false;
+    compFlag:= false; {boundCondFlag:= false;} constFlag:= false;
     nameFlag:= false;
     self.hasOnlySubstanceUnits := false;
   end;
@@ -244,7 +245,7 @@ implementation
     name:= '';
     idFlag:= true;
     boundCond:= false; amtConst:= false; initAmtFlag:= false; initConcFlag:= false;
-    compFlag:= false; boundCondFlag:= false; constFlag:= false;
+    compFlag:= false; {boundCondFlag:= false;} constFlag:= false;
     nameFlag:= false;
     self.hasOnlySubstanceUnits := false;
 

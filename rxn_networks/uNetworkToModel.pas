@@ -130,6 +130,7 @@ begin
       begin
       newSpecies := TSBMLSpecies.create(nodes[i].state.species);
       newSpecies.setInitialConcentration(nodes[i].state.conc);
+      newSpecies.setBoundaryCondition(nodes[i].state.boundarySp);
       newSpecies.setCompartment(DEFAULT_COMP);
       newSpecies.setHasOnlySubstanceUnits(false); // species units is conc.
       self.model.addSBMLspecies(newSpecies);

@@ -1077,6 +1077,25 @@ object mainForm: TmainForm
           WidthPercent = 100.000000000000000000
           OnClick = btnCloseNodePanelClick
         end
+        object checkBoxBoundarySp: TWebCheckBox
+          Left = 23
+          Top = 192
+          Width = 113
+          Height = 22
+          Hint = 'Check if Boundary species (not a part of reaction)'
+          Caption = 'Boundary Species'
+          ChildOrder = 11
+          ElementClassName = 'card-body-shadow'
+          ElementLabelClassName = 'custom-control-label'
+          ElementFont = efCSS
+          Enabled = False
+          HeightStyle = ssAuto
+          HeightPercent = 100.000000000000000000
+          ShowHint = False
+          State = cbUnchecked
+          WidthPercent = 100.000000000000000000
+          OnClick = checkBoxBoundarySpClick
+        end
       end
       object pnlReactionPanel: TWebPanel
         Left = 19
@@ -1312,7 +1331,7 @@ object mainForm: TmainForm
           760)
         object pnlSimResultsFile: TWebPanel
           Left = 8
-          Top = 681
+          Top = 621
           Width = 205
           Height = 73
           ElementClassName = 'card'
@@ -1468,6 +1487,7 @@ object mainForm: TmainForm
         OnMouseMove = networkPB1MouseMove
         OnMouseUp = networkPB1MouseUp
         OnMouseWheel = networkPB1MouseWheel
+        ExplicitTop = 6
       end
       object netDrawScrollBarVert: TTMSFNCScrollBar
         Left = 756
