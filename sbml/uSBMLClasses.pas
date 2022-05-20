@@ -12,7 +12,8 @@ type
    amtConst: boolean; // if amt constant.
    hasOnlySubstanceUnits: boolean;   // 4.6.5 The hasOnlySubstanceUnits attribute
    initAmtFlag, initConcFlag: boolean;
-   compFlag, boundCondFlag, constFlag: boolean;
+   //compFlag, boundCondFlag, constFlag: boolean;
+   compFlag, constFlag: boolean;
    idFlag, nameFlag: boolean;
 
    public
@@ -142,16 +143,15 @@ type
    name: String;
    formula: String;  // math expression converted to String by libSBML
    paramIds: array of String; // TODO: Store parameter ids (local parameter) used in kinetic law.
-   numParams: integer;
+   numParams: integer; // Not needed
    nameFlagSet: boolean;
 
   public
    constructor create(); Overload;
    constructor create(newId: String; newFormula: String; paramArr: array of String); Overload;
-   function getNumParameters(): integer;  // Not used
-   procedure setNumParameters(i:integer); // Not used
-   function addParameter(param: String): String;  // Not used
-   function getParameter(n: integer): String;  // Not used
+   function getNumLocalParameters(): integer;  // Not used
+   function addLocalParameter(param: String): String; // Not used
+   function getLocalParameter(n: integer): String;   // not used
   // function removeParameter(n: integer): String;
 
    function getId(): String;
@@ -231,7 +231,7 @@ implementation
     name:= '';
     idFlag:= false;
     boundCond:= false; amtConst:= false; initAmtFlag:= false; initConcFlag:= false;
-    compFlag:= false; boundCondFlag:= false; constFlag:= false;
+    compFlag:= false; {boundCondFlag:= false;} constFlag:= false;
     nameFlag:= false;
     self.hasOnlySubstanceUnits := false;
   end;
@@ -245,7 +245,7 @@ implementation
     name:= '';
     idFlag:= true;
     boundCond:= false; amtConst:= false; initAmtFlag:= false; initConcFlag:= false;
-    compFlag:= false; boundCondFlag:= false; constFlag:= false;
+    compFlag:= false; {boundCondFlag:= false;} constFlag:= false;
     nameFlag:= false;
     self.hasOnlySubstanceUnits := false;
 
@@ -678,28 +678,25 @@ implementation
    begin
      formula:= newFormula;
    end;
-   function SBMLkineticlaw.getNumParameters(): integer;
+   function SBMLkineticlaw.getNumLocalParameters(): integer;
    begin
-     Result:= numParams;
-   end;
-   procedure SBMLkineticlaw.setNumParameters(i:integer);
-   begin
-     numParams:= i;
+     Result:= length(self.paramIds);
    end;
 
-   function SBMLkineticlaw.addParameter(param:String): String;  // TSBMLparameter;
+   function SBMLkineticlaw.addLocalParameter(param:String): String;  // TSBMLparameter;
     var len: integer;
    begin
     len:= Length(paramIds);
     SetLength(paramIds,len+1);  // add new paramID to array
     paramIds[len]:= param;
+    inc(self.numParams);
    // console.log('kineticLaw.addParameter: ',param);
    end;
-   function SBMLkineticlaw.getParameter(n: integer): String; // TSBMLparameter;
+   function SBMLkineticlaw.getLocalParameter(n: integer): String; // TSBMLparameter;
    begin
      Result:= paramIds[n];
    end;
-  // function removeParameter(n: integer): String;
+  // function removeParameter(n: integer): String;  // May need?
 
  // **************************************************************
  constructor SBMLReaction.create(id:String; prod: array of String; reactant: array of String); // remove at some point

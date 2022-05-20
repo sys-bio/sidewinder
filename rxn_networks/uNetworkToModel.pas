@@ -130,6 +130,7 @@ begin
       begin
       newSpecies := TSBMLSpecies.create(nodes[i].state.species);
       newSpecies.setInitialConcentration(nodes[i].state.conc);
+      newSpecies.setBoundaryCondition(nodes[i].state.boundarySp);
       newSpecies.setCompartment(DEFAULT_COMP);
       newSpecies.setHasOnlySubstanceUnits(false); // species units is conc.
       self.model.addSBMLspecies(newSpecies);
@@ -295,7 +296,7 @@ begin
     newLaw := SBMLkineticLaw.create();
     for j := 0 to (self.network.reactions[i].state.rateParams.count -1) do
     begin
-      newLaw.addParameter(self.network.reactions[i].state.rateParams[j].getId);
+     // newLaw.addParameter(self.network.reactions[i].state.rateParams[j].getId);
       if not self.model.isParameterIdinList(self.network.reactions[i].state.rateParams[j].getId) then
         self.model.addSBMLParameter(self.network.reactions[i].state.rateParams[j]);
     end;

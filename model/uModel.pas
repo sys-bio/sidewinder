@@ -2,7 +2,7 @@ unit uModel;
 
 interface
 uses Web, JS, System.Generics.Collections, uSBMLClasses, uSBMLClasses.rule,
-     uSBMLClasses.Layout, uSBMLClasses.Render, uSidewinderTypes;
+     uSBMLClasses.Layout, uSBMLClasses.Render, uSidewinderTypes, uSBMLClasses.FuncDefinition;
 
 type
 
@@ -16,13 +16,14 @@ type
     numReactions: integer;  // number of rxns in model.
     numbPlugins: integer; // Not used
     numSpecies,{ numParams,} numCompartments: integer; // number of species,comps in model
-    numEvents, numRules, numFuncDefs: integer;  // Currently not used.
+    numEvents, numRules: integer;  // Currently not used.
     annotationStr: String;    // optional
     sbmlreactions: array of SBMLReaction; // list of reactions
     modelSpecies: array of TSBMLSpecies;
     modelComps: array of TSBMLcompartment;
     modelParams: array of TSBMLparameter;
     modelRules: array of TSBMLRule;  // optional
+    modelFuncDefList: TList<TSBMLFuncDefinition>; // optional list of functions
     modelId: String; // optional model name
     modelLayout: TSBMLLayout;
     modelRendering: TSBMLRenderInformation;
@@ -61,8 +62,11 @@ type
    function  isParameterIdinList(id: string): boolean;
    function  getSBMLmodelRules():array of TSBMLrule;
    procedure addSBMLrule( newR: TSBMLrule);
-   procedure setNumFuncDefs( newNum: integer );
+   //procedure setNumFuncDefs( newNum: integer );
    function  getNumFuncDefs(): integer;
+   procedure addFuncDef( newFuncDef: TSBMLFuncDefinition );
+   function  getFuncDef( index: integer ): TSBMLFuncDefinition;
+   function  getFuncDefList(): TList<TSBMLFuncDefinition>;
    function  getSpeciesNumb(): integer;
    procedure addSBMLspecies(newSpecies: TSBMLSpecies);
    function  getSBMLspecies(i:integer): TSBMLSpecies; overload;
@@ -114,12 +118,14 @@ constructor TModel.create();
 begin
   //  errors:=0;
     self.strSBMLErrors := TList<string>.create;
+    self.modelFuncDefList := TList<TSBMLFuncDefinition>.create;
     numReactions:= 0;
     numSpecies:= 0; numCompartments:= 0;
-    numEvents:= 0; numRules:= 0; numFuncDefs:=0;
+    numEvents:= 0; numRules:= 0;
     modelRules:= nil;
-    self.numFuncDefs := 0;
     modelId := '';
+    self.modelLayout := nil;
+    self.modelRendering := nil;
 end;
 
 
@@ -242,14 +248,26 @@ procedure TModel.SBML_UpdateEvent();
    self.modelId := newId;
  end;
 
- procedure TModel.setNumFuncDefs( newNum: integer );
- begin
-   self.numFuncDefs := newNum;
- end;
-
  function TModel.getNumFuncDefs: Integer;
  begin
-   Result := self.numFuncDefs;
+   Result := self.modelFuncDefList.Count;
+ end;
+
+ procedure TModel.addFuncDef( newFuncDef: TSBMLFuncDefinition );
+ begin
+   self.modelFuncDefList.Add(TSBMLFuncDefinition.create(newFuncDef));
+ end;
+
+ function TModel.getFuncDef( index: integer ): TSBMLFuncDefinition;
+ begin
+   if index < self.modelFuncDefList.count then
+     Result:= self.modelFuncDefList[index]
+   else Result := nil;
+ end;
+
+ function  TModel.getFuncDefList(): TList<TSBMLFuncDefinition>;
+ begin
+   Result:= self.modelFuncDefList;
  end;
 
  function TModel.getSpeciesNumb(): integer;

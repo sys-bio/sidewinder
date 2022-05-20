@@ -28,24 +28,24 @@ TFormatODEs = class
     sVals: array of double;   // init val of species, same size as speciesStrAr
     pVals: array of double;   // init val of parameters, same size as paramsStrAr.
 
-  function buildODE_LHS( rxn: SBMLreaction ): array of String; // build the 'dydt_s[]=' or '-dydt_s[]=', store in rhsSymbols
-  function getODEeqLoc(Speciesdydt : String): Integer; // return index of Species in odeEqs.
+  function  buildODE_LHS( rxn: SBMLreaction ): array of String; // build the 'dydt_s[]=' or '-dydt_s[]=', store in rhsSymbols
+  function  getODEeqLoc(Speciesdydt : String): Integer; // return index of Species in odeEqs.
   procedure BuildAssignmentEqs(model: TModel);
   function spBoundaryCondition(speciesId: String): boolean;
 
-  public
+ public
   constructor create( model: TModel);
-  function replaceStrNames(names: array of String; stringtoedit: String; prefixStr: String):String;
-  function StrInArray(const Value : String;const ArrayOfString : Array of String) : Integer;
-  function testStrReplace( ): String;  // testing....
-  function getODEs(): array of String;
-  function getODEs2(): array of String; // LSODA eqs
-  function getODEeqSet(): String;
-  function getODEeqSet2(): String; // LSODA eq set.
-  function get_sVals(): array of double; // get init vals for species used in eqs.
-  function get_pVals(): array of double; // get init vals for params, including comp vols used in eqs.
-  function get_speciesStrAr(): array of String;  // SBML Species id
-  function get_paramsStrAr(): array of String;   // SBML parameter and compartment ids.
+  function  replaceStrNames(names: array of String; stringtoedit: String; prefixStr: String):String;
+  function  StrInArray(const Value : String;const ArrayOfString : Array of String) : Integer;
+  function  testStrReplace( ): String;  // testing....
+  function  getODEs(): array of String;
+  function  getODEs2(): array of String; // LSODA eqs
+  function  getODEeqSet(): String;
+  function  getODEeqSet2(): String; // LSODA eq set.
+  function  get_sVals(): array of double; // get init vals for species used in eqs.
+  function  get_pVals(): array of double; // get init vals for params, including comp vols used in eqs.
+  function  get_speciesStrAr(): array of String;  // SBML Species id
+  function  get_paramsStrAr(): array of String;   // SBML parameter and compartment ids.
   procedure buildLSODAeqs();   // build LSODA eqs (odeEqs2)
   procedure buildFinalEqSet(); // Build up final ODE eqs list as one string for use by solver.
 
@@ -531,8 +531,8 @@ var
 // Assumes left parenthesis follows operator: 'pow(a,b)', not 'pow (a,b)' or 'pow a,b'
 function JSMathConvert(eqStr: String): String;
 const
-  sbmlOp: array[0..4] of String = ('pow', 'ln','log', 'exp', 'abs');
-  jsMathOp: array[0..4] of String = ('Math.pow', 'Math.log', 'Math.log10', 'Math.exp', 'Math.abs');
+  sbmlOp: array[0..5] of String = ('pow', 'ln','log', 'exp', 'abs', 'pi');
+  jsMathOp: array[0..5] of String = ('Math.pow', 'Math.log', 'Math.log10', 'Math.exp', 'Math.abs', 'Math.PI');
 var
  i: Integer;
  sbmlStr: String;

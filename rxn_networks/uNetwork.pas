@@ -14,7 +14,8 @@ interface
 
 Uses SysUtils, Classes, Types, libthreejs, WEBLib.Graphics, Math, WEBLib.Utils,
      WEBLib.JSON, Web, System.Generics.Collections, uNetworkTypes, uBuildRateLaw,
-     uSBMLClasses, uModel, uSBMLClasses.Layout, uSBMLClasses.Render, uSidewinderTypes;
+     uSBMLClasses, uModel, uSBMLClasses.Layout, uSBMLClasses.Render,
+     uSBMLClasses.FuncDefinition, uSidewinderTypes;
 
 const
   // The following constant is the distance between the outer
@@ -22,6 +23,7 @@ const
   // the launch point for a reaction arc (edge)
   NODE_ARC_DEADSPACE = 8;
   DEFAULT_REACTION_THICKNESS = 3;
+  DEFAULT_NODE_BOUNDARY_SPECIES_COLOR = clSkyBlue;
   DEFAULT_REACTION_COLOR = clWebLightSteelBlue;
   DEFAULT_NODE_OUTLINE_THICKNESS = 3;
   MAGIC_IDENTIFER = 'NM01';  // Identifier for json output, 01 refers to version number
@@ -58,14 +60,15 @@ type
        id : string;
        species: string; // typically id and species are the same (aliases will not be)
        conc: double;   // conc of species, assume unit volume
+       boundarySp: boolean; // true: boundary species (not part of any reaction)
        x, y, w, h : double;
        fillColor, outlineColor : TColor;
        outlineThickness : integer;
        function  getCenter : TPointF;
        procedure saveAsJSON (nodeObject : TJSONObject);
        procedure loadFromJSON (obj : TJSONObject);
-       procedure loadFromSBML (obj : TSBMLLayoutSpeciesGlyph; initVal: double; nodeStyle: TSBMLRenderStyle;
-                         nodeColorDefList: TList<TSBMLRenderColorDefinition>);
+       procedure loadFromSBML (obj : TSBMLLayoutSpeciesGlyph; initVal: double; boundary: boolean;
+          nodeStyle: TSBMLRenderStyle; nodeColorDefList: TList<TSBMLRenderColorDefinition>);
        function  clone : TNodeState;
   end;
 
@@ -129,8 +132,13 @@ type
       procedure saveAsJSON (reactionObject : TJSONObject);
       procedure loadFromJSON (obj : TJSONObject);
       procedure loadFromSBML (glyphRxn : TSBMLLayoutReactionGlyph; modelRxn: SBMLReaction;
-         paramAr: array of TSBMLparameter; spGlyphList: TList<TSBMLLayoutSpeciesGlyph>;
-         compAr: array of TSBMLcompartment; modelRender: TSBMLRenderInformation);
+         paramAr: array of TSBMLparameter; funcDefList: TList<TSBMLFuncDefinition>;
+         spGlyphList: TList<TSBMLLayoutSpeciesGlyph>; compAr: array of TSBMLcompartment;
+         modelRender: TSBMLRenderInformation);
+
+      // Convert any SBML func defs that are used for reaction kinetic laws:
+      function convertFuncDefsToKineticLaws(funcDefList: TList<TSBMLFuncDefinition>;
+                strKinLaw: string ): string; // Returns updated kinetic law
       function getMassCenter(): TPointF; // Calc mass center for reaction, where each node has mass of 1.
       function clone : TReactionState;
   end;
@@ -182,6 +190,7 @@ type
 
        function    loadModel (modelStr : string): string;
        procedure   loadSBMLModel (model: TModel);
+       // TODO: attach assignments to nodes??
        function    getSpeciesRenderStyle(newSpeciesGlyph:TSBMLLayoutSpeciesGlyph;
                           newModel: TModel): TSBMLRenderStyle;
        function    getColorDefs(newStyle: TSBMLRenderStyle;
@@ -281,6 +290,9 @@ procedure TNodeState.saveAsJSON (nodeObject : TJSONObject);
 begin
   nodeObject.AddPair ('id', self.id);
   nodeObject.AddPair('species',self.species);
+  if self.boundarySp then
+    nodeObject.AddPair('boundary', 'true')
+  else nodeObject.AddPair('boundary', 'false');
   nodeObject.AddPair ('conc', TJSONNumber.Create(conc));  // to be added.
   nodeObject.AddPair ('x', TJSONNumber.Create (x));
   nodeObject.AddPair ('y', TJSONNumber.Create (y));
@@ -294,9 +306,15 @@ end;
 
 
 procedure TNodeState.loadFromJSON (obj : TJSONObject);
+var intBC: string;
 begin
+   intBC := '';
    self.id := obj.GetJSONValue('id');
    self.species := obj.GetJSONValue('species');
+   intBC := obj.GetJSONValue('boundary');
+   if intBC = 'true' then
+     self.boundarySp := true
+   else self.boundarySp := false;
    self.conc := strtofloat (obj.GetJSonValue('conc'));  // to be added
    self.x := strtofloat (obj.GetJSONValue ('x'));
    self.y := strtofloat (obj.GetJsonValue ('y'));
@@ -309,7 +327,7 @@ begin
 end;
 
 procedure TNodeState.loadFromSBML (obj : TSBMLLayoutSpeciesGlyph; initVal: double;
-  nodeStyle: TSBMLRenderStyle; nodeColorDefList: TList<TSBMLRenderColorDefinition>);
+  boundary: boolean; nodeStyle: TSBMLRenderStyle; nodeColorDefList: TList<TSBMLRenderColorDefinition>);
 var i: integer;
     strokeCFound, fillCFound: boolean;
 begin
@@ -317,6 +335,7 @@ begin
   fillCFound := false;
   self.id := obj.getId;
   self.species := obj.getSpeciesId;
+  self.boundarySp := boundary;
   self.conc := initVal;
   self.x := obj.getBoundingBox().getPoint().getX;
   self.y := obj.getBoundingBox().getPoint().getY;
@@ -564,10 +583,12 @@ end;
 
 
 procedure TReactionState.loadFromSBML (glyphRxn : TSBMLLayoutReactionGlyph; modelRxn: SBMLReaction;
-         paramAr: array of TSBMLparameter; spGlyphList: TList<TSBMLLayoutSpeciesGlyph>;
-         compAr: array of TSBMLcompartment; modelRender: TSBMLRenderInformation);
+         paramAr: array of TSBMLparameter; funcDefList: TList<TSBMLFuncDefinition>;
+         spGlyphList: TList<TSBMLLayoutSpeciesGlyph>; compAr: array of TSBMLcompartment;
+         modelRender: TSBMLRenderInformation);
 var  newParam : TSBMLparameter;
      speciesName, paramName : string;
+     updatedKineticLaw: string; // kinetic law with funcDef id replaced with funcDef equation.
      spGlyphId: string;
      i, j, k : integer;
      intNumCurveSeg: integer; // number of line segments
@@ -627,8 +648,9 @@ begin
     if destId[i] = '' then destId[i] := modelRxn.getProduct(i).getSpecies;
     destStoich[i] := modelRxn.getProduct(i).getStoichiometry;
     end;
-
-  // For now, just grab all parameters, not just ones used in reactions:
+  updatedKineticLaw := '';
+  updatedKineticLaw := self.convertFuncDefsToKineticLaws( funcDefList,
+                                           modelRxn.getKineticLaw.getFormula);
   // Grab parameters that are used in reaction:
   for j := 0 to Length(paramAr) - 1 do
     begin
@@ -649,7 +671,8 @@ begin
       rateParams.Add(newParam);
     end;
 
-  rateLaw := modelRxn.getKineticLaw.getFormula;
+  //rateLaw := modelRxn.getKineticLaw.getFormula;
+  rateLaw := updatedKineticLaw;
 
   // Rxn curve/line order of assignment:
   //  1.  default, if no layout info available.
@@ -682,7 +705,6 @@ begin
 
       end;
 
-
     end // end of if glyphRxn <> nil
   else
     begin
@@ -691,6 +713,35 @@ begin
     end;
 
 end;
+
+ // Convert any SBML func defs that are used for reaction kinetic laws:
+function TReactionState.convertFuncDefsToKineticLaws(funcDefList: TList<TSBMLFuncDefinition>;
+                strKinLaw: string ): string;
+var i: integer;
+   strNewKLaw: string;
+   formula: string;
+begin
+  strNewKLaw := '';
+  strNewKLaw := strKinLaw;
+  console.log(' Initial NewFormula:', strNewKLaw);
+  if funcDefList <> nil then
+    begin
+    for i := 0 to funcDefList.count -1 do
+      begin
+      formula := '';
+      if strNewKLaw.Contains(funcDefList[i].getId) then
+        begin
+        formula := '(' + funcDefList[i].getFuncFormula + ')';
+        strNewKLaw := strNewKLaw.Replace(funcDefList[i].getFullFuncLabel, formula);
+        console.log(' Current NewFormula:', strNewKLaw);
+        end;
+
+      end;
+    end;
+  console.log(' Final NewFormula:', strNewKLaw);
+  Result := strNewKLaw;
+end;
+
        // Returns true if curve for reaction was found and processed.
 function  TReactionState.processReactionSpeciesReferenceCurves(newGlyphRxn: TSBMLLayoutReactionGlyph;
           newModelRxn: SBMLReaction; newSpGlyphList: TList<TSBMLLayoutSpeciesGlyph>;
@@ -1166,8 +1217,10 @@ var i, j, k, l: integer;
    speciesGlyph: TSBMLLayoutSpeciesGlyph;
    reactionGlyph: TSBMLLayoutReactionGlyph;
    reactionGlyphId: string; // name of reaction, used to find reaction details.
-   spAr: array of string;
+ //  spAr: array of string;
+   spAr: array of TSBMLSpecies;
    initVal: double;
+   boundarySp: boolean;
    node : TNode;
    reaction : TReaction;
    nodeState : TNodeState;
@@ -1184,14 +1237,18 @@ begin
     for i := 0 to modelLayout.getNumSpGlyphs - 1 do
       begin
         initVal := 0;
-        spAr := model.getS_Names;
+       // spAr := model.getS_Names;
+        spAr := model.getSBMLspeciesAr;
         speciesGlyph := modelLayout.getSpGlyph(i);
         for j := 0 to Length(spAr) -1 do
         begin
          // console.log('loadSBMLModel, species: ',spAr[j],', spglyph: ',speciesGlyph.getSpeciesId);
-          if spAr[j] = speciesGlyph.getSpeciesId then
+          if spAr[j].getID = speciesGlyph.getSpeciesId then
           begin
-            initVal := model.getS_initVals[j];
+            if spAr[j].isSetInitialConcentration then
+              initVal := spAr[j].getInitialConcentration
+            else initVal := spAr[j].getInitialAmount;
+            boundarySp := spAr[j].getBoundaryCondition;
           end;
 
         end;
@@ -1199,9 +1256,9 @@ begin
           begin
           nodeStyle := self.getSpeciesRenderStyle(speciesGlyph, model);
           nodeColorDefList := getColorDefs(nodeStyle, modelRender);
-          nodeState.loadFromSBML (speciesGlyph, initVal, nodeStyle, nodeColorDefList);
+          nodeState.loadFromSBML (speciesGlyph, initVal, boundarySp, nodeStyle, nodeColorDefList);
           end
-        else nodeState.loadFromSBML (speciesGlyph, initVal, nil, nil);
+        else nodeState.loadFromSBML (speciesGlyph, initVal, boundarySp, nil, nil);
         addNode (nodeState);
       end;
 
@@ -1216,7 +1273,9 @@ begin
             if reactionGlyphId = model.getReaction(j).getID then
             begin
               reactionState.loadFromSBML (reactionGlyph, model.getReaction(j),
-                   model.getSBMLparameterAr, modelLayout.getSpGlyphList, model.getSBMLcompartmentsArr(), model.getSBMLRenderInfo);
+                   model.getSBMLparameterAr, model.getFuncDefList,
+                   modelLayout.getSpGlyphList, model.getSBMLcompartmentsArr(),
+                   model.getSBMLRenderInfo);
               reaction := addReaction (reactionState);
              // Set the node pointers based on the node Ids
               for k := 0 to reaction.state.nReactants - 1 do
@@ -1280,24 +1339,32 @@ end;
     // No SBML layout present:
 procedure TNetwork.autoBuildNetworkFromSBML(model: TModel);
  var i, j, k, l, index: integer;
-   spAr: array of string;
+   //spAr: array of string;
+   spAr: array of TSBMLSpecies;
    initVal: double;
    node : TNode;
    reaction : TReaction;
    nodeState : TNodeState;
    reactionState: TReactionState;
  begin
-    spAr := model.getS_Names;
+    //spAr := model.getS_Names;
+    spAr := model.getSBMLspeciesAr;
     for j := 0 to Length(spAr) -1 do
       begin
-        nodeState.id := spAr[j]; // default
-        nodeState.species := spAr[j];
-        nodeState.conc := model.getS_initVals[j];
+        nodeState.id := spAr[j].getID; // default
+        nodeState.species := spAr[j].getID;
+        nodeState.boundarySp := spAr[j].getBoundaryCondition;
+        if spAr[j].isSetInitialConcentration then
+          nodeState.conc := spAr[j].getInitialConcentration
+        else nodeState.conc := spAr[j].getInitialAmount;
+       // nodeState.conc := spAr[j].getmodel.getS_initVals[j];
         nodeState.x := 20 + j; // default values
         nodeState.y := 60 + j; //   "
         nodeState.w := 60;     //   "
         nodeState.h := 40;     //   "
-        nodeState.fillColor := RGB(255,204,153);// clWebPeachPuff;
+        if nodeState.boundarySp then
+          nodeState.fillColor := DEFAULT_NODE_BOUNDARY_SPECIES_COLOR
+        else nodeState.fillColor := RGB(255,204,153);// clWebPeachPuff;
         nodeState.outlineColor := RGB(255,102,0);
         nodeState.outlineThickness := DEFAULT_NODE_OUTLINE_THICKNESS;
         self.addNode(nodeState);
@@ -1308,7 +1375,7 @@ procedure TNetwork.autoBuildNetworkFromSBML(model: TModel);
     for j := 0 to model.getNumReactions - 1 do
         begin
           reactionState.loadFromSBML (nil, model.getReaction(j), model.getSBMLparameterAr,
-                                nil, model.getSBMLcompartmentsArr(), nil);
+                             nil, nil, model.getSBMLcompartmentsArr(), nil);
 
           reaction := addReaction (reactionState);
           reaction.state.arcCenter.x := 20 + j*2;
@@ -1392,6 +1459,7 @@ procedure TNetwork.autoBuildNetworkFromSBML(model: TModel);
  begin
    nodeState.id := rxnId + NULL_NODE_TAG;
    nodeState.species := rxnId + NULL_NODE_TAG;
+   nodeState.boundarySp := true;
    nodeState.conc := 0.0;
    nodeState.x := 22 + 2*num ; // default values
    nodeState.y := 62 + 2*num; //   "

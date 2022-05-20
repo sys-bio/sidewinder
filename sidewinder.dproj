@@ -159,6 +159,7 @@
         <DCCReference Include="sbml\uSBMLClasses.Layout.pas"/>
         <DCCReference Include="math\uASTNode.pas"/>
         <DCCReference Include="sbml\uSBMLClasses.Render.pas"/>
+        <DCCReference Include="sbml\uSBMLClasses.FuncDefinition.pas"/>
         <None Include="index.html"/>
         <None Include="sbml\libsbml.js"/>
         <None Include="sbml\libsbml.wasm"/>

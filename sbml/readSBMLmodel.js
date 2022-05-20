@@ -114,6 +114,51 @@ getRules(tModela, tRule) {
     return tModela;
   }
 
+  getFuncDefs(tModela, tFuncDef) {
+    var i;
+    const numFuncs = this.model.getNumFunctionDefinitions();
+    if( numFuncs >0 ){
+      for( i=0; i< numFuncs; i++) {
+        tFuncDef.clear();
+        const newFuncDef = this.model.getFunctionDefinition(i);
+        if( newFuncDef.isSetIdAttribute()) {
+          console.log('func Def: ', newFuncDef.getId());
+          tFuncDef.setId(newFuncDef.getId());
+        }
+        if( newFuncDef.isSetName() ) {
+          tFuncDef.setName(newFuncDef.getName());
+        }
+        if( newFuncDef.isSetBody() ) {
+          const newBody = newFuncDef.getBody();
+          const strBody = new this.libSBML.SBMLFormulaParser().formulaToL3String(newBody);
+          tFuncDef.setFuncFormula(strBody.trim());
+        }
+        const newMath = newFuncDef.getMath();
+        console.log(' func Math: ', newMath.getType() );
+        const strMath = new this.libSBML.SBMLFormulaParser().formulaToL3String(newMath);
+        var fullFuncLabel = tFuncDef.getId() + '('; // func name with comma sep vars in parenthesis
+        let varArr = strMath.split(',');
+        const numVars = varArr.length -1; // last element is formula
+        const elementZeroArr = varArr[0].split('lambda('); // assume format lambda(var1, var2, ...
+        if( elementZeroArr.length > 1) {
+         varArr[0] = elementZeroArr[1]; // discard first element: 'lambda('
+        }
+        for( var j=0; j< numVars; j++) {
+          tFuncDef.addVar(varArr[j].trim());
+          if( j == 0 ) { fullFuncLabel = fullFuncLabel + varArr[j].trim(); }
+          else { fullFuncLabel = fullFuncLabel + ', ' + varArr[j].trim(); }
+         // console.log(' var ',j,': ',varArr[j].trim());
+        }
+        fullFuncLabel = fullFuncLabel + ')';
+        tFuncDef.setFullFuncLabel( fullFuncLabel );
+        tModela.addFuncDef( tFuncDef );
+        console.log(' Func eq: ', strMath);
+      }
+    }
+    //else { console.log('No SBML Func Defs!');}
+    return tModela;
+  }
+
   getCompartments(tModela, tComp ) {
     var i;
     for (i=0; i < tModela.numCompartments; i++) {
