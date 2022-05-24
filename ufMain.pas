@@ -142,6 +142,7 @@ type
     btnParamReset: TWebButton;
     btnResetRun: TWebButton;
     checkBoxBoundarySp: TWebCheckBox;
+    ButtonVarAssignments: TWebButton;
 
     procedure btnUniUniClick(Sender: TObject);
     procedure btnBiBiClick(Sender: TObject);
@@ -218,6 +219,7 @@ type
     procedure edtReactionIdExit(Sender: TObject);
     procedure stepSizeEdit1Exit(Sender: TObject);
     procedure checkBoxBoundarySpClick(Sender: TObject);
+    procedure ButtonVarAssignmentsClick(Sender: TObject);
 
   private
     numbPlots: Integer; // Number of plots displayed
@@ -326,21 +328,21 @@ Uses uGraphUtils, uCreateNetworks, uLayout, uTestModel, uSelectedObjects;
 
 procedure TMainForm.enableEditNodePanel;
 begin
-  editNodeId.Enabled := true;
-  editNodeConc.Enabled := true;
-  self.checkBoxBoundarySp.Enabled := false; // Do not enable until we have reaction eq editing
-  btnNodeFillColor.Enabled := true;
-  btnNodeOutlineColor.Enabled := true;
+  self.editNodeId.Enabled := true;
+  self.editNodeConc.Enabled := true;
+  self.checkBoxBoundarySp.Enabled := true;
+  self.btnNodeFillColor.Enabled := true;
+  self.btnNodeOutlineColor.Enabled := true;
 end;
 
 
 procedure TMainForm.disableEditNodePanel;
 begin
-  editNodeId.Enabled := false;
-  editNodeConc.Enabled := false;
+  self.editNodeId.Enabled := false;
+  self.editNodeConc.Enabled := false;
   self.checkBoxBoundarySp.Enabled := false;
-  btnNodeFillColor.Enabled := false;
-  btnNodeOutlineColor.Enabled :=false;
+  self.btnNodeFillColor.Enabled := false;
+  self.btnNodeOutlineColor.Enabled :=false;
 end;
 
 procedure TMainForm.enableEditReactionPanel;
@@ -362,7 +364,7 @@ procedure TMainForm.btnAddPlotClick(Sender: TObject);
 begin
   // Make runtime, stepsize, simulation buttons visible
   self.numbPlots := self.numbPlots + 1;
- // rtLabel1.visible := true;  // Do not let user modify for now
+ // rtLabel1.visible := true;  // Run time: Do not let user modify for now
  // rtLengthEdit1.visible := true; // Do not let user modify for now
   stepSizeLabel1.visible := true;
   stepSizeEdit1.visible := true;
@@ -372,7 +374,6 @@ end;
 procedure TMainForm.btnAboutClick(Sender: TObject);
 begin
   notifyUser(SIDEWINDER_VERSION);
-  //notifyUser('Version 0.2: LayoutRender debug');
 end;
 
 procedure TMainForm.btnAddNodeClick(Sender: TObject);
@@ -548,6 +549,23 @@ begin
   networkController.setAddUniUniReaction;
 end;
 
+
+procedure TMainForm.ButtonVarAssignmentsClick(Sender: TObject);
+begin
+// TODO Get a list of assignments for species and params used in reaction.
+ if networkController.selectedObjects.count > 0 then
+     begin
+     case networkController.selectedObjects[0].objType of
+       oNode     : begin
+                   networkController.selectedObjects[0].node.state.species;
+                   end;
+       oReaction : begin
+                   networkController.selectedObjects[0].reaction.state.id;
+                   end;
+     end;
+     end;
+ networkController.selectedObjects[0].reaction.state.species;
+end;
 
 procedure TMainForm.editNodeIdExit(Sender: TObject);
 var newId, cutNewId: string;

@@ -61,6 +61,8 @@ type
    procedure addSBMLparameter(newParam: TSBMLparameter);
    function  isParameterIdinList(id: string): boolean;
    function  getSBMLmodelRules():array of TSBMLrule;
+   function  getSBMLRule( index: integer ): TSBMLRule;
+   function  getSBMLRuleWithVarId( varId: string ): TSBMLRule;
    procedure addSBMLrule( newR: TSBMLrule);
    //procedure setNumFuncDefs( newNum: integer );
    function  getNumFuncDefs(): integer;
@@ -436,6 +438,24 @@ procedure TModel.SBML_UpdateEvent();
  function TModel.getSBMLmodelRules():array of TSBMLrule;
  begin
    Result:= self.modelRules;
+ end;
+
+ function  TModel.getSBMLRule( index: integer ): TSBMLRule;
+ begin
+   if index < length(self.modelRules) then
+     Result := self.modelRules[index]
+   else Result := nil;
+ end;
+
+ function  TModel.getSBMLRuleWithVarId( varId: string ): TSBMLRule;
+ var i: integer;
+ begin
+   Result := nil;
+   for i := 0 to length(self.modelRules) -1 do
+     begin
+     if self.modelRules[i].getVariable = varId then
+       Result:= self.modelRules[i];
+     end;
  end;
 
  procedure TModel.setSBMLLayout(newLayout: TSBMLLayout);

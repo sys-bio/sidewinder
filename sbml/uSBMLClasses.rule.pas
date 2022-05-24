@@ -7,28 +7,30 @@ type
  TSBMLRule = class
  private
    formula:String;
-   SBMLvar: String;
+   SBMLvar: String; // for Assignment, the variable id that is being assigned the math (formula).
    id, name: String;
    RateR, AssignmentR, AlgebraicR, ScalerR: boolean;
    isSpeciesConc, isParam: boolean;
+   isSpeciesRef: boolean;  // species reference: formula is stoichiometry
    piecewiseUsed: boolean; // law contains piecewise in formula
 
  public
    constructor Create(); overload;
    constructor Create(cpyRule: TSBMLrule); overload;
-   function isRate(): boolean; //virtual; abstract; // rate rule
+   function isRate(): boolean;       // rate rule
    procedure setRate(isR: boolean);
-   function isAssignment(): boolean; //virtual; abstract; // assignment rule
+   function isAssignment(): boolean; // assignment rule
    procedure setAssignment(isAssign: boolean);
-   function isAlgebraic(): boolean;//virtual; abstract; // algebraic rule
+   function isAlgebraic(): boolean;  // algebraic rule
    procedure setAlgebraic(isAlg: boolean);
-   function isScaler(): boolean; //virtual; abstract; // true if this Rule is an AssignmentRule (Level 2) or has type "scalar" (Level 1), false otherwise.
+   function isScaler(): boolean; // true if this Rule is an AssignmentRule (Level 2) or has type "scalar" (Level 1), false otherwise.
    procedure setScaler(isS: boolean);
-   function isSpeciesConcentration(): boolean; //virtual; abstract; //returning true if this Rule is a SpeciesConcentrationRule or equivalent
+   function isSpeciesConcentration(): boolean; //returning true if this Rule is a SpeciesConcentrationRule or equivalent
    procedure setSpeciesConcentration(isSp: boolean);
-   function isParameter(): boolean; //virtual; abstract;// parameter rule
+   function isParameter(): boolean;        // parameter rule
    procedure setParameter(isP: boolean);
-   //function getParameter(): boolean; // get rid of. use isParameter ....
+   function isSpeciesReference(): boolean; // speciesReference rule
+   procedure setSpeciesReference(isSpR: boolean);
    function getFormula(): String;
    procedure setFormula(eq: String);
    function isSetFormula(): boolean;
@@ -91,7 +93,7 @@ begin
   self.SBMLvar:= '';
   self.id:= ''; name:= '';
   self.RateR:= false; self.AssignmentR:= false; self.AlgebraicR:= false; self.ScalerR:= false;
-  self.isSpeciesConc:= false; self.isParam:= false;
+  self.isSpeciesConc:= false; self.isParam:= false; self.isSpeciesRef := false;
 end;
 
 constructor TSBMLRule.Create(cpyRule: TSBMLrule); overload;
@@ -114,6 +116,7 @@ begin
    self.ScalerR:= cpyRule.isScaler;
    self.isSpeciesConc:= cpyRule.isSpeciesConcentration;
    self.isParam:= cpyRule.isParameter;
+   self.isSpeciesRef := cpyRule.isSpeciesRef;
    self.piecewiseUsed := cpyRule.containsPiecewise;
 end;
 
@@ -164,7 +167,7 @@ begin
 end;
 
 
-function TSBMLRule.isSpeciesConcentration(): boolean; //virtual; abstract;
+function TSBMLRule.isSpeciesConcentration(): boolean;
 begin
   Result:= self.isSpeciesConc;
 end;
@@ -175,7 +178,16 @@ begin
   self.isSpeciesConc:= isSp;
 end;
 
-function TSBMLRule.isParameter(): boolean; //virtual; abstract;// parameter rule
+function TSBMLRule.isSpeciesReference(): boolean; // speciesReference rule
+begin
+  Result := self.isSpeciesRef;
+end;
+procedure TSBMLRule.setSpeciesReference(isSpR: boolean);
+begin
+  self.isSpeciesRef := isSpR;
+end;
+
+function TSBMLRule.isParameter(): boolean; // parameter rule
 begin
   Result:= self.isParam;
 end;
@@ -186,11 +198,6 @@ begin
   self.isParam:= isP;
   self.isParam:= true;
 end;
-//function TSBMLrule.getParameter(): boolean;
-//begin
-//  Result:= self.isParam;
-//end;
-
 
 function TSBMLRule.getFormula(): String;
 begin

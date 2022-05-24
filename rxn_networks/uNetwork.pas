@@ -14,7 +14,7 @@ interface
 
 Uses SysUtils, Classes, Types, libthreejs, WEBLib.Graphics, Math, WEBLib.Utils,
      WEBLib.JSON, Web, System.Generics.Collections, uNetworkTypes, uBuildRateLaw,
-     uSBMLClasses, uModel, uSBMLClasses.Layout, uSBMLClasses.Render,
+     uSBMLClasses, uModel, uSBMLClasses.Layout, uSBMLClasses.Render, uSBMLClasses.Rule,
      uSBMLClasses.FuncDefinition, uSidewinderTypes;
 
 const
@@ -59,7 +59,7 @@ type
   TNodeState = record
        id : string;
        species: string; // typically id and species are the same (aliases will not be)
-       conc: double;   // conc of species, assume unit volume
+       conc: double;    // conc of species, assume unit volume
        boundarySp: boolean; // true: boundary species (not part of any reaction)
        x, y, w, h : double;
        fillColor, outlineColor : TColor;
@@ -167,7 +167,6 @@ type
    end;
 
   TListOfReactions = array of TReaction;
-
   TListOfReactionStates = array of TReactionState;
 
   TNetworkSavedState = record
@@ -178,6 +177,7 @@ type
 
   TNetwork = class (TObject)
     private
+      listOfSBMLRules: TList<TSBMLRule>;
       procedure buildNetworkFromSBMLLayout(model: TModel); // model has SBML layout described
       procedure autoBuildNetworkFromSBML(model: TModel); // No SBML layout, build own layout
       FNetworkEvent: TNetworkEvent;
@@ -214,7 +214,10 @@ type
        function    addNode (id : string; x, y, w, h : double) : TNode; overload;
        function    addNode (state : TNodeState): TNode; overload;
        function    buildNullNodeState(rxnId: string; num: integer): TNodeState; // used to add null node for one species rxn
-
+       procedure   addRule (newRule: TSBMLRule);
+       function    getRule (index: integer): TSBMLRule;
+       function    getRuleWithVarId (varId: string): TSBMLRule;
+       function    getNumRules(): integer;
        procedure   computeAnyToAnyCoordinates (reaction : TReaction; sourceNodes, destNodes : array of TNode);
 
        function    findReaction(id: string; var index: integer): boolean;
@@ -1232,6 +1235,12 @@ begin
     if model.getSBMLRenderInfo <> nil then
       modelRender := model.getSBMLRenderInfo;
 
+    for i := 0 to length(model.getSBMLmodelRules) -1 do
+      begin
+      if model.getSBMLRule(i).isAssignment then
+        self.addRule( model.getSBMLRule(i) );
+      end;
+
     // Do not get layout dimensions? not really necessary?
     // if needed then need to set NetworkPB to width and height.
     for i := 0 to modelLayout.getNumSpGlyphs - 1 do
@@ -1451,7 +1460,13 @@ procedure TNetwork.autoBuildNetworkFromSBML(model: TModel);
           end;
 
         end;
-     self.autoLayoutEvent(nil); // Generate layout
+    // Chk for Assignment rules:
+    for i := 0 to length(model.getSBMLmodelRules) -1 do
+      begin
+      if model.getSBMLRule(i).isAssignment then
+        self.addRule( model.getSBMLRule(i) );
+      end;
+    self.autoLayoutEvent(nil); // Generate layout
  end;
 
  function TNetwork.buildNullNodeState(rxnId: String; num: integer): TNodeState;
@@ -1693,7 +1708,6 @@ begin
 
 end;
 
-
 function TNetwork.addReaction (state : TReactionState) : TReaction;
 begin
   setlength (reactions, length (reactions) + 1);
@@ -1711,6 +1725,38 @@ begin
   result := length (reactions);
   self.networkEvent(nil); // Notify listener
 end;
+
+procedure TNetwork.addRule (newRule: TSBMLRule);
+begin
+  if self.listOfSBMLRules = nil then
+    self.listOfSBMLRules := TList<TSBMLRule>.create;
+  self.listOfSBMLRules.Add(TSBMLRule.create(newRule));
+end;
+
+function TNetwork.getRule (index: integer): TSBMLRule;
+begin
+  if index < self.listOfSBMLRules.Count then
+    Result := self.listOfSBMLRules[index]
+  else Result := nil;
+end;
+
+// This function returns a rule, typical assignment, for varId
+    // varId: any species, parameter, compartment
+function TNetwork.getRuleWithVarId (varId: string): TSBMLRule;
+ var i: integer;
+ begin
+   Result := nil;
+   for i := 0 to self.listOfSBMLRules.Count -1 do
+     begin
+     if self.listOfSBMLRules[i].getVariable = varId then
+       Result := self.listOfSBMLRules[i];
+     end;
+ end;
+
+ function TNetwork.getNumRules(): integer;
+ begin
+   Result := self.listOfSBMLRules.Count;
+ end;
 
  // Note: newSubStr should have all spaces replaced with '_'
 function TNetwork.strReplaceParamName(oldSubStr: string; newSubStr: string): boolean;
