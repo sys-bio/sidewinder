@@ -39,6 +39,8 @@ class ProcessSBML {
    tModela.numSpecies = this.model.getNumSpecies();
    tModela.numParams = this.model.getNumParameters();
    tModela.numCompartments = this.model.getNumCompartments();
+   const numInitAssignments = this.model.getNumInitialAssignments(); // TODO: Need to get these
+   console.log(' Number of Init assignments: ',numInitAssignments);
    tModela.numEvents = this.model.getNumEvents();
    console.log( 'Number of events: ', this.model.getNumEvents() );
    tModela.numRules = this.model.getNumRules();

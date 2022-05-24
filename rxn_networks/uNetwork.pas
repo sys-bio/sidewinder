@@ -1755,7 +1755,9 @@ function TNetwork.getRuleWithVarId (varId: string): TSBMLRule;
 
  function TNetwork.getNumRules(): integer;
  begin
-   Result := self.listOfSBMLRules.Count;
+   if self.listOfSBMLRules <> nil then
+     Result := self.listOfSBMLRules.Count
+   else Result := 0;
  end;
 
  // Note: newSubStr should have all spaces replaced with '_'

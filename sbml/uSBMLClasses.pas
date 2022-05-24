@@ -103,6 +103,23 @@ type
 
 // SBMLlocalParameter not implimented, same methods as TSBMLParameter.
 
+ TSBMLInitialAssignment = class  // Overrules any inital val assigned to the symbol.
+  private
+    id: string; // unique id, optional
+    symbol: string; // Symbol which is assigned the value calculated from formula at t=0
+    formula: string;
+  public
+    constructor create() overload;
+    constructor create( cpy: TSBMLInitialAssignment ) overload;
+    procedure setId( newId: string );
+    function getId(): string;
+    procedure setSymbol( newSym: string );
+    function getSymbol(): string;
+    procedure setFormula( newF: string );
+    function getFormula(): string;
+ end;
+
+
  TSBMLSpeciesReference = class
  private
     stoichValue: double;  // A positive value indicates the species is effectively a
@@ -363,6 +380,45 @@ implementation
      Result:= nameFlag;
    end;
 
+
+
+   constructor TSBMLInitialAssignment.create() overload;
+   begin
+    self.id := '';
+    self.symbol := '';
+    self.formula := '';
+   end;
+   constructor TSBMLInitialAssignment.create( cpy: TSBMLInitialAssignment ) overload;
+   begin
+    self.id := cpy.getId;
+    self.symbol := cpy.getSymbol;
+    self.formula := cpy.getFormula;
+   end;
+
+   procedure TSBMLInitialAssignment.setId( newId: string );
+   begin
+     self.id := newId;
+   end;
+   function TSBMLInitialAssignment.getId(): string;
+   begin
+     Result := self.id;
+   end;
+   procedure TSBMLInitialAssignment.setSymbol( newSym: string );
+   begin
+     self.symbol := newSym;
+   end;
+   function TSBMLInitialAssignment.getSymbol(): string;
+   begin
+     Result := self.symbol;
+   end;
+   procedure TSBMLInitialAssignment.setFormula( newF: string );
+   begin
+     self.formula := newF;
+   end;
+   function TSBMLInitialAssignment.getFormula(): string;
+   begin
+     Result := self.formula;
+   end;
 
   // ************************************************
 

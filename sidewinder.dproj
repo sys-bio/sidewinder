@@ -160,6 +160,11 @@
         <DCCReference Include="math\uASTNode.pas"/>
         <DCCReference Include="sbml\uSBMLClasses.Render.pas"/>
         <DCCReference Include="sbml\uSBMLClasses.FuncDefinition.pas"/>
+        <DCCReference Include="ufAssignments.pas">
+            <Form>FormAssignments</Form>
+            <FormType>dfm</FormType>
+            <DesignClass>TWebForm</DesignClass>
+        </DCCReference>
         <None Include="index.html"/>
         <None Include="sbml\libsbml.js"/>
         <None Include="sbml\libsbml.wasm"/>
