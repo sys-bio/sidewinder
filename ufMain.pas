@@ -10,12 +10,11 @@ uses
   Vcl.StdCtrls, WEBLib.StdCtrls, WEBLib.Buttons, Vcl.Imaging.pngimage,
   Vcl.Graphics,System.Generics.Collections,
   uControllerNetwork, uNetworkCanvas, uNetwork, Vcl.TMSFNCTypes, Vcl.TMSFNCUtils,
-  Vcl.TMSFNCGraphics,
-  Vcl.TMSFNCGraphicsTypes, Vcl.TMSFNCCustomControl, Vcl.TMSFNCScrollBar,
-  uNetworkTypes, WEBLib.Lists, Vcl.Forms, uModel,
-  uSBMLClasses, uSimulation, uControllerMain,
-  uODE_FormatUtility, uGraphP, Vcl.Menus, WEBLib.Menus, ufVarSelect, uPlotPanel,
-  uParamSliderLayout, uSidewinderTypes, WEBLib.ComCtrls, WEBLib.Miletus, WEBLib.JQCtrls; //, VCL.TMSFNCCustomPicker, VCL.TMSFNCColorPicker;
+  Vcl.TMSFNCGraphics, Vcl.TMSFNCGraphicsTypes, Vcl.TMSFNCCustomControl, Vcl.TMSFNCScrollBar,
+  uNetworkTypes, WEBLib.Lists, Vcl.Forms, uModel, uSBMLClasses, uSBMLClasses.rule, uSimulation,
+  uControllerMain, uODE_FormatUtility, uGraphP, Vcl.Menus, WEBLib.Menus, ufVarSelect,
+  uPlotPanel, uParamSliderLayout, uSidewinderTypes, WEBLib.ComCtrls, WEBLib.Miletus,
+  WEBLib.JQCtrls, ufAssignments;
 
 const SIDEWINDER_VERSION = 'Version 0.32 alpha';
       DEFAULT_RUNTIME = 10000;
@@ -220,6 +219,7 @@ type
     procedure stepSizeEdit1Exit(Sender: TObject);
     procedure checkBoxBoundarySpClick(Sender: TObject);
     procedure ButtonVarAssignmentsClick(Sender: TObject);
+    procedure displayVarAssignments(rxnId: string);
 
   private
     numbPlots: Integer; // Number of plots displayed
@@ -551,20 +551,113 @@ end;
 
 
 procedure TMainForm.ButtonVarAssignmentsClick(Sender: TObject);
+var rxnId: string;
 begin
 // TODO Get a list of assignments for species and params used in reaction.
- if networkController.selectedObjects.count > 0 then
-     begin
-     case networkController.selectedObjects[0].objType of
-       oNode     : begin
-                   networkController.selectedObjects[0].node.state.species;
-                   end;
+  rxnId := '';
+  if networkController.selectedObjects.count > 0 then
+    begin
+      case networkController.selectedObjects[0].objType of
+       // oNode     : begin
+         //          networkController.selectedObjects[0].node.state.species;
+         //          end;
        oReaction : begin
-                   networkController.selectedObjects[0].reaction.state.id;
+                   rxnId := networkController.selectedObjects[0].reaction.state.id;
+                   self.displayVarAssignments(rxnId);
                    end;
-     end;
-     end;
- networkController.selectedObjects[0].reaction.state.species;
+      end;
+    end;
+
+end;
+
+procedure TMainForm.displayVarAssignments(rxnId: string);
+
+  // *****************************************
+  procedure AfterCreate(AForm: TObject);
+  var i, j, rxnIndex: integer;
+      strListOfAssign: TStringList;
+      curRule: TSBMLRule;
+      curStr: string;
+      foundVar: string;
+  begin
+    rxnIndex := 0;
+   // strTitle := '';
+    strListOfAssign := TStringList.create;
+    if self.networkController.findReaction(rxnId, rxnIndex) then
+      begin
+        for i := 0 to self.network.getNumRules -1 do
+          begin
+            curRule := nil;
+            curStr := '';
+            foundVar := '';
+            curRule := self.network.getRule(i);
+            for j := 0 to self.network.reactions[rxnIndex].state.nReactants -1 do
+              begin
+              if curRule.getVariable = self.network.reactions[rxnIndex].state.srcId[j] then
+                begin
+                foundVar := self.network.reactions[rxnIndex].state.srcId[j]
+                end;
+              end;
+
+            if foundVar = '' then
+              begin
+              for j := 0 to self.network.reactions[rxnIndex].state.nProducts -1 do
+                begin
+                if curRule.getVariable = self.network.reactions[rxnIndex].state.destId[j] then
+                  begin
+                  foundVar := self.network.reactions[rxnIndex].state.destId[j]
+                  end;
+                end;
+              end;
+
+            if foundVar = '' then
+              begin
+              for j := 0 to self.network.reactions[rxnIndex].state.rateParams.Count -1 do
+                begin
+                if curRule.getVariable = self.network.reactions[rxnIndex].state.rateParams[j].getId then
+                  begin
+                  foundVar := self.network.reactions[rxnIndex].state.rateParams[j].getId;
+                  end;
+                end;
+              end;
+
+            if (foundVar <> '') and (curRule.isAssignment) then
+              begin
+              curStr := foundVar + ' = ' + curRule.getFormula;
+              strListOfAssign.Add(curStr);
+              end;
+
+          end;
+
+        if strListOfAssign.Count <1 then strListOfAssign.Add('No variable assignments found.');
+
+
+      end
+    else strListOfAssign.Add('No reaction with that id found');
+
+    //(AForm as TFormAssignments).Top := trunc(self.Height*0.2); // put popup %20 from top
+    (AForm as TFormAssignments).listOfAssignments := strListOfAssign;
+    (AForm as TFormAssignments).fillAssignmentList();
+  end; // afterCreate
+  /// **********************************************************************
+
+var rxnIndex: integer;
+    fShowAssignments: TFormAssignments;
+    strTitle: string;
+begin
+  if self.networkController.findReaction(rxnId, rxnIndex) then
+      begin
+      strTitle := 'Reaction ' + self.network.reactions[rxnIndex].state.id + ' variable assignments:';
+      fShowAssignments := TFormAssignments.CreateNew(@AfterCreate);
+      fShowAssignments.Popup := true;
+      fShowAssignments.ShowClose := true;
+      fShowAssignments.PopupOpacity := 0.3;
+      fShowAssignments.Border := fbDialogSizeable;
+      fShowAssignments.caption := strTitle;
+      fShowAssignments.ShowModal({@AfterShowModal});
+      end
+  else notifyUser( ' No reaction with that id found.' );
+
 end;
 
 procedure TMainForm.editNodeIdExit(Sender: TObject);
