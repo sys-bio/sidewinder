@@ -14,13 +14,33 @@
       <species id="X1" compartment="default_compartment" initialConcentration="0" hasOnlySubstanceUnits="false" boundaryCondition="true" constant="false"/>
     </listOfSpecies>
     <listOfParameters>
-      <parameter id="VM1" value="10" constant="true"/>
+      <parameter id="VM1" constant="false"/>
       <parameter id="Keq1" constant="false"/>
-      <parameter id="h" value="10" constant="true"/>
+      <parameter id="h" constant="false"/>
       <parameter id="V4" value="2.5" constant="true"/>
       <parameter id="KS4" value="0.5" constant="true"/>
     </listOfParameters>
+    <listOfInitialAssignments>
+      <initialAssignment symbol="h">
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+          <apply>
+            <plus/>
+            <ci> Keq1 </ci>
+            <cn type="integer"> 2 </cn>
+          </apply>
+        </math>
+      </initialAssignment>
+    </listOfInitialAssignments>
     <listOfRules>
+      <assignmentRule variable="VM1">
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+          <apply>
+            <plus/>
+            <cn type="integer"> 10 </cn>
+            <ci> S2 </ci>
+          </apply>
+        </math>
+      </assignmentRule>
       <assignmentRule variable="Keq1">
         <math xmlns="http://www.w3.org/1998/Math/MathML">
           <apply>
@@ -208,4 +228,3 @@
     </listOfReactions>
   </model>
 </sbml>
-
