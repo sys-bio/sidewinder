@@ -631,7 +631,6 @@ procedure TMainForm.displayVarAssignments(rxnId: string);
 
         if strListOfAssign.Count <1 then strListOfAssign.Add('No variable assignments found.');
 
-
       end
     else strListOfAssign.Add('No reaction with that id found');
 
@@ -643,18 +642,25 @@ procedure TMainForm.displayVarAssignments(rxnId: string);
 
 var rxnIndex: integer;
     fShowAssignments: TFormAssignments;
+    curRxnState: TReactionState;
     strTitle: string;
 begin
+
   if self.networkController.findReaction(rxnId, rxnIndex) then
       begin
-      strTitle := 'Reaction ' + self.network.reactions[rxnIndex].state.id + ' variable assignments:';
-      fShowAssignments := TFormAssignments.CreateNew(@AfterCreate);
-      fShowAssignments.Popup := true;
-      fShowAssignments.ShowClose := true;
-      fShowAssignments.PopupOpacity := 0.3;
-      fShowAssignments.Border := fbDialogSizeable;
-      fShowAssignments.caption := strTitle;
-      fShowAssignments.ShowModal({@AfterShowModal});
+      curRxnState := self.network.reactions[rxnIndex].state;
+      if self.network.getNumRules > 0 then
+        begin
+        strTitle := 'Reaction ' + self.network.reactions[rxnIndex].state.id + ' variable assignments:';
+        fShowAssignments := TFormAssignments.CreateNew(@AfterCreate);
+        fShowAssignments.Popup := true;
+        fShowAssignments.ShowClose := true;
+        fShowAssignments.PopupOpacity := 0.3;
+        fShowAssignments.Border := fbDialogSizeable;
+        fShowAssignments.Caption := strTitle;
+        fShowAssignments.ShowModal({@AfterShowModal});
+        end
+      else notifyUser( ' No Assignments for variables used in reaction.' );
       end
   else notifyUser( ' No reaction with that id found.' );
 

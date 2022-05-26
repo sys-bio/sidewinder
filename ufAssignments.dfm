@@ -10,7 +10,7 @@ object FormAssignments: TFormAssignments
   Font.Name = 'Tahoma'
   Font.Style = []
   ParentFont = False
-  object lbSBMLAssigments: TWebListBox
+  object lbSBMLAssignments: TWebListBox
     Left = 16
     Top = 8
     Width = 249

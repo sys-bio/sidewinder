@@ -26,6 +26,7 @@ implementation
     jsComp: TJSObject;
     newParam: TSBMLparameter;
     jsParam: TJSObject;
+    newInitAssign: TSBMLInitialAssignment; jsInitAssign: TJSObject;
     newRule: TSBMLRule; jsRule: TJSObject;
     newFuncDef: TSBMLFuncDefinition; jsFuncDef: TJSObject;
     newLayout: TSBMLLayout; jsLayout: TJSObject;
@@ -60,6 +61,8 @@ implementation
     jsComp:= JS.ToObject(newComp);
     newParam:= TSBMLparameter.create(); // a new parameter
     jsParam:= JS.ToObject(newParam);
+    newInitAssign := TSBMLInitialAssignment.create();
+    jsInitAssign := JS.toObject(newInitAssign);
     newRule:= TSBMLRule.create();
     jsRule:= JS.ToObject(newRule);
     newFuncDef := TSBMLFuncDefinition.create();
@@ -143,6 +146,7 @@ implementation
       }
 
       newModel = moreReading.getNumbers(newModel);
+      newModel = moreReading.getInitialAssignments(newModel, jsInitAssign);
       newModel = moreReading.getRules(newModel,jsRule);
       newModel = moreReading.getSpecies(newModel, jsSpecies );
       newModel = moreReading.getCompartments(newModel, jsComp);

@@ -177,7 +177,8 @@ type
 
   TNetwork = class (TObject)
     private
-      listOfSBMLRules: TList<TSBMLRule>;
+      listOfSBMLRules: TList<TSBMLRule>; // Currently not saved to JSON file
+      listOfSBMLInitAssignments: TList<TSBMLInitialAssignment>; // Not saved to JSON
       procedure buildNetworkFromSBMLLayout(model: TModel); // model has SBML layout described
       procedure autoBuildNetworkFromSBML(model: TModel); // No SBML layout, build own layout
       FNetworkEvent: TNetworkEvent;
@@ -217,8 +218,14 @@ type
        procedure   addRule (newRule: TSBMLRule);
        function    getRule (index: integer): TSBMLRule;
        function    getRuleWithVarId (varId: string): TSBMLRule;
+       function    getRuleList(): TList<TSBMLRule>;
        function    getNumRules(): integer;
-       procedure   computeAnyToAnyCoordinates (reaction : TReaction; sourceNodes, destNodes : array of TNode);
+
+       procedure   addInitialAssignment(newInitAssign: TSBMLInitialAssignment);
+       function    getInitialAssignment(index: integer): TSBMLInitialAssignment;
+       function    getInitialAssignmentWithVarId (varId: string): TSBMLInitialAssignment;
+       function    getInitialAssignmentList(): TList<TSBMLInitialAssignment>;
+       function    getNumInitalAssignments(): integer;
 
        function    findReaction(id: string; var index: integer): boolean;
        function    addReaction (state : TReactionState) : TReaction; overload;
@@ -226,6 +233,7 @@ type
        procedure   updateReactions(node: TNode);  // Node Id changes
        procedure   updateReactionParamVal( paramId: string; newVal: double );
        function    addAnyToAnyReaction (id: string; sourceNodes, destNodes : array of TNode; var edgeIndex : integer) : TReaction;
+       procedure   computeAnyToAnyCoordinates (reaction : TReaction; sourceNodes, destNodes : array of TNode);
        procedure   unSelectAll;
        procedure   unReactionSelect;
        function    adjustNetworkCenterOffset (w, h : integer): TPointF;// get center offset for centering network
@@ -1240,6 +1248,12 @@ begin
       if model.getSBMLRule(i).isAssignment then
         self.addRule( model.getSBMLRule(i) );
       end;
+      // Chk for Initial Assignments:
+    for i := 0 to model.getNumInitialAssignments -1 do
+      begin
+      self.addInitialAssignment( model.getInitialAssignment(i) );
+      end;
+
 
     // Do not get layout dimensions? not really necessary?
     // if needed then need to set NetworkPB to width and height.
@@ -1465,6 +1479,12 @@ procedure TNetwork.autoBuildNetworkFromSBML(model: TModel);
       begin
       if model.getSBMLRule(i).isAssignment then
         self.addRule( model.getSBMLRule(i) );
+      end;
+
+     // Chk for Initial Assignments:
+    for i := 0 to model.getNumInitialAssignments -1 do
+      begin
+      self.addInitialAssignment( model.getInitialAssignment(i) );
       end;
     self.autoLayoutEvent(nil); // Generate layout
  end;
@@ -1753,10 +1773,52 @@ function TNetwork.getRuleWithVarId (varId: string): TSBMLRule;
      end;
  end;
 
+ function TNetwork.getRuleList(): TList<TSBMLRule>;
+ begin
+   Result := self.listOfSBMLRules;
+ end;
+
  function TNetwork.getNumRules(): integer;
  begin
    if self.listOfSBMLRules <> nil then
      Result := self.listOfSBMLRules.Count
+   else Result := 0;
+ end;
+
+ procedure TNetwork.addInitialAssignment(newInitAssign: TSBMLInitialAssignment);
+ begin
+   if self.listOfSBMLInitAssignments = nil then
+    self.listOfSBMLInitAssignments := TList<TSBMLInitialAssignment>.create;
+   self.listOfSBMLInitAssignments.Add(TSBMLInitialAssignment.create(newInitAssign));
+ end;
+
+ function  TNetwork.getInitialAssignment(index: integer): TSBMLInitialAssignment;
+ begin
+   if self.listOfSBMLInitAssignments.count > index then
+     Result := self.listOfSBMLInitAssignments[index]
+   else Result := nil;
+ end;
+
+ function  TNetwork.getInitialAssignmentWithVarId (varId: string): TSBMLInitialAssignment;
+ var i: integer;
+ begin
+   Result := nil;
+   for i := 0 to self.listOfSBMLInitAssignments.Count -1 do
+     begin
+     if self.listOfSBMLInitAssignments[i].getSymbol = varId then
+       Result := self.listOfSBMLInitAssignments[i];
+     end;
+ end;
+
+ function  TNetwork.getInitialAssignmentList(): TList<TSBMLInitialAssignment>;
+ begin
+   Result := self.listOfSBMLInitAssignments;
+ end;
+
+ function  TNetwork.getNumInitalAssignments(): integer;
+ begin
+   if self.listOfSBMLInitAssignments <> nil then
+     Result := self.listOfSBMLInitAssignments.Count
    else Result := 0;
  end;
 
@@ -2077,6 +2139,10 @@ begin
  for i := 0 to length (nodes) - 1 do
       nodes[i].Free;
   setLength (nodes, 0);
+
+  self.listOfSBMLRules.Free;
+  self.listOfSBMLInitAssignments.Free;
+
   self.networkEvent(nil);
 end;
 

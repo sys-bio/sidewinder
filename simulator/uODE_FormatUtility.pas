@@ -6,8 +6,8 @@ unit uODE_FormatUtility;
 // Convert basic math functions to javascript notation (ie pow() -> Math.pow() )
 
 interface
-uses System.SysUtils, System.StrUtils, System.Types,
-     web, uSBMLClasses, uModel, uSBMLClasses.rule;
+uses System.SysUtils, System.StrUtils, System.Types, web, uSBMLClasses, uModel,
+uSBMLClasses.rule, System.Generics.Collections;
 
 type
 TFormatODEs = class
@@ -19,6 +19,8 @@ TFormatODEs = class
     odeEqSet2:String; // LSODA specific
     assignParamEqs: array of String; // List of SBML param assignment formulas, to be added to final odeEqSet.
     assignSpeciesEqs: array of String; // List of SBML spec assignment formulas, to be added to final odeEqSet.
+    initialAssignParamEqs: TList<string>;
+    initialAssignSpeciesEqs: TList<string>;
     rxns: array of SBMLreaction;
     prods: array of TSBMLSpeciesReference; // TODO: move to buildODE_LHS()
     reactants: array of TSBMLSpeciesReference; // TODO: move to buildODE_LHS()
@@ -31,12 +33,13 @@ TFormatODEs = class
   function  buildODE_LHS( rxn: SBMLreaction ): array of String; // build the 'dydt_s[]=' or '-dydt_s[]=', store in rhsSymbols
   function  getODEeqLoc(Speciesdydt : String): Integer; // return index of Species in odeEqs.
   procedure BuildAssignmentEqs(model: TModel);
+  procedure buildInitialAssignEqs(model: TModel); // generate init Assignment eqs (valid only at t=0).
   function spBoundaryCondition(speciesId: String): boolean;
 
  public
   constructor create( model: TModel);
   function  replaceStrNames(names: array of String; stringtoedit: String; prefixStr: String):String;
-  function  StrInArray(const Value : String;const ArrayOfString : Array of String) : Integer;
+  function  StrInArray(const Value : String; const ArrayOfString : Array of String) : Integer;
   function  testStrReplace( ): String;  // testing....
   function  getODEs(): array of String;
   function  getODEs2(): array of String; // LSODA eqs
@@ -47,6 +50,7 @@ TFormatODEs = class
   function  get_speciesStrAr(): array of String;  // SBML Species id
   function  get_paramsStrAr(): array of String;   // SBML parameter and compartment ids.
   procedure buildLSODAeqs();   // build LSODA eqs (odeEqs2)
+
   procedure buildFinalEqSet(); // Build up final ODE eqs list as one string for use by solver.
 
 end;
@@ -67,6 +71,8 @@ var i, j,k,  count: Integer;
 begin
   self.assignParamEqs := nil;
   self.assignSpeciesEqs := nil;
+  self.initialAssignParamEqs := TList<string>.Create;
+  self.initialAssignSpeciesEqs := TList<string>.Create;
   setLength(self.speciesAr,Length(model.getSBMLspeciesAr()));
   self.speciesAr := model.getSBMLspeciesAr();
   setLength(paramsStrAr, Length(model.getSBMLparameterAr()));
@@ -77,6 +83,7 @@ begin
   self.paramsStrAr := model.getP_Names;
   self.pVals := model.getP_Vals;
   self.BuildAssignmentEqs(model);
+  self.buildInitialAssignEqs(model);
 
   // *******************************************************************
   // go through each reaction eq and replace all species and params in arrays:
@@ -471,6 +478,39 @@ end;
    end;
  end;
 
+ procedure TFormatODEs.buildInitialAssignEqs(model: TModel);
+ var i: integer;
+     curEq, curSymbol: string;
+ begin
+   if model.getNumInitialAssignments > 0 then
+     begin
+     for i := 0 to model.getNumInitialAssignments -1 do
+       begin
+       curEq:= '';
+       curSymbol := model.getInitialAssignment(i).getSymbol;
+       //if model.isParameterIdinList(curSymbol) then
+       if curSymbol <> '' then
+         begin
+         curEq:= model.getInitialAssignment(i).getSymbol + ' = '; // Start building assignment
+         if model.getInitialAssignment(i).getFormula <> '' then
+           curEq := curEq + model.getInitialAssignment(i).getFormula
+         else curEq := curEq + '0';
+         curEq:= replaceStrNames(self.speciesStrAr, curEq,'s');
+         curEq:= replaceStrNames(self.paramsStrAr, curEq,'p');
+         curEq:= JSMathConvert(curEq);
+         if self.StrInArray(curSymbol, self.paramsStrAr) > -1 then
+           self.initialAssignParamEqs.Add(curEq)
+         else if self.StrInArray(curSymbol, self.speciesStrAr) > -1 then
+            self.initialAssignSpeciesEqs.Add(curEq);
+
+         end;
+
+       end;
+
+     end;
+
+
+ end;
    // Build up final ODE eqs list as one string for use by solver
  procedure TFormatODEs.buildFinalEqSet();
  var i:Integer;

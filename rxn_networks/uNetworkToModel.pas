@@ -20,6 +20,7 @@ private
   procedure setReactions;
   procedure setCompartments; // Currently only one, unit compartment
   procedure setAssignmentRules;
+  procedure setInitialAssignments;
   procedure setSpeciesRendering( spState: TNodeState; specGlypId: string;
                                  specTextGlyphId:string );
   procedure setReactionRendering( rxnState: TReactionState; rxnSpRefGlyphId: string; reactant: boolean );
@@ -110,6 +111,13 @@ begin
     begin
     self.model.addSBMLrule(self.network.getRule(i));
     end;
+end;
+
+procedure TNetworkToModel.setInitialAssignments;
+var i: integer;
+begin
+  for i := 0 to self.network.getNumInitalAssignments -1 do
+    self.model.addInitialAssignment(self.network.getInitialAssignment(i));
 end;
 
 // Layout: creates species and text glyphs:

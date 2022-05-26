@@ -100,16 +100,16 @@ class GenerateSBMLModel {
      if(rxnRules[i].isRate()){
        newRule = this.libSBMLmodel.createRateRule();}
      else if(rxnRules[i].isAssignment()){
-            newRule = this.libSBMLmodel.createAssignmentRule();}
+        newRule = this.libSBMLmodel.createAssignmentRule(); }
      else if(rxnRules[i].isAlgebraic()){
             newRule = this.libSBMLmodel.createAlgebraicRule();}
-     newRule.setId(rxnRules[i].getId());
-     if(rxnRules[i].isSetName()){newRule.setName(rxnRules[i].getName());}
-     if(rxnRules[i].isScaler()){newRule.setScaler(true); }
-     if(rxnRules[i].isSpeciesConcentration()){ newRule.setSpeciesConcentration(true);}
-     if(rxnRules[i].isParameter()){ newRule.setParameter(true);}
-     if(rxnRules[i].isSetFormula()){ newRule.setFormula(rxnRules[i].getFormula());}
-     if(rxnRules[i].isSetVariable()){ newRule.setVariable(rxnRules[i].getVariable());}
+      newRule.setId(rxnRules[i].getId());
+        if(rxnRules[i].isSetName()){newRule.setName(rxnRules[i].getName());}
+        if(rxnRules[i].isScaler()){newRule.setScaler(true); }
+       // if(rxnRules[i].isSpeciesConcentration()){ newRule.setSpeciesConcentration(true);}// no longer needed?
+       // if(rxnRules[i].isParameter()){ newRule.setParameter(rxnRules[i].getVariable());}// Not longer needed
+        if(rxnRules[i].isSetFormula()){ newRule.setFormula(rxnRules[i].getFormula());}
+        if(rxnRules[i].isSetVariable()){ newRule.setVariable(rxnRules[i].getVariable());}
    }
  }
 
