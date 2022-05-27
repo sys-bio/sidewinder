@@ -2175,6 +2175,7 @@ procedure TMainForm.updateRxnRatePanel(); // Refresh with current rxn info.
 begin
   try
     self.rateLawEqLabel.Caption := networkController.selectedObjects[0].reaction.state.rateLaw; // use getRateLaw instead.
+    self.rateLawEqLabel.Hint := networkController.selectedObjects[0].reaction.state.rateLaw;
     self.lblRxnIdString.Caption := networkController.selectedObjects[0].reaction.state.id;
     self.RxnRatePanel.Width := self.rateLawEqLabel.Width + self.rateLawLabel.Width + 60;
     self.RxnRatePanel.invalidate;

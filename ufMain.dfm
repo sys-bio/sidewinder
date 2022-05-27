@@ -1337,8 +1337,8 @@ object mainForm: TmainForm
           216
           760)
         object pnlSimResultsFile: TWebPanel
-          Left = 8
-          Top = 561
+          Left = 6
+          Top = 684
           Width = 205
           Height = 73
           ElementClassName = 'card'
@@ -1494,6 +1494,8 @@ object mainForm: TmainForm
         OnMouseMove = networkPB1MouseMove
         OnMouseUp = networkPB1MouseUp
         OnMouseWheel = networkPB1MouseWheel
+        ExplicitLeft = -101
+        ExplicitTop = -6
       end
       object netDrawScrollBarVert: TTMSFNCScrollBar
         Left = 756
@@ -1667,6 +1669,7 @@ object mainForm: TmainForm
           Font.Style = []
           HeightPercent = 100.000000000000000000
           ParentFont = False
+          ShowHint = True
           WidthPercent = 100.000000000000000000
         end
         object lblRxnId: TWebLabel
