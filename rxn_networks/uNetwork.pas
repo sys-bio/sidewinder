@@ -780,6 +780,7 @@ begin
       Result := false;
       reactant := false;
       spRefGlyph := newGlyphRxn.getSpeciesRefGlyph(i);
+
       if i = 0 then  // Only use style from first spRefGlyph to draw reaction line:
         begin
         spRefGlyphStyle := reactionRenderInfo.getGlyphRenderStyle(newGlyphRxn.getSpeciesRefGlyph(i).getId,
@@ -809,6 +810,12 @@ begin
           end;
         end;
       spGlyphId := spRefGlyph.getSpeciesGlyphId; // species glyph id used to find spId
+      for j := 0 to newSpGlyphList.Count -1 do
+        begin
+        if newSpGlyphList[j].getId = spGlyphId then
+          spId := newSpGlyphList[j].getSpeciesId;
+        end;
+      if spId = '' then console.log('uNetwork -TReactionState.processReactionSpeciesReferenceCurves, no species id found');
 
       for j := 0 to newModelRxn.getNumReactants -1 do
         begin
@@ -1318,7 +1325,8 @@ begin
                       reaction.state.destPtr[k] := nodes[l];
                       break;
                     end;
-              reaction.state.setBezierHandles; // node ptrs have been set.
+              //reaction.state.setBezierHandles; // Do not need this as SBML layout
+                                                // has this already specified.
             end;
 
              // ************************
@@ -1879,7 +1887,7 @@ begin
       reaction.state.productReactionArcs[i].arcDirection := adOutArc;
 
   // Set up start handles on each reactant, these are between
-  // the the node and arc center but shifted towards the arccenter
+  // the node and arc center but shifted towards the arccenter
   reaction.state.setBezierHandles;
 
   // If we want line segments they go here.
@@ -1893,9 +1901,11 @@ var nReactants, nProducts : integer;
     i , reactantCount, productCount: integer;
     nDestCount : integer;
     startPt, pt : TPointF;
+    shift: double;
 begin
   // Set up start handles on each reactant, these are between
   // the the node and arc center but shifted towards the arccenter
+  shift := 1.00; // 1.25;
   cx := self.arcCenter.x; cy := self.arcCenter.y;
   reactantCount := self.nReactants;
   productCount := self.nProducts;
@@ -1904,15 +1914,15 @@ begin
     if self.srcPtr[i] <> nil then
       begin
       pt := self.srcPtr[i].state.getCenter;
-      self.reactantReactionArcs[i].h1.x := pt.x + (cx - pt.x) / 1.25;
-      self.reactantReactionArcs[i].h1.y := pt.y + (cy - pt.y) / 1.25;
+      self.reactantReactionArcs[i].h1.x := pt.x + (cx - pt.x) / shift;
+      self.reactantReactionArcs[i].h1.y := pt.y + (cy - pt.y) / shift;
       end;
     end;
 
   // Compute the common position of the inner control point on the
   // reactant side, the opposite inner control point will be
   // made collinear with this point. We'll make the inner control point
-  // on the reactant side the centroid between teh reactants and arccenter
+  // on the reactant side the centroid between the reactants and arccenter
 
   sumX := 0; sumY := 0;
   for i := 0 to reactantCount - 1 do
@@ -1934,7 +1944,6 @@ begin
       self.reactantReactionArcs[i].h2.x := centerX;
       self.reactantReactionArcs[i].h2.y := centerY;
       end;
-
   // Set up start handles on each product, shift handles twards the arccenter
   for i := 0 to productCount - 1 do
     begin
@@ -1943,6 +1952,8 @@ begin
       pt := self.destPtr[i].state.getCenter;
       self.productReactionArcs[i].h2.x := cx + (pt.x - cx) / 3.25;
       self.productReactionArcs[i].h2.y := cy + (pt.y - cy) / 3.25;
+     // self.productReactionArcs[i].h2.x := cx + (pt.x - cx) / 1.0;
+     // self.productReactionArcs[i].h2.y := cy + (pt.y - cy) / 1.0;
       end;
     end;
 
@@ -1950,6 +1961,8 @@ begin
   nDestCount := 0;
   for i := 0 to productCount - 1 do
       begin
+  //    self.productReactionArcs[i].h1.x := 2*cx - self.reactantReactionArcs[0].h2.x;
+  //    self.productReactionArcs[i].h1.y := 2*cy - self.reactantReactionArcs[0].h2.y;
       self.productReactionArcs[i].h1.x := 2*cx - self.reactantReactionArcs[0].h2.x;
       self.productReactionArcs[i].h1.y := 2*cy - self.reactantReactionArcs[0].h2.y;
       end;

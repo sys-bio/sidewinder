@@ -54,6 +54,7 @@ type
     procedure stopTimer();
     procedure startTimer();
     function  getTime():double;
+    // TODO: procedure updateInitialAssignments(); If any InitAssignments, calc them here then set param, species init vals to these.
     procedure setRuntime( newRunTime: double );
     procedure setTime( newTime: double );
     procedure startSimulation();
