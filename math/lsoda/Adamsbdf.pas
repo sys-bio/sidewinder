@@ -1958,7 +1958,6 @@ begin
       dy_tv:= TVector.create(yh[2].size);
       dy_tv[1]:=0.4;
       yh[2]:= FDerivatives(t,y_arr,self.p);
-
       nfe := 1;
 
       { Load the initial value vector in yh.}
@@ -2401,7 +2400,7 @@ begin
              end;
           end;
 
-          console.log('line ~ 2348, y[1]: ', y[1]);
+        //  console.log('line ~ 2348, y[1]: ', y[1]);
          terminate2( y, t );
          exit;
        end;     {   end if ( kflag == -1 || kflag == -2 )   }
