@@ -158,7 +158,7 @@ begin
   odeFormat := TFormatODEs.create(self.model);
   // Run Simulation using info from odeFormat:
   odeFormat.buildFinalEqSet();
-  console.log(' ODE eq set2:',odeFormat.getODEeqSet2());
+  //console.log(' ODE eq set2:',odeFormat.getODEeqSet2());
    if self.solverUsed = LSODAS then
     self.LSODAeq := odeFormat.getODEeqSet2()
   else
