@@ -10,16 +10,9 @@
       <species id="S1" compartment="default_compartment" initialConcentration="0" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false"/>
     </listOfSpecies>
     <listOfParameters>
-      <parameter id="k1" value="0.1" constant="false"/>
+      <parameter id="k1" value="0.1" constant="true"/>
       <parameter id="S2" value="0" constant="true"/>
     </listOfParameters>
-    <listOfRules>
-      <assignmentRule variable="k1">
-        <math xmlns="http://www.w3.org/1998/Math/MathML">
-          <cn> 0.1 </cn>
-        </math>
-      </assignmentRule>
-    </listOfRules>
     <listOfReactions>
       <reaction id="J0" reversible="true" fast="false">
         <listOfReactants>
