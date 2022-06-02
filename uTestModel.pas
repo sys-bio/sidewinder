@@ -652,8 +652,8 @@ begin
 ' </sbml>';
    
   3:
-   Result := ' <?xml version="1.0" encoding="UTF-8"?>' +
-  ' <sbml xmlns="http://www.sbml.org/sbml/level3/version1/core" xmlns:layout="http://www.sbml.org/sbml/level3/version1/layout/version1" xmlns:render="http://www.sbml.org/sbml/level3/version1/render/version1" ' +
+   Result := '<?xml version="1.0" encoding="UTF-8"?>' +
+  '<sbml xmlns="http://www.sbml.org/sbml/level3/version1/core" xmlns:layout="http://www.sbml.org/sbml/level3/version1/layout/version1" xmlns:render="http://www.sbml.org/sbml/level3/version1/render/version1" ' +
   'level="3" version="1" layout:required="false" render:required="false">' +
   ' <model id="Model_layout">' +
     ' <listOfCompartments>' +

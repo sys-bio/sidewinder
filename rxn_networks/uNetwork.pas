@@ -286,7 +286,7 @@ end;
 function saveColorToJSON (color : TColor) : TJSONObject;
 var A : byte;
 begin
-  console.log('Color: ', colorToHexString(color) );
+ // console.log('Color: ', colorToHexString(color) );
   result := TJSONObject.Create;
   result.AddPair ('R', TJSONNumber.Create (GetRValue (color)));
   result.AddPair ('G', TJSONNumber.Create (GetGValue (color)));
@@ -756,7 +756,7 @@ var i: integer;
 begin
   strNewKLaw := '';
   strNewKLaw := strKinLaw;
-  console.log(' Initial NewFormula:', strNewKLaw);
+ // console.log(' Initial NewFormula:', strNewKLaw);
   if funcDefList <> nil then
     begin
     for i := 0 to funcDefList.count -1 do
@@ -766,12 +766,12 @@ begin
         begin
         formula := '(' + funcDefList[i].getFuncFormula + ')';
         strNewKLaw := strNewKLaw.Replace(funcDefList[i].getFullFuncLabel, formula);
-        console.log(' Current NewFormula:', strNewKLaw);
+       // console.log(' Current NewFormula:', strNewKLaw);
         end;
 
       end;
     end;
-  console.log(' Final NewFormula:', strNewKLaw);
+  //console.log(' Final NewFormula:', strNewKLaw);
   Result := strNewKLaw;
 end;
 
@@ -1385,7 +1385,7 @@ begin
              // ************************
           end;
       end;
-   console.log('Done loading SBML network layout');
+   //console.log('Done loading SBML network layout');
 end;
 
 function TNetwork.getColorDefs(newStyle: TSBMLRenderStyle;
@@ -2101,7 +2101,7 @@ begin
   result := False;
   if node.overControlRectangle (x, y, selectedNodeGrabRectangle) then
      begin
-     console.log ('netowork.overNodeControlRectangle: TRUE, i = ' + inttostr (i));
+    // console.log ('netowork.overNodeControlRectangle: TRUE, i = ' + inttostr (i));
      result := True;
      exit;
      end;
@@ -2127,7 +2127,7 @@ begin
              begin
              reactionIndex := i;
              arcId := j;
-             console.log ('Found Reactant Bezier');
+             //console.log ('Found Reactant Bezier');
              exit (True);
              end;
           end;
@@ -2140,7 +2140,7 @@ begin
              begin
              reactionIndex := i;
              arcId := j;
-             console.log ('Found it Product Bezier');
+             //console.log ('Found it Product Bezier');
              exit (True);
              end;
 
@@ -2395,21 +2395,23 @@ begin
   //sY := y*scalingFactor - f;
   //sW := state.w*scalingFactor + 2*f;
   //sH := state.h*scalingFactor + 2*f;
-
-  sX := state.x - f;
-  sY := state.y - f;
-  sW := state.w + 2*f;
-  sH := state.h + 2*f;
+  if Assigned(state) then
+    begin
+    sX := state.x - f;
+    sY := state.y - f;
+    sW := state.w + 2*f;
+    sH := state.h + 2*f;
+    end;
 
   // Given the selected box, now compute the control boxes around this rectangle
   r := getControlRects(sX, sY, sW, sH);
   for i := 0 to MAX_NODE_CONTROL_POINTS - 1 do
       begin
-      console.log ('TNode.overControlRectangle: ' + inttostr (i));
+     // console.log ('TNode.overControlRectangle: ' + inttostr (i));
       result := uGraphUtils.PtInRectF (r[i], TPointF.Create (x,y)) or result;
       if result then
          begin
-         console.log ('TNode.overControlRectangle: FOUND');
+       //  console.log ('TNode.overControlRectangle: FOUND');
          selectedNodeGrabRectangle := i;
          exit;
          end;
@@ -2644,8 +2646,8 @@ begin
       begin
       h1 := state.reactantReactionArcs[i].h1;
       h2 := state.reactantReactionArcs[i].h2;
-      console.log ('h1 and h2');
-      console.log (h1); console.log (h2);
+     // console.log ('h1 and h2');
+     // console.log (h1); console.log (h2);
       if ptInCircle (x, y, h1) then
          begin
          bezierId := i;

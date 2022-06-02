@@ -16,12 +16,12 @@ uses
   uPlotPanel, uParamSliderLayout, uSidewinderTypes, WEBLib.ComCtrls, WEBLib.Miletus,
   WEBLib.JQCtrls, ufAssignments, ufSelectExample;
 
-const SIDEWINDER_VERSION = 'Version 0.32 alpha';
+const SIDEWINDER_VERSION = 'Version 0.33 alpha';
       DEFAULT_RUNTIME = 10000;
       EDITBOX_HT = 25;
       ZOOM_SCALE = 20;
       MAX_STR_LENGTH = 50;  // Max User inputed string length for Rxn/spec/param id
-      DEBUG = true; // true then show debug console output and any other debug related info
+      DEBUG = false; // true then show debug console output and any other debug related info
 
 type
   TPanelType = ( SIMULATION_PANEL, REACTION_PANEL, NODE_PANEL );
@@ -466,8 +466,7 @@ procedure TMainForm.btnDrawClick(Sender: TObject);
       strModel: string;
   begin
     i := self.fSelectExample.indexExampleChosen;
-    //if i = 3 then set stepsize to 10;
-
+    if i = 3 then self.stepSizeEdit1.Text := inttostr(10); // glycolysis example
     strModel := getTestModel(i);
     self.SBMLOpenDialogGetFileAsText(nil,0, strModel);
   end;
@@ -842,6 +841,11 @@ begin
   self.deleteAllSliders;
   self.network.Clear;
   self.networkPB1.Invalidate;
+  self.disableEditNodePanel;
+  self.editNodeId.Text := '';
+  self.editNodeConc.Text := '';
+  self.edtReactionId.Text := '';
+  self.networkController.selectedObjects.clear;
   self.resetBtnOnLineSim;
   self.btnResetSimSpecies.Enabled := false;
   self.btnParamReset.Enabled := false;
@@ -1046,24 +1050,30 @@ begin
   networkPB1.Invalidate;
   if (networkController.selectedObjects.Count > 0) and (networkController.selectedObjects[0].objType = oNode) then
     begin
-     // editNodeId.Text := networkController.selectedObjects[0].node.state.id;
-     editNodeId.Text := networkController.selectedObjects[0].node.state.species;
-      editNodeConc.Text := networkCOntroller.selectedObjects[0].node.state.conc.ToString;
+    if Assigned(networkController.selectedObjects[0].node.state) then
+      begin
+      self.editNodeId.Text := networkController.selectedObjects[0].node.state.species;
+      self.editNodeConc.Text := networkCOntroller.selectedObjects[0].node.state.conc.ToString;
       self.checkBoxBoundarySp.Checked := networkCOntroller.selectedObjects[0].node.state.boundarySp;
-      pnlNodePanel.visible := true;
-      self.rightPanelType := NODE_PANEL;
-      self.RRxnEditWPanel.visible := false;
-      self.RSimWPanel.visible := false;
-      self.RNodeEditWPanel.visible := true;
-      self.RNodeEditWPanel.invalidate;
-      self.setRightPanels;
+      end;
+
+    pnlNodePanel.visible := true;
+    self.rightPanelType := NODE_PANEL;
+    self.RRxnEditWPanel.visible := false;
+    self.RSimWPanel.visible := false;
+    self.RNodeEditWPanel.visible := true;
+    self.RNodeEditWPanel.invalidate;
+    self.setRightPanels;
     end
   else if (networkController.selectedObjects.Count > 0) and (networkController.selectedObjects[0].objType = oReaction) then
     begin
     self.rightPanelType := REACTION_PANEL;
-    edtReactionId.Text := networkController.selectedObjects[0].reaction.state.id;
-    btnReactionColor.Color := networkController.selectedObjects[0].reaction.state.fillColor;
-    edtReactionWidth.Value := networkController.selectedObjects[0].reaction.state.thickness;
+    if Assigned(networkController.selectedObjects[0].reaction.state) then
+      begin
+      edtReactionId.Text := networkController.selectedObjects[0].reaction.state.id;
+      btnReactionColor.Color := networkController.selectedObjects[0].reaction.state.fillColor;
+      edtReactionWidth.Value := networkController.selectedObjects[0].reaction.state.thickness;
+      end;
     self.RSimWPanel.visible := false;
     self.RNodeEditWPanel.visible := false;
     self.RRxnEditWPanel.visible := true;

@@ -1338,7 +1338,7 @@ object mainForm: TmainForm
           760)
         object pnlSimResultsFile: TWebPanel
           Left = 6
-          Top = 624
+          Top = 604
           Width = 205
           Height = 73
           ElementClassName = 'card'
