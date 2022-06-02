@@ -1463,7 +1463,7 @@ procedure TNetwork.autoBuildNetworkFromSBML(model: TModel);
 
           reaction := addReaction (reactionState);
           reaction.state.arcCenter.x := 20 + j*2;
-          reaction.state.arcCenter.y := 22 + j*2;
+          reaction.state.arcCenter.y := 60 + j*2;
              // Set the node pointers based on the node Ids
           if reaction.state.nReactants < 1 then
           begin

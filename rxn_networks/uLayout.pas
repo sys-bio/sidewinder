@@ -58,7 +58,8 @@ begin
   W := width;
   L := height;
   area := W*L;
-  k := 120;
+  //k := 120;
+  k := sqrt( area/(2*length(network.nodes)) ); // python code: https://gist.github.com/mmisono/8972731
   iterations := trunc ((130 * ln(length (network.nodes) + 2)));
 
   dt := 1/(iterations + 1);
