@@ -485,6 +485,12 @@ begin
       srcId[i] := '';
       if i < Length(srcStoich) then
          srcStoich[i] := 0.0; // assume same size as srcId
+      self.reactantReactionArcs[i].h1.x := 0.0;
+      self.reactantReactionArcs[i].h2.x := 0.0;
+      self.reactantReactionArcs[i].nodeIntersectionPt.x := 0.0;
+      self.reactantReactionArcs[i].h1.y := 0.0;
+      self.reactantReactionArcs[i].h2.y := 0.0;
+      self.reactantReactionArcs[i].nodeIntersectionPt.y := 0.0;
       end;
 end;
 
@@ -502,6 +508,14 @@ begin
       destId[i] := '';
       if i < Length(destStoich) then
          destStoich[i] := 0.0; // assume same size as destId
+
+      self.productReactionArcs[i].h1.x := 0.0;
+      self.productReactionArcs[i].h2.x := 0.0;
+      self.productReactionArcs[i].nodeIntersectionPt.x := 0.0;
+      self.productReactionArcs[i].h1.y := 0.0;
+      self.productReactionArcs[i].h2.y := 0.0;
+      self.productReactionArcs[i].nodeIntersectionPt.y := 0.0;
+
      end;
 end;
 
@@ -604,6 +618,7 @@ var  newParam : TSBMLparameter;
      i, j, k : integer;
      intNumCurveSeg: integer; // number of line segments
      intReactNode, intProdNode : integer; // node index.
+     spRefGlyphUsed: TList<boolean>; // check if glyph already used.
      rxnStyle: TSBMLRenderStyle;
 begin
   id := modelRxn.getId;
@@ -616,9 +631,13 @@ begin
   // get reactants:
   self.nReactants := modelRxn.getNumReactants;
   createReactantSpace (nReactants);
+  //spRefGlyphUsed := TList<boolean>.create;
+
 
   for i := 0 to modelRxn.getNumReactants - 1 do
       begin
+   //   for i := 0 to glyphRxn.getNumSpeciesRefGlyphs -1 do
+   //     spRefGlyphUsed[i] := false;
       srcId[i] := '';
       if glyphRxn <> nil then
         begin
@@ -629,7 +648,10 @@ begin
           spGlyphId := glyphRxn.getSpeciesRefGlyph(j).getSpeciesGlyphId;
           speciesName := getSpeciesIdFromSpGlyphId(spGlyphId, spGlyphList);
           if speciesName = modelRxn.getReactant(i).getSpecies then
-            srcId[i] := spGlyphId;
+            begin
+            srcId[i] := spGlyphId;  // different srcId can have same spGlyphId  (
+           // spRefGlyphUsed[j] := true;
+            end;
           end;
         end;
       if srcId[i] = '' then srcId[i] := modelRxn.getReactant(i).getSpecies;
@@ -652,7 +674,7 @@ begin
           spGlyphId := glyphRxn.getSpeciesRefGlyph(j).getSpeciesGlyphId;
           speciesName := getSpeciesIdFromSpGlyphId(spGlyphId, spGlyphList);
           if speciesName = modelRxn.getProduct(i).getSpecies then
-            destId[i] := spGlyphId;
+            destId[i] := spGlyphId; // different destId can have same spGlyphId
           end;
       end;
 
@@ -763,10 +785,10 @@ var i, j, k, nodeIndex: integer;
     spGlyphId, spId: string; // SpeciesGlyph id, species id
     reactant: boolean;
     colorFound: boolean;
-
+   // currBezier: TSBMLLayoutCubicBezier;
     arcCenterFound: boolean;
     strMsg: string;
-begin
+begin                // if dest spRefGlyph is the same as another then set curve the same.
   arcCenterFound := false;
   colorFound := false;
 
@@ -835,7 +857,10 @@ begin
               reactant := false;
               for k := 0 to self.nProducts -1 do
                 if self.destId[k] = spGlyphId then nodeIndex := k;
+
               end;
+
+
             end;
         end;
 
@@ -862,8 +887,13 @@ begin
                       end;
                     arcCenterFound := true;
                     end;
+                //  currBezier := nil;
+                //  currBezier := spRefGlyph.getCurve.getCubicBezier(j);
+                //  self.importSBMLBezierCurve(currBezier,
+                //                           nodeIndex, reactant );
                   self.importSBMLBezierCurve(spRefGlyph.getCurve.getCubicBezier(j),
                                            nodeIndex, reactant );
+
                   Result := true;
                   end
                   else
@@ -913,6 +943,32 @@ begin
         end;
 
     end;
+    if self.nReactants >1 then   // Give same reactant ids the same curve:
+      begin                      // assume curves are bezier only:
+      for j := 0 to self.nReactants - 1 do
+        begin
+        if (self.reactantReactionArcs[j].h1.x = 0) and (self.reactantReactionArcs[j].h2.x = 0) then
+         for k := 1 to self.nReactants - 1 do
+           begin
+           if self.srcId[j] = self.srcId[k] then
+             self.reactantReactionArcs[j] := self.reactantReactionArcs[k];
+           end;
+        end;
+      end;
+    if self.nProducts > 1 then
+      begin
+      for j := 0 to self.nProducts - 1 do
+        begin
+        if (self.productReactionArcs[j].h1.x = 0) and (self.productReactionArcs[j].h2.x = 0) then
+         for k := 1 to self.nProducts - 1 do
+           begin
+           if self.destId[j] = self.destId[k] then
+             self.productReactionArcs[j] := self.productReactionArcs[k];
+           end;
+        end;
+      end;
+
+
 end;
 
 procedure TReactionState.processReactionCurves( newRxn: TSBMLLayoutReactionGlyph ;
@@ -998,7 +1054,6 @@ begin
                                       newBezier.getBasePoint2.getY;
       self.productReactionArcs[intNode].arcDirection := adOutArc;
       self.productReactionArcs[intNode].Merged := false;
-     // self.setBezierHandles;   // self.srcPt = nil, not assigned yet
       end;
     end;
 end;
@@ -1017,7 +1072,6 @@ begin
     self.reactantReactionArcs[intNode].nodeIntersectionPt.y := currentLine.getStartPt.getY;
     self.reactantReactionArcs[intNode].arcDirection := adInArc;
     self.reactantReactionArcs[intNode].Merged := false;
-   // self.setBezierHandles;
     end
   else
     begin
@@ -1035,7 +1089,6 @@ begin
         self.productReactionArcs[intNode].nodeIntersectionPt.y := currentLine.getEndPt.getY;
         self.productReactionArcs[intNode].arcDirection := adOutArc;
         self.productReactionArcs[intNode].Merged := false;
-      //  self.setBezierHandles;
         end;
     end;
 

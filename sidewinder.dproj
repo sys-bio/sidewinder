@@ -165,6 +165,11 @@
             <FormType>dfm</FormType>
             <DesignClass>TWebForm</DesignClass>
         </DCCReference>
+        <DCCReference Include="ufSelectExample.pas">
+            <Form>formExamples</Form>
+            <FormType>dfm</FormType>
+            <DesignClass>TWebForm</DesignClass>
+        </DCCReference>
         <None Include="index.html"/>
         <None Include="sbml\libsbml.js"/>
         <None Include="sbml\libsbml.wasm"/>

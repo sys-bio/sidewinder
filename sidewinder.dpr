@@ -45,7 +45,8 @@ uses
   uASTNode in 'math\uASTNode.pas',
   uSBMLClasses.Render in 'sbml\uSBMLClasses.Render.pas',
   uSBMLClasses.FuncDefinition in 'sbml\uSBMLClasses.FuncDefinition.pas',
-  ufAssignments in 'ufAssignments.pas' {FormAssignments: TWebForm} {*.html};
+  ufAssignments in 'ufAssignments.pas' {FormAssignments: TWebForm} {*.html},
+  ufSelectExample in 'ufSelectExample.pas' {formExamples: TWebForm} {*.html};
 
 {$R *.res}
 
@@ -54,5 +55,6 @@ begin
   Application.MainFormOnTaskbar := True;
   Application.CreateForm(TmainForm, mainForm);
   Application.CreateForm(TFormAssignments, FormAssignments);
+  Application.CreateForm(TformExamples, formExamples);
   Application.Run;
 end.

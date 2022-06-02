@@ -14,14 +14,14 @@ uses
   uNetworkTypes, WEBLib.Lists, Vcl.Forms, uModel, uSBMLClasses, uSBMLClasses.rule, uSimulation,
   uControllerMain, uODE_FormatUtility, uGraphP, Vcl.Menus, WEBLib.Menus, ufVarSelect,
   uPlotPanel, uParamSliderLayout, uSidewinderTypes, WEBLib.ComCtrls, WEBLib.Miletus,
-  WEBLib.JQCtrls, ufAssignments;
+  WEBLib.JQCtrls, ufAssignments, ufSelectExample;
 
 const SIDEWINDER_VERSION = 'Version 0.32 alpha';
       DEFAULT_RUNTIME = 10000;
       EDITBOX_HT = 25;
       ZOOM_SCALE = 20;
       MAX_STR_LENGTH = 50;  // Max User inputed string length for Rxn/spec/param id
-      DEBUG = false; // true then show debug console output and any other debug related info
+      DEBUG = true; // true then show debug console output and any other debug related info
 
 type
   TPanelType = ( SIMULATION_PANEL, REACTION_PANEL, NODE_PANEL );
@@ -232,6 +232,7 @@ type
     rxnProdStoichLabels: TList<TWebLabel>;
     rxnProdStoichEdits: TList<TWebEdit>;
     saveSimResults: boolean;
+    fSelectExample: TformExamples;
     procedure InitSimResultsTable(); // Init simResultsMemo.
     procedure addPlot(yMax: double); // Add a plot, yMax: largest initial val of plotted species
     procedure resetPlots();  // Reset plots for new simulation.
@@ -317,7 +318,7 @@ type
 
 var
   mainForm: TMainForm;
-  spSelectform: TVarSelectForm; // display speciecs select to plot radio group
+ // spSelectform: TVarSelectForm; // display speciecs select to plot radio group
 
 implementation
 
@@ -449,6 +450,27 @@ begin
 end;
 
 procedure TMainForm.btnDrawClick(Sender: TObject);
+  procedure afterCreate(AForm: TObject);
+  var exampleList: TStringList;
+  begin
+    exampleList := TStringList.Create;
+    exampleList.Add('Simple network');
+    exampleList.Add('Feedback example');
+    exampleList.Add('Goldbeter 1990, calcium spike');
+    exampleList.Add('Glycolysis');
+    (AForm as TformExamples).rgSelectExample.Items := exampleList;
+  end;
+
+  procedure afterShowModal(AValue: integer);
+  var i: integer;
+      strModel: string;
+  begin
+    i := self.fSelectExample.indexExampleChosen;
+    //if i = 3 then set stepsize to 10;
+
+    strModel := getTestModel(i);
+    self.SBMLOpenDialogGetFileAsText(nil,0, strModel);
+  end;
 var
   n1, n2, n3, n4: TNode;
   srcNodes, destNodes : array of TNode;
@@ -456,23 +478,12 @@ begin
   setLength (srcNodes, 1); setLength (destNodes, 1);
   if length(network.getCurrentState.savedNodes) = 0 then
   begin
-    n1 := networkController.addNode('node1', 60, 200);
-    n1.state.conc := 5.0;
-    n2 := networkController.addNode('node2', 270, 270);
-    n3 := networkController.addNode('node3', 540, 80);
-    n4 := networkController.addNode('node4', 400, 500);
-    srcNodes[0] := n1; destNodes[0] := n2;
-    networkController.addReaction('r1', srcNodes, destNodes);
+    // ****************************
+    self.fSelectExample := TformExamples.CreateNew(@afterCreate);
+    self.fSelectExample.Popup := true;
 
-    srcNodes[0] := n2; destNodes[0] := n3;
-    networkController.addReaction('r2', srcNodes, destNodes);
-
-    srcNodes[0] := n3; destNodes[0] := n4;
-    networkController.addReaction('r3', srcNodes, destNodes);
-
-    srcNodes[0] := n4; destNodes[0] := n2;
-    networkController.addReaction('r4', srcNodes, destNodes);
-    networkPB1.Invalidate;
+    self.fSelectExample.PopupOpacity := 0.3;
+    self.fSelectExample.ShowModal(@AfterShowModal);
   end
   else
     notifyUser('Network already exists in panel.');
@@ -526,7 +537,7 @@ end;
 procedure TMainForm.btnSimpleClick(Sender: TObject);
 var s : string;
 begin
-  s := getTestModel;
+  s := getTestModel(0);
   SBMLmodelMemo.Lines.Text := s;
   SBMLmodelMemo.visible := true;
   self.MainController.loadSBML(s);
@@ -975,7 +986,6 @@ begin
       newVal := strtofloat(self.RxnParamEdit.text);
       reaction.state.rateParams[self.RxnParamComboBox.ItemIndex].setValue(newVal);
       self.networkController.updateParamVal(reaction.state.rateParams[self.RxnParamComboBox.ItemIndex].getId, newVal);
-     // self.networkController.network.networkEvent(nil);   // notify listener that network changed. TODO: Move to network class ( add add setValue to networkController)
     end;
   except
     on Exception : EConvertError do

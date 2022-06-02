@@ -340,7 +340,7 @@ object mainForm: TmainForm
       Top = 34
       Width = 116
       Height = 25
-      Caption = 'Sample Network'
+      Caption = 'Sample Networks'
       ChildOrder = 2
       ElementClassName = 'btn btn-primary btn-sm'
       ElementFont = efCSS
@@ -1338,7 +1338,7 @@ object mainForm: TmainForm
           760)
         object pnlSimResultsFile: TWebPanel
           Left = 6
-          Top = 684
+          Top = 624
           Width = 205
           Height = 73
           ElementClassName = 'card'
@@ -1494,8 +1494,6 @@ object mainForm: TmainForm
         OnMouseMove = networkPB1MouseMove
         OnMouseUp = networkPB1MouseUp
         OnMouseWheel = networkPB1MouseWheel
-        ExplicitLeft = -101
-        ExplicitTop = -6
       end
       object netDrawScrollBarVert: TTMSFNCScrollBar
         Left = 756
@@ -1826,7 +1824,9 @@ object mainForm: TmainForm
           Top = 104
           Width = 96
           Height = 25
-          Hint = 'Parameter and species assignments'
+          Hint = 
+            'Parameter and species assignments. Assignments currently cannot ' +
+            'be changed.'
           Caption = 'Assignments'
           ChildOrder = 3
           ElementClassName = 'btn btn-primary btn-sm'
