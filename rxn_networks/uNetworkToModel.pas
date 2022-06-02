@@ -19,6 +19,8 @@ private
   //procedure setParameters; // Currently done in setReactions as all params in rxn equations
   procedure setReactions;
   procedure setCompartments; // Currently only one, unit compartment
+  procedure setAssignmentRules;
+  procedure setInitialAssignments;
   procedure setSpeciesRendering( spState: TNodeState; specGlypId: string;
                                  specTextGlyphId:string );
   procedure setReactionRendering( rxnState: TReactionState; rxnSpRefGlyphId: string; reactant: boolean );
@@ -57,6 +59,7 @@ begin
   self.setCompartments;
   self.setSpecies;
   self.setReactions;
+  self.setAssignmentRules;
   self.model.setSBMLLayout(self.layout);
   self.model.setSBMLRenderInfo(self.renderInfo);
 
@@ -99,6 +102,22 @@ begin
    newComp.setSize(1.0);
    newComp.setConstant(true);
    self.model.addSBMLcompartment(newComp);
+end;
+
+procedure TNetworkToModel.setAssignmentRules;
+var i: integer;
+begin
+  for i := 0 to self.network.getNumRules -1 do
+    begin
+    self.model.addSBMLrule(self.network.getRule(i));
+    end;
+end;
+
+procedure TNetworkToModel.setInitialAssignments;
+var i: integer;
+begin
+  for i := 0 to self.network.getNumInitalAssignments -1 do
+    self.model.addInitialAssignment(self.network.getInitialAssignment(i));
 end;
 
 // Layout: creates species and text glyphs:

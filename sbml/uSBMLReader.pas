@@ -26,6 +26,7 @@ implementation
     jsComp: TJSObject;
     newParam: TSBMLparameter;
     jsParam: TJSObject;
+    newInitAssign: TSBMLInitialAssignment; jsInitAssign: TJSObject;
     newRule: TSBMLRule; jsRule: TJSObject;
     newFuncDef: TSBMLFuncDefinition; jsFuncDef: TJSObject;
     newLayout: TSBMLLayout; jsLayout: TJSObject;
@@ -60,6 +61,8 @@ implementation
     jsComp:= JS.ToObject(newComp);
     newParam:= TSBMLparameter.create(); // a new parameter
     jsParam:= JS.ToObject(newParam);
+    newInitAssign := TSBMLInitialAssignment.create();
+    jsInitAssign := JS.toObject(newInitAssign);
     newRule:= TSBMLRule.create();
     jsRule:= JS.ToObject(newRule);
     newFuncDef := TSBMLFuncDefinition.create();
@@ -111,46 +114,48 @@ implementation
         //console.log( 'Read Sbml error: ', doc.getError(i).getMessage() );
         newModel.addSBMLErrorStr( doc.getError(i).getMessage() );
       }
+      if (doc.getNumErrors() == 0) {
 
+        doc.enablePackage(libsbml.LayoutExtension.prototype.getXmlnsL3V1V1(), 'layout', true);
+        doc.enablePackage(libsbml.RenderExtension.prototype.getXmlnsL3V1V1(), 'render', true);
 
-      doc.enablePackage(libsbml.LayoutExtension.prototype.getXmlnsL3V1V1(), 'layout', true);
-      doc.enablePackage(libsbml.RenderExtension.prototype.getXmlnsL3V1V1(), 'render', true);
+        const model = doc.getModel();
+        const moreReading = new ProcessSBML(model, libsbml);
 
-      const model = doc.getModel();
-      const moreReading = new ProcessSBML(model, libsbml);
-
-      if(model.getNumPlugins() >0) {
-        if(model.findPlugin('layout') != undefined) {
-        // Load layout information for model:
-          if( moreReading.numLayouts >0) {
-            jsLayout = moreReading.getLayout(jsLayout, jsDims, jsPt, jsBBox,
-              jsLineSeg, jsCubicB, jsCurve, jsCompGlyph, jsGraphObj, jsGenObj,
-              jsSpGlyph, jsSpRefGlyph, jsRxnGlyph, jsTextGlyph );
-            if( jsLayout != undefined) {  // another chk
-              newModel.setSBMLLayout(jsLayout);
+       if(model.getNumPlugins() >0) {
+         if(model.findPlugin('layout') != undefined) {
+          // Load layout information for model:
+            if( moreReading.numLayouts >0) {
+              jsLayout = moreReading.getLayout(jsLayout, jsDims, jsPt, jsBBox,
+                jsLineSeg, jsCubicB, jsCurve, jsCompGlyph, jsGraphObj, jsGenObj,
+                jsSpGlyph, jsSpRefGlyph, jsRxnGlyph, jsTextGlyph );
+              if( jsLayout != undefined) {  // another chk
+                newModel.setSBMLLayout(jsLayout);
+              }
             }
-          }
-          if( moreReading.isLocalRenderSet ) {
-            jsRenderInfo = moreReading.getSBMLRenderInformation( jsRenderInfo, jsRenderStyle,
+            if( moreReading.isLocalRenderSet ) {
+              jsRenderInfo = moreReading.getSBMLRenderInformation( jsRenderInfo, jsRenderStyle,
                 jsLineEnding, jsRenderGroup, jsEllipse, jsRectangle, jsPolygon,
                 jsRenderPt, jsRender1D, jsColorDef, jsBBox, jsDims, jsPt );
-            if( jsRenderInfo != undefined ) {
-              newModel.setSBMLRenderInfo(jsRenderInfo);
+              if( jsRenderInfo != undefined ) {
+                newModel.setSBMLRenderInfo(jsRenderInfo);
+              }
             }
           }
+
         }
 
+        newModel = moreReading.getNumbers(newModel);
+        newModel = moreReading.getInitialAssignments(newModel, jsInitAssign);
+        newModel = moreReading.getRules(newModel,jsRule);
+        newModel = moreReading.getSpecies(newModel, jsSpecies );
+        newModel = moreReading.getCompartments(newModel, jsComp);
+        newModel = moreReading.getParameters(newModel, jsParam);
+
+        newModel = moreReading.getFuncDefs(newModel, jsFuncDef);
+
+        newModel = moreReading.getReactions(newModel);
       }
-
-      newModel = moreReading.getNumbers(newModel);
-      newModel = moreReading.getRules(newModel,jsRule);
-      newModel = moreReading.getSpecies(newModel, jsSpecies );
-      newModel = moreReading.getCompartments(newModel, jsComp);
-      newModel = moreReading.getParameters(newModel, jsParam);
-
-      newModel = moreReading.getFuncDefs(newModel, jsFuncDef);
-
-      newModel = moreReading.getReactions(newModel);
       newModel.SBML_UpdateEvent();  // libsbml loaded and model processed.
      libsbml.destroy(doc);
      libsbml.destroy(reader);
@@ -161,37 +166,47 @@ implementation
 
          const reader = new libsbml.SBMLReader();
          const doc = reader.readSBMLFromString(SBMLtext);
-         const model = doc.getModel();
-         const moreReading = new ProcessSBML(model, libsbml);
 
-         if(model.getNumPlugins() >0) {
-           if(model.findPlugin('layout') != undefined) {
-        // Load layout information for model:
-             if( moreReading.numLayouts >0) {
-               jsLayout = moreReading.getLayout(jsLayout, jsDims, jsPt, jsBBox,
-                 jsLineSeg, jsCubicB, jsCurve, jsCompGlyph, jsGraphObj, jsGenObj,
-                 jsSpGlyph, jsSpRefGlyph, jsRxnGlyph, jsTextGlyph );
-               if( jsLayout != undefined) {  // another chk
-               newModel.setSBMLLayout(jsLayout);
-               }
-             }
-             if( moreReading.isLocalRenderSet ) {
-               jsRenderInfo = moreReading.getSBMLRenderInformation( jsRenderInfo, jsRenderStyle,
-                jsLineEnding, jsRenderGroup, jsEllipse, jsRectangle, jsPolygon,
-                jsRenderPt, jsRender1D, jsColorDef, jsBBox, jsDims, jsPt );
-               if( jsRenderInfo != undefined ) {
-                 newModel.setSBMLRenderInfo(jsRenderInfo);
-               }
-             }
-
-           }
+         var i;
+         const sbmlErrors = doc.getNumErrors();
+         for( i=0; i < sbmlErrors; i++ ) {
+          //console.log( 'Read Sbml error: ', doc.getError(i).getMessage() );
+           newModel.addSBMLErrorStr( doc.getError(i).getMessage() );
          }
-         newModel = moreReading.getNumbers(newModel);
-         newModel = moreReading.getRules(newModel,jsRule);
-         newModel = moreReading.getSpecies(newModel, jsSpecies );
-         newModel = moreReading.getCompartments(newModel, jsComp);
-         newModel = moreReading.getParameters(newModel, jsParam);
-         newModel = moreReading.getReactions(newModel);
+         if (doc.getNumErrors() == 0)  {
+
+           const model = doc.getModel();
+           const moreReading = new ProcessSBML(model, libsbml);
+
+           if(model.getNumPlugins() >0) {
+             if(model.findPlugin('layout') != undefined) {
+              // Load layout information for model:
+               if( moreReading.numLayouts >0) {
+                 jsLayout = moreReading.getLayout(jsLayout, jsDims, jsPt, jsBBox,
+                   jsLineSeg, jsCubicB, jsCurve, jsCompGlyph, jsGraphObj, jsGenObj,
+                   jsSpGlyph, jsSpRefGlyph, jsRxnGlyph, jsTextGlyph );
+                 if( jsLayout != undefined) {  // another chk
+                 newModel.setSBMLLayout(jsLayout);
+                 }
+               }
+               if( moreReading.isLocalRenderSet ) {
+                 jsRenderInfo = moreReading.getSBMLRenderInformation( jsRenderInfo, jsRenderStyle,
+                  jsLineEnding, jsRenderGroup, jsEllipse, jsRectangle, jsPolygon,
+                  jsRenderPt, jsRender1D, jsColorDef, jsBBox, jsDims, jsPt );
+                 if( jsRenderInfo != undefined ) {
+                   newModel.setSBMLRenderInfo(jsRenderInfo);
+                 }
+               }
+
+             }
+           }
+           newModel = moreReading.getNumbers(newModel);
+           newModel = moreReading.getRules(newModel,jsRule);
+           newModel = moreReading.getSpecies(newModel, jsSpecies );
+           newModel = moreReading.getCompartments(newModel, jsComp);
+           newModel = moreReading.getParameters(newModel, jsParam);
+           newModel = moreReading.getReactions(newModel);
+         }
          newModel.SBML_UpdateEvent();  // libsbml loaded and model processed.
          libsbml.destroy(doc);
          libsbml.destroy(reader);

@@ -71,6 +71,7 @@ type
     procedure setNodeBoundarySp(bSp: boolean); // true: node is boundary species
     procedure addReaction(Id: string; srcNodes, destNodes: array of TNode);
     procedure setReactionId(Id: string);
+    function  findReaction(id: string; var index: integer): boolean;
     procedure updateParamVal( pId: string; newVal: double);
     procedure setReactionSpecStoich(spIndex: integer; stoichVal: double; src: boolean);
     procedure prepareUndo;
@@ -268,6 +269,12 @@ begin
 
 end;
 
+function  TController.findReaction(id: string; var index: integer): boolean;
+begin
+  if self.network.findReaction(id, index) then
+    Result := true
+  else Result := false;
+end;
 
 function TController.addNode(Id: string; x, y: double): TNode;
 var index: integer;

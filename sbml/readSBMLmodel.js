@@ -39,6 +39,8 @@ class ProcessSBML {
    tModela.numSpecies = this.model.getNumSpecies();
    tModela.numParams = this.model.getNumParameters();
    tModela.numCompartments = this.model.getNumCompartments();
+   const numInitAssignments = this.model.getNumInitialAssignments(); // TODO: Need to get these
+   console.log(' Number of Init assignments: ',numInitAssignments);
    tModela.numEvents = this.model.getNumEvents();
    console.log( 'Number of events: ', this.model.getNumEvents() );
    tModela.numRules = this.model.getNumRules();
@@ -49,6 +51,22 @@ class ProcessSBML {
    tModela.annotationStr = this.model.getNotesString();
    return tModela;
   }
+
+getInitialAssignments(tModela, tInitAssign) {
+  for( var i=0; i < this.model.getNumInitialAssignments(); i++ ) {
+    const newAssign = this.model.getInitialAssignment(i);
+    if (newAssign.isSetIdAttribute()) {
+      tInitAssign.setId(newAssign.getId()); }
+    else { tInitAssign.setId('InitAssign_' + newAssign.getSymbol()); }
+    if( newAssign.isSetMath()) {
+      const astMath = newAssign.getMath();
+      tInitAssign.setFormula( new this.libSBML.SBMLFormulaParser().formulaToL3String(astMath));}
+    else { tInitAssign.setFormula(''); }
+    tInitAssign.setSymbol( newAssign.getSymbol() );
+    tModela.addInitialAssignment( tInitAssign );
+  }
+  return tModela;
+}
 
 getRules(tModela, tRule) {
    var i;

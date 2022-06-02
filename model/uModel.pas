@@ -22,6 +22,7 @@ type
     modelSpecies: array of TSBMLSpecies;
     modelComps: array of TSBMLcompartment;
     modelParams: array of TSBMLparameter;
+    modelInitialAssignments: TList<TSBMLInitialAssignment>;
     modelRules: array of TSBMLRule;  // optional
     modelFuncDefList: TList<TSBMLFuncDefinition>; // optional list of functions
     modelId: String; // optional model name
@@ -60,7 +61,13 @@ type
    function  getSBMLparameterAr(): array of TSBMLparameter;
    procedure addSBMLparameter(newParam: TSBMLparameter);
    function  isParameterIdinList(id: string): boolean;
+   procedure addInitialAssignment( newInitAssign: TSBMLInitialAssignment );
+   function  getNumInitialAssignments(): integer;
+   function  getInitialAssignment( index: integer): TSBMLInitialAssignment;
+   function  getInitialAssignmentWithSymbolId( symbolId: string ): TSBMLInitialAssignment;
    function  getSBMLmodelRules():array of TSBMLrule;
+   function  getSBMLRule( index: integer ): TSBMLRule;
+   function  getSBMLRuleWithVarId( varId: string ): TSBMLRule;
    procedure addSBMLrule( newR: TSBMLrule);
    //procedure setNumFuncDefs( newNum: integer );
    function  getNumFuncDefs(): integer;
@@ -118,6 +125,7 @@ constructor TModel.create();
 begin
   //  errors:=0;
     self.strSBMLErrors := TList<string>.create;
+    self.modelInitialAssignments := TList<TSBMLInitialAssignment>.create;
     self.modelFuncDefList := TList<TSBMLFuncDefinition>.create;
     numReactions:= 0;
     numSpecies:= 0; numCompartments:= 0;
@@ -436,6 +444,54 @@ procedure TModel.SBML_UpdateEvent();
  function TModel.getSBMLmodelRules():array of TSBMLrule;
  begin
    Result:= self.modelRules;
+ end;
+
+ function  TModel.getSBMLRule( index: integer ): TSBMLRule;
+ begin
+   if index < length(self.modelRules) then
+     Result := self.modelRules[index]
+   else Result := nil;
+ end;
+
+ function  TModel.getSBMLRuleWithVarId( varId: string ): TSBMLRule;
+ var i: integer;
+ begin
+   Result := nil;
+   for i := 0 to length(self.modelRules) -1 do
+     begin
+     if self.modelRules[i].getVariable = varId then
+       Result:= self.modelRules[i];
+     end;
+ end;
+
+ procedure TModel.addInitialAssignment( newInitAssign: TSBMLInitialAssignment );
+ begin
+   if self.modelInitialAssignments = nil then
+     self.modelInitialAssignments := TList<TSBMLInitialAssignment>.create;
+   self.modelInitialAssignments.Add(newInitAssign);
+ end;
+
+ function  TModel.getNumInitialAssignments(): integer;
+ begin
+   Result := self.modelInitialAssignments.Count;
+ end;
+ function  TModel.getInitialAssignment( index: integer): TSBMLInitialAssignment;
+ begin
+   if index < self.modelInitialAssignments.Count then
+     Result := self.modelInitialAssignments[index]
+   else Result := nil;
+ end;
+
+ function  TModel.getInitialAssignmentWithSymbolId(symbolId: string): TSBMLInitialAssignment;
+ var i: integer;
+ begin
+   Result := nil;
+   for i := 0 to self.modelInitialAssignments.Count -1 do
+     begin
+     if self.modelInitialAssignments[i].getSymbol = symbolId then
+       Result := self.modelInitialAssignments[i];
+     end;
+
  end;
 
  procedure TModel.setSBMLLayout(newLayout: TSBMLLayout);

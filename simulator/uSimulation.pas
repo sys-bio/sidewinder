@@ -54,6 +54,7 @@ type
     procedure stopTimer();
     procedure startTimer();
     function  getTime():double;
+    // TODO: procedure updateInitialAssignments(); If any InitAssignments, calc them here then set param, species init vals to these.
     procedure setRuntime( newRunTime: double );
     procedure setTime( newTime: double );
     procedure startSimulation();
@@ -154,10 +155,10 @@ var
   i: Integer;
   odeFormat: TFormatODEs;
 begin
-  //ODEready := false;
   odeFormat := TFormatODEs.create(self.model);
   // Run Simulation using info from odeFormat:
   odeFormat.buildFinalEqSet();
+  //console.log(' ODE eq set2:',odeFormat.getODEeqSet2());
    if self.solverUsed = LSODAS then
     self.LSODAeq := odeFormat.getODEeqSet2()
   else

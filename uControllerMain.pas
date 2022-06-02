@@ -431,6 +431,7 @@ procedure TControllerMain.modelWritten(modelStr: String);
 procedure TControllerMain.changeParameterVal(pos: Integer; newVal: Double);
 begin
   self.sbmlmodel.changeParamVal(pos, newVal);
+  // self.runSim.updateP_Val( pos, newVal ); ?
 end;
 
 procedure TControllerMain.changeSimParameterVal(pos: Integer; newVal: Double );

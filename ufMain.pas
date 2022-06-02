@@ -10,14 +10,13 @@ uses
   Vcl.StdCtrls, WEBLib.StdCtrls, WEBLib.Buttons, Vcl.Imaging.pngimage,
   Vcl.Graphics,System.Generics.Collections,
   uControllerNetwork, uNetworkCanvas, uNetwork, Vcl.TMSFNCTypes, Vcl.TMSFNCUtils,
-  Vcl.TMSFNCGraphics,
-  Vcl.TMSFNCGraphicsTypes, Vcl.TMSFNCCustomControl, Vcl.TMSFNCScrollBar,
-  uNetworkTypes, WEBLib.Lists, Vcl.Forms, uModel,
-  uSBMLClasses, uSimulation, uControllerMain,
-  uODE_FormatUtility, uGraphP, Vcl.Menus, WEBLib.Menus, ufVarSelect, uPlotPanel,
-  uParamSliderLayout, uSidewinderTypes, WEBLib.ComCtrls, WEBLib.Miletus, WEBLib.JQCtrls; //, VCL.TMSFNCCustomPicker, VCL.TMSFNCColorPicker;
+  Vcl.TMSFNCGraphics, Vcl.TMSFNCGraphicsTypes, Vcl.TMSFNCCustomControl, Vcl.TMSFNCScrollBar,
+  uNetworkTypes, WEBLib.Lists, Vcl.Forms, uModel, uSBMLClasses, uSBMLClasses.rule, uSimulation,
+  uControllerMain, uODE_FormatUtility, uGraphP, Vcl.Menus, WEBLib.Menus, ufVarSelect,
+  uPlotPanel, uParamSliderLayout, uSidewinderTypes, WEBLib.ComCtrls, WEBLib.Miletus,
+  WEBLib.JQCtrls, ufAssignments, ufSelectExample;
 
-const SIDEWINDER_VERSION = 'Version 0.32 alpha';
+const SIDEWINDER_VERSION = 'Version 0.33 alpha';
       DEFAULT_RUNTIME = 10000;
       EDITBOX_HT = 25;
       ZOOM_SCALE = 20;
@@ -142,6 +141,7 @@ type
     btnParamReset: TWebButton;
     btnResetRun: TWebButton;
     checkBoxBoundarySp: TWebCheckBox;
+    ButtonVarAssignments: TWebButton;
 
     procedure btnUniUniClick(Sender: TObject);
     procedure btnBiBiClick(Sender: TObject);
@@ -218,6 +218,8 @@ type
     procedure edtReactionIdExit(Sender: TObject);
     procedure stepSizeEdit1Exit(Sender: TObject);
     procedure checkBoxBoundarySpClick(Sender: TObject);
+    procedure ButtonVarAssignmentsClick(Sender: TObject);
+    procedure displayVarAssignments(rxnId: string);
 
   private
     numbPlots: Integer; // Number of plots displayed
@@ -230,6 +232,7 @@ type
     rxnProdStoichLabels: TList<TWebLabel>;
     rxnProdStoichEdits: TList<TWebEdit>;
     saveSimResults: boolean;
+    fSelectExample: TformExamples;
     procedure InitSimResultsTable(); // Init simResultsMemo.
     procedure addPlot(yMax: double); // Add a plot, yMax: largest initial val of plotted species
     procedure resetPlots();  // Reset plots for new simulation.
@@ -315,7 +318,7 @@ type
 
 var
   mainForm: TMainForm;
-  spSelectform: TVarSelectForm; // display speciecs select to plot radio group
+ // spSelectform: TVarSelectForm; // display speciecs select to plot radio group
 
 implementation
 
@@ -326,21 +329,21 @@ Uses uGraphUtils, uCreateNetworks, uLayout, uTestModel, uSelectedObjects;
 
 procedure TMainForm.enableEditNodePanel;
 begin
-  editNodeId.Enabled := true;
-  editNodeConc.Enabled := true;
-  self.checkBoxBoundarySp.Enabled := false; // Do not enable until we have reaction eq editing
-  btnNodeFillColor.Enabled := true;
-  btnNodeOutlineColor.Enabled := true;
+  self.editNodeId.Enabled := true;
+  self.editNodeConc.Enabled := true;
+  self.checkBoxBoundarySp.Enabled := true;
+  self.btnNodeFillColor.Enabled := true;
+  self.btnNodeOutlineColor.Enabled := true;
 end;
 
 
 procedure TMainForm.disableEditNodePanel;
 begin
-  editNodeId.Enabled := false;
-  editNodeConc.Enabled := false;
+  self.editNodeId.Enabled := false;
+  self.editNodeConc.Enabled := false;
   self.checkBoxBoundarySp.Enabled := false;
-  btnNodeFillColor.Enabled := false;
-  btnNodeOutlineColor.Enabled :=false;
+  self.btnNodeFillColor.Enabled := false;
+  self.btnNodeOutlineColor.Enabled :=false;
 end;
 
 procedure TMainForm.enableEditReactionPanel;
@@ -362,7 +365,7 @@ procedure TMainForm.btnAddPlotClick(Sender: TObject);
 begin
   // Make runtime, stepsize, simulation buttons visible
   self.numbPlots := self.numbPlots + 1;
- // rtLabel1.visible := true;  // Do not let user modify for now
+ // rtLabel1.visible := true;  // Run time: Do not let user modify for now
  // rtLengthEdit1.visible := true; // Do not let user modify for now
   stepSizeLabel1.visible := true;
   stepSizeEdit1.visible := true;
@@ -372,7 +375,6 @@ end;
 procedure TMainForm.btnAboutClick(Sender: TObject);
 begin
   notifyUser(SIDEWINDER_VERSION);
-  //notifyUser('Version 0.2: LayoutRender debug');
 end;
 
 procedure TMainForm.btnAddNodeClick(Sender: TObject);
@@ -448,6 +450,26 @@ begin
 end;
 
 procedure TMainForm.btnDrawClick(Sender: TObject);
+  procedure afterCreate(AForm: TObject);
+  var exampleList: TStringList;
+  begin
+    exampleList := TStringList.Create;
+    exampleList.Add('Simple network');
+    exampleList.Add('Feedback example');
+    exampleList.Add('Goldbeter 1990, calcium spike');
+    exampleList.Add('Glycolysis');
+    (AForm as TformExamples).rgSelectExample.Items := exampleList;
+  end;
+
+  procedure afterShowModal(AValue: integer);
+  var i: integer;
+      strModel: string;
+  begin
+    i := self.fSelectExample.indexExampleChosen;
+    if i = 3 then self.stepSizeEdit1.Text := inttostr(10); // glycolysis example
+    strModel := getTestModel(i);
+    self.SBMLOpenDialogGetFileAsText(nil,0, strModel);
+  end;
 var
   n1, n2, n3, n4: TNode;
   srcNodes, destNodes : array of TNode;
@@ -455,23 +477,12 @@ begin
   setLength (srcNodes, 1); setLength (destNodes, 1);
   if length(network.getCurrentState.savedNodes) = 0 then
   begin
-    n1 := networkController.addNode('node1', 60, 200);
-    n1.state.conc := 5.0;
-    n2 := networkController.addNode('node2', 270, 270);
-    n3 := networkController.addNode('node3', 540, 80);
-    n4 := networkController.addNode('node4', 400, 500);
-    srcNodes[0] := n1; destNodes[0] := n2;
-    networkController.addReaction('r1', srcNodes, destNodes);
+    // ****************************
+    self.fSelectExample := TformExamples.CreateNew(@afterCreate);
+    self.fSelectExample.Popup := true;
 
-    srcNodes[0] := n2; destNodes[0] := n3;
-    networkController.addReaction('r2', srcNodes, destNodes);
-
-    srcNodes[0] := n3; destNodes[0] := n4;
-    networkController.addReaction('r3', srcNodes, destNodes);
-
-    srcNodes[0] := n4; destNodes[0] := n2;
-    networkController.addReaction('r4', srcNodes, destNodes);
-    networkPB1.Invalidate;
+    self.fSelectExample.PopupOpacity := 0.3;
+    self.fSelectExample.ShowModal(@AfterShowModal);
   end
   else
     notifyUser('Network already exists in panel.');
@@ -525,7 +536,7 @@ end;
 procedure TMainForm.btnSimpleClick(Sender: TObject);
 var s : string;
 begin
-  s := getTestModel;
+  s := getTestModel(0);
   SBMLmodelMemo.Lines.Text := s;
   SBMLmodelMemo.visible := true;
   self.MainController.loadSBML(s);
@@ -548,6 +559,122 @@ begin
   networkController.setAddUniUniReaction;
 end;
 
+
+procedure TMainForm.ButtonVarAssignmentsClick(Sender: TObject);
+var rxnId: string;
+begin
+// TODO Get a list of assignments for species and params used in reaction.
+  rxnId := '';
+  if networkController.selectedObjects.count > 0 then
+    begin
+      case networkController.selectedObjects[0].objType of
+       // oNode     : begin
+         //          networkController.selectedObjects[0].node.state.species;
+         //          end;
+       oReaction : begin
+                   rxnId := networkController.selectedObjects[0].reaction.state.id;
+                   self.displayVarAssignments(rxnId);
+                   end;
+      end;
+    end;
+
+end;
+
+procedure TMainForm.displayVarAssignments(rxnId: string);
+
+  // *****************************************
+  procedure AfterCreate(AForm: TObject);
+  var i, j, rxnIndex: integer;
+      strListOfAssign: TStringList;
+      curRule: TSBMLRule;
+      curStr: string;
+      foundVar: string;
+  begin
+    rxnIndex := 0;
+   // strTitle := '';
+    strListOfAssign := TStringList.create;
+    if self.networkController.findReaction(rxnId, rxnIndex) then
+      begin
+        for i := 0 to self.network.getNumRules -1 do
+          begin
+            curRule := nil;
+            curStr := '';
+            foundVar := '';
+            curRule := self.network.getRule(i);
+            for j := 0 to self.network.reactions[rxnIndex].state.nReactants -1 do
+              begin
+              if curRule.getVariable = self.network.reactions[rxnIndex].state.srcId[j] then
+                begin
+                foundVar := self.network.reactions[rxnIndex].state.srcId[j]
+                end;
+              end;
+
+            if foundVar = '' then
+              begin
+              for j := 0 to self.network.reactions[rxnIndex].state.nProducts -1 do
+                begin
+                if curRule.getVariable = self.network.reactions[rxnIndex].state.destId[j] then
+                  begin
+                  foundVar := self.network.reactions[rxnIndex].state.destId[j]
+                  end;
+                end;
+              end;
+
+            if foundVar = '' then
+              begin
+              for j := 0 to self.network.reactions[rxnIndex].state.rateParams.Count -1 do
+                begin
+                if curRule.getVariable = self.network.reactions[rxnIndex].state.rateParams[j].getId then
+                  begin
+                  foundVar := self.network.reactions[rxnIndex].state.rateParams[j].getId;
+                  end;
+                end;
+              end;
+
+            if (foundVar <> '') and (curRule.isAssignment) then
+              begin
+              curStr := foundVar + ' = ' + curRule.getFormula;
+              strListOfAssign.Add(curStr);
+              end;
+
+          end;
+
+        if strListOfAssign.Count <1 then strListOfAssign.Add('No variable assignments found.');
+
+      end
+    else strListOfAssign.Add('No reaction with that id found');
+
+    //(AForm as TFormAssignments).Top := trunc(self.Height*0.2); // put popup %20 from top
+    (AForm as TFormAssignments).listOfAssignments := strListOfAssign;
+    (AForm as TFormAssignments).fillAssignmentList();
+  end; // afterCreate
+  /// **********************************************************************
+
+var rxnIndex: integer;
+    fShowAssignments: TFormAssignments;
+    curRxnState: TReactionState;
+    strTitle: string;
+begin
+
+  if self.networkController.findReaction(rxnId, rxnIndex) then
+      begin
+      curRxnState := self.network.reactions[rxnIndex].state;
+      if self.network.getNumRules > 0 then
+        begin
+        strTitle := 'Reaction ' + self.network.reactions[rxnIndex].state.id + ' variable assignments:';
+        fShowAssignments := TFormAssignments.CreateNew(@AfterCreate);
+        fShowAssignments.Popup := true;
+        fShowAssignments.ShowClose := true;
+        fShowAssignments.PopupOpacity := 0.3;
+        fShowAssignments.Border := fbDialogSizeable;
+        fShowAssignments.Caption := strTitle;
+        fShowAssignments.ShowModal({@AfterShowModal});
+        end
+      else notifyUser( ' No Assignments for variables used in reaction.' );
+      end
+  else notifyUser( ' No reaction with that id found.' );
+
+end;
 
 procedure TMainForm.editNodeIdExit(Sender: TObject);
 var newId, cutNewId: string;
@@ -714,6 +841,11 @@ begin
   self.deleteAllSliders;
   self.network.Clear;
   self.networkPB1.Invalidate;
+  self.disableEditNodePanel;
+  self.editNodeId.Text := '';
+  self.editNodeConc.Text := '';
+  self.edtReactionId.Text := '';
+  self.networkController.selectedObjects.clear;
   self.resetBtnOnLineSim;
   self.btnResetSimSpecies.Enabled := false;
   self.btnParamReset.Enabled := false;
@@ -858,7 +990,6 @@ begin
       newVal := strtofloat(self.RxnParamEdit.text);
       reaction.state.rateParams[self.RxnParamComboBox.ItemIndex].setValue(newVal);
       self.networkController.updateParamVal(reaction.state.rateParams[self.RxnParamComboBox.ItemIndex].getId, newVal);
-     // self.networkController.network.networkEvent(nil);   // notify listener that network changed. TODO: Move to network class ( add add setValue to networkController)
     end;
   except
     on Exception : EConvertError do
@@ -919,24 +1050,30 @@ begin
   networkPB1.Invalidate;
   if (networkController.selectedObjects.Count > 0) and (networkController.selectedObjects[0].objType = oNode) then
     begin
-     // editNodeId.Text := networkController.selectedObjects[0].node.state.id;
-     editNodeId.Text := networkController.selectedObjects[0].node.state.species;
-      editNodeConc.Text := networkCOntroller.selectedObjects[0].node.state.conc.ToString;
+    if Assigned(networkController.selectedObjects[0].node.state) then
+      begin
+      self.editNodeId.Text := networkController.selectedObjects[0].node.state.species;
+      self.editNodeConc.Text := networkCOntroller.selectedObjects[0].node.state.conc.ToString;
       self.checkBoxBoundarySp.Checked := networkCOntroller.selectedObjects[0].node.state.boundarySp;
-      pnlNodePanel.visible := true;
-      self.rightPanelType := NODE_PANEL;
-      self.RRxnEditWPanel.visible := false;
-      self.RSimWPanel.visible := false;
-      self.RNodeEditWPanel.visible := true;
-      self.RNodeEditWPanel.invalidate;
-      self.setRightPanels;
+      end;
+
+    pnlNodePanel.visible := true;
+    self.rightPanelType := NODE_PANEL;
+    self.RRxnEditWPanel.visible := false;
+    self.RSimWPanel.visible := false;
+    self.RNodeEditWPanel.visible := true;
+    self.RNodeEditWPanel.invalidate;
+    self.setRightPanels;
     end
   else if (networkController.selectedObjects.Count > 0) and (networkController.selectedObjects[0].objType = oReaction) then
     begin
     self.rightPanelType := REACTION_PANEL;
-    edtReactionId.Text := networkController.selectedObjects[0].reaction.state.id;
-    btnReactionColor.Color := networkController.selectedObjects[0].reaction.state.fillColor;
-    edtReactionWidth.Value := networkController.selectedObjects[0].reaction.state.thickness;
+    if Assigned(networkController.selectedObjects[0].reaction.state) then
+      begin
+      edtReactionId.Text := networkController.selectedObjects[0].reaction.state.id;
+      btnReactionColor.Color := networkController.selectedObjects[0].reaction.state.fillColor;
+      edtReactionWidth.Value := networkController.selectedObjects[0].reaction.state.thickness;
+      end;
     self.RSimWPanel.visible := false;
     self.RNodeEditWPanel.visible := false;
     self.RRxnEditWPanel.visible := true;
@@ -2058,6 +2195,7 @@ procedure TMainForm.updateRxnRatePanel(); // Refresh with current rxn info.
 begin
   try
     self.rateLawEqLabel.Caption := networkController.selectedObjects[0].reaction.state.rateLaw; // use getRateLaw instead.
+    self.rateLawEqLabel.Hint := networkController.selectedObjects[0].reaction.state.rateLaw;
     self.lblRxnIdString.Caption := networkController.selectedObjects[0].reaction.state.id;
     self.RxnRatePanel.Width := self.rateLawEqLabel.Width + self.rateLawLabel.Width + 60;
     self.RxnRatePanel.invalidate;

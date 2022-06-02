@@ -14,7 +14,7 @@ interface
 
 Uses SysUtils, Classes, Types, libthreejs, WEBLib.Graphics, Math, WEBLib.Utils,
      WEBLib.JSON, Web, System.Generics.Collections, uNetworkTypes, uBuildRateLaw,
-     uSBMLClasses, uModel, uSBMLClasses.Layout, uSBMLClasses.Render,
+     uSBMLClasses, uModel, uSBMLClasses.Layout, uSBMLClasses.Render, uSBMLClasses.Rule,
      uSBMLClasses.FuncDefinition, uSidewinderTypes;
 
 const
@@ -59,7 +59,7 @@ type
   TNodeState = record
        id : string;
        species: string; // typically id and species are the same (aliases will not be)
-       conc: double;   // conc of species, assume unit volume
+       conc: double;    // conc of species, assume unit volume
        boundarySp: boolean; // true: boundary species (not part of any reaction)
        x, y, w, h : double;
        fillColor, outlineColor : TColor;
@@ -167,7 +167,6 @@ type
    end;
 
   TListOfReactions = array of TReaction;
-
   TListOfReactionStates = array of TReactionState;
 
   TNetworkSavedState = record
@@ -178,6 +177,8 @@ type
 
   TNetwork = class (TObject)
     private
+      listOfSBMLRules: TList<TSBMLRule>; // Currently not saved to JSON file
+      listOfSBMLInitAssignments: TList<TSBMLInitialAssignment>; // Not saved to JSON
       procedure buildNetworkFromSBMLLayout(model: TModel); // model has SBML layout described
       procedure autoBuildNetworkFromSBML(model: TModel); // No SBML layout, build own layout
       FNetworkEvent: TNetworkEvent;
@@ -214,8 +215,17 @@ type
        function    addNode (id : string; x, y, w, h : double) : TNode; overload;
        function    addNode (state : TNodeState): TNode; overload;
        function    buildNullNodeState(rxnId: string; num: integer): TNodeState; // used to add null node for one species rxn
+       procedure   addRule (newRule: TSBMLRule);
+       function    getRule (index: integer): TSBMLRule;
+       function    getRuleWithVarId (varId: string): TSBMLRule;
+       function    getRuleList(): TList<TSBMLRule>;
+       function    getNumRules(): integer;
 
-       procedure   computeAnyToAnyCoordinates (reaction : TReaction; sourceNodes, destNodes : array of TNode);
+       procedure   addInitialAssignment(newInitAssign: TSBMLInitialAssignment);
+       function    getInitialAssignment(index: integer): TSBMLInitialAssignment;
+       function    getInitialAssignmentWithVarId (varId: string): TSBMLInitialAssignment;
+       function    getInitialAssignmentList(): TList<TSBMLInitialAssignment>;
+       function    getNumInitalAssignments(): integer;
 
        function    findReaction(id: string; var index: integer): boolean;
        function    addReaction (state : TReactionState) : TReaction; overload;
@@ -223,6 +233,7 @@ type
        procedure   updateReactions(node: TNode);  // Node Id changes
        procedure   updateReactionParamVal( paramId: string; newVal: double );
        function    addAnyToAnyReaction (id: string; sourceNodes, destNodes : array of TNode; var edgeIndex : integer) : TReaction;
+       procedure   computeAnyToAnyCoordinates (reaction : TReaction; sourceNodes, destNodes : array of TNode);
        procedure   unSelectAll;
        procedure   unReactionSelect;
        function    adjustNetworkCenterOffset (w, h : integer): TPointF;// get center offset for centering network
@@ -275,7 +286,7 @@ end;
 function saveColorToJSON (color : TColor) : TJSONObject;
 var A : byte;
 begin
-  console.log('Color: ', colorToHexString(color) );
+ // console.log('Color: ', colorToHexString(color) );
   result := TJSONObject.Create;
   result.AddPair ('R', TJSONNumber.Create (GetRValue (color)));
   result.AddPair ('G', TJSONNumber.Create (GetGValue (color)));
@@ -474,6 +485,12 @@ begin
       srcId[i] := '';
       if i < Length(srcStoich) then
          srcStoich[i] := 0.0; // assume same size as srcId
+      self.reactantReactionArcs[i].h1.x := 0.0;
+      self.reactantReactionArcs[i].h2.x := 0.0;
+      self.reactantReactionArcs[i].nodeIntersectionPt.x := 0.0;
+      self.reactantReactionArcs[i].h1.y := 0.0;
+      self.reactantReactionArcs[i].h2.y := 0.0;
+      self.reactantReactionArcs[i].nodeIntersectionPt.y := 0.0;
       end;
 end;
 
@@ -491,6 +508,14 @@ begin
       destId[i] := '';
       if i < Length(destStoich) then
          destStoich[i] := 0.0; // assume same size as destId
+
+      self.productReactionArcs[i].h1.x := 0.0;
+      self.productReactionArcs[i].h2.x := 0.0;
+      self.productReactionArcs[i].nodeIntersectionPt.x := 0.0;
+      self.productReactionArcs[i].h1.y := 0.0;
+      self.productReactionArcs[i].h2.y := 0.0;
+      self.productReactionArcs[i].nodeIntersectionPt.y := 0.0;
+
      end;
 end;
 
@@ -593,6 +618,7 @@ var  newParam : TSBMLparameter;
      i, j, k : integer;
      intNumCurveSeg: integer; // number of line segments
      intReactNode, intProdNode : integer; // node index.
+     spRefGlyphUsed: TList<boolean>; // check if glyph already used.
      rxnStyle: TSBMLRenderStyle;
 begin
   id := modelRxn.getId;
@@ -605,9 +631,13 @@ begin
   // get reactants:
   self.nReactants := modelRxn.getNumReactants;
   createReactantSpace (nReactants);
+  //spRefGlyphUsed := TList<boolean>.create;
+
 
   for i := 0 to modelRxn.getNumReactants - 1 do
       begin
+   //   for i := 0 to glyphRxn.getNumSpeciesRefGlyphs -1 do
+   //     spRefGlyphUsed[i] := false;
       srcId[i] := '';
       if glyphRxn <> nil then
         begin
@@ -618,7 +648,10 @@ begin
           spGlyphId := glyphRxn.getSpeciesRefGlyph(j).getSpeciesGlyphId;
           speciesName := getSpeciesIdFromSpGlyphId(spGlyphId, spGlyphList);
           if speciesName = modelRxn.getReactant(i).getSpecies then
-            srcId[i] := spGlyphId;
+            begin
+            srcId[i] := spGlyphId;  // different srcId can have same spGlyphId  (
+           // spRefGlyphUsed[j] := true;
+            end;
           end;
         end;
       if srcId[i] = '' then srcId[i] := modelRxn.getReactant(i).getSpecies;
@@ -641,7 +674,7 @@ begin
           spGlyphId := glyphRxn.getSpeciesRefGlyph(j).getSpeciesGlyphId;
           speciesName := getSpeciesIdFromSpGlyphId(spGlyphId, spGlyphList);
           if speciesName = modelRxn.getProduct(i).getSpecies then
-            destId[i] := spGlyphId;
+            destId[i] := spGlyphId; // different destId can have same spGlyphId
           end;
       end;
 
@@ -723,7 +756,7 @@ var i: integer;
 begin
   strNewKLaw := '';
   strNewKLaw := strKinLaw;
-  console.log(' Initial NewFormula:', strNewKLaw);
+ // console.log(' Initial NewFormula:', strNewKLaw);
   if funcDefList <> nil then
     begin
     for i := 0 to funcDefList.count -1 do
@@ -733,12 +766,12 @@ begin
         begin
         formula := '(' + funcDefList[i].getFuncFormula + ')';
         strNewKLaw := strNewKLaw.Replace(funcDefList[i].getFullFuncLabel, formula);
-        console.log(' Current NewFormula:', strNewKLaw);
+       // console.log(' Current NewFormula:', strNewKLaw);
         end;
 
       end;
     end;
-  console.log(' Final NewFormula:', strNewKLaw);
+  //console.log(' Final NewFormula:', strNewKLaw);
   Result := strNewKLaw;
 end;
 
@@ -752,10 +785,10 @@ var i, j, k, nodeIndex: integer;
     spGlyphId, spId: string; // SpeciesGlyph id, species id
     reactant: boolean;
     colorFound: boolean;
-
+   // currBezier: TSBMLLayoutCubicBezier;
     arcCenterFound: boolean;
     strMsg: string;
-begin
+begin                // if dest spRefGlyph is the same as another then set curve the same.
   arcCenterFound := false;
   colorFound := false;
 
@@ -769,6 +802,7 @@ begin
       Result := false;
       reactant := false;
       spRefGlyph := newGlyphRxn.getSpeciesRefGlyph(i);
+
       if i = 0 then  // Only use style from first spRefGlyph to draw reaction line:
         begin
         spRefGlyphStyle := reactionRenderInfo.getGlyphRenderStyle(newGlyphRxn.getSpeciesRefGlyph(i).getId,
@@ -798,6 +832,12 @@ begin
           end;
         end;
       spGlyphId := spRefGlyph.getSpeciesGlyphId; // species glyph id used to find spId
+      for j := 0 to newSpGlyphList.Count -1 do
+        begin
+        if newSpGlyphList[j].getId = spGlyphId then
+          spId := newSpGlyphList[j].getSpeciesId;
+        end;
+      if spId = '' then console.log('uNetwork -TReactionState.processReactionSpeciesReferenceCurves, no species id found');
 
       for j := 0 to newModelRxn.getNumReactants -1 do
         begin
@@ -817,7 +857,10 @@ begin
               reactant := false;
               for k := 0 to self.nProducts -1 do
                 if self.destId[k] = spGlyphId then nodeIndex := k;
+
               end;
+
+
             end;
         end;
 
@@ -844,8 +887,13 @@ begin
                       end;
                     arcCenterFound := true;
                     end;
+                //  currBezier := nil;
+                //  currBezier := spRefGlyph.getCurve.getCubicBezier(j);
+                //  self.importSBMLBezierCurve(currBezier,
+                //                           nodeIndex, reactant );
                   self.importSBMLBezierCurve(spRefGlyph.getCurve.getCubicBezier(j),
                                            nodeIndex, reactant );
+
                   Result := true;
                   end
                   else
@@ -895,6 +943,32 @@ begin
         end;
 
     end;
+    if self.nReactants >1 then   // Give same reactant ids the same curve:
+      begin                      // assume curves are bezier only:
+      for j := 0 to self.nReactants - 1 do
+        begin
+        if (self.reactantReactionArcs[j].h1.x = 0) and (self.reactantReactionArcs[j].h2.x = 0) then
+         for k := 1 to self.nReactants - 1 do
+           begin
+           if self.srcId[j] = self.srcId[k] then
+             self.reactantReactionArcs[j] := self.reactantReactionArcs[k];
+           end;
+        end;
+      end;
+    if self.nProducts > 1 then
+      begin
+      for j := 0 to self.nProducts - 1 do
+        begin
+        if (self.productReactionArcs[j].h1.x = 0) and (self.productReactionArcs[j].h2.x = 0) then
+         for k := 1 to self.nProducts - 1 do
+           begin
+           if self.destId[j] = self.destId[k] then
+             self.productReactionArcs[j] := self.productReactionArcs[k];
+           end;
+        end;
+      end;
+
+
 end;
 
 procedure TReactionState.processReactionCurves( newRxn: TSBMLLayoutReactionGlyph ;
@@ -980,7 +1054,6 @@ begin
                                       newBezier.getBasePoint2.getY;
       self.productReactionArcs[intNode].arcDirection := adOutArc;
       self.productReactionArcs[intNode].Merged := false;
-     // self.setBezierHandles;   // self.srcPt = nil, not assigned yet
       end;
     end;
 end;
@@ -999,7 +1072,6 @@ begin
     self.reactantReactionArcs[intNode].nodeIntersectionPt.y := currentLine.getStartPt.getY;
     self.reactantReactionArcs[intNode].arcDirection := adInArc;
     self.reactantReactionArcs[intNode].Merged := false;
-   // self.setBezierHandles;
     end
   else
     begin
@@ -1017,7 +1089,6 @@ begin
         self.productReactionArcs[intNode].nodeIntersectionPt.y := currentLine.getEndPt.getY;
         self.productReactionArcs[intNode].arcDirection := adOutArc;
         self.productReactionArcs[intNode].Merged := false;
-      //  self.setBezierHandles;
         end;
     end;
 
@@ -1232,6 +1303,18 @@ begin
     if model.getSBMLRenderInfo <> nil then
       modelRender := model.getSBMLRenderInfo;
 
+    for i := 0 to length(model.getSBMLmodelRules) -1 do
+      begin
+      if model.getSBMLRule(i).isAssignment then
+        self.addRule( model.getSBMLRule(i) );
+      end;
+      // Chk for Initial Assignments:
+    for i := 0 to model.getNumInitialAssignments -1 do
+      begin
+      self.addInitialAssignment( model.getInitialAssignment(i) );
+      end;
+
+
     // Do not get layout dimensions? not really necessary?
     // if needed then need to set NetworkPB to width and height.
     for i := 0 to modelLayout.getNumSpGlyphs - 1 do
@@ -1295,13 +1378,14 @@ begin
                       reaction.state.destPtr[k] := nodes[l];
                       break;
                     end;
-              reaction.state.setBezierHandles; // node ptrs have been set.
+              //reaction.state.setBezierHandles; // Do not need this as SBML layout
+                                                // has this already specified.
             end;
 
              // ************************
           end;
       end;
-   console.log('Done loading SBML network layout');
+   //console.log('Done loading SBML network layout');
 end;
 
 function TNetwork.getColorDefs(newStyle: TSBMLRenderStyle;
@@ -1451,7 +1535,19 @@ procedure TNetwork.autoBuildNetworkFromSBML(model: TModel);
           end;
 
         end;
-     self.autoLayoutEvent(nil); // Generate layout
+    // Chk for Assignment rules:
+    for i := 0 to length(model.getSBMLmodelRules) -1 do
+      begin
+      if model.getSBMLRule(i).isAssignment then
+        self.addRule( model.getSBMLRule(i) );
+      end;
+
+     // Chk for Initial Assignments:
+    for i := 0 to model.getNumInitialAssignments -1 do
+      begin
+      self.addInitialAssignment( model.getInitialAssignment(i) );
+      end;
+    self.autoLayoutEvent(nil); // Generate layout
  end;
 
  function TNetwork.buildNullNodeState(rxnId: String; num: integer): TNodeState;
@@ -1693,7 +1789,6 @@ begin
 
 end;
 
-
 function TNetwork.addReaction (state : TReactionState) : TReaction;
 begin
   setlength (reactions, length (reactions) + 1);
@@ -1711,6 +1806,82 @@ begin
   result := length (reactions);
   self.networkEvent(nil); // Notify listener
 end;
+
+procedure TNetwork.addRule (newRule: TSBMLRule);
+begin
+  if self.listOfSBMLRules = nil then
+    self.listOfSBMLRules := TList<TSBMLRule>.create;
+  self.listOfSBMLRules.Add(TSBMLRule.create(newRule));
+end;
+
+function TNetwork.getRule (index: integer): TSBMLRule;
+begin
+  if index < self.listOfSBMLRules.Count then
+    Result := self.listOfSBMLRules[index]
+  else Result := nil;
+end;
+
+// This function returns a rule, typical assignment, for varId
+    // varId: any species, parameter, compartment
+function TNetwork.getRuleWithVarId (varId: string): TSBMLRule;
+ var i: integer;
+ begin
+   Result := nil;
+   for i := 0 to self.listOfSBMLRules.Count -1 do
+     begin
+     if self.listOfSBMLRules[i].getVariable = varId then
+       Result := self.listOfSBMLRules[i];
+     end;
+ end;
+
+ function TNetwork.getRuleList(): TList<TSBMLRule>;
+ begin
+   Result := self.listOfSBMLRules;
+ end;
+
+ function TNetwork.getNumRules(): integer;
+ begin
+   if self.listOfSBMLRules <> nil then
+     Result := self.listOfSBMLRules.Count
+   else Result := 0;
+ end;
+
+ procedure TNetwork.addInitialAssignment(newInitAssign: TSBMLInitialAssignment);
+ begin
+   if self.listOfSBMLInitAssignments = nil then
+    self.listOfSBMLInitAssignments := TList<TSBMLInitialAssignment>.create;
+   self.listOfSBMLInitAssignments.Add(TSBMLInitialAssignment.create(newInitAssign));
+ end;
+
+ function  TNetwork.getInitialAssignment(index: integer): TSBMLInitialAssignment;
+ begin
+   if self.listOfSBMLInitAssignments.count > index then
+     Result := self.listOfSBMLInitAssignments[index]
+   else Result := nil;
+ end;
+
+ function  TNetwork.getInitialAssignmentWithVarId (varId: string): TSBMLInitialAssignment;
+ var i: integer;
+ begin
+   Result := nil;
+   for i := 0 to self.listOfSBMLInitAssignments.Count -1 do
+     begin
+     if self.listOfSBMLInitAssignments[i].getSymbol = varId then
+       Result := self.listOfSBMLInitAssignments[i];
+     end;
+ end;
+
+ function  TNetwork.getInitialAssignmentList(): TList<TSBMLInitialAssignment>;
+ begin
+   Result := self.listOfSBMLInitAssignments;
+ end;
+
+ function  TNetwork.getNumInitalAssignments(): integer;
+ begin
+   if self.listOfSBMLInitAssignments <> nil then
+     Result := self.listOfSBMLInitAssignments.Count
+   else Result := 0;
+ end;
 
  // Note: newSubStr should have all spaces replaced with '_'
 function TNetwork.strReplaceParamName(oldSubStr: string; newSubStr: string): boolean;
@@ -1769,7 +1940,7 @@ begin
       reaction.state.productReactionArcs[i].arcDirection := adOutArc;
 
   // Set up start handles on each reactant, these are between
-  // the the node and arc center but shifted towards the arccenter
+  // the node and arc center but shifted towards the arccenter
   reaction.state.setBezierHandles;
 
   // If we want line segments they go here.
@@ -1783,9 +1954,11 @@ var nReactants, nProducts : integer;
     i , reactantCount, productCount: integer;
     nDestCount : integer;
     startPt, pt : TPointF;
+    shift: double;
 begin
   // Set up start handles on each reactant, these are between
   // the the node and arc center but shifted towards the arccenter
+  shift := 1.00; // 1.25;
   cx := self.arcCenter.x; cy := self.arcCenter.y;
   reactantCount := self.nReactants;
   productCount := self.nProducts;
@@ -1794,15 +1967,15 @@ begin
     if self.srcPtr[i] <> nil then
       begin
       pt := self.srcPtr[i].state.getCenter;
-      self.reactantReactionArcs[i].h1.x := pt.x + (cx - pt.x) / 1.25;
-      self.reactantReactionArcs[i].h1.y := pt.y + (cy - pt.y) / 1.25;
+      self.reactantReactionArcs[i].h1.x := pt.x + (cx - pt.x) / shift;
+      self.reactantReactionArcs[i].h1.y := pt.y + (cy - pt.y) / shift;
       end;
     end;
 
   // Compute the common position of the inner control point on the
   // reactant side, the opposite inner control point will be
   // made collinear with this point. We'll make the inner control point
-  // on the reactant side the centroid between teh reactants and arccenter
+  // on the reactant side the centroid between the reactants and arccenter
 
   sumX := 0; sumY := 0;
   for i := 0 to reactantCount - 1 do
@@ -1824,7 +1997,6 @@ begin
       self.reactantReactionArcs[i].h2.x := centerX;
       self.reactantReactionArcs[i].h2.y := centerY;
       end;
-
   // Set up start handles on each product, shift handles twards the arccenter
   for i := 0 to productCount - 1 do
     begin
@@ -1833,6 +2005,8 @@ begin
       pt := self.destPtr[i].state.getCenter;
       self.productReactionArcs[i].h2.x := cx + (pt.x - cx) / 3.25;
       self.productReactionArcs[i].h2.y := cy + (pt.y - cy) / 3.25;
+     // self.productReactionArcs[i].h2.x := cx + (pt.x - cx) / 1.0;
+     // self.productReactionArcs[i].h2.y := cy + (pt.y - cy) / 1.0;
       end;
     end;
 
@@ -1840,6 +2014,8 @@ begin
   nDestCount := 0;
   for i := 0 to productCount - 1 do
       begin
+  //    self.productReactionArcs[i].h1.x := 2*cx - self.reactantReactionArcs[0].h2.x;
+  //    self.productReactionArcs[i].h1.y := 2*cy - self.reactantReactionArcs[0].h2.y;
       self.productReactionArcs[i].h1.x := 2*cx - self.reactantReactionArcs[0].h2.x;
       self.productReactionArcs[i].h1.y := 2*cy - self.reactantReactionArcs[0].h2.y;
       end;
@@ -1925,7 +2101,7 @@ begin
   result := False;
   if node.overControlRectangle (x, y, selectedNodeGrabRectangle) then
      begin
-     console.log ('netowork.overNodeControlRectangle: TRUE, i = ' + inttostr (i));
+    // console.log ('netowork.overNodeControlRectangle: TRUE, i = ' + inttostr (i));
      result := True;
      exit;
      end;
@@ -1951,7 +2127,7 @@ begin
              begin
              reactionIndex := i;
              arcId := j;
-             console.log ('Found Reactant Bezier');
+             //console.log ('Found Reactant Bezier');
              exit (True);
              end;
           end;
@@ -1964,7 +2140,7 @@ begin
              begin
              reactionIndex := i;
              arcId := j;
-             console.log ('Found it Product Bezier');
+             //console.log ('Found it Product Bezier');
              exit (True);
              end;
 
@@ -2029,6 +2205,10 @@ begin
  for i := 0 to length (nodes) - 1 do
       nodes[i].Free;
   setLength (nodes, 0);
+
+  self.listOfSBMLRules.Free;
+  self.listOfSBMLInitAssignments.Free;
+
   self.networkEvent(nil);
 end;
 
@@ -2215,21 +2395,23 @@ begin
   //sY := y*scalingFactor - f;
   //sW := state.w*scalingFactor + 2*f;
   //sH := state.h*scalingFactor + 2*f;
-
-  sX := state.x - f;
-  sY := state.y - f;
-  sW := state.w + 2*f;
-  sH := state.h + 2*f;
+  if Assigned(state) then
+    begin
+    sX := state.x - f;
+    sY := state.y - f;
+    sW := state.w + 2*f;
+    sH := state.h + 2*f;
+    end;
 
   // Given the selected box, now compute the control boxes around this rectangle
   r := getControlRects(sX, sY, sW, sH);
   for i := 0 to MAX_NODE_CONTROL_POINTS - 1 do
       begin
-      console.log ('TNode.overControlRectangle: ' + inttostr (i));
+     // console.log ('TNode.overControlRectangle: ' + inttostr (i));
       result := uGraphUtils.PtInRectF (r[i], TPointF.Create (x,y)) or result;
       if result then
          begin
-         console.log ('TNode.overControlRectangle: FOUND');
+       //  console.log ('TNode.overControlRectangle: FOUND');
          selectedNodeGrabRectangle := i;
          exit;
          end;
@@ -2464,8 +2646,8 @@ begin
       begin
       h1 := state.reactantReactionArcs[i].h1;
       h2 := state.reactantReactionArcs[i].h2;
-      console.log ('h1 and h2');
-      console.log (h1); console.log (h2);
+     // console.log ('h1 and h2');
+     // console.log (h1); console.log (h2);
       if ptInCircle (x, y, h1) then
          begin
          bezierId := i;

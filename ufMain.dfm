@@ -340,7 +340,7 @@ object mainForm: TmainForm
       Top = 34
       Width = 116
       Height = 25
-      Caption = 'Sample Network'
+      Caption = 'Sample Networks'
       ChildOrder = 2
       ElementClassName = 'btn btn-primary btn-sm'
       ElementFont = efCSS
@@ -892,7 +892,7 @@ object mainForm: TmainForm
         OnClick = btnAddNodeClick
       end
       object pnlNodePanel: TWebPanel
-        Left = 22
+        Left = 19
         Top = 258
         Width = 160
         Height = 247
@@ -1081,17 +1081,24 @@ object mainForm: TmainForm
           Left = 23
           Top = 192
           Width = 113
-          Height = 22
+          Height = 30
           Hint = 'Check if Boundary species (not a part of reaction)'
           Caption = 'Boundary Species'
           ChildOrder = 11
+          Color = clNone
           ElementClassName = 'card-body-shadow'
           ElementLabelClassName = 'custom-control-label'
           ElementFont = efCSS
           Enabled = False
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clBlack
+          Font.Height = -12
+          Font.Name = 'Tahoma'
+          Font.Style = []
           HeightStyle = ssAuto
           HeightPercent = 100.000000000000000000
-          ShowHint = False
+          ParentFont = False
+          ShowHint = True
           State = cbUnchecked
           WidthPercent = 100.000000000000000000
           OnClick = checkBoxBoundarySpClick
@@ -1330,8 +1337,8 @@ object mainForm: TmainForm
           216
           760)
         object pnlSimResultsFile: TWebPanel
-          Left = 8
-          Top = 621
+          Left = 6
+          Top = 604
           Width = 205
           Height = 73
           ElementClassName = 'card'
@@ -1487,7 +1494,6 @@ object mainForm: TmainForm
         OnMouseMove = networkPB1MouseMove
         OnMouseUp = networkPB1MouseUp
         OnMouseWheel = networkPB1MouseWheel
-        ExplicitTop = 6
       end
       object netDrawScrollBarVert: TTMSFNCScrollBar
         Left = 756
@@ -1661,6 +1667,7 @@ object mainForm: TmainForm
           Font.Style = []
           HeightPercent = 100.000000000000000000
           ParentFont = False
+          ShowHint = True
           WidthPercent = 100.000000000000000000
         end
         object lblRxnId: TWebLabel
@@ -1802,7 +1809,7 @@ object mainForm: TmainForm
         end
         object RxnParamEdit: TWebEdit
           Left = 6
-          Top = 91
+          Top = 70
           Width = 138
           Height = 22
           ChildOrder = 2
@@ -1811,6 +1818,24 @@ object mainForm: TmainForm
           HeightPercent = 100.000000000000000000
           WidthPercent = 100.000000000000000000
           OnExit = RxnParamEditExit
+        end
+        object ButtonVarAssignments: TWebButton
+          Left = 6
+          Top = 104
+          Width = 96
+          Height = 25
+          Hint = 
+            'Parameter and species assignments. Assignments currently cannot ' +
+            'be changed.'
+          Caption = 'Assignments'
+          ChildOrder = 3
+          ElementClassName = 'btn btn-primary btn-sm'
+          ElementFont = efCSS
+          HeightStyle = ssAuto
+          HeightPercent = 100.000000000000000000
+          ShowHint = True
+          WidthPercent = 100.000000000000000000
+          OnClick = ButtonVarAssignmentsClick
         end
       end
     end
