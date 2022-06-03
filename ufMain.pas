@@ -839,13 +839,13 @@ begin
   self.mainController.clearSim;
   self.deleteAllPlots;
   self.deleteAllSliders;
-  self.network.Clear;
+  self.networkController.clearNetwork;
+  self.networkController.clearSelectedObjects;
   self.networkPB1.Invalidate;
   self.disableEditNodePanel;
   self.editNodeId.Text := '';
   self.editNodeConc.Text := '';
   self.edtReactionId.Text := '';
-  self.networkController.selectedObjects.clear;
   self.resetBtnOnLineSim;
   self.btnResetSimSpecies.Enabled := false;
   self.btnParamReset.Enabled := false;
