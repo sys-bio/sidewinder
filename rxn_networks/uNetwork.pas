@@ -1442,8 +1442,8 @@ procedure TNetwork.autoBuildNetworkFromSBML(model: TModel);
           nodeState.conc := spAr[j].getInitialConcentration
         else nodeState.conc := spAr[j].getInitialAmount;
        // nodeState.conc := spAr[j].getmodel.getS_initVals[j];
-        nodeState.x := 20 + j; // default values
-        nodeState.y := 60 + j; //   "
+        nodeState.x := 30 + j; // default values
+        nodeState.y := 40 + j; //   "
         nodeState.w := 60;     //   "
         nodeState.h := 40;     //   "
         if nodeState.boundarySp then
@@ -1462,7 +1462,7 @@ procedure TNetwork.autoBuildNetworkFromSBML(model: TModel);
                              nil, nil, model.getSBMLcompartmentsArr(), nil);
 
           reaction := addReaction (reactionState);
-          reaction.state.arcCenter.x := 20 + j*2;
+          reaction.state.arcCenter.x := 20 + j*2; // default, could be zero as well?
           reaction.state.arcCenter.y := 60 + j*2;
              // Set the node pointers based on the node Ids
           if reaction.state.nReactants < 1 then

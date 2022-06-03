@@ -54,7 +54,7 @@ var W, L, area : double;
 begin
   finished := False;
   iter := 0;
-  maxIter := 600;
+  maxIter := 60; //600;
   W := width;
   L := height;
   area := W*L;
@@ -125,6 +125,7 @@ begin
                    end;
                  end;
                end;
+
              {
              dx := network.reactions[m].state.srcPtr[0].state.x - network.reactions[m].state.destPtr[0].state.x;
              dy := network.reactions[m].state.srcPtr[0].state.y - network.reactions[m].state.destPtr[0].state.y;
@@ -142,8 +143,10 @@ begin
                 network.reactions[m].state.srcPtr[0].dy := network.reactions[m].state.srcPtr[0].dy + (-ddy);
                 network.reactions[m].state.destPtr[0].dy := network.reactions[m].state.destPtr[0].dy + (+ddy);
                 //showmessage (floattostr (network.reactions[m].state.srcPtr[0].dx));
-                end;  }
+                end;
+                }
             end;
+
 
          //showmessage ('t = ' + floattostr (t));
 				 // Adjust Coordinates
@@ -161,6 +164,7 @@ begin
                      begin
                      network.nodes[v].state.x := 0 + (network.nodes[v].state.x + ((dx/disp) * t)); // divide by d is okay
                      network.nodes[v].state.y := 0 + trunc (network.nodes[v].state.y + ((dy/disp) * t));
+
                      end;
                    end;
                 end;
@@ -175,6 +179,11 @@ begin
          end;
     dx := 0;
          //showmessage ('x = ' + floattostr (network.nodes[v].state.x));
+    // Hack to keep nodes in canvas until investigated in more detail:
+    for v := 0 to length(network.nodes) -1 do
+      begin
+      if network.nodes[v].state.y <0 then network.nodes[v].state.y := v*2;
+      end;
 end;
 
 
