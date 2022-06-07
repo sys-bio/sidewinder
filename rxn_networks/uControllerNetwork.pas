@@ -77,7 +77,8 @@ type
     procedure prepareUndo;
     procedure undo;
     procedure deleteSelectedItems;
-
+    procedure clearNetwork;
+    procedure clearSelectedObjects;
     procedure addAnyReactionMouseDown(Sender: TObject; x, y: double; nReactants, nProducts: integer);
     procedure OnMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; x, y: double);
     procedure OnMouseMove(Sender: TObject; Shift: TShiftState; x, y: double);
@@ -187,6 +188,17 @@ begin
         end;
     end;
 
+end;
+
+procedure TController.clearNetwork;
+begin
+   self.network.Clear;
+
+end;
+
+procedure TController.clearSelectedObjects;
+begin
+  self.selectedObjects.clear;
 end;
 
 function TController.loadModel(modelStr: string): string;

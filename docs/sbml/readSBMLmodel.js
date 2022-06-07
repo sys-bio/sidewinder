@@ -39,6 +39,8 @@ class ProcessSBML {
    tModela.numSpecies = this.model.getNumSpecies();
    tModela.numParams = this.model.getNumParameters();
    tModela.numCompartments = this.model.getNumCompartments();
+   const numInitAssignments = this.model.getNumInitialAssignments(); // TODO: Need to get these
+   console.log(' Number of Init assignments: ',numInitAssignments);
    tModela.numEvents = this.model.getNumEvents();
    console.log( 'Number of events: ', this.model.getNumEvents() );
    tModela.numRules = this.model.getNumRules();
@@ -49,6 +51,22 @@ class ProcessSBML {
    tModela.annotationStr = this.model.getNotesString();
    return tModela;
   }
+
+getInitialAssignments(tModela, tInitAssign) {
+  for( var i=0; i < this.model.getNumInitialAssignments(); i++ ) {
+    const newAssign = this.model.getInitialAssignment(i);
+    if (newAssign.isSetIdAttribute()) {
+      tInitAssign.setId(newAssign.getId()); }
+    else { tInitAssign.setId('InitAssign_' + newAssign.getSymbol()); }
+    if( newAssign.isSetMath()) {
+      const astMath = newAssign.getMath();
+      tInitAssign.setFormula( new this.libSBML.SBMLFormulaParser().formulaToL3String(astMath));}
+    else { tInitAssign.setFormula(''); }
+    tInitAssign.setSymbol( newAssign.getSymbol() );
+    tModela.addInitialAssignment( tInitAssign );
+  }
+  return tModela;
+}
 
 getRules(tModela, tRule) {
    var i;
@@ -111,6 +129,51 @@ getRules(tModela, tRule) {
         tSpecies.setHasOnlySubstanceUnits(newSpecies.getHasOnlySubstanceUnits()); }
       tModela.addSBMLspecies(tSpecies); // Add new species to array of all species used in model.
     }
+    return tModela;
+  }
+
+  getFuncDefs(tModela, tFuncDef) {
+    var i;
+    const numFuncs = this.model.getNumFunctionDefinitions();
+    if( numFuncs >0 ){
+      for( i=0; i< numFuncs; i++) {
+        tFuncDef.clear();
+        const newFuncDef = this.model.getFunctionDefinition(i);
+        if( newFuncDef.isSetIdAttribute()) {
+          console.log('func Def: ', newFuncDef.getId());
+          tFuncDef.setId(newFuncDef.getId());
+        }
+        if( newFuncDef.isSetName() ) {
+          tFuncDef.setName(newFuncDef.getName());
+        }
+        if( newFuncDef.isSetBody() ) {
+          const newBody = newFuncDef.getBody();
+          const strBody = new this.libSBML.SBMLFormulaParser().formulaToL3String(newBody);
+          tFuncDef.setFuncFormula(strBody.trim());
+        }
+        const newMath = newFuncDef.getMath();
+        console.log(' func Math: ', newMath.getType() );
+        const strMath = new this.libSBML.SBMLFormulaParser().formulaToL3String(newMath);
+        var fullFuncLabel = tFuncDef.getId() + '('; // func name with comma sep vars in parenthesis
+        let varArr = strMath.split(',');
+        const numVars = varArr.length -1; // last element is formula
+        const elementZeroArr = varArr[0].split('lambda('); // assume format lambda(var1, var2, ...
+        if( elementZeroArr.length > 1) {
+         varArr[0] = elementZeroArr[1]; // discard first element: 'lambda('
+        }
+        for( var j=0; j< numVars; j++) {
+          tFuncDef.addVar(varArr[j].trim());
+          if( j == 0 ) { fullFuncLabel = fullFuncLabel + varArr[j].trim(); }
+          else { fullFuncLabel = fullFuncLabel + ', ' + varArr[j].trim(); }
+         // console.log(' var ',j,': ',varArr[j].trim());
+        }
+        fullFuncLabel = fullFuncLabel + ')';
+        tFuncDef.setFullFuncLabel( fullFuncLabel );
+        tModela.addFuncDef( tFuncDef );
+        console.log(' Func eq: ', strMath);
+      }
+    }
+    //else { console.log('No SBML Func Defs!');}
     return tModela;
   }
 
@@ -185,7 +248,9 @@ getRules(tModela, tRule) {
       if (this.model.getReaction(i).isSetReversible()) {
         rxnReversible = this.model.getReaction(i).getReversible(); }
       else { rxnReversible = true; } // level 2 default is true
-    
+      // Note: we do not check for localParameters to add to kinetic law.
+      // Assume reaction only uses global parameters.
+      // this.model.getReaction(i).getKineticLaw().getNumLocalParameters();
    //console.log('--> kinetic law: ',this.model.getReaction(i).getKineticLaw().getFormula());
       tModela.addSBMLReaction(this.model.getReaction(i).getId(), products, prodStoich,
                               reactants, reactStoich, kineticForm, rxnReversible);

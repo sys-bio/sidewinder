@@ -46,7 +46,7 @@ procedure fruchterman_reingold(network : TNetwork; width, height : integer; iter
 var W, L, area : double;
     k, dt, t, x, y : double;
     dx, dy, ddx, ddy, delta, disp, d: double;
-    v, u, m : integer;
+    v, u, m, i, n : integer;
     tempinit, alpha : double;
     finished : boolean;
     iter : integer;
@@ -54,11 +54,12 @@ var W, L, area : double;
 begin
   finished := False;
   iter := 0;
-  maxIter := 600;
+  maxIter := 60; //600;
   W := width;
   L := height;
   area := W*L;
-  k := 120;
+  //k := 120;
+  k := sqrt( area/( 5 *length(network.nodes) ) ); // python code: https://gist.github.com/mmisono/8972731
   iterations := trunc ((130 * ln(length (network.nodes) + 2)));
 
   dt := 1/(iterations + 1);
@@ -101,6 +102,31 @@ begin
           // calculate attractive forces
          for m := 0 to length (network.reactions) - 1 do
              begin
+             for i := 0 to network.reactions[m].state.nReactants -1 do
+               begin
+               for n := 0 to network.reactions[m].state.nProducts -1 do
+                 begin
+                 dx := network.reactions[m].state.srcPtr[i].state.x - network.reactions[m].state.destPtr[n].state.x;
+                 dy := network.reactions[m].state.srcPtr[i].state.y - network.reactions[m].state.destPtr[n].state.y;
+                 delta := sqrt(dx*dx+dy*dy);
+               //showmessage ('dx = ' + floattostr (dx) + ' dy = ' + floattostr (dy) + ' delta = ' + floattostr (delta));
+                 if delta <> 0 then
+                   begin
+                   d := f_attractive (delta,k)/delta;
+                  //showmessage ('d = ' + floattostr (d));
+                   ddx := dx*d;
+                   ddy := dy*d;
+                   network.reactions[m].state.srcPtr[i].dx := network.reactions[m].state.srcPtr[i].dx + (-ddx);
+                   network.reactions[m].state.destPtr[n].dx := network.reactions[m].state.destPtr[n].dx + (+ddx);
+
+                   network.reactions[m].state.srcPtr[i].dy := network.reactions[m].state.srcPtr[i].dy + (-ddy);
+                   network.reactions[m].state.destPtr[n].dy := network.reactions[m].state.destPtr[n].dy + (+ddy);
+                   //showmessage (floattostr (network.reactions[m].state.srcPtr[0].dx));
+                   end;
+                 end;
+               end;
+
+             {
              dx := network.reactions[m].state.srcPtr[0].state.x - network.reactions[m].state.destPtr[0].state.x;
              dy := network.reactions[m].state.srcPtr[0].state.y - network.reactions[m].state.destPtr[0].state.y;
              delta := sqrt(dx*dx+dy*dy);
@@ -118,7 +144,9 @@ begin
                 network.reactions[m].state.destPtr[0].dy := network.reactions[m].state.destPtr[0].dy + (+ddy);
                 //showmessage (floattostr (network.reactions[m].state.srcPtr[0].dx));
                 end;
+                }
             end;
+
 
          //showmessage ('t = ' + floattostr (t));
 				 // Adjust Coordinates
@@ -131,13 +159,13 @@ begin
                    dx := network.nodes[v].dx;
                    dy := network.nodes[v].dy;
                    disp := sqrt(dx*dx+dy*dy);
-
                   // showmessage ('d 2 = ' + floattostr (disp));
                    if (disp <> 0) then
-                       begin
-                       network.nodes[v].state.x := 0 + (network.nodes[v].state.x + ((dx/disp) * t)); // divide by d is okay
-                       network.nodes[v].state.y := 0 + trunc (network.nodes[v].state.y + ((dy/disp) * t));
-                       end;
+                     begin
+                     network.nodes[v].state.x := 0 + (network.nodes[v].state.x + ((dx/disp) * t)); // divide by d is okay
+                     network.nodes[v].state.y := 0 + trunc (network.nodes[v].state.y + ((dy/disp) * t));
+
+                     end;
                    end;
                 end;
 				     end;
@@ -149,8 +177,13 @@ begin
          // cooling
          t := t - dt;
          end;
-         dx := 0;
+    dx := 0;
          //showmessage ('x = ' + floattostr (network.nodes[v].state.x));
+    // Hack to keep nodes in canvas until investigated in more detail:
+    for v := 0 to length(network.nodes) -1 do
+      begin
+      if network.nodes[v].state.y <0 then network.nodes[v].state.y := v*2;
+      end;
 end;
 
 
