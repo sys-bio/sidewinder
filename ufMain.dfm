@@ -1354,9 +1354,6 @@ object mainForm: TmainForm
           Font.Style = []
           ParentFont = False
           ShowCaption = False
-          ExplicitLeft = 6
-          ExplicitTop = 564
-          ExplicitWidth = 205
           object lblFileName: TWebLabel
             Left = 16
             Top = 45

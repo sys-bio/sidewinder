@@ -810,7 +810,8 @@ begin
       self.btnOnLineSim.font.color := clred;
       self.btnOnLineSim.ElementClassName := 'btn btn-success btn-sm';
       self.btnOnLineSim.caption := 'Simulation: Pause';
-      simResultsMemo.visible := true;
+      if DEBUG then
+        simResultsMemo.visible := true;
       self.mainController.SetRunTime(DEFAULT_RUNTIME);
        // default timer interval is 100 msec:
       // multiplier default is 10, range 1 - 50
