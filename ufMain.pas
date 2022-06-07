@@ -16,7 +16,7 @@ uses
   uPlotPanel, uParamSliderLayout, uSidewinderTypes, WEBLib.ComCtrls, WEBLib.Miletus,
   WEBLib.JQCtrls, ufAssignments, ufSelectExample;
 
-const SIDEWINDER_VERSION = 'Version 0.46 alpha';
+const SIDEWINDER_VERSION = 'Version 0.47 alpha';
       DEFAULT_RUNTIME = 10000;
       EDITBOX_HT = 25;
       ZOOM_SCALE = 20;
@@ -198,7 +198,6 @@ type
     procedure SliderEditLBClick(Sender: TObject);
     procedure splitterMoved(Sender: TObject);
     procedure btnSimpleClick(Sender: TObject);
-    procedure stepSizeEdit1Change(Sender: TObject);
     procedure SaveSBMLButtonClick(Sender: TObject);
     procedure resetInitValsButtonClick(Sender: TObject);
     procedure editNodeConcExit(Sender: TObject);
@@ -224,6 +223,7 @@ type
     procedure checkBoxBoundarySpClick(Sender: TObject);
     procedure ButtonVarAssignmentsClick(Sender: TObject);
     procedure displayVarAssignments(rxnId: string);
+    procedure splitterClick(Sender: TObject);
 
   private
     numbPlots: Integer; // Number of plots displayed
@@ -1329,35 +1329,9 @@ begin
 end;
 
 procedure TMainForm.refreshPlotAndSliderPanels();
-//var i: integer;
 begin
   self.refreshPlotPanels;
   self.refreshSliderPanels;
-{  if assigned(self.plotsPanelList) then
- begin
-   if self.plotsPanelList.count >0 then
-   begin
-     //console.log(' PlotWPanel width: ', plotsPanelList[0].plotWPanel.width, 'plot PB width: ', plotsPanelList[0].plotPB.width);
-     for i := 0 to self.plotsPanelList.count -1 do
-       begin
-          plotsPanelList[i].setPlotPBWidth();
-          plotsPanelList[i].initializePlot( MainController.getRunTime,
-                             MainController.getStepSize, self.plotSpecies[i]);
-          self.plotsPanelList[i].setPlotLegend(self.plotSpecies[i]);
-       end;
-   end;
- end; }
- // param sliders:
- {if assigned(self.pnlSliderAr) then
-   begin
-     for i := 0 to Length(self.pnlSliderAr) - 1 do
-     begin
-       configPSliderPanel(i, 0, self.pnlSliderContainer.width, SLIDERPHEIGHT,
-                         self.pnlSliderAr);
-       configPSliderTBar(i, self.pnlSliderContainer.width, self.sliderPTBarAr,
-             self.sliderPHLabelAr, self.sliderPLLabelAr, self.sliderPTBLabelAr);
-     end;
-   end;  }
 
 end;
 
@@ -1478,6 +1452,12 @@ begin
   self.SliderEditLB.Top := 40; // default
 end;
 
+procedure TMainForm.splitterClick(Sender: TObject);
+begin
+ // TODO   Popup with trackbar/slider to adjust self.splitter.left
+ // self.splitterMoved(nil);
+end;
+
 procedure TMainForm.splitterMoved(Sender: TObject);
 begin
   networkCanvas.bitmap.Height := networkPB1.Height;
@@ -1487,33 +1467,6 @@ begin
 
   self.adjustRightTabWPanels;
   networkPB1.Invalidate;
-end;
-
-procedure TMainForm.stepSizeEdit1Change(Sender: TObject); // use stepSizeEdit1Exit
-var newStep: integer;
-begin {
-  try
-    newStep := strToInt(stepSizeEdit1.Text);
-    if newStep >0 then
-      begin
-      self.stepSize := newStep * 0.001;
-      self.mainController.SetStepSize(self.stepSize);
-      end
-    else notifyUser ('Step size must be a positive integer');
-
-  except
-       on Exception: EConvertError do
-         notifyUser ('Step size must be a positive integer');
-  end;
-
-  if self.mainController.IsModelLoaded then
-  begin
-    self.mainController.createSimulation();
-    if self.numbPlots >0 then
-      self.initializePlots;
-    self.currentGeneration := 0;
-  end;
-          }
 end;
 
 procedure TMainForm.stepSizeEdit1Exit(Sender: TObject);
@@ -1679,6 +1632,7 @@ procedure TMainForm.selectPlotSpecies(plotnumb: Integer);
         if fPlotSpecies.SpPlotCG.checked[i] then
           begin
             plotSp := self.mainController.getModel.getS_names[i];
+          //  plotSp := self.mainController.getModel.getSBMLspecies(i).getID;
             if self.mainController.getModel.getSBMLspecies(plotSp).isSetInitialAmount then
             begin
               if self.mainController.getModel.getSBMLspecies(plotSp).getInitialAmount > maxYVal then
@@ -1699,7 +1653,8 @@ procedure TMainForm.selectPlotSpecies(plotnumb: Integer);
           else self.plotSpecies.Items[getPlotPBIndex(plotNumb)].Add('');
       end;
 
-    for i := 0 to Length(self.mainController.getModel.getSBMLspeciesAr) -1 do
+    //for i := 0 to Length(self.mainController.getModel.getSBMLspeciesAr) -1 do
+    for i := 0 to length(self.mainController.getModel.getS_Names) -1 do
     begin
       if fPlotSpecies.SpPlotCG.Items.Count < (i +1) then
       begin
@@ -1731,12 +1686,16 @@ procedure TMainForm.selectPlotSpecies(plotnumb: Integer);
      curStr: string;
   begin
     lgth := 0;
-    for i := 0 to Length(self.mainController.getModel.getSBMLspeciesAr) -1 do
+   // TODO: Need Additional (non default) plots to allow plotting of boundary species.
+   //  Need to look at plots, as new data is only plotted for species, change plot species array to handle boundary species.
+   // for i := 0 to Length(self.mainController.getModel.getSBMLspeciesAr) -1 do
+    for i := 0 to length(self.mainController.getModel.getS_Names) -1 do
     begin
       curStr := '';
-      if self.mainController.getModel.getSBMLspecies(i).isSetIdAttribute then
+      curStr := self.mainController.getModel.getS_names[i];
+     { if self.mainController.getModel.getSBMLspecies(i).isSetIdAttribute then
          curStr := self.mainController.getModel.getSBMLspecies(i).getID
-      else curStr := self.mainController.getModel.getSBMLspecies(i).getName;
+      else curStr := self.mainController.getModel.getSBMLspecies(i).getName; }
 
       if not curStr.Contains( NULL_NODE_TAG ) then
         begin

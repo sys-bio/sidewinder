@@ -551,7 +551,6 @@ object mainForm: TmainForm
         ShowHint = True
         Text = '100'
         WidthPercent = 100.000000000000000000
-        OnChange = stepSizeEdit1Change
         OnExit = stepSizeEdit1Exit
       end
     end
@@ -1364,7 +1363,6 @@ object mainForm: TmainForm
         ChildOrder = 3
         Color = clBtnFace
         OnMoved = SplitterPlotSliderMoved
-        ExplicitLeft = 305
       end
       object pnlSliderContainer: TWebPanel
         Left = 305
@@ -1641,7 +1639,9 @@ object mainForm: TmainForm
       Align = alRight
       ChildOrder = 3
       Color = clBtnFace
+      OnClick = splitterClick
       OnMoved = splitterMoved
+      ExplicitLeft = 954
     end
     object RNodeEditWPanel: TWebPanel
       Left = 1114
