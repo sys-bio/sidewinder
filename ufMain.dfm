@@ -116,7 +116,7 @@ object mainForm: TmainForm
       Width = 120
       Height = 28
       Hint = 'If network ready, start simulation'
-      Caption = 'Setup Simulation'
+      Caption = 'Start Simulation'
       ChildOrder = 5
       ElementClassName = 'btn btn-danger btn-sm'
       Font.Charset = DEFAULT_CHARSET
@@ -1333,18 +1333,15 @@ object mainForm: TmainForm
         ChildOrder = 4
         ElementBodyClassName = 'card-body'
         ElementFont = efCSS
-        DesignSize = (
-          216
-          760)
         object pnlSimResultsFile: TWebPanel
-          Left = 6
-          Top = 584
-          Width = 205
+          Left = 0
+          Top = 687
+          Width = 216
           Height = 73
           ElementClassName = 'card'
           HeightPercent = 100.000000000000000000
           WidthPercent = 100.000000000000000000
-          Anchors = [akLeft, akBottom]
+          Align = alBottom
           BorderColor = clSilver
           BorderStyle = bsSingle
           Caption = 'pnlSimResultsFile'
@@ -1357,6 +1354,9 @@ object mainForm: TmainForm
           Font.Style = []
           ParentFont = False
           ShowCaption = False
+          ExplicitLeft = 6
+          ExplicitTop = 564
+          ExplicitWidth = 205
           object lblFileName: TWebLabel
             Left = 16
             Top = 45

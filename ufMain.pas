@@ -41,7 +41,7 @@ type
     yLbl: TWebLabel;
     zoomLbl: TWebLabel;
     zoomFactorLbl1: TWebLabel;
-    SBMLmodelMemo: TWebMemo;       // Not used for now.
+    SBMLmodelMemo: TWebMemo;       // DEBUG only
     stepSizeLabel1: TWebLabel;
     stepSizeEdit1: TWebEdit;
     ZoomCntrlPanel: TWebPanel;
@@ -173,6 +173,8 @@ type
     procedure netDrawScrollBarHorizValueChanged(Sender: TObject; Value: Double);
 
     procedure btnOnLineSimClick(Sender: TObject);
+    procedure runSim();
+    procedure stopSim();
     procedure btnAddPlotClick(Sender: TObject);
     procedure btnParamAddSliderClick(Sender: TObject);
     procedure loadNetworkButtonClick(Sender: TObject);
@@ -257,7 +259,7 @@ type
     procedure LoadJSONFile();
     procedure EditSliderList(sn: Integer);
             // delete, change param slider as needed using TWebListBox.
-    procedure resetBtnOnLineSim(); // reset to default look and caption of 'Setup simulation'
+    procedure resetBtnOnLineSim(); // reset to default look and caption of 'Start simulation'
     procedure deleteSlider(sn: Integer); // sn: slider index
     procedure deleteAllSliders();
     procedure adjustRightTabWPanels(); // Adjust all right panels
@@ -466,15 +468,19 @@ procedure TMainForm.btnDrawClick(Sender: TObject);
       strModel: string;
   begin
     i := self.fSelectExample.indexExampleChosen;
-    if i = 3 then self.stepSizeEdit1.Text := inttostr(10); // glycolysis example
     strModel := getTestModel(i);
     self.SBMLOpenDialogGetFileAsText(nil,0, strModel);
+    if i = 3 then
+      begin
+      self.stepSizeEdit1.Text := inttostr(10); // glycolysis example
+      self.stepSizeEdit1Exit(nil);
+      end;
   end;
-var
-  n1, n2, n3, n4: TNode;
-  srcNodes, destNodes : array of TNode;
+//var
+  //n1, n2, n3, n4: TNode;
+ // srcNodes, destNodes : array of TNode;
 begin
-  setLength (srcNodes, 1); setLength (destNodes, 1);
+  //setLength (srcNodes, 1); setLength (destNodes, 1);
   if length(network.getCurrentState.savedNodes) = 0 then
   begin
     // ****************************
@@ -537,8 +543,11 @@ procedure TMainForm.btnSimpleClick(Sender: TObject);
 var s : string;
 begin
   s := getTestModel(0);
-  SBMLmodelMemo.Lines.Text := s;
-  SBMLmodelMemo.visible := true;
+  if DEBUG then
+    begin
+    SBMLmodelMemo.Lines.Text := s;
+    SBMLmodelMemo.visible := true;
+    end;
   self.MainController.loadSBML(s);
  end;
 
@@ -717,8 +726,11 @@ end;
 procedure TMainForm.SBMLOpenDialogGetFileAsText(Sender: TObject;
   AFileIndex: Integer; AText: string);
 begin
-  SBMLmodelMemo.Lines.Text := AText;
-  SBMLmodelMemo.visible := true;
+  if DEBUG then
+    begin
+    SBMLmodelMemo.Lines.Text := AText;
+    SBMLmodelMemo.visible := true;
+    end;
   // Check if sbmlmodel already created, if so, destroy before creating ?
   self.deleteAllPlots;
   self.deleteAllSliders;
@@ -732,7 +744,7 @@ end;
 procedure TMainForm.resetBtnOnLineSim();
 begin
   self.btnOnLineSim.ElementClassName := 'btn btn-primary btn-sm';
-  self.btnOnLineSim.caption := 'Setup Simulation';
+  self.btnOnLineSim.caption := 'Start Simulation';
   self.btnAddPlot.Enabled := false;
   self.btnParamAddSlider.Enabled := false;
   self.enableStepSizeEdit;
@@ -751,80 +763,84 @@ begin
    end;
 
  if MainController.isOnline = false then
-   begin
-     self.btnAddPlot.Enabled := true;
-     self.btnParamAddSlider.Enabled := true;
-     self.enableStepSizeEdit;
-     if self.networkUpdated = false then
-       begin
-       if self.mainController.IsModelLoaded then
-         begin
-         MainController.setOnline(true);
-		     self.btnResetSimSpecies.Enabled := false;
-         self.btnParamReset.Enabled := false;
-         self.btnResetRun.Enabled := false;
-         self.disableStepSizeEdit;
-         self.btnOnLineSim.font.color := clred;
-         self.btnOnLineSim.ElementClassName := 'btn btn-success btn-sm';
-         self.btnOnLineSim.caption := 'Simulation: Pause';
-         simResultsMemo.visible := true;
-         self.mainController.SetRunTime(DEFAULT_RUNTIME);
-         // default timer interval is 100 msec:
-         // multiplier default is 10, range 1 - 50
-         self.mainController.SetTimerInterval(round(1000/self.trackBarSimSpeed.position));
-         self.mainController.SetStepSize(self.stepSize);
-       //  self.rtLengthEdit1.Text := FloatToStr(MainController.getRunTime);
-         if self.mainController.getCurrTime = 0  then
-           self.InitSimResultsTable();  // Set table of Sim results.
-         self.rightPanelType := SIMULATION_PANEL;
-         self.setRightPanels;
-         MainController.SetTimerEnabled(true); // Turn on web timer (Start simulation)
-         end
-         else notifyUser(' No model created for simulation. ');
-       end
-     else
-       begin
-       self.setUpSimulationUI;
-       self.btnOnLineSim.font.color := clgreen;
-       self.btnOnLineSim.ElementClassName := 'btn btn-danger btn-sm';
-       self.btnOnLineSim.caption := 'Simulation: Play';
-       // add a default plot:
-       if self.numbPlots < 1 then
-         begin
-         if length( self.mainController.getModel.getS_Names ) < 10 then
-           addPlotAll()
-         //else self.btnAddPlotClick(nil);  // Issue slider form pops up before plot form closes.
-         end
-       else self.btnAddPlotClick(nil);
-       // add default param sliders:
-       if self.numbSliders < 1 then
-         begin
-         if length( self.mainController.getModel.getP_Names ) < 11 then
-           begin
-           self.addAllParamSliders;
-           self.btnParamAddSlider.Enabled := false;
-           end
-         else self.btnParamAddSliderClick(nil);
-         end
-       end;
-
-   end
+   self.runSim
  else  // stop simulation
-   begin
-     MainController.setOnline(false);
-     self.btnResetSimSpecies.Enabled := true;
-     self.btnParamReset.Enabled := true;
-     self.btnResetRun.Enabled := true;
-     self.enableStepSizeEdit;
-     self.MainController.SetTimerEnabled(false); // Turn off web timer (Stop simulation)
-     self.btnOnLineSim.font.color := clgreen;
-     self.btnOnLineSim.ElementClassName := 'btn btn-danger btn-sm';
-     self.btnOnLineSim.caption := 'Simulation: Play';
-     if self.saveSimResults then
-       begin
-       self.mainController.writeSimData(self.lblSimDataFileName.Caption, self.simResultsMemo.Lines);
-       end;
-   end;
+   self.stopSim;
+end;
+
+procedure TMainForm.runSim();
+begin
+  self.btnAddPlot.Enabled := true;
+  self.btnParamAddSlider.Enabled := true;
+  self.enableStepSizeEdit;
+  if self.networkUpdated = true then
+    begin
+    self.setUpSimulationUI;
+    self.btnOnLineSim.font.color := clgreen;
+    self.btnOnLineSim.ElementClassName := 'btn btn-danger btn-sm';
+    self.btnOnLineSim.caption := 'Simulation: Play';
+     // add a default plot:
+    if self.numbPlots < 1 then
+      begin
+     // if length( self.mainController.getModel.getS_Names ) < 10 then
+        addPlotAll()
+      end
+    else self.btnAddPlotClick(nil);
+      // add default param sliders:
+    if self.numbSliders < 1 then
+      begin
+      //if length( self.mainController.getModel.getP_Names ) < 11 then
+        //begin
+      self.addAllParamSliders;
+      if length( self.mainController.getModel.getP_Names ) < 11 then
+        self.btnParamAddSlider.Enabled := false;
+      end
+    else self.btnParamAddSliderClick(nil);
+
+    end;
+
+  // ******************
+  if self.mainController.IsModelLoaded then
+    begin
+      MainController.setOnline(true);
+	    self.btnResetSimSpecies.Enabled := false;
+      self.btnParamReset.Enabled := false;
+      self.btnResetRun.Enabled := false;
+      self.disableStepSizeEdit;
+      self.btnOnLineSim.font.color := clred;
+      self.btnOnLineSim.ElementClassName := 'btn btn-success btn-sm';
+      self.btnOnLineSim.caption := 'Simulation: Pause';
+      simResultsMemo.visible := true;
+      self.mainController.SetRunTime(DEFAULT_RUNTIME);
+       // default timer interval is 100 msec:
+      // multiplier default is 10, range 1 - 50
+      self.mainController.SetTimerInterval(round(1000/self.trackBarSimSpeed.position));
+      self.mainController.SetStepSize(self.stepSize);
+       //  self.rtLengthEdit1.Text := FloatToStr(MainController.getRunTime);
+      if self.mainController.getCurrTime = 0  then
+        self.InitSimResultsTable();  // Set table of Sim results.
+      self.rightPanelType := SIMULATION_PANEL;
+      self.setRightPanels;
+      MainController.SetTimerEnabled(true); // Turn on web timer (Start simulation)
+      end
+   else notifyUser(' No model created for simulation. ');
+end;
+
+procedure TMainForm.stopSim();
+begin
+   MainController.setOnline(false);
+   self.btnResetSimSpecies.Enabled := true;
+   self.btnParamReset.Enabled := true;
+   self.btnResetRun.Enabled := true;
+   self.enableStepSizeEdit;
+   self.MainController.SetTimerEnabled(false); // Turn off web timer (Stop simulation)
+   self.btnOnLineSim.font.color := clgreen;
+   self.btnOnLineSim.ElementClassName := 'btn btn-danger btn-sm';
+   self.btnOnLineSim.caption := 'Simulation: Play';
+   if self.saveSimResults then
+     begin
+     self.mainController.writeSimData(self.lblSimDataFileName.Caption, self.simResultsMemo.Lines);
+     end;
 end;
 
 procedure TMainForm.checkBoxBoundarySpClick(Sender: TObject);
@@ -1743,14 +1759,18 @@ begin
 end;
 
 procedure TMainForm.addPlotAll(); // add plot with all species
-var i: integer; maxYVal: double; plotSp: string;
+var i, numSpeciesToPlot: integer; maxYVal: double; plotSp: string;
 begin
   maxYVal := 0;
+  numSpeciesToPlot := 0;
   if self.plotSpecies = nil then
     self.plotSpecies := TList<TSpeciesList>.create;
   self.plotSpecies.Add(TSpeciesList.create);
   self.numbPlots := self.numbPlots + 1;
-  for i := 0 to length(self.mainController.getModel.getS_Names) -1 do
+  numSpeciesToPlot := length(self.mainController.getModel.getS_Names);
+  if numSpeciesToPlot > 8 then numSpeciesToPlot := 8;
+
+  for i := 0 to numSpeciesToPlot -1 do
     begin
       plotSp := '';
       plotSp := self.mainController.getModel.getS_names[i];
@@ -1771,7 +1791,8 @@ begin
     end;
   for i := 0 to Length(self.mainController.getModel.getSBMLspeciesAr) -1 do
     begin
-      if length(self.mainController.getModel.getS_Names) < (i +1) then
+    //  if length(self.mainController.getModel.getS_Names) < (i +1) then
+      if numSpeciesToPlot < (i +1) then
         begin
         self.plotSpecies[self.numbPlots - 1].Add('');
         end;
@@ -2028,10 +2049,14 @@ end;
 // *******************************************************
 
 procedure TMainForm.addAllParamSliders();
-var i: integer;
+var i, numParSliders: integer;
     sliderP: string;
 begin
-  for i := 0 to length(self.mainController.getModel.getP_Names) -1 do
+  numParSliders := 0;
+  numParSliders := length(self.mainController.getModel.getP_Names);
+  if numParSliders > 10 then numParSliders := 10;
+
+  for i := 0 to numParSliders -1 do
     begin
     sliderP := '';
     SetLength(self.sliderParamAr, self.numbSliders + 1);    // add a slider
