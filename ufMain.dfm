@@ -17,68 +17,6 @@ object mainForm: TmainForm
     BorderColor = clSilver
     BorderStyle = bsSingle
     ElementBodyClassName = 'card-body-10  bg-dark text-white'
-    object stepSizeLabel1: TWebLabel
-      Left = 1398
-      Top = 25
-      Width = 71
-      Height = 13
-      Hint = 'Changing step size resets simulation'
-      Caption = 'Step size (ms):'
-      Font.Charset = DEFAULT_CHARSET
-      Font.Color = clWhite
-      Font.Height = -11
-      Font.Name = 'Tahoma'
-      Font.Style = []
-      HeightPercent = 100.000000000000000000
-      ParentFont = False
-      ShowHint = True
-      WidthPercent = 100.000000000000000000
-    end
-    object lblStepSizeMin: TWebLabel
-      Left = 1169
-      Top = 25
-      Width = 22
-      Height = 13
-      Caption = '0.1x'
-      ElementFont = efCSS
-      HeightStyle = ssAuto
-      HeightPercent = 100.000000000000000000
-      WidthPercent = 100.000000000000000000
-    end
-    object lblStepSizeMax: TWebLabel
-      Left = 1353
-      Top = 25
-      Width = 12
-      Height = 13
-      Caption = '3x'
-      ElementFont = efCSS
-      HeightStyle = ssAuto
-      HeightPercent = 100.000000000000000000
-      WidthPercent = 100.000000000000000000
-    end
-    object lblStepSize: TWebLabel
-      Left = 1197
-      Top = 6
-      Width = 97
-      Height = 13
-      Hint = 'Speed up/down simulation'
-      Caption = 'Sim speed multiplier:'
-      ElementFont = efCSS
-      HeightStyle = ssAuto
-      HeightPercent = 100.000000000000000000
-      WidthPercent = 100.000000000000000000
-    end
-    object lblStepSizeVal: TWebLabel
-      Left = 1309
-      Top = 6
-      Width = 12
-      Height = 13
-      Caption = '1x'
-      ElementFont = efCSS
-      HeightStyle = ssAuto
-      HeightPercent = 100.000000000000000000
-      WidthPercent = 100.000000000000000000
-    end
     object newNetworkBtn: TWebButton
       Left = 16
       Top = 11
@@ -166,20 +104,6 @@ object mainForm: TmainForm
       WidthPercent = 100.000000000000000000
       OnClick = btnParamAddSliderClick
     end
-    object stepSizeEdit1: TWebEdit
-      Left = 1475
-      Top = 24
-      Width = 33
-      Height = 22
-      Hint = 'Changing step size resets simulation'
-      ChildOrder = 5
-      HeightPercent = 100.000000000000000000
-      ShowHint = True
-      Text = '100'
-      WidthPercent = 100.000000000000000000
-      OnChange = stepSizeEdit1Change
-      OnExit = stepSizeEdit1Exit
-    end
     object loadNetworkButton: TWebButton
       Left = 220
       Top = 10
@@ -245,24 +169,6 @@ object mainForm: TmainForm
       WidthPercent = 100.000000000000000000
       OnClick = resetInitValsButtonClick
     end
-    object trackBarSimSpeed: TWebTrackBar
-      Left = 1197
-      Top = 24
-      Width = 150
-      Height = 20
-      Hint = 'Speed up/down simulation'
-      ElementClassName = 'custom-range'
-      HeightPercent = 100.000000000000000000
-      WidthPercent = 100.000000000000000000
-      ChildOrder = 13
-      ElementFont = efCSS
-      Max = 30
-      Min = 1
-      Position = 10
-      Role = ''
-      ShowHint = True
-      OnChange = trackBarSimSpeedChange
-    end
     object btnParamReset: TWebButton
       Left = 842
       Top = 10
@@ -312,7 +218,7 @@ object mainForm: TmainForm
     ChildOrder = 4
     ElementBodyClassName = 'card-body-10  bg-dark text-white'
     object btnRandomNetwork: TWebButton
-      Left = 404
+      Left = 450
       Top = 3
       Width = 116
       Height = 25
@@ -323,7 +229,7 @@ object mainForm: TmainForm
       OnClick = btnRandomNetworkClick
     end
     object btnAutoLayout: TWebButton
-      Left = 526
+      Left = 570
       Top = 3
       Width = 116
       Height = 25
@@ -349,7 +255,7 @@ object mainForm: TmainForm
       OnClick = btnDrawClick
     end
     object btnAbout: TWebButton
-      Left = 908
+      Left = 1000
       Top = 24
       Width = 96
       Height = 25
@@ -362,7 +268,7 @@ object mainForm: TmainForm
       OnClick = btnAboutClick
     end
     object btnCenter: TWebButton
-      Left = 282
+      Left = 330
       Top = 3
       Width = 116
       Height = 25
@@ -376,7 +282,7 @@ object mainForm: TmainForm
     object WebPanel1: TWebPanel
       Left = 14
       Top = 16
-      Width = 123
+      Width = 120
       Height = 47
       ElementClassName = 'card'
       HeightPercent = 100.000000000000000000
@@ -386,7 +292,7 @@ object mainForm: TmainForm
       ChildOrder = 4
       ElementBodyClassName = 'card-body-shadow'
       DesignSize = (
-        123
+        120
         47)
       object yLbl: TWebLabel
         Left = 80
@@ -454,7 +360,7 @@ object mainForm: TmainForm
       end
     end
     object SBMLmodelMemo: TWebMemo
-      Left = 1026
+      Left = 1200
       Top = 0
       Width = 313
       Height = 82
@@ -468,7 +374,7 @@ object mainForm: TmainForm
       WidthPercent = 100.000000000000000000
     end
     object ZoomCntrlPanel: TWebPanel
-      Left = 726
+      Left = 143
       Top = 3
       Width = 176
       Height = 79
@@ -507,6 +413,146 @@ object mainForm: TmainForm
         Position = 50
         Role = ''
         OnChange = zoomTrackBarChange
+      end
+    end
+    object pnlSimSpeedMult: TWebPanel
+      Left = 692
+      Top = 3
+      Width = 162
+      Height = 79
+      Hint = 'Speed up simulation, limited by computer resources.'
+      ElementClassName = 'card'
+      HeightPercent = 100.000000000000000000
+      WidthPercent = 100.000000000000000000
+      BorderColor = clSilver
+      BorderStyle = bsSingle
+      ChildOrder = 8
+      ElementBodyClassName = 'card-body'
+      ElementFont = efCSS
+      ShowHint = True
+      object lblStepSize: TWebLabel
+        Left = 13
+        Top = 3
+        Width = 97
+        Height = 13
+        Hint = 'Speed up/down simulation'
+        Caption = 'Sim speed multiplier:'
+        ElementFont = efCSS
+        HeightStyle = ssAuto
+        HeightPercent = 100.000000000000000000
+        WidthPercent = 100.000000000000000000
+      end
+      object lblStepSizeMin: TWebLabel
+        Left = 7
+        Top = 40
+        Width = 22
+        Height = 13
+        Caption = '0.1x'
+        ElementFont = efCSS
+        HeightStyle = ssAuto
+        HeightPercent = 100.000000000000000000
+        WidthPercent = 100.000000000000000000
+      end
+      object lblStepSizeMax: TWebLabel
+        Left = 140
+        Top = 40
+        Width = 12
+        Height = 13
+        Caption = '3x'
+        ElementFont = efCSS
+        HeightStyle = ssAuto
+        HeightPercent = 100.000000000000000000
+        WidthPercent = 100.000000000000000000
+      end
+      object lblStepSizeVal: TWebLabel
+        Left = 120
+        Top = 3
+        Width = 12
+        Height = 13
+        Caption = '1x'
+        ElementFont = efCSS
+        HeightStyle = ssAuto
+        HeightPercent = 100.000000000000000000
+        WidthPercent = 100.000000000000000000
+      end
+      object trackBarSimSpeed: TWebTrackBar
+        Left = 32
+        Top = 38
+        Width = 100
+        Height = 20
+        Hint = 'Speed up/down simulation'
+        ElementClassName = 'custom-range'
+        HeightPercent = 100.000000000000000000
+        WidthPercent = 100.000000000000000000
+        ChildOrder = 13
+        ElementFont = efCSS
+        Max = 30
+        Min = 1
+        Position = 10
+        Role = ''
+        ShowHint = True
+        OnChange = trackBarSimSpeedChange
+      end
+    end
+    object pnlStepSize: TWebPanel
+      Left = 860
+      Top = 3
+      Width = 125
+      Height = 79
+      ElementClassName = 'card'
+      HeightPercent = 100.000000000000000000
+      WidthPercent = 100.000000000000000000
+      BorderColor = clSilver
+      BorderStyle = bsSingle
+      ChildOrder = 9
+      ElementBodyClassName = 'card-body-shadow'
+      ElementFont = efCSS
+      DesignSize = (
+        125
+        79)
+      object stepSizeLabel1: TWebLabel
+        Left = 3
+        Top = 25
+        Width = 71
+        Height = 13
+        Hint = 'Changing step size resets simulation'
+        Caption = 'Step size (ms):'
+        ElementFont = efCSS
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWhite
+        Font.Height = -11
+        Font.Name = 'Tahoma'
+        Font.Style = []
+        HeightStyle = ssAuto
+        HeightPercent = 100.000000000000000000
+        ParentFont = False
+        ShowHint = True
+        WidthPercent = 100.000000000000000000
+      end
+      object stepSizeEdit1: TWebEdit
+        Left = 75
+        Top = 23
+        Width = 40
+        Height = 24
+        Hint = 'Changing step size resets simulation'
+        Alignment = taCenter
+        Anchors = [akTop, akRight]
+        ChildOrder = 5
+        ElementClassName = 'card-body-shadow'
+        ElementFont = efCSS
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -11
+        Font.Name = 'Tahoma'
+        Font.Style = []
+        HeightStyle = ssAuto
+        HeightPercent = 100.000000000000000000
+        ParentFont = False
+        ShowHint = True
+        Text = '100'
+        WidthPercent = 100.000000000000000000
+        OnChange = stepSizeEdit1Change
+        OnExit = stepSizeEdit1Exit
       end
     end
   end
@@ -1308,7 +1354,7 @@ object mainForm: TmainForm
         OnClick = SliderEditLBClick
       end
       object SplitterPlotSlider: TWebSplitter
-        Left = 305
+        Left = 300
         Top = 0
         Width = 5
         Height = 760
@@ -1318,11 +1364,12 @@ object mainForm: TmainForm
         ChildOrder = 3
         Color = clBtnFace
         OnMoved = SplitterPlotSliderMoved
+        ExplicitLeft = 305
       end
       object pnlSliderContainer: TWebPanel
-        Left = 310
+        Left = 305
         Top = 0
-        Width = 216
+        Width = 221
         Height = 760
         ElementClassName = 'card'
         HeightPercent = 100.000000000000000000
@@ -1333,10 +1380,12 @@ object mainForm: TmainForm
         ChildOrder = 4
         ElementBodyClassName = 'card-body'
         ElementFont = efCSS
+        ExplicitLeft = 255
+        ExplicitWidth = 271
         object pnlSimResultsFile: TWebPanel
           Left = 0
           Top = 687
-          Width = 216
+          Width = 221
           Height = 73
           ElementClassName = 'card'
           HeightPercent = 100.000000000000000000
@@ -1354,6 +1403,7 @@ object mainForm: TmainForm
           Font.Style = []
           ParentFont = False
           ShowCaption = False
+          ExplicitWidth = 216
           object lblFileName: TWebLabel
             Left = 16
             Top = 45
@@ -1422,7 +1472,7 @@ object mainForm: TmainForm
       object pnlPlotContainer: TWebPanel
         Left = 0
         Top = 0
-        Width = 305
+        Width = 300
         Height = 760
         ElementClassName = 'card'
         HeightPercent = 100.000000000000000000
@@ -1436,7 +1486,7 @@ object mainForm: TmainForm
         object simResultsMemo: TWebMemo
           Left = 0
           Top = 621
-          Width = 305
+          Width = 300
           Height = 139
           Align = alBottom
           AutoSize = False
@@ -1449,6 +1499,7 @@ object mainForm: TmainForm
           SelStart = 0
           Visible = False
           WidthPercent = 100.000000000000000000
+          ExplicitWidth = 305
         end
         object WebConsoleLog1: TWebConsoleLog
           Left = 6

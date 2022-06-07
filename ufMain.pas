@@ -16,7 +16,7 @@ uses
   uPlotPanel, uParamSliderLayout, uSidewinderTypes, WEBLib.ComCtrls, WEBLib.Miletus,
   WEBLib.JQCtrls, ufAssignments, ufSelectExample;
 
-const SIDEWINDER_VERSION = 'Version 0.45 alpha';
+const SIDEWINDER_VERSION = 'Version 0.46 alpha';
       DEFAULT_RUNTIME = 10000;
       EDITBOX_HT = 25;
       ZOOM_SCALE = 20;
@@ -41,9 +41,7 @@ type
     yLbl: TWebLabel;
     zoomLbl: TWebLabel;
     zoomFactorLbl1: TWebLabel;
-    SBMLmodelMemo: TWebMemo;       // DEBUG only
-    stepSizeLabel1: TWebLabel;
-    stepSizeEdit1: TWebEdit;
+    SBMLmodelMemo: TWebMemo;
     ZoomCntrlPanel: TWebPanel;
     zoomCtlLabel: TWebLabel;
     zoomTrackBar: TWebTrackBar;
@@ -133,15 +131,19 @@ type
     WebLabel3: TWebLabel;
     edtReactionWidth: TWebSpinEdit;
     WebLabel4: TWebLabel;
-    trackBarSimSpeed: TWebTrackBar;
-    lblStepSizeMin: TWebLabel;
-    lblStepSizeMax: TWebLabel;
-    lblStepSize: TWebLabel;
-    lblStepSizeVal: TWebLabel;
     btnParamReset: TWebButton;
     btnResetRun: TWebButton;
     checkBoxBoundarySp: TWebCheckBox;
     ButtonVarAssignments: TWebButton;
+    pnlSimSpeedMult: TWebPanel;
+    lblStepSize: TWebLabel;
+    trackBarSimSpeed: TWebTrackBar;
+    lblStepSizeMin: TWebLabel;
+    lblStepSizeMax: TWebLabel;
+    lblStepSizeVal: TWebLabel;
+    pnlStepSize: TWebPanel;
+    stepSizeLabel1: TWebLabel;
+    stepSizeEdit1: TWebEdit;
 
     procedure btnUniUniClick(Sender: TObject);
     procedure btnBiBiClick(Sender: TObject);
