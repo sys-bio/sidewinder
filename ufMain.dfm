@@ -336,9 +336,9 @@ object mainForm: TmainForm
       OnClick = btnAutoLayoutClick
     end
     object btnSampleLayout: TWebButton
-      Left = 404
+      Left = 368
       Top = 34
-      Width = 116
+      Width = 185
       Height = 25
       Caption = 'Sample Networks'
       ChildOrder = 2
