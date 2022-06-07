@@ -10,8 +10,7 @@ uses
 type
   TformExamples = class(TWebForm)
     rgSelectExample: TWebRadioGroup;
-    btnClose: TWebButton;
-    procedure btnCloseClick(Sender: TObject);
+    procedure closeForm();
     procedure rgSelectExampleChange(Sender: TObject);
   private
     { Private declarations }
@@ -26,19 +25,17 @@ implementation
 
 {$R *.dfm}
 
-procedure TformExamples.btnCloseClick(Sender: TObject);
+procedure TformExamples.closeForm();
 var lForm: TWebForm;
 begin
-  lForm := TWebForm((Sender as TWebButton).Parent);
-  lForm.Close;
-  lForm.Free;
-
+  self.close;
 end;
 
 procedure TformExamples.rgSelectExampleChange(Sender: TObject);
 begin
-  console.log('change: ',rgSelectExample.ItemIndex );
+ // console.log('change: ',rgSelectExample.ItemIndex );
   self.indexExampleChosen := rgSelectExample.ItemIndex;
+  self.closeForm;
 end;
 
 end.

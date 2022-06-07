@@ -1,6 +1,6 @@
 object formExamples: TformExamples
   Width = 271
-  Height = 246
+  Height = 209
   CSSLibrary = cssBootstrap
   ElementClassName = ' bg-dark border border-dark'
   ElementFont = efCSS
@@ -12,17 +12,15 @@ object formExamples: TformExamples
   ParentFont = False
   object rgSelectExample: TWebRadioGroup
     Left = 8
-    Top = 21
+    Top = 8
     Width = 249
-    Height = 204
-    ElementClassName = 'custom-control custom-radio'
+    Height = 185
+    ElementClassName = 'form-radio-input'
     HeightPercent = 100.000000000000000000
     WidthPercent = 100.000000000000000000
     Caption = 'Select Model to view:'
     Columns = 1
-    ElementButtonClassName = 'custom-control-input'
     ElementGroupClassName = 'modal-content'
-    ElementLabelClassName = 'custom-control-label'
     ElementLegendClassName = 'h6'
     ElementFont = efCSS
     Font.Charset = DEFAULT_CHARSET
@@ -30,23 +28,9 @@ object formExamples: TformExamples
     Font.Height = -16
     Font.Name = 'Tahoma'
     Font.Style = []
-    ItemIndex = 0
+    ItemIndex = -1
     ParentFont = False
     Role = ''
     OnChange = rgSelectExampleChange
-  end
-  object btnClose: TWebButton
-    Left = 208
-    Top = 0
-    Width = 49
-    Height = 25
-    Caption = 'OK'
-    ChildOrder = 1
-    ElementClassName = 'btn btn-primary btn-sm'
-    ElementFont = efCSS
-    HeightStyle = ssAuto
-    HeightPercent = 100.000000000000000000
-    WidthPercent = 100.000000000000000000
-    OnClick = btnCloseClick
   end
 end
