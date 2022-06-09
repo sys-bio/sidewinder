@@ -9,6 +9,7 @@ uses
   uVector, adamsbdf, odeEquations;
 
   procedure LSODA_Test;
+  function getReferenceResults(): string;
 
 implementation
 
@@ -20,8 +21,10 @@ var
   iout : integer;
   l : TLsoda;
   odeClass : TODE_eqs;
+  solverOutput: string;
 
 begin
+  solverOutput := '';
   y := TVector.Create (3);  // 3 is the number of variables
   l := TLsoda.Create (3);
   p[0]:= -0.04;
@@ -45,12 +48,14 @@ begin
 
     l.SetfcnPascal (odeClass);   // Set all pascal code function to solve.
 
-     console.log('t,        y_1,        y_2,        y_3 ');
+    // console.log('t,        y_1,        y_2,        y_3 ');
+     solverOutput := 't,        y_1,        y_2,        y_3 ' + #13#10; // line break
     for iout := 1 to 20 do
         begin
         l.execute (y, t, tout);
         //console.log('t: ',t, 'y_1: ', floattostr(y[1]), 'y_2: ',floattostr(y[2]), 'y_3: ',floattostr (y[3]));
         console.log(t, ', ', y[1], ', ',y[2], ', ',y[3]);
+        solverOutput := solverOutput + floattostr(t) + ', ' + floattostr(y[1]) + ', ' + floattostr(y[2]) + ', ' + floattostr(y[3]) + #13#10;
         //Form1.WebListBox1.Items.Add (floattostr (t) + ': ' + floattostr (y[1]) + ',  ' + floattostr (y[2]) + ',  ' + floattostr (y[3]));
         if l.istate < 0 then
            begin
@@ -64,7 +69,12 @@ begin
   finally
     l.free; y.free;
   end;
+  console.log('Results:', solverOutput);
 end;
 
+function getReferenceResults(): string;
+begin
+  Result :='The results';
+end;
 
 end.
