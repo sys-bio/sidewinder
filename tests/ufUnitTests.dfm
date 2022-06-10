@@ -25,6 +25,7 @@ object fUnitTests: TfUnitTests
     Caption = 'Run all tests'
     HeightPercent = 100.000000000000000000
     WidthPercent = 100.000000000000000000
+    OnClick = btnRunallClick
   end
   object lbTestGroups: TWebListBox
     Left = 112
@@ -36,7 +37,6 @@ object fUnitTests: TfUnitTests
     ItemIndex = -1
     MultiSelect = True
     WidthPercent = 100.000000000000000000
-    OnClick = lbTestGroupsClick
   end
   object btnRunSpecifiedTests: TWebButton
     Left = 200
