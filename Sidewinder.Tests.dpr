@@ -7,7 +7,9 @@ uses
   uTestLSODA_JS in 'math\lsoda\uTestLSODA_JS.pas',
   uTestCase in 'tests\uTestCase.pas',
   ufUnitTests in 'tests\ufUnitTests.pas' {fUnitTests: TWebForm} {*.html},
-  utests.TestUtils in 'tests\utests.TestUtils.pas';
+  utests.TestUtils in 'tests\utests.TestUtils.pas',
+  uTestSBMLReadWrite in 'sbml\uTestSBMLReadWrite.pas',
+  uModel in 'model\uModel.pas';
 
 {$R *.res}
 

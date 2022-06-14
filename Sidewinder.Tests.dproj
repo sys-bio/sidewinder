@@ -116,6 +116,8 @@
             <DesignClass>TWebForm</DesignClass>
         </DCCReference>
         <DCCReference Include="tests\utests.TestUtils.pas"/>
+        <DCCReference Include="sbml\uTestSBMLReadWrite.pas"/>
+        <DCCReference Include="model\uModel.pas"/>
         <None Include="AllTests_index.html"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>

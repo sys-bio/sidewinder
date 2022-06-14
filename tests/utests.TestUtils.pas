@@ -16,7 +16,7 @@ implementation
  begin
    Result := TList<string>.create;
    testResultList := TStringList.Create;
-   testResultList.Text := testResult;
+   testResultList.Text := testResult;// break up into array of strings based on newLine char
    refList := TStringList.Create;
    refList.Text := refResult;
    for i := 0 to refList.Count -1 do

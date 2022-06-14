@@ -5,7 +5,7 @@ interface
 uses
   System.SysUtils, System.Classes, JS, Web, WEBLib.Graphics, WEBLib.Controls,
   WEBLib.Forms, WEBLib.Dialogs, Vcl.Controls, Vcl.StdCtrls, WEBLib.StdCtrls,
-  System.Generics.Collections, LSODA.test, uTestLSODA_JS, uTestCase;
+  System.Generics.Collections, LSODA.test, uTestLSODA_JS, uTestCase, uTestSBMLReadWrite;
 
 const SIMULATOR = 0;
       TESTGROUPS: array [0..1] of string = ('Simulation group', 'Reading/Writing SBML models');
@@ -28,6 +28,7 @@ type
     procedure runSimulationTests();
     procedure runSBMLReadWriteTests();
     procedure populateTestResultsListBox();
+    procedure addFinishedTestCases( newTestCases: TList<TTestCase> );
   public
     testCases: TList<TTestCase>;
   end;
@@ -53,11 +54,11 @@ end;
 procedure TfUnitTests.btnRunSpecifiedTestsClick(Sender: TObject);
 var i: integer;
 begin
-  for i := 0 to self.lbTestGroups.Count -1 do
-    begin
+  //for i := 0 to self.lbTestGroups.Count -1 do
+  //  begin
       if self.lbTestGroups.Selected[0] then self.runSimulationTests;
       if self.lbTestGroups.Selected[1] then self.runSBMLReadWriteTests;
-    end;
+  //  end;
 end;
 
 procedure TfUnitTests.btnSaveFileClick(Sender: TObject);
@@ -81,15 +82,22 @@ end;
 
 procedure TfUnitTests.runSimulationTests;
 var lsoda_JSTestRun: TLSODA_JSTests;
+    curTestList: TList<TTestCase>;
 begin
   self.testCases := LSODA_Test(self.testCases); // Pascal only test
-//  lsoda_JSTestRun := TLSODA_JSTests.create;
- // lsoda_JSTestRun.LSODATests; // Javascript/pascal mix
+  lsoda_JSTestRun := TLSODA_JSTests.create;
+  curTestList := lsoda_JSTestRun.LSODATests; // Javascript/pascal mix
+  self.addFinishedTestCases(curTestList);
+  curTestList := nil;
   self.populateTestResultsListBox;
 end;
+
 procedure TfUnitTests.runSBMLReadWriteTests();
+var sbmlReadWrite: TTestSBMLReadWrite;
 begin
   console.log('Running SBML Read-Write tests');
+  TTestSBMLReadWrite.create;
+
 end;
 
 procedure TfUnitTests.populateTestResultsListBox();
@@ -100,15 +108,25 @@ begin
   for i := 0 to self.testCases.Count -1 do
     begin
     testStr := '';
-    if self.testCases[i].getBooleanTestResult then strBool := 'Pass' else strBool := 'Fail';
+    if self.testCases[i].getBooleanTestResult then strBool := 'Pass' else strBool := '** Fail';
     testStr := strBool + ': ' + inttostr(self.testCases[i].getTestId) + ': ' + self.testCases[i].getTestName;
     if self.testCases[i].sTestInfoList.Count > 0 then
       testStr := testStr + ': ' + self.testCases[i].sTestInfoList[0];
-    //self.lbTestResults.ItemIndex := i;
+
     self.lbTestResults.AddItem(testStr, nil);
 
     end;
 
+end;
+
+procedure TfUnitTests.addFinishedTestCases( newTestCases: TList<TTestCase> );
+var i: integer;
+begin
+  for i := 0 to newTestCases.Count -1 do
+    begin
+    self.testCases.add(newTestCases[i]);
+    self.testCases[self.testCases.Count -1].setTestId(self.testCases.Count);
+    end;
 end;
 
 end.

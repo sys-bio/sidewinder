@@ -84,7 +84,7 @@ begin
       testResult.sTestInfoList.Add(resultInfo[i]);
     end;
   currentTestResultList.Add(testResult);
-  console.log('Results:', resultInfo );
+ // console.log('Results:', resultInfo );
   Result := currentTestResultList;
 end;
 
