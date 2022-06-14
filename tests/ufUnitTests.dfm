@@ -1,10 +1,10 @@
 object fUnitTests: TfUnitTests
-  Width = 640
+  Width = 720
   Height = 480
   OnCreate = WebFormCreate
   object lblPickTests: TWebLabel
-    Left = 112
-    Top = 162
+    Left = 16
+    Top = 58
     Width = 96
     Height = 16
     Caption = 'Pick tests to run:'
@@ -17,9 +17,18 @@ object fUnitTests: TfUnitTests
     ParentFont = False
     WidthPercent = 100.000000000000000000
   end
+  object lblResults: TWebLabel
+    Left = 280
+    Top = 39
+    Width = 39
+    Height = 13
+    Caption = 'Results:'
+    HeightPercent = 100.000000000000000000
+    WidthPercent = 100.000000000000000000
+  end
   object btnRunall: TWebButton
-    Left = 112
-    Top = 80
+    Left = 16
+    Top = 8
     Width = 96
     Height = 25
     Caption = 'Run all tests'
@@ -28,8 +37,8 @@ object fUnitTests: TfUnitTests
     OnClick = btnRunallClick
   end
   object lbTestGroups: TWebListBox
-    Left = 112
-    Top = 184
+    Left = 16
+    Top = 80
     Width = 209
     Height = 129
     HeightPercent = 100.000000000000000000
@@ -39,8 +48,8 @@ object fUnitTests: TfUnitTests
     WidthPercent = 100.000000000000000000
   end
   object btnRunSpecifiedTests: TWebButton
-    Left = 200
-    Top = 336
+    Left = 104
+    Top = 224
     Width = 121
     Height = 25
     Caption = 'Run Specified tests'
@@ -48,5 +57,26 @@ object fUnitTests: TfUnitTests
     HeightPercent = 100.000000000000000000
     WidthPercent = 100.000000000000000000
     OnClick = btnRunSpecifiedTestsClick
+  end
+  object lbTestResults: TWebListBox
+    Left = 280
+    Top = 58
+    Width = 273
+    Height = 169
+    HeightPercent = 100.000000000000000000
+    ItemHeight = 13
+    ItemIndex = -1
+    WidthPercent = 100.000000000000000000
+  end
+  object btnSaveFile: TWebButton
+    Left = 440
+    Top = 8
+    Width = 113
+    Height = 33
+    Caption = 'Save Results to File'
+    ChildOrder = 6
+    HeightPercent = 100.000000000000000000
+    WidthPercent = 100.000000000000000000
+    OnClick = btnSaveFileClick
   end
 end

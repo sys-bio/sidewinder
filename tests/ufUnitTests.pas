@@ -16,14 +16,18 @@ type
     lbTestGroups: TWebListBox;
     btnRunSpecifiedTests: TWebButton;
     lblPickTests: TWebLabel;
+    lbTestResults: TWebListBox;
+    lblResults: TWebLabel;
+    btnSaveFile: TWebButton;
 
     procedure WebFormCreate(Sender: TObject);
     procedure btnRunSpecifiedTestsClick(Sender: TObject);
     procedure btnRunallClick(Sender: TObject);
+    procedure btnSaveFileClick(Sender: TObject);
   private
-
     procedure runSimulationTests();
     procedure runSBMLReadWriteTests();
+    procedure populateTestResultsListBox();
   public
     testCases: TList<TTestCase>;
   end;
@@ -56,6 +60,11 @@ begin
     end;
 end;
 
+procedure TfUnitTests.btnSaveFileClick(Sender: TObject);
+begin
+// TODO
+end;
+
 procedure TfUnitTests.WebFormCreate(Sender: TObject);
 var i: integer;
     testList: TStringList;
@@ -76,10 +85,30 @@ begin
   self.testCases := LSODA_Test(self.testCases); // Pascal only test
 //  lsoda_JSTestRun := TLSODA_JSTests.create;
  // lsoda_JSTestRun.LSODATests; // Javascript/pascal mix
+  self.populateTestResultsListBox;
 end;
 procedure TfUnitTests.runSBMLReadWriteTests();
 begin
   console.log('Running SBML Read-Write tests');
+end;
+
+procedure TfUnitTests.populateTestResultsListBox();
+var i: integer;
+    testStr: string;
+    strBool: string;
+begin
+  for i := 0 to self.testCases.Count -1 do
+    begin
+    testStr := '';
+    if self.testCases[i].getBooleanTestResult then strBool := 'Pass' else strBool := 'Fail';
+    testStr := strBool + ': ' + inttostr(self.testCases[i].getTestId) + ': ' + self.testCases[i].getTestName;
+    if self.testCases[i].sTestInfoList.Count > 0 then
+      testStr := testStr + ': ' + self.testCases[i].sTestInfoList[0];
+    //self.lbTestResults.ItemIndex := i;
+    self.lbTestResults.AddItem(testStr, nil);
+
+    end;
+
 end;
 
 end.

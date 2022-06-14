@@ -18,7 +18,9 @@ type
    constructor create(newTestId: integer; newTestName: string);
    procedure testPass;
    procedure testFail;
-   function getTestResult(): boolean;
+   function getBooleanTestResult(): boolean;
+   function getTestId(): integer;
+   function getTestName(): string;
 
  end;
 
@@ -43,9 +45,18 @@ implementation
      self.testResult := false;
    end;
 
-   function TTestCase.getTestResult: boolean;
+   function TTestCase.getBooleanTestResult: boolean;
    begin
      Result := self.testResult;
+   end;
+
+   function TTestCase.getTestId(): integer;
+   begin
+     Result := self.intTestId;
+   end;
+   function TTestCase.getTestName(): string;
+   begin
+     Result := self.strTestName;
    end;
 
 end.

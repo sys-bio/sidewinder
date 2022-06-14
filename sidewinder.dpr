@@ -9,7 +9,6 @@ uses
   uSBMLClasses in 'sbml\uSBMLClasses.pas',
   uMath in 'math\uMath.pas',
   Adamsbdf in 'math\lsoda\Adamsbdf.pas',
-  LSODA.test in 'math\lsoda\LSODA.test.pas',
   lsodamat in 'math\lsoda\lsodamat.pas',
   odeEquations in 'math\lsoda\odeEquations.pas',
   uMatrix in 'math\lsoda\uMatrix.pas',
@@ -46,7 +45,8 @@ uses
   uSBMLClasses.Render in 'sbml\uSBMLClasses.Render.pas',
   uSBMLClasses.FuncDefinition in 'sbml\uSBMLClasses.FuncDefinition.pas',
   ufAssignments in 'ufAssignments.pas' {FormAssignments: TWebForm} {*.html},
-  ufSelectExample in 'ufSelectExample.pas' {formExamples: TWebForm} {*.html};
+  ufSelectExample in 'ufSelectExample.pas' {formExamples: TWebForm} {*.html},
+  uTestCase in 'tests\uTestCase.pas';
 
 {$R *.res}
 

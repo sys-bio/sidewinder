@@ -116,7 +116,6 @@
         <DCCReference Include="sbml\uSBMLClasses.pas"/>
         <DCCReference Include="math\uMath.pas"/>
         <DCCReference Include="math\lsoda\Adamsbdf.pas"/>
-        <DCCReference Include="math\lsoda\LSODA.test.pas"/>
         <DCCReference Include="math\lsoda\lsodamat.pas"/>
         <DCCReference Include="math\lsoda\odeEquations.pas"/>
         <DCCReference Include="math\lsoda\uMatrix.pas"/>
@@ -170,6 +169,7 @@
             <FormType>dfm</FormType>
             <DesignClass>TWebForm</DesignClass>
         </DCCReference>
+        <DCCReference Include="tests\uTestCase.pas"/>
         <None Include="index.html"/>
         <None Include="sbml\libsbml.js"/>
         <None Include="sbml\libsbml.wasm"/>
