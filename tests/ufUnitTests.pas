@@ -31,7 +31,7 @@ type
     procedure addFinishedTestCases( newTestCases: TList<TTestCase> );
   public
     testCases: TList<TTestCase>;
-    procedure SBMLReadWriteTestesDone( testCaseResults : TList<TTestCase> );
+    procedure SBMLReadWriteTestsDone( testCaseResults : TList<TTestCase> );
   end;
 
 var
@@ -99,12 +99,12 @@ var sbmlReadWrite: TTestSBMLReadWrite;
 begin
   console.log('Running SBML Read-Write tests');
   sbmlReadWrite := TTestSBMLReadWrite.create;
-  sbmlReadWrite.OnNotify := self.SBMLReadWriteTestesDone;  // asyncronous calls
+  sbmlReadWrite.OnNotify := self.SBMLReadWriteTestsDone;  // asyncronous calls
   sbmlReadWrite.runTests;
 
 end;
 
-procedure TfUnitTests.SBMLReadWriteTestesDone( testCaseResults : TList<TTestCase> );
+procedure TfUnitTests.SBMLReadWriteTestsDone( testCaseResults : TList<TTestCase> );
 begin
   console.log('Got SBML read-write test results');
   self.addFinishedTestCases(testCaseResults);
@@ -116,6 +116,7 @@ var i: integer;
     testStr: string;
     strBool: string;
 begin
+  self.lbTestResults.clear;
   for i := 0 to self.testCases.Count -1 do
     begin
     testStr := '';

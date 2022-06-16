@@ -26,8 +26,8 @@ type
 
     constructor create();
     procedure runTests; // run Write, then read tests
-    procedure runWriteSBMLTests();
-    procedure runReadSBMLTests();
+    procedure runWriteSBMLTest();
+    procedure runReadSBMLTest();
     procedure testsFinished(); // Notify listener
     procedure modelWritten(modelStr: String);  // callback: notified when SBML string created.
     procedure modelRead(testModel: TModel);  // callback: notified when SBML string created.
@@ -39,8 +39,8 @@ implementation
 constructor TTestSBMLReadWrite.create();
 begin
   self.testResultList := TList<TTestCase>.create;
-  self.currentWriteTestIndex := -1;
-  self.currentReadTestIndex := -1;
+  self.currentWriteTestIndex := 0;
+  self.currentReadTestIndex := 0;
 end;
 
 procedure TTestSBMLReadWrite.modelWritten(modelStr: String);
@@ -65,46 +65,49 @@ if self.currentWriteTestIndex > -1 then
         end;
       end;
 
-
-
     end;
   end;
-console.log('MODEL: ', modelStr);
+ console.log('MODEL: ', modelStr);
+ inc(self.currentWriteTestIndex); // next test...
+ if self.currentWriteTestIndex < NUM_WRITE_TESTS then
+   runWriteSBMLTest( )
+ else self.testsFinished;
 end;
 
 procedure TTestSBMLReadWrite.modelRead(testModel: TModel);
 begin
   console.log('MODEL read');
+  inc(self.currentReadTestIndex);
+  if self.currentReadTestIndex < NUM_READ_TESTS then
+    runReadSBMLTest( )
+  else self.testsFinished;
 end;
 
 procedure TTEstSBMLReadWrite.runTests;
 begin
-  self.runWriteSBMLTests;
-  self.runReadSBMLTests;
-  self.testsFinished;
-
+  if NUM_WRITE_TESTs > 0 then
+    self.runWriteSBMLTest;
+  if NUM_READ_TESTS >0 then
+    self.runReadSBMLTest;
 end;
 
-procedure TTestSBMLReadWrite.runWriteSBMLTests();
-var i: integer;
-    testModel: TModel;
+procedure TTestSBMLReadWrite.runWriteSBMLTest();
+var testModel: TModel;
     sbmlTestWriter: TSBMLWriter;
 begin
-  for i := 0 to NUM_WRITE_TESTS -1 do
-    begin
-    self.testResultList.Add(TTestCase.create(i+1, 'SBML write test ' + inttostr(i)));
-    testModel := self.generateWriteTestModel(i);
-    self.currentWriteTestIndex := i;
-    sbmlTestWriter := TSBMLWriter.create();
-    sbmlTestWriter.OnNotify := self.modelWritten;
-    sbmlTestWriter.buildSBMLString(testModel);
-    end;
+  self.testResultList.Add(TTestCase.create(self.currentWriteTestIndex +1,
+                   'SBML write test ' + inttostr(self.currentWriteTestIndex +1)));
+  testModel := self.generateWriteTestModel(self.currentWriteTestIndex);
+  sbmlTestWriter := TSBMLWriter.create();
+  sbmlTestWriter.OnNotify := self.modelWritten;
+  sbmlTestWriter.buildSBMLString(testModel);
 end;
 
-procedure TTestSBMLReadWrite.runReadSBMLTests();
+procedure TTestSBMLReadWrite.runReadSBMLTest();
 var i: integer;
 begin
 
+  self.testsFinished;
 end;
 
 procedure TTestSBMLReadWrite.testsFinished;
