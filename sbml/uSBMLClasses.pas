@@ -166,6 +166,7 @@ type
   public
    constructor create(); Overload;
    constructor create(newId: String; newFormula: String; paramArr: array of String); Overload;
+   constructor create(newId: String; newFormula: String; paramArr: array of TSBMLparameter); Overload;
    function getNumLocalParameters(): integer;  // Not used
    function addLocalParameter(param: String): String; // Not used
    function getLocalParameter(n: integer): String;   // not used
@@ -706,6 +707,20 @@ implementation
      paramIds:= Copy(paramArr, 0, Length(paramArr));
      numParams:= Length(paramArr);
    end;
+
+   constructor SBMLkineticlaw.create(newId: String; newFormula: String; paramArr: array of TSBMLparameter); Overload;
+   var i: integer;
+   begin
+     id:= newId;
+     formula:= newFormula;
+     name:= '';
+     nameFlagSet:= false;
+     setLength( self.paramIds, Length(paramArr) );
+     for i := 0 to Length(paramArr) -1 do
+       self.paramIds[i] := paramArr[i].getId;
+     numParams:= Length(paramArr);
+   end;
+
    function SBMLkineticlaw.getId(): String;
    begin
      Result:= id;
