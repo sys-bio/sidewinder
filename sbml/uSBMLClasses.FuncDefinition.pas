@@ -27,6 +27,7 @@ type
   procedure setFuncFormula( newFormula: string );
   function  getFullFuncLabel(): string;
   procedure setFullFuncLabel( newLabel: string );
+  function printStr(): string;
 
  end;
 
@@ -52,6 +53,14 @@ implementation
    self.varList := TList<string>.create;
    for i := 0 to funcCopy.getNumVars -1 do
      self.addVar(funcCopy.getVar(i));
+
+ end;
+
+ function TSBMLFuncDefinition.printStr(): string;
+ begin
+   Result := '';
+   Result := ', Func Def ID: ' + self.getId + ', Name: ' + self.getName;
+   Result := Result + ', Func Def vars and formula: '  + self.getFullFuncLabel;
 
  end;
 

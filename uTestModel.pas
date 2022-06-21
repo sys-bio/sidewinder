@@ -2,6 +2,8 @@ unit uTestModel;
 
 interface
 
+const SBML_EXAMPLE_MODELS = 4; // Number of example SBML models listed below
+
 function getTestModel( index: integer ) : string;
 
 implementation

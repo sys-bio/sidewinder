@@ -5,10 +5,10 @@ unit uTestSBMLReadWrite;
 
 interface
 uses   System.SysUtils, System.Classes, JS, Web, System.Generics.Collections,
- uTestCase, utests.TestUtils, uSBMLClasses, uSBMLWriter, uModel;
+ uTestCase, utests.TestUtils, uSBMLClasses, uSBMLWriter, uSBMLReader, uModel, uTestModel;
 
 const NUM_WRITE_TESTS = 1;
-      NUM_READ_TESTS = 0;
+      NUM_READ_TESTS = 1;
 
 type
  TReadWriteTestsFinished = procedure(readWriteTestCase: TList<TTestCase>) of object;  // Notify when done testing
@@ -19,7 +19,9 @@ type
     currentWriteTestIndex: integer; // Due to asynchronous calls to libsbml.js, need to keep track of this?
     currentReadTestIndex: integer;
     function generateWriteTestModel(testIndex: integer): TModel;
-    function getTestReferenceString(testIndex: integer): string;
+    function generateReadTestModel(testIndex: integer): string;
+    function getWriteTestReferenceString(testIndex: integer): string;
+    function getReadTestReferenceString(testIndex: integer): string;
   public
     resultInfo: TList<string>;
     testResultList: TList<TTestCase>;
@@ -30,12 +32,13 @@ type
     procedure runReadSBMLTest();
     procedure testsFinished(); // Notify listener
     procedure modelWritten(modelStr: String);  // callback: notified when SBML string created.
-    procedure modelRead(testModel: TModel);  // callback: notified when SBML string created.
+    procedure modelRead();  // callback: notified when SBML string created.
     property OnNotify: TReadWriteTestsFinished read FNotify write FNotify;
  end;
 
 
 implementation
+
 constructor TTestSBMLReadWrite.create();
 begin
   self.testResultList := TList<TTestCase>.create;
@@ -50,7 +53,7 @@ begin
 if self.currentWriteTestIndex > -1 then
   begin
   refResultsList := TList<string>.create;
-  refStr := self.getTestReferenceString(self.currentWriteTestIndex);
+  refStr := self.getWriteTestReferenceString(self.currentWriteTestIndex);
   if refStr <> '' then
     begin
     refResultsList := compareStrResults(modelStr, refStr);
@@ -71,43 +74,85 @@ if self.currentWriteTestIndex > -1 then
  inc(self.currentWriteTestIndex); // next test...
  if self.currentWriteTestIndex < NUM_WRITE_TESTS then
    runWriteSBMLTest( )
- else self.testsFinished;
+ else
+   begin
+   if self.currentReadTestIndex < NUM_READ_TESTS then
+     runReadSBMLTest()
+   else self.testsFinished;
+   end
+  // self.testsFinished;
 end;
 
-procedure TTestSBMLReadWrite.modelRead(testModel: TModel);
+procedure TTestSBMLReadWrite.modelRead();
+var i: integer; refStr, testModelStr: string;
+    refResultsList: TList<string>;
+// self.testResultList index is assumed to be at self.currentWriteTestIndex + self.currentReadTestIndex
 begin
-  console.log('MODEL read');
+  console.log('MODEL read: ');
+  if self.currentReadTestIndex > -1 then
+    begin
+    testModelStr := self.testModel.printStr;
+    console.log(testModelStr);
+    refResultsList := TList<string>.create;
+    refStr := self.getReadTestReferenceString(self.currentReadTestIndex);
+    if refStr <> '' then
+      begin
+      refResultsList := compareStrResults(testModelStr, refStr);
+      if self.testResultList.count > (self.currentWriteTestIndex + self.currentReadTestIndex) then
+        begin
+        if refResultsList.Count <1 then self.testResultList[self.currentWriteTestIndex + self.currentReadTestIndex].testPass
+        else
+          begin
+          self.testResultList[self.currentWriteTestIndex + self.currentReadTestIndex].testFail;
+          for i := 0 to refResultsList.count -1 do
+            self.testResultList[self.currentWriteTestIndex + self.currentReadTestIndex].sTestInfoList.Add(refResultsList[i]);
+          end;
+        end;
+      end;
+    end;
+
   inc(self.currentReadTestIndex);
   if self.currentReadTestIndex < NUM_READ_TESTS then
+    begin
+    self.testModel.Free;
     runReadSBMLTest( )
+    end
   else self.testsFinished;
 end;
 
 procedure TTEstSBMLReadWrite.runTests;
 begin
-  if NUM_WRITE_TESTs > 0 then
-    self.runWriteSBMLTest;
-  if NUM_READ_TESTS >0 then
-    self.runReadSBMLTest;
+  if NUM_WRITE_TESTS > 0 then
+    self.runWriteSBMLTest
+  else if NUM_READ_TESTS > 0 then self.runReadSBMLTest;
+
+
 end;
 
 procedure TTestSBMLReadWrite.runWriteSBMLTest();
-var testModel: TModel;
+var testWriteModel: TModel;
     sbmlTestWriter: TSBMLWriter;
 begin
   self.testResultList.Add(TTestCase.create(self.currentWriteTestIndex +1,
                    'SBML write test ' + inttostr(self.currentWriteTestIndex +1)));
-  testModel := self.generateWriteTestModel(self.currentWriteTestIndex);
+  testWriteModel := self.generateWriteTestModel(self.currentWriteTestIndex);
   sbmlTestWriter := TSBMLWriter.create();
   sbmlTestWriter.OnNotify := self.modelWritten;
-  sbmlTestWriter.buildSBMLString(testModel);
+  sbmlTestWriter.buildSBMLString(testWriteModel);
 end;
 
 procedure TTestSBMLReadWrite.runReadSBMLTest();
 var i: integer;
+    sbmlTestReader: TSBMLRead;
+    testSBMLStr: string;
 begin
+  self.testResultList.Add(TTestCase.create(self.currentReadTestIndex +1,
+                   'SBML read test ' + inttostr(self.currentReadTestIndex +1)));
+  testSBMLStr := generateReadTestModel(self.currentReadTestIndex);
+  self.testModel := TModel.create;
+  self.testModel.OnPing := self.modelRead;
+  sbmlTestReader := TSBMLRead.create(self.testModel, testSBMLStr );
 
-  self.testsFinished;
 end;
 
 procedure TTestSBMLReadWrite.testsFinished;
@@ -145,6 +190,7 @@ begin
        testRxn := SBMLReaction.create('Reaction_1', testProdSpAr, testReactSpAr);
        testRxn.setKineticLaw( SBMLKineticLaw.create('reaction1_kinlaw','k1*S1', testParamAr) );
        curModel.addSBMLReaction(testRxn);
+       //console.log(curModel.printStr);
        Result := curModel;
     end;
     // ****************************************
@@ -154,7 +200,16 @@ begin
 
 
 end;
-  function TTestSBMLReadWrite.getTestReferenceString(testIndex: Integer): string;
+
+function TTestSBMLReadWrite.generateReadTestModel(testIndex: integer): string;
+begin
+  if testIndex < SBML_EXAMPLE_MODELS then
+    Result := getTestModel(testIndex)
+  else Result := '';
+
+end;
+
+ function TTestSBMLReadWrite.getWriteTestReferenceString(testIndex: Integer): string;
   var refTestStrList: TList<string>;
   begin
     refTestStrList := TList<string>.create;
@@ -209,5 +264,16 @@ end;
 
   end;
 
+
+  function TTestSBMLReadWrite.getReadTestReferenceString(testIndex: integer): string;
+  var refTestStrList: TList<string>;
+  begin
+    refTestStrList := TList<string>.create;
+    refTestStrList.Add('Model id: , Species:  Species ID: S1, Boundary sp: false, Init Conc: 20, Comp: default_compartment Species ID: S2, Boundary sp: false, Init Conc: 0, Comp: default_compartment Species ID: S3, Boundary sp: false, Init Conc: 0, Comp: default_compartment Species ID: S4, Boundary sp: false, Init Conc: 0, Comp: default_compartment, Model compartments:  Comp ID: default_compartment, No Comp name, Comp size: 1, Comp constant, , Model params:  Param ID: k1, No Param name, Value: 0.1, Param Const Param ID: k2, No Param name, Value: 0.2, Param Const Param ID: k3, No Param name, Value: 0.1, Param Const Param ID: k4, No Param name, Value: 0.2, Param Const, Model Rxns: , Rxn ID: J1, No Rxn Name, No Rxn Comp , Rxn reversible, Rxn products:  SpRef ID: S2J1, SpRef species: S2, Stoich Coeff: 1, Rxn reactants:  SpRef ID: S1J1, SpRef species: S1, Stoich Coeff: 1, Rxn KinLaw:  Kinetic Law id: dummy, Kinetic Law No name, Kinetic Law formula: k1 * S1, Kinetic Law params: self.paramIds[i], self.paramIds[i],  End of Kinetic Law param list. , Rxn ID: J2, No Rxn Name, No Rxn Comp , Rxn reversible, Rxn products:  SpRef ID: S3J2, SpRef species: S3, Stoich Coeff: 1, Rxn reactants:  SpRef ID: S2J2, SpRef species: S2, Stoich Coeff: 1, Rxn KinLaw:  Kinetic Law id: dummy, Kinetic Law No name, Kinetic Law formula: k2 * S2, Kinetic Law params: self.paramIds[i], self.paramIds[i],  End of Kinetic Law param list. , Rxn ID: J3, No Rxn Name, No Rxn Comp , Rxn reversible, Rxn products:  SpRef ID: S4J3, SpRef species: S4, Stoich Coeff: 1, Rxn reactants:  SpRef ID: S3J3, SpRef species: S3, Stoich Coeff: 1, Rxn KinLaw:  Kinetic Law id: dummy, Kinetic Law No name, Kinetic Law formula: k3 * S3, Kinetic Law params: self.paramIds[i], self.paramIds[i],  End of Kinetic Law param list. , Rxn ID: J4, No Rxn Name, No Rxn Comp , Rxn reversible, Rxn products:  SpRef ID: S2J4, SpRef species: S2, Stoich Coeff: 1, Rxn reactants:  SpRef ID: S4J4, SpRef species: S4, Stoich Coeff: 1, Rxn KinLaw:  Kinetic Law id: dummy, Kinetic Law No name, Kinetic Law formula: k4 * S4, Kinetic Law params: self.paramIds[i], self.paramIds[i],  End of Kinetic Law param list. , Model Initial Assignments: , Model Rules: Model events: 0, Model Func definitions:' );
+
+    if refTestStrList.count > testIndex then
+      Result := refTestStrList[testIndex]
+    else Result := '';
+  end;
 
 end.

@@ -37,6 +37,7 @@ type
    function isDepthSet(): boolean;
    function getId(): string;
    procedure setId(newId: string);
+   function printStr(): string;
 
  end;
  TSBMLLayoutPoint = class
@@ -61,6 +62,7 @@ type
    procedure setZ(newZ: double);
    function getId(): string;
    procedure setId(newId: string);
+   function printStr(): string;
 
  end;
 
@@ -84,6 +86,7 @@ type
    procedure setId( newId: string);
    function isSetId(): boolean;
    function getId(): string;
+   function printStr(): string
    end;
 
  TSBMLLayoutLineSegment = class
@@ -373,6 +376,13 @@ implementation
     self.depthSet := true;
   end;
 
+  function TSBMLLayoutDims.printStr: string;
+  begin
+    Result := ' Layout Dims ID: ' + self.id;
+    Result := Result + ' Layout w, h: ' + floattostr(self.width) + ', ' + floattostr(self.height);
+    if self.depthSet then Result := Result + ' Layout depth: ' + floattostr(self.depth);
+  end;
+
   procedure TSBMLLayoutDims.setId(newId: string);
   begin
     self.id := newId;
@@ -450,6 +460,15 @@ implementation
 
   end;
 
+  function TSBMLLayoutPoint.printStr(): string;
+  begin
+    Result := '';
+    Result := ' Layout Pt ID: ' + self.id;
+    Result := Result + ' Layout Pt XY: ' + floattostr(self.xPt) + ', ' +floattostr(self.yPt);
+    if self.isZSet then Result := Result + ', Layout Pt Z: ' + floattostr(self.zPt);
+
+  end;
+
   procedure TSBMLLayoutPoint.setId(newId: string);
   begin
     self.id := newId;
@@ -516,7 +535,13 @@ implementation
       self.dims := TSBMLLayoutDims.create(cpy.getDims);
     end
     else notifyUser('TSBMLLayoutBoundingBox: no bounding box to copy');
+  end;
 
+  function TSBMLLayoutBoundingBox.printStr: string;
+  begin
+    Result := '';
+    Result := ' BoundingBox ID: ' + self.id + ', BB pt: ' + self.point.printStr;
+    Result := Result + self.dims.printStr;
   end;
 
   procedure TSBMLLayoutBoundingBox.clear();
