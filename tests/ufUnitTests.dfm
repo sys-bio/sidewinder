@@ -61,7 +61,7 @@ object fUnitTests: TfUnitTests
   object lbTestResults: TWebListBox
     Left = 280
     Top = 58
-    Width = 273
+    Width = 409
     Height = 169
     HeightPercent = 100.000000000000000000
     ItemHeight = 13
