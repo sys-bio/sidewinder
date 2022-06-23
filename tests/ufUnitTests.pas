@@ -5,7 +5,8 @@ interface
 uses
   System.SysUtils, System.Classes, JS, Web, WEBLib.Graphics, WEBLib.Controls,
   WEBLib.Forms, WEBLib.Dialogs, Vcl.Controls, Vcl.StdCtrls, WEBLib.StdCtrls,
-  System.Generics.Collections, LSODA.test, uTestLSODA_JS, uTestCase, uTestSBMLReadWrite;
+  System.Generics.Collections, LSODA.test, uTestLSODA_JS, uTestCase, uTestSBMLReadWrite,
+  uSidewinderTypes;
 
 const SIMULATOR = 0;
       TESTGROUPS: array [0..1] of string = ('Simulation group', 'Reading/Writing SBML models');
@@ -25,10 +26,12 @@ type
     procedure btnRunallClick(Sender: TObject);
     procedure btnSaveFileClick(Sender: TObject);
   private
+    strTestResults: string; // used to write to file.
     procedure runSimulationTests();
     procedure runSBMLReadWriteTests();
     procedure populateTestResultsListBox();
     procedure addFinishedTestCases( newTestCases: TList<TTestCase> );
+    procedure saveTestResults(fName: string);
   public
     testCases: TList<TTestCase>;
     procedure SBMLReadWriteTestsDone( testCaseResults : TList<TTestCase> );
@@ -63,15 +66,33 @@ begin
 end;
 
 procedure TfUnitTests.btnSaveFileClick(Sender: TObject);
+var fileName: string;
 begin
 // TODO
+  fileName := InputBox('Save Test results to the downloads directory',
+    'Enter File Name:', 'newtest.txt');
+  if fileName <> '' then
+    begin
+      if self.strTestResults <> '' then
+        self.saveTestResults(fileName)
+      else notifyUser('No results to save.');
+    end
+  else
+    notifyUser('Save cancelled');
 end;
+
+procedure TfUnitTests.saveTestResults(fName: string);
+ begin
+   Application.DownloadTextFile(self.strTestResults, fName);
+ end;
+
 
 procedure TfUnitTests.WebFormCreate(Sender: TObject);
 var i: integer;
     testList: TStringList;
 begin
   self.testCases := TList<TTestCase>.create;
+  self.strTestResults := '';
   testList := TStringList.create();
   for i := 0 to length(TESTGROUPS) -1 do
     begin
@@ -117,6 +138,7 @@ var i: integer;
     strBool: string;
 begin
   self.lbTestResults.clear;
+  self.strTestResults := '';
   for i := 0 to self.testCases.Count -1 do
     begin
     testStr := '';
@@ -124,7 +146,7 @@ begin
     testStr := strBool + ': ' + inttostr(self.testCases[i].getTestId) + ': ' + self.testCases[i].getTestName;
     if self.testCases[i].sTestInfoList.Count > 0 then
       testStr := testStr + ': ' + self.testCases[i].sTestInfoList[0];
-
+    self.strTestResults := self.strTestResults + testStr + sLineBreak;
     self.lbTestResults.AddItem(testStr, nil);
 
     end;

@@ -881,7 +881,9 @@ implementation
 
   function TSBMLLayoutGraphicalObject.printStr: string;
   begin
-    Result := ', Layout Graph Object ID:' + self.getId + self.getBoundingBox.printStr;
+    Result := ', Layout Graph Object ID:' + self.getId;
+    if self.boundingBoxSet then Result := Result + self.getBoundingBox.printStr
+    else Result := Result + ' No bounding box';
   end;
 
   procedure TSBMLLayoutGraphicalObject.setId(newId: string);
@@ -1167,7 +1169,7 @@ var
     else Result := Result + ', Reaction Glyph No Curve ';
     Result := Result + ', Reaction Glyph SpRefGlyphs: ';
     for i := 0 to self.getNumSpeciesRefGlyphs -1 do
-      Result := Result + self.getSpeciesRefGlyph(i).printStr;
+      Result := Result + self.getSpeciesRefGlyph(i).printStr + sLineBreak;
   end;
 
   procedure TSBMLLayoutReactionGlyph.clear();
@@ -1408,7 +1410,26 @@ end;
   function TSBMLLayout.printStr: string;
   var i: integer;
   begin
-    Result := ' Layout ID: ' + self.getId;
+    Result := ' Layout ID: ' + self.getId + ', Layout dims: ' + self.getDims.printStr + sLineBreak;
+    Result := Result + ' Additional Graphical Glyphs: ';
+    for i := 0 to self.getNumAddionalGraphObjs -1 do
+      Result := Result + self.getAdditionalGraphObj(i).printStr;
+    Result := Result + sLineBreak + ' Additional General Glyphs: ';
+    for i := 0 to self.getNumGenGlyphs -1 do
+      Result := Result + self.getGenGlyph(i).printStr;
+    Result := Result + sLineBreak + ' Compartment Glyphs: ';
+    for i := 0 to self.getNumCompGlyphs -1 do
+      Result := Result + self.getCompGlyph(i).printStr;
+    Result := Result + sLineBreak + ' Species Glyphs: ';
+    for i := 0 to self.getNumSpGlyphs -1 do
+      Result := Result + self.getSpGlyph(i).printStr;
+    Result := Result + sLineBreak + ' Reaction and Sp Ref Glyphs: ';
+    for i := 0 to self.getNumRxnGlyphs -1 do
+      Result := Result + self.getRxnGlyph(i).printStr;
+    Result := Result + sLineBreak + ' Text Glyphs: ';
+    for i := 0 to self.getNumTextGlyphs -1 do
+      Result := Result + self.getTextGlyph(i).printStr;
+    Result := Result + sLineBreak;
 
   end;
 

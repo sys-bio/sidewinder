@@ -170,6 +170,11 @@ begin
   for i := 0 to self.getNumFuncDefs -1 do
     Result := Result + self.modelFuncDefList[i].printStr;
 
+  Result := Result + sLineBreak;
+  Result := Result + ' Model Layout: ';
+  if self.modelLayout <> nil then Result := Result + self.getSBMLLayout.printStr
+  else Result := Result + 'NO layout';
+
 
 end;
 

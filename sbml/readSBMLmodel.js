@@ -18,15 +18,16 @@ class ProcessSBML {
    console.log(' # ofplugins: ', this.model.getNumPlugins() );
    if(this.model.getNumPlugins() >0) {
      this.SBMLLayOut = this.model.findPlugin('layout');
-
-   // this.SBMLGlobalRender = libsbml.RenderExtension.prototype.getXmlnsL3V1V1()
-   
-    if(this.model.hasPlugin('layout')) {
+     this.SBMLGlobalRender = libsbml.RenderExtension.prototype.getXmlnsL3V1V1()
+    // if(this.model.hasPlugin('render')) {
+    //   console.log(' model has render plugin' );
+    // }
+     if(this.model.hasPlugin('layout')) {
        console.log(' model has layout plugin' );
-    }
+     }
      if(this.SBMLLayOut == undefined) {
        console.log('No layout plugin defined');
-       }
+     }
      else {
        this.newLayoutPlug = this.SBMLLayOut.asLayout();
        this.numLayouts = this.newLayoutPlug.getNumLayouts(); // why does it report 2 if only one?
@@ -266,8 +267,8 @@ getRules(tModela, tRule) {
             tSpGlyph, tSpRefGlyph, tRxnGlyph, tTextGlyph) {
     var i;
   
-   // for(i=0; i< this.numLayouts; i++) {
-    for(i=0; i< 1; i++) { // cap at one for now, numLayouts reports 2 when there is one?
+    for(i=0; i< this.numLayouts; i++) {
+   // for(i=0; i< 1; i++) { // cap at one for now, numLayouts reports 2 when there is one?
       console.log(' Getting next layout #: ', i);
       const aLayout = this.newLayoutPlug.getLayout(i);
       const rPlugin = this.libSBML.castObject(aLayout.getPlugin("render"), this.libSBML.RenderLayoutPlugin);
@@ -278,10 +279,10 @@ getRules(tModela, tRule) {
         this.localRenderInfo = rPlugin.getRenderInformation(numLocalRenderPlug-1); // works for localInfo, not GlobalInfo
       this.isLocalRenderSet = true;
       }
-    // global:
- //   const rGlobalPluginList = this.libSBML.castObject(aLayout.getPlugin("render"), this.libSBML.RenderListOfLayoutsPlugin);   // none found
- 
- //   const numGlobalObj = rGlobalRenderList.getNumGlobalRenderInformationObjects();
+    // global?: NO ...
+//    const rGlobalPluginList = this.libSBML.castObject(aLayout.getPlugin("render"), this.libSBML.RenderListOfLayoutsPlugin);   // none found
+//    const numGlobalInfo = rGlobalRenderList.getRenderInformation();
+//    const numGlobalObj = rGlobalRenderList.getNumGlobalRenderInformationObjects();
  //   if( numGlobalObj > 0 ) {
  //     this.globalRenderInfo = rGlobalRenderList.getRenderGlobalInformation(numGlobalObj -1 );
  //   }

@@ -21,10 +21,14 @@ implementation
    refList.Text := refResult;
    for i := 0 to refList.Count -1 do
      begin
-     if trim(testResultList[i]) <> trim(refList[i]) then
+     if i < testResultList.Count then  // Make sure index not out of bounds
        begin
-       Result.Add(testResultList[i] + ', Ref: ' +refList[i]);
-       end;
+       if trim(testResultList[i]) <> trim(refList[i]) then
+         begin
+         Result.Add(testResultList[i] + ', *** Ref: ' +refList[i]);
+         end;
+       end
+     else Result.Add('Test line blank, Ref: ' +refList[i]);
      end;
 
  end;
