@@ -10,7 +10,8 @@ class ProcessSBML {
    this.model = libSBMLModel; // Model from libSBML doc.getModel()
    this.isLocalRenderSet = false;
    this.isGlobalRenderSet = false;
-   this.glyphIds = new Array();
+   this.glyphIds = new Array(); // needed for render styles
+   this.specIds = new Array();  // needed for render styles, coyote uses this
    this.spRefRoles = ['substrate', 'product', 'sidesubstrate', 'sideproduct', 'modifier',
                       'activator', 'inhibitor', 'undefined'];
    this.glyphTypes = ['COMPARTMENTGLYPH', 'SPECIESGLYPH', 'REACTIONGLYPH',
@@ -114,6 +115,7 @@ getRules(tModela, tRule) {
    // generate array of TSBMLSpecies for model:
       const newSpecies = this.model.getSpecies(i);
       tSpecies.setID(newSpecies.getId());
+      this.specIds.push(newSpecies.getId()); // for render styles
       if (newSpecies.isSetInitialAmount())
         { tSpecies.setInitialAmount(newSpecies.getInitialAmount());}
       else if (newSpecies.isSetInitialConcentration())
@@ -679,11 +681,19 @@ getRules(tModela, tRule) {
            nRenderStyle.addRole(this.spRefRoles[j]);
          }
        }
-     }
+     }      // check glyph Ids:
      for( let i=0; i< sbmlRenderStyle.getNumIds(); i++ ) {
        for( let j=0; j < this.glyphIds.length; j++ ) {
          if(sbmlRenderStyle.isInIdList( this.glyphIds[j] )) {
            nRenderStyle.addGoId( this.glyphIds[j] );
+         }
+       }
+     }
+          // check if IdList contains species node Id as well:
+     for( let i=0; i< sbmlRenderStyle.getNumIds(); i++ ) {
+       for( let j=0; j < this.specIds.length; j++ ) {
+         if(sbmlRenderStyle.isInIdList( this.specIds[j] )) {
+           nRenderStyle.addGoId( this.specIds[j] );
          }
        }
      }

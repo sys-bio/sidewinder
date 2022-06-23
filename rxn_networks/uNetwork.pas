@@ -1413,10 +1413,12 @@ function TNetwork.getSpeciesRenderStyle(newSpeciesGlyph:TSBMLLayoutSpeciesGlyph;
 var i, j: integer;
     renderStyle: TSBMLRenderStyle;
     glyphId: string;
+    spId: string; // id of actual species represented by node
 begin
   glyphId := newSpeciesGlyph.getId;
+  spId := newSpeciesGlyph.getSpeciesId;
   Result := nil;
-  Result := newModel.getRenderStyle( glyphId, 'SPECIESGLYPH', '' );
+  Result := newModel.getRenderStyle( glyphId, spId, 'SPECIESGLYPH', '' );
 
 end;
 
