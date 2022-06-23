@@ -973,10 +973,17 @@ end;
 
 procedure TMainForm.RxnParamComboBoxChange(Sender: TObject);  // NOT needed. ??
 var i: integer;
+    paramInitAssign: string;
 begin
  //console.log('TMainForm.RxnParamComboBoxChange');
+ paramInitAssign := '';
  i := self.RxnParamComboBox.ItemIndex;
- self.rxnParamEdit.text := floattostr(networkController.selectedObjects[0].reaction.state.rateParams[i].getValue);
+ if self.network.getInitialAssignmentWithVarId(networkController.selectedObjects[0].reaction.state.rateParams[i].getId ) <> nil then
+    paramInitAssign := self.network.getInitialAssignmentWithVarId(networkController.selectedObjects[0].reaction.state.rateParams[i].getId ).getFormula;
+ if paramInitAssign = '' then
+   self.rxnParamEdit.text := floattostr(networkController.selectedObjects[0].reaction.state.rateParams[i].getValue)
+ else self.rxnParamEdit.text := paramInitAssign;
+ // TODO: What to do if someone removes initial Assignment?
 end;
 
 procedure TMainForm.RxnParamComboBoxClick(Sender: TObject);
@@ -997,7 +1004,7 @@ begin
  // self.rxnParamEdit.text := floattostr(networkController.network.reactions[networkController.selectedEdge].state.rateParams[i].getValue);
 end;
 
-
+  // TODO: CHeck if edited param has an initialAssignment, if it does, then delete it if user put in new value.
 procedure TMainForm.RxnParamEditExit(Sender: TObject);
 var newVal: double;
     paramId: string;
@@ -1009,6 +1016,9 @@ begin
       newVal := strtofloat(self.RxnParamEdit.text);
       reaction.state.rateParams[self.RxnParamComboBox.ItemIndex].setValue(newVal);
       self.networkController.updateParamVal(reaction.state.rateParams[self.RxnParamComboBox.ItemIndex].getId, newVal);
+      if self.network.getInitialAssignmentWithVarId(reaction.state.rateParams[self.RxnParamComboBox.ItemIndex].getId ) <> nil then
+        // Remove initial assignment:
+       //? self.network.deleteInitialAssignment(reaction.state.rateParams[self.RxnParamComboBox.ItemIndex].getId);
     end;
   except
     on Exception : EConvertError do
@@ -2201,6 +2211,7 @@ end;
 
 procedure TMainForm.updateRxnParamPanel();
 var paramTStr: string;
+   // paramAssignStr: string;
     i: integer;
 begin
   paramTStr:= '';

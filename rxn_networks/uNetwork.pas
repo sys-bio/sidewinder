@@ -225,6 +225,7 @@ type
        function    getInitialAssignment(index: integer): TSBMLInitialAssignment;
        function    getInitialAssignmentWithVarId (varId: string): TSBMLInitialAssignment;
        function    getInitialAssignmentList(): TList<TSBMLInitialAssignment>;
+       function    deleteInitialAssignment(varId: string): boolean;
        function    getNumInitalAssignments(): integer;
 
        function    findReaction(id: string; var index: integer): boolean;
@@ -1871,6 +1872,23 @@ function TNetwork.getRuleWithVarId (varId: string): TSBMLRule;
      if self.listOfSBMLInitAssignments[i].getSymbol = varId then
        Result := self.listOfSBMLInitAssignments[i];
      end;
+ end;
+
+ function   TNetwork.deleteInitialAssignment(varId: string): boolean;
+ var i, foundIndex: integer;
+ begin
+   foundIndex := -1;
+   for i := 0 to self.listOfSBMLInitAssignments.Count -1 do
+     begin
+     if self.listOfSBMLInitAssignments[i].getId = varId then
+       foundIndex := i;
+     end;
+   if foundIndex > -1 then
+     begin
+     self.listOfSBMLInitAssignments.Delete(foundIndex);
+     Result := true;
+     end
+   else Result := false;
  end;
 
  function  TNetwork.getInitialAssignmentList(): TList<TSBMLInitialAssignment>;
