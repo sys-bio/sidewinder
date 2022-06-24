@@ -218,6 +218,7 @@ type
        procedure   addRule (newRule: TSBMLRule);
        function    getRule (index: integer): TSBMLRule;
        function    getRuleWithVarId (varId: string): TSBMLRule;
+       function    getAssignmentRuleWithVarId (varId: string): TSBMLRule;
        function    getRuleList(): TList<TSBMLRule>;
        function    getNumRules(): integer;
 
@@ -1837,6 +1838,20 @@ function TNetwork.getRuleWithVarId (varId: string): TSBMLRule;
      end;
  end;
 
+ function TNetwork.getAssignmentRuleWithVarId (varId: string): TSBMLRule;
+ var i: integer;
+ begin
+   Result := nil;
+   for i := 0 to self.listOfSBMLRules.Count -1 do
+     begin
+     if self.listOfSBMLRules[i].isAssignment then
+       begin
+       if self.listOfSBMLRules[i].getVariable = varId then
+         Result := self.listOfSBMLRules[i];
+       end;
+     end;
+ end;
+
  function TNetwork.getRuleList(): TList<TSBMLRule>;
  begin
    Result := self.listOfSBMLRules;
@@ -1880,7 +1895,7 @@ function TNetwork.getRuleWithVarId (varId: string): TSBMLRule;
    foundIndex := -1;
    for i := 0 to self.listOfSBMLInitAssignments.Count -1 do
      begin
-     if self.listOfSBMLInitAssignments[i].getId = varId then
+     if self.listOfSBMLInitAssignments[i].getSymbol = varId then
        foundIndex := i;
      end;
    if foundIndex > -1 then

@@ -974,14 +974,24 @@ end;
 procedure TMainForm.RxnParamComboBoxChange(Sender: TObject);  // NOT needed. ??
 var i: integer;
     paramInitAssign: string;
+    curAssignRule: TSBMLRule;
 begin
  //console.log('TMainForm.RxnParamComboBoxChange');
  paramInitAssign := '';
+ curAssignRule := nil;
+ self.rxnParamEdit.Enabled := true;
  i := self.RxnParamComboBox.ItemIndex;
  if self.network.getInitialAssignmentWithVarId(networkController.selectedObjects[0].reaction.state.rateParams[i].getId ) <> nil then
     paramInitAssign := self.network.getInitialAssignmentWithVarId(networkController.selectedObjects[0].reaction.state.rateParams[i].getId ).getFormula;
  if paramInitAssign = '' then
-   self.rxnParamEdit.text := floattostr(networkController.selectedObjects[0].reaction.state.rateParams[i].getValue)
+   begin  // If param has assignmentRule then do not allow editing.
+   curAssignRule := self.networkController.network.getAssignmentRuleWithVarId(networkController.selectedObjects[0].reaction.state.rateParams[i].getId);
+   if curAssignRule = nil then
+     self.rxnParamEdit.text := floattostr(networkController.selectedObjects[0].reaction.state.rateParams[i].getValue)
+   else self.rxnParamEdit.Enabled := false;
+
+
+   end
  else self.rxnParamEdit.text := paramInitAssign;
  // TODO: What to do if someone removes initial Assignment?
 end;
@@ -1016,9 +1026,8 @@ begin
       newVal := strtofloat(self.RxnParamEdit.text);
       reaction.state.rateParams[self.RxnParamComboBox.ItemIndex].setValue(newVal);
       self.networkController.updateParamVal(reaction.state.rateParams[self.RxnParamComboBox.ItemIndex].getId, newVal);
-      if self.network.getInitialAssignmentWithVarId(reaction.state.rateParams[self.RxnParamComboBox.ItemIndex].getId ) <> nil then
-        // Remove initial assignment:
-       //? self.network.deleteInitialAssignment(reaction.state.rateParams[self.RxnParamComboBox.ItemIndex].getId);
+      if self.network.getNumInitalAssignments > 0 then // Remove initial assignment:
+        self.networkController.network.deleteInitialAssignment(reaction.state.rateParams[self.RxnParamComboBox.ItemIndex].getId);
     end;
   except
     on Exception : EConvertError do

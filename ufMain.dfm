@@ -1854,10 +1854,15 @@ object mainForm: TmainForm
           Top = 70
           Width = 138
           Height = 22
+          Hint = 
+            'Only real numbers. If disabled then Assignment Rule exits for th' +
+            'e parameter. Algebraic expressions are not allowed to be entered' +
+            ', only read from existing model.'
           ChildOrder = 2
           ElementClassName = 'form-control'
           ElementFont = efCSS
           HeightPercent = 100.000000000000000000
+          ShowHint = True
           WidthPercent = 100.000000000000000000
           OnExit = RxnParamEditExit
         end
