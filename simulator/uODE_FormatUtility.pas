@@ -19,8 +19,8 @@ TFormatODEs = class
     odeEqSet2:String; // LSODA specific
     assignParamEqs: array of String; // List of SBML param assignment formulas, to be added to final odeEqSet.
     assignSpeciesEqs: array of String; // List of SBML spec assignment formulas, to be added to final odeEqSet.
-    initialAssignParamEqs: TList<string>;
-    initialAssignSpeciesEqs: TList<string>;
+    initialAssignParamEqs: TList<string>; // Only used at t=0
+    initialAssignSpeciesEqs: TList<string>;//  "          "
     rxns: array of SBMLreaction;
     prods: array of TSBMLSpeciesReference; // TODO: move to buildODE_LHS()
     reactants: array of TSBMLSpeciesReference; // TODO: move to buildODE_LHS()
@@ -52,7 +52,10 @@ TFormatODEs = class
   procedure buildLSODAeqs();   // build LSODA eqs (odeEqs2)
 
   procedure buildFinalEqSet(); // Build up final ODE eqs list as one string for use by solver.
-
+  function getInitialAssignParamEqs(): TList<string>;
+  function getInitialAssignSpeciesEqs: TList<string>;
+  function getAssignRuleParamEqs: array of string;
+  function getAssignRuleSpeciesEqs: array of string;
 end;
 // Currently no support for user defined functions in kinetic law formula.
 
@@ -341,7 +344,7 @@ begin
                 lhs[i]:= ODESTART + IntToStr(strInArray(self.prods[i].getSpecies(),speciesStrAr))+']'+'= (1)*('+stoich.ToString+')* ('; // dydt_name
             end
             else lhs[i]:= '';  // No ODE for boundary condition.
-            console.log('... Products lhs: ', lhs[np+i]);
+          //  console.log('... Products lhs: ', lhs[np+i]);
           end;
         end;
       end;
@@ -478,6 +481,15 @@ end;
    end;
  end;
 
+ function TFormatODES.getAssignRuleParamEqs: array of string;
+ begin
+   Result := self.assignParamEqs;
+ end;
+  function TFormatODEs.getAssignRuleSpeciesEqs: array of string;
+  begin
+    Result := self.assignSpeciesEqs;
+  end;
+
  procedure TFormatODEs.buildInitialAssignEqs(model: TModel);
  var i: integer;
      curEq, curSymbol: string;
@@ -499,7 +511,10 @@ end;
          curEq:= replaceStrNames(self.paramsStrAr, curEq,'p');
          curEq:= JSMathConvert(curEq);
          if self.StrInArray(curSymbol, self.paramsStrAr) > -1 then
-           self.initialAssignParamEqs.Add(curEq)
+           begin
+           self.initialAssignParamEqs.Add(curEq);
+           //console.log('Init Assignment for: ',curSymbol,': ',curEq);
+           end
          else if self.StrInArray(curSymbol, self.speciesStrAr) > -1 then
             self.initialAssignSpeciesEqs.Add(curEq);
 
@@ -559,6 +574,15 @@ var
        end;
      end;
 
+ end;
+
+ function TFormatODEs.getInitialAssignParamEqs(): TList<string>;
+ begin
+   Result := self.initialAssignParamEqs;
+ end;
+ function TFormatODEs.getInitialAssignSpeciesEqs: TList<string>;
+ begin
+   Result := self.initialAssignSpeciesEqs;
  end;
 
 // SBML math operators:

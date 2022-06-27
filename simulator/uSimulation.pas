@@ -16,6 +16,10 @@ type
     dydt: TDoubleDynArray;
     s_Vals: array of Double; // species, Changes, one to one correlation: s_Vals[n] <=> s_Names[n]
     s_Names: array of String; // Use species ID as name
+    s_ValsInit: array of Double; // vals at t = 0;
+    s_InitAssignEqs: string; // Eqs to be eval at t = 0
+    p_ValsInit: array of Double; // vals at t = 0
+    p_InitAssignEqs: string; // Eqs to be eval at t = 0
     p_NameValAr: TVarNameValList;  // user can change
     eqList: String;   // Euler, RK4 ODE eq list.
     LSODAeq: String;  // Formated ODE eq list for LSODA solver.
@@ -61,6 +65,7 @@ type
     procedure updateSimulation();
     procedure updateP_Val( index: integer; newVal: double );
     function  getP_Vals(): TVarNameValList;
+    procedure setInitValues(); // set init vals of params. species at t=0
     procedure testLSODA();  // Solve test equations. All pascal code.
  end;
 
@@ -129,6 +134,7 @@ procedure TSimulationJS.startSimulation();
 begin
   self.p := self.p_NameValAr.getValAr;
   self.ODEready := true;
+  //console.log('Init time: ', self.time);
   self.updateSimulation;
 end;
 
@@ -138,11 +144,15 @@ begin
   if self.ODEready = true then
     begin
     //  self.setStepSize(self.WebTimer1.Interval * 0.001); // 1 sec = 1000 msec;
+      if self.time = 0.0 then
+        begin
+        self.setInitValues;
+        end;
       if self.paramUpdated then
         begin
         self.paramUpdated := false;
         end;
-      //  console.log('updateSimulation: self.time, s[0]: ',self.time,', ',self.s_Vals[0]);
+      //  console.log('updateSimulation: self.time, s[0]: ',self.time,', ',self.s_Vals);
         self.nextEval(self.time, self.s_Vals, self.p);
     end
     // else error msg needed?
@@ -158,11 +168,28 @@ begin
   odeFormat := TFormatODEs.create(self.model);
   // Run Simulation using info from odeFormat:
   odeFormat.buildFinalEqSet();
-  //console.log(' ODE eq set2:',odeFormat.getODEeqSet2());
+ // console.log(' ODE eq set2:',odeFormat.getODEeqSet2());
    if self.solverUsed = LSODAS then
     self.LSODAeq := odeFormat.getODEeqSet2()
   else
     self.eqList := odeFormat.getODEeqSet();
+  self.p_InitAssignEqs := '';
+  self.s_InitAssignEqs := '';
+  // Need to add rate assignments as well:  Assignment rules before initial assignments?
+  for i := 0 to length(odeFormat.getAssignRuleParamEqs) -1 do
+    self.p_InitAssignEqs := self.p_InitAssignEqs + odeFormat.getAssignRuleParamEqs[i] + sLineBreak;
+  for i := 0 to length(odeFormat.getAssignRuleSpeciesEqs) -1 do
+    self.s_InitAssignEqs := self.s_InitAssignEqs + odeFormat.getAssignRuleSpeciesEqs[i] + sLineBreak;
+  for i := 0 to odeFormat.getInitialAssignParamEqs.Count -1 do
+    self.p_InitAssignEqs := self.p_InitAssignEqs + odeFormat.getInitialAssignParamEqs[i] + sLineBreak;
+  for i := 0 to odeFormat.getInitialAssignSpeciesEqs.count -1 do
+    self.s_InitAssignEqs := self.s_InitAssignEqs + odeFormat.getInitialAssignSpeciesEqs[i] + sLineBreak;
+  if self.p_InitAssignEqs <> '' then
+    self.p_InitAssignEqs := self.p_InitAssignEqs + 'return p;' + sLineBreak;
+  if self.s_InitAssignEqs <> '' then
+    self.s_InitAssignEqs := self.s_InitAssignEqs + 'return s;' + sLineBreak;
+ // console.log( '*** p Init eqs: ', self.p_InitAssignEqs );
+//  console.log( '** s Init eqs: ', self.s_InitAssignEqs );
 end;
 
 procedure TSimulationJS.nextEval(newTime: double; s: array of double; newPVals: array of double);
@@ -178,7 +205,7 @@ begin
         self.eval(newTime, s);
     end;
 end;
-                             // want to use updated time
+  // eval code probably no longer works as we use LSODA exclusively. See self.eval2()
 procedure  TSimulationJS.eval ( newTime: double; s : array of double );
  var i, j: Integer;
  var numSteps: Integer;
@@ -389,7 +416,6 @@ end;
 
 procedure TSimulationJS.SetTimerInterval(nInterval: Integer);
 begin
- // console.log('SimultionJS.setTimerInterval: ', nInterval);
   self.WebTimer1.Interval := nInterval;
 end;
 
@@ -409,6 +435,34 @@ begin
   self.updateSimulation();
   if self.time > runTime then
     self.WebTimer1.enabled := false;
+end;
+
+procedure TSimulationJS.setInitValues();
+var i: integer;
+begin
+  setLength(self.s_ValsInit, length(self.s_Vals));
+  setLength(self.p_ValsInit, length(self.p));
+  //self.p_ValsInit[0] := 2;
+
+  if self.p_InitAssignEqs <> '' then
+    begin
+    asm
+    //  console.log(this.p_InitAssignEqs);
+      var initParamFunc = new Function( 's','p', this.p_InitAssignEqs);
+      this.p = initParamFunc(this.s_Vals, this.p);
+    //  console.log('new p: ', this.p);
+    end
+    end;
+  // Now check if species init vals need to be calculated:
+   if self.s_InitAssignEqs <> '' then
+    begin
+    asm
+    //  console.log(this.s_InitAssignEqs);
+      var initSpFunc = new Function( 's','p', this.s_InitAssignEqs);
+      this.s = initSpFunc(this.s_Vals, this.p);
+    //  console.log('new s init vals: ', this.s);
+    end
+    end;
 end;
 
 procedure TSimulationJS.testLSODA();
