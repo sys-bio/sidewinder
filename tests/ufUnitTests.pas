@@ -6,10 +6,10 @@ uses
   System.SysUtils, System.Classes, JS, Web, WEBLib.Graphics, WEBLib.Controls,
   WEBLib.Forms, WEBLib.Dialogs, Vcl.Controls, Vcl.StdCtrls, WEBLib.StdCtrls,
   System.Generics.Collections, LSODA.test, uTestLSODA_JS, uTestCase, uTestSBMLReadWrite,
-  uSidewinderTypes;
+  uTestSBMLReadGenerateEqs, uSidewinderTypes;
 
-const SIMULATOR = 0;
-      TESTGROUPS: array [0..1] of string = ('Simulation group', 'Reading/Writing SBML models');
+const TESTGROUPS: array [0..2] of string = ('Simulation tests', 'Reading/Writing SBML models',
+      'Read SBML Model and generate equations list for Sim');
 
 type
   TfUnitTests = class(TWebForm)
@@ -27,14 +27,17 @@ type
     procedure btnSaveFileClick(Sender: TObject);
   private
     strTestResults: string; // used to write to file.
+    runAllTests: boolean;
+    groupTestIndex: integer;
     procedure runSimulationTests();
     procedure runSBMLReadWriteTests();
+    procedure runReadSBMLGenerateEqsTests(); // read SBML model generate Eqs for Sim.
     procedure populateTestResultsListBox();
-    procedure addFinishedTestCases( newTestCases: TList<TTestCase> );
+    procedure addFinishedTestCases( newTestCases: TList<TTestCaseResult> );
     procedure saveTestResults(fName: string);
   public
-    testCases: TList<TTestCase>;
-    procedure SBMLReadWriteTestsDone( testCaseResults : TList<TTestCase> );
+    testCases: TList<TTestCaseResult>;
+    procedure testsDone( testCaseResults : TList<TTestCaseResult> );  // callback
   end;
 
 var
@@ -48,27 +51,22 @@ procedure TfUnitTests.btnRunallClick(Sender: TObject);
 var
   i: Integer;
 begin
-  for i := 0 to length(TESTGROUPS) -1 do
-    begin
-      if i = 0 then self.runSimulationTests;
-      if i = 1 then self.runSBMLReadWriteTests;
-    end;
+  self.groupTestIndex := 0;
+  self.runAllTests := true;
+  self.runSimulationTests;
 end;
 
 procedure TfUnitTests.btnRunSpecifiedTestsClick(Sender: TObject);
-var i: integer;
 begin
-  //for i := 0 to self.lbTestGroups.Count -1 do
-  //  begin
-      if self.lbTestGroups.Selected[0] then self.runSimulationTests;
-      if self.lbTestGroups.Selected[1] then self.runSBMLReadWriteTests;
-  //  end;
+    if self.lbTestGroups.Selected[0] then self.runSimulationTests;
+    if self.lbTestGroups.Selected[1] then self.runSBMLReadWriteTests;
+    if self.lbTestGroups.Selected[2] then self.runReadSBMLGenerateEqsTests;
+
 end;
 
 procedure TfUnitTests.btnSaveFileClick(Sender: TObject);
 var fileName: string;
 begin
-// TODO
   fileName := InputBox('Save Test results to the downloads directory',
     'Enter File Name:', 'newtest.txt');
   if fileName <> '' then
@@ -91,8 +89,10 @@ procedure TfUnitTests.WebFormCreate(Sender: TObject);
 var i: integer;
     testList: TStringList;
 begin
-  self.testCases := TList<TTestCase>.create;
+  self.testCases := TList<TTestCaseResult>.create;
+  self.groupTestIndex := 0;
   self.strTestResults := '';
+  self.runAllTests := false;
   testList := TStringList.create();
   for i := 0 to length(TESTGROUPS) -1 do
     begin
@@ -104,32 +104,47 @@ end;
 
 procedure TfUnitTests.runSimulationTests;
 var lsoda_JSTestRun: TLSODA_JSTests;
-    curTestList: TList<TTestCase>;
+    curTestList: TList<TTestCaseResult>;
 begin
   self.testCases := LSODA_Test(self.testCases); // Pascal only test
   lsoda_JSTestRun := TLSODA_JSTests.create;
   curTestList := lsoda_JSTestRun.LSODATests; // Javascript/pascal mix
-  self.addFinishedTestCases(curTestList);
-  curTestList := nil;
-  self.populateTestResultsListBox;
+  self.testsDone(curTestList);
 end;
 
 procedure TfUnitTests.runSBMLReadWriteTests();
 var sbmlReadWrite: TTestSBMLReadWrite;
-    curTestList: TList<TTestCase>;
+    curTestList: TList<TTestCaseResult>;
 begin
   console.log('Running SBML Read-Write tests');
   sbmlReadWrite := TTestSBMLReadWrite.create;
-  sbmlReadWrite.OnNotify := self.SBMLReadWriteTestsDone;  // asyncronous calls
+  sbmlReadWrite.OnNotify := self.testsDone;  // asyncronous calls
   sbmlReadWrite.runTests;
-
 end;
 
-procedure TfUnitTests.SBMLReadWriteTestsDone( testCaseResults : TList<TTestCase> );
+procedure TfUnitTests.runReadSBMLGenerateEqsTests();
+var curTestList: TList<TTestCaseResult>;
+    sbmlReadGenerateEqs: TTestSBMLReadGenerateEqs;
 begin
-  console.log('Got SBML read-write test results');
+  console.log(' Running SBML read, generate Eq list tests');
+  sbmlReadGenerateEqs := TTestSBMLReadGenerateEqs.create;
+  sbmlReadGenerateEqs.OnNotify := self.testsDone;
+  sbmlReadGenerateEqs.runTest;
+end;
+
+procedure TfUnitTests.testsDone( testCaseResults : TList<TTestCaseResult> );
+begin
+  console.log('Got group test results');
   self.addFinishedTestCases(testCaseResults);
   self.populateTestResultsListBox;
+  if self.runAllTests then
+  begin
+    inc(self.groupTestIndex);
+   // Call next group of tests....
+    if self.groupTestIndex = 1 then self.runSBMLReadWriteTests;
+    if self.groupTestIndex = 2 then self.runReadSBMLGenerateEqsTests;
+  end;
+
 end;
 
 procedure TfUnitTests.populateTestResultsListBox();
@@ -148,12 +163,11 @@ begin
       testStr := testStr + ': ' + self.testCases[i].sTestInfoList[0];
     self.strTestResults := self.strTestResults + testStr + sLineBreak;
     self.lbTestResults.AddItem(testStr, nil);
-
     end;
 
 end;
 
-procedure TfUnitTests.addFinishedTestCases( newTestCases: TList<TTestCase> );
+procedure TfUnitTests.addFinishedTestCases( newTestCases: TList<TTestCaseResult> );
 var i: integer;
 begin
   for i := 0 to newTestCases.Count -1 do

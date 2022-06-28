@@ -23,9 +23,9 @@ type
     procedure buildReferenceResults();
   public
     resultInfo: TList<string>;
-    testResultList: TList<TTestCase>;
+    testResultList: TList<TTestCaseResult>;
     constructor create;
-    function  LSODATests(): TList<TTestCase>;
+    function  LSODATests(): TList<TTestCaseResult>;
     procedure runTest(eqs: string; species: array of double; params: array of double;
                          testIndex: integer);
     function getReferenceResult(index: integer): string;
@@ -43,7 +43,7 @@ var i: integer;
 
 begin
   self.buildReferenceResults;
-  testResultList := TList<TTestCase>.create;
+  testResultList := TList<TTestCaseResult>.create;
   LSODAspecies := TList<TArrD>.create;
   LSODAparams := TList<TArrD>.create;
   LSODAeqs := TList<string>.create;
@@ -85,7 +85,7 @@ begin
   LSODAparams.Add(Copy(b,0,MaxInt));
   end;
 
-function TLSODA_JSTests.LSODATests(): TList<TTestCase>;
+function TLSODA_JSTests.LSODATests(): TList<TTestCaseResult>;
 var i: integer;
     s: array of double;
     p: array of double;
@@ -128,11 +128,11 @@ var i, j: integer;
     y: TVector;
     tNext: double;
     time: double;
-    curTestCase: TTestCase;
+    curTestCase: TTestCaseResult;
     resultInfo: TList<string>; // holds any diffs between current result and ref result
     k: Integer;
 begin
-  curTestCase := TTestCase.create(testIndex + 1, 'LSODA_JStests Eq' + inttostr(testIndex +1));
+  curTestCase := TTestCaseResult.create(testIndex + 1, 'LSODA_JStests Eq' + inttostr(testIndex +1));
   self.solverOutput := '';
   stepSize := 0.1;
   runTime := 10;

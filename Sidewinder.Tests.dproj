@@ -118,6 +118,10 @@
         <DCCReference Include="tests\utests.TestUtils.pas"/>
         <DCCReference Include="sbml\uTestSBMLReadWrite.pas"/>
         <DCCReference Include="model\uModel.pas"/>
+        <DCCReference Include="sbml\uTestSBML_ReadModels.pas"/>
+        <DCCReference Include="sbml\uSBMLReader.pas"/>
+        <DCCReference Include="tests\uTestSBMLReadGenerateEqs.pas"/>
+        <DCCReference Include="simulator\uSimulation.pas"/>
         <None Include="AllTests_index.html"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>

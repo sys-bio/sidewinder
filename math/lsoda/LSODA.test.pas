@@ -9,12 +9,12 @@ uses
   System.Generics.Collections, uVector, adamsbdf, odeEquations, uTestCase,
   utests.TestUtils;
 
-  function LSODA_Test(currentTestResultList: TList<TTestCase>): TList<TTestCase>;
+  function LSODA_Test(currentTestResultList: TList<TTestCaseResult>): TList<TTestCaseResult>;
   function getReferenceResults(): string;
 
 implementation
 
-function LSODA_Test(currentTestResultList: TList<TTestCase>):TList<TTestCase>;
+function LSODA_Test(currentTestResultList: TList<TTestCaseResult>):TList<TTestCaseResult>;
 var
   y : TVector;
   t, tout : double;
@@ -24,7 +24,7 @@ var
   odeClass : TODE_eqs;
   solverOutput: string;
   refOutput: string;
-  testResult: TTestCase;
+  testResult: TTestCaseResult;
   resultInfo: TList<string>;
 begin
   resultInfo := TList<string>.create;
@@ -35,7 +35,7 @@ begin
   p[1]:= 10000;
   p[2]:= 3E7;
   l.p:= p;
-  testResult := TTestCase.create(1, 'LSODA Pascal test');
+  testResult := TTestCaseResult.create(1, 'LSODA Pascal test');
   odeClass:= TODE_eqs.create;    // added
 
   try

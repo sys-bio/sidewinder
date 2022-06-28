@@ -39,7 +39,7 @@ object fUnitTests: TfUnitTests
   object lbTestGroups: TWebListBox
     Left = 16
     Top = 80
-    Width = 209
+    Width = 241
     Height = 129
     HeightPercent = 100.000000000000000000
     ItemHeight = 13
@@ -48,7 +48,7 @@ object fUnitTests: TfUnitTests
     WidthPercent = 100.000000000000000000
   end
   object btnRunSpecifiedTests: TWebButton
-    Left = 104
+    Left = 120
     Top = 224
     Width = 121
     Height = 25

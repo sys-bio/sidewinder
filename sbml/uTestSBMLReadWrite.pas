@@ -5,13 +5,14 @@ unit uTestSBMLReadWrite;
 
 interface
 uses   System.SysUtils, System.Classes, JS, Web, System.Generics.Collections,
- uTestCase, utests.TestUtils, uSBMLClasses, uSBMLWriter, uSBMLReader, uModel, uTestModel;
+ uTestCase, utests.TestUtils, uSBMLClasses, uSBMLWriter, uSBMLReader, uModel, uTestModel,
+ uTestSBML_ReadModels;
 
 const NUM_WRITE_TESTS = 1;
-      NUM_READ_TESTS = 2;
+      NUM_READ_TESTS = 3;
 
 type
- TReadWriteTestsFinished = procedure(readWriteTestCase: TList<TTestCase>) of object;  // Notify when done testing
+ TReadWriteTestsFinished = procedure(readWriteTestCase: TList<TTestCaseResult>) of object;  // Notify when done testing
  TTestSBMLReadWrite = class
   private
     FNotify: TReadWriteTestsFinished; // send sbml info to listener once asynchronous read done.
@@ -24,7 +25,7 @@ type
     function getReadTestReferenceString(testIndex: integer): string;
   public
     resultInfo: TList<string>;
-    testResultList: TList<TTestCase>;
+    testResultList: TList<TTestCaseResult>;
 
     constructor create();
     procedure runTests; // run Write, then read tests
@@ -41,7 +42,7 @@ implementation
 
 constructor TTestSBMLReadWrite.create();
 begin
-  self.testResultList := TList<TTestCase>.create;
+  self.testResultList := TList<TTestCaseResult>.create;
   self.currentWriteTestIndex := 0;
   self.currentReadTestIndex := 0;
 end;
@@ -133,7 +134,7 @@ procedure TTestSBMLReadWrite.runWriteSBMLTest();
 var testWriteModel: TModel;
     sbmlTestWriter: TSBMLWriter;
 begin
-  self.testResultList.Add(TTestCase.create(self.currentWriteTestIndex +1,
+  self.testResultList.Add(TTestCaseResult.create(self.currentWriteTestIndex +1,
                    'SBML write test ' + inttostr(self.currentWriteTestIndex +1)));
   testWriteModel := self.generateWriteTestModel(self.currentWriteTestIndex);
   sbmlTestWriter := TSBMLWriter.create();
@@ -146,9 +147,9 @@ var i: integer;
     sbmlTestReader: TSBMLRead;
     testSBMLStr: string;
 begin
-  self.testResultList.Add(TTestCase.create(self.currentReadTestIndex +1,
+  self.testResultList.Add(TTestCaseResult.create(self.currentReadTestIndex +1,
                    'SBML read test ' + inttostr(self.currentReadTestIndex +1)));
-  testSBMLStr := generateReadTestModel(self.currentReadTestIndex);
+  testSBMLStr := self.generateReadTestModel(self.currentReadTestIndex);
   self.testModel := TModel.create;
   self.testModel.OnPing := self.modelRead;
   sbmlTestReader := TSBMLRead.create(self.testModel, testSBMLStr );
@@ -203,9 +204,15 @@ end;
 
 function TTestSBMLReadWrite.generateReadTestModel(testIndex: integer): string;
 begin
-  if testIndex < SBML_EXAMPLE_MODELS then
+  if testIndex < 2 then  //  change from 2 to SBML_EXAMPLE_MODELS when all examples added
+ // if testIndex < SBML_EXAMPLE_MODELS then
     Result := getTestModel(testIndex)
-  else Result := '';
+  else
+    begin
+    if testIndex < 2 + SBML_TEST_MODELS then
+      Result := getSBMLReadTestModel (testIndex - 2)
+    else Result := '';
+    end;
 
 end;
 
@@ -305,6 +312,16 @@ end;
 '' + sLineBreak +
  'Text Glyphs: , Layout TextGlyph: , Layout Graph Object ID:txtGlyphX0 No bounding box, TextGlyph text: X0, TextGlyph text origin: , TextGlyph GraphObj ID: speciesGlyphX0, Layout TextGlyph: , Layout Graph Object ID:txtGlyphS1 No bounding box, TextGlyph text: S1, TextGlyph text origin: , TextGlyph GraphObj ID: speciesGlyphS1, Layout TextGlyph: , Layout Graph Object ID:txtGlyphS4 No bounding box, TextGlyph text: S4, TextGlyph text origin: , TextGlyph GraphObj ID: speciesGlyphS4, Layout TextGlyph: , Layout Graph Object ID:txtGlyphS2 No bounding box, TextGlyph text: S2, TextGlyph text origin: , TextGlyph GraphObj ID: speciesGlyphS2, Layout TextGlyph: , Layout Graph Object ID:txtGlyphS3 No bounding box, TextGlyph text: S3, TextGlyph text origin: , TextGlyph GraphObj ID: speciesGlyphS3, Layout TextGlyph: , Layout Graph Object ID:txtGlyphX1 No bounding box, TextGlyph text: X1, TextGlyph text origin: , TextGlyph GraphObj ID: speciesGlyphX1'
      );
+
+     refTestStrList.Add('Model id: , Species:  Species ID: X0, Boundary sp: true, Init Conc: 10, Comp: default_compartment Species ID: S1, Boundary sp: false, Init Conc: 0, Comp: default_compartment Species ID: S4, Boundary sp: false, Init Conc: 0, Comp: default_compartment Species ID: S2, Boundary sp: false, Init Conc: 0, Comp: default_compartment Species ID: S3, Boundary sp: false, Init Conc: 0, Comp: default_compartment Species ID: X1, Boundary sp: true, Init Conc: 0, Comp: default_compartment' + sLineBreak +
+ 'Model compartments:  Comp ID: default_compartment, No Comp name, Comp size: 1, Comp constant, ' + sLineBreak +
+ 'Model params:  Param ID: VM1, No Param name, Value: 0, Param can vary Param ID: Keq1, No Param name, Value: 0, Param can vary Param ID: h, No Param name, Value: 0, Param can vary Param ID: V4, No Param name, Value: 2.5, Param Const Param ID: KS4, No Param name, Value: 0.5, Param Const' + sLineBreak +
+ 'Model Rxns: , Rxn ID: J0, No Rxn Name, No Rxn Comp , Rxn reversible, Rxn products:  SpRef ID: S1J0, SpRef species: S1, Stoich Coeff: 1, Rxn reactants:  SpRef ID: X0J0, SpRef species: X0, Stoich Coeff: 1, Rxn KinLaw:  Kinetic Law id: dummy, Kinetic Law No name, Kinetic Law formula: VM1 * (X0 - S1 / Keq1) / (1 + X0 + S1 + pow(S4, h)), Kinetic Law params: self.paramIds[i], self.paramIds[i],  End of Kinetic Law param list. , Rxn ID: J1, No Rxn Name, No Rxn Comp , Rxn reversible, Rxn products:  SpRef ID: S2J1, SpRef species: S2, Stoich Coeff: 1, Rxn reactants:  SpRef ID: S1J1, SpRef species: S1, Stoich Coeff: 1, Rxn KinLaw:  Kinetic Law id: dummy, Kinetic Law No name, Kinetic Law formula: (10 * S1 - 2 * S2) / (1 + S1 + S2), Kinetic Law params: self.paramIds[i], self.paramIds[i],  End of Kinetic Law param list. , Rxn ID: J2, No Rxn Name, No Rxn Comp , Rxn reversible, Rxn products:  SpRef ID: S3J2, SpRef species: S3, Stoich Coeff: 1, Rxn reactants:  SpRef ID: S2J2, SpRef species: S2, Stoich Coeff: 1, Rxn KinLaw:  Kinetic Law id: dummy, Kinetic Law No name, Kinetic Law formula: (10 * S2 - 2 * S3) / (1 + S2 + S3), Kinetic Law params: self.paramIds[i], self.paramIds[i],  End of Kinetic Law param list. , Rxn ID: J3, No Rxn Name, No Rxn Comp , Rxn reversible, Rxn products:  SpRef ID: S4J3, SpRef species: S4, Stoich Coeff: 1, Rxn reactants:  SpRef ID: S3J3, SpRef species: S3, Stoich Coeff: 1, Rxn KinLaw:  Kinetic Law id: dummy, Kinetic Law No name, Kinetic Law formula: (10 * S3 - 2 * S4) / (1 + S3 + S4), Kinetic Law params: self.paramIds[i], self.paramIds[i],  End of Kinetic Law param list. , Rxn ID: J4, No Rxn Name, No Rxn Comp , Rxn reversible, Rxn products:  SpRef ID: X1J4, SpRef species: X1, Stoich Coeff: 1, Rxn reactants:  SpRef ID: S4J4, SpRef species: S4, Stoich Coeff: 1, Rxn KinLaw:  Kinetic Law id: dummy, Kinetic Law No name, Kinetic Law formula: V4 * S4 / (KS4 + S4), Kinetic Law params: self.paramIds[i], self.paramIds[i],  End of Kinetic Law param list.' + sLineBreak +
+ 'Model Initial Assignments:  InitAssign Id: InitAssign_h, Symbol: h, Formula: Keq1 + 2' + sLineBreak +
+ 'Model Rules:  Assignment Rule ID: , No Rule name, Rule is for parameter, Rule variable: VM1, Rule formula: 10 + S2, Rule Does not use piecewise.  Assignment Rule ID: , No Rule name, Rule is for parameter, Rule variable: Keq1, Rule formula: S1 * 10 + 10, Rule Does not use piecewise. ' + sLineBreak +
+ 'Model events: 0' + sLineBreak +
+ 'Model Func definitions: ' + sLineBreak +
+ 'Model Layout: NO layout');
 
     if refTestStrList.count > testIndex then
       Result := refTestStrList[testIndex]

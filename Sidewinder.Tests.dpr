@@ -9,7 +9,11 @@ uses
   ufUnitTests in 'tests\ufUnitTests.pas' {fUnitTests: TWebForm} {*.html},
   utests.TestUtils in 'tests\utests.TestUtils.pas',
   uTestSBMLReadWrite in 'sbml\uTestSBMLReadWrite.pas',
-  uModel in 'model\uModel.pas';
+  uModel in 'model\uModel.pas',
+  uTestSBML_ReadModels in 'sbml\uTestSBML_ReadModels.pas',
+  uSBMLReader in 'sbml\uSBMLReader.pas',
+  uTestSBMLReadGenerateEqs in 'tests\uTestSBMLReadGenerateEqs.pas',
+  uSimulation in 'simulator\uSimulation.pas';
 
 {$R *.res}
 

@@ -51,6 +51,9 @@ type
     function  getStepSize(): double;
     procedure setStepSize(newStep: double);
     procedure generateEquations(); // Take SBML model and generate eqs compatible for solver.
+    function  getLSODAeqs(): string;
+    function  getParamInitAssignEqs(): string;
+    function  getSpeciesInitAssignEqs(): string;
     function  IsOnline(): Boolean;
     procedure SetOnline(bOnline: Boolean);
     procedure SetTimerEnabled(bTimer: Boolean);
@@ -465,10 +468,25 @@ begin
     end;
 end;
 
-procedure TSimulationJS.testLSODA();
+function TSimulationJS.getLSODAeqs(): string;
+  begin
+  Result := self.LSODAeq;
+  end;
+
+function  TSimulationJS.getParamInitAssignEqs(): string;
+  begin
+  Result := self.p_InitAssignEqs;
+  end;
+
+function  TSimulationJS.getSpeciesInitAssignEqs(): string;
+  begin
+  Result := self.s_InitAssignEqs;
+  end;
+
+  procedure TSimulationJS.testLSODA();
 
  begin
-   // LSODA.test.test(); // Use with all Pascal code.
+   // LSODA.test.test(); //? Use with all Pascal code.
  end;
 
 end.
