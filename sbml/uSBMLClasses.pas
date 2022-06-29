@@ -1,6 +1,6 @@
 unit uSBMLClasses;
 interface
- uses Web, JS;
+ uses System.SysUtils, Web, JS;
 type
 
  TSBMLSpecies = class
@@ -42,6 +42,7 @@ type
    function getName(): String;
    procedure setName(val: String);
    function isSetName(): boolean;
+   function printStr(): string;  // serialize as string, use for testing
  end;
 
  TSBMLcompartment = class
@@ -71,6 +72,7 @@ type
     function getName(): String;
     procedure setName(val:String);
     function isSetName(): boolean;
+    function printStr(): string;
  end;
 
 
@@ -98,7 +100,7 @@ type
     function getName(): String;
     procedure setName(val: String);
     function isSetName(): boolean;
-
+    function printStr(): string;
  end;
 
 // SBMLlocalParameter not implimented, same methods as TSBMLParameter.
@@ -117,6 +119,7 @@ type
     function getSymbol(): string;
     procedure setFormula( newF: string );
     function getFormula(): string;
+    function printStr(): string;
  end;
 
 
@@ -146,6 +149,7 @@ type
     function getStoichiometry(): double;
     procedure setStoichiometry(val: double);
     function isSetStoichiometry(): boolean;
+    function printStr(): string;
  //   function getName(): String;
  //   procedure setName(val: String);
  //   function isSetName(): boolean;
@@ -166,6 +170,7 @@ type
   public
    constructor create(); Overload;
    constructor create(newId: String; newFormula: String; paramArr: array of String); Overload;
+   constructor create(newId: String; newFormula: String; paramArr: array of TSBMLparameter); Overload;
    function getNumLocalParameters(): integer;  // Not used
    function addLocalParameter(param: String): String; // Not used
    function getLocalParameter(n: integer): String;   // not used
@@ -178,6 +183,7 @@ type
    function isNameFlagSet():boolean;
    function getFormula(): String;
    procedure setFormula(newFormula: String);
+   function printStr(): string;
 
  end;
      // reaction Modifiers not implimented
@@ -234,6 +240,7 @@ type
   function getName(): String;
   procedure setName(name: String);
   function isSetName(): boolean;
+  function printStr(): string;
 
  end;
 
@@ -284,7 +291,19 @@ implementation
     compFlag:= copySp.isSetCompartment();
     self.hasOnlySubstanceUnits := copySp.getHasOnlySubstanceUnits();
 
+   end;
 
+  function TSBMLSpecies.printStr(): string;
+  begin
+    Result := '';
+    Result := ' Species ID: '+ self.sid;
+    if self.isSetName then Result := Result + ', Name: '+ self.name;
+    if self.getBoundaryCondition then Result := Result + ', Boundary sp: true'
+    else  Result := Result + ', Boundary sp: false';
+    if self.initAmtFlag then Result := Result + ', Init Amt: ' + floattostr(self.initAmt)
+    else Result := Result + ', Init Conc: ' + floattostr(self.initConc);
+    if self.isSetCompartment then Result := Result + ', Comp: ' + self.compSid
+    else Result := Result + ', No Compartment';
 
   end;
    function TSBMLSpecies.getInitialAmount(): double;
@@ -395,6 +414,13 @@ implementation
     self.formula := cpy.getFormula;
    end;
 
+   function TSBMLInitialAssignment.printStr: string;
+   begin
+     Result := '';
+     Result := ' InitAssign Id: ' + self.id;
+     Result := Result + ', Symbol: ' + self.symbol + ', Formula: ' + self.formula;
+   end;
+
    procedure TSBMLInitialAssignment.setId( newId: string );
    begin
      self.id := newId;
@@ -450,6 +476,17 @@ implementation
      speciesSetFlag:= true;
      stoichSetFlag:= true;
   end;
+
+  function TSBMLSpeciesReference.printStr: string;
+  begin
+    Result := '';
+    Result := ' SpRef ID: ' + self.id;
+    if self.speciesSetFlag then Result := Result +', SpRef species: ' + self.species
+    else Result := Result +', NO SpRef species';
+    Result := Result + ', Stoich Coeff: ' + floattostr(self.stoichValue);
+
+  end;
+
   function TSBMLSpeciesReference.getSpecies():String;
   begin
     Result:= species;
@@ -530,6 +567,19 @@ implementation
     name:= copyParam.getName;
     value:= copyParam.getValue;
   end;
+
+  function TSBMLparameter.printStr: string;
+  begin
+    Result := '';
+    Result := ' Param ID: ' + self.id;
+    if self.nameSetFlag then Result := Result + ', Param name: ' + self.name
+    else Result := Result + ', No Param name';
+    Result := Result + ', Value: ' + floattostr(self.value);
+    if self.isSetConstant then Result := Result + ', Param Const'
+    else Result := Result + ', Param can vary';
+
+  end;
+
   function TSBMLparameter.getValue():double;
   begin
     Result:= self.value;
@@ -620,6 +670,20 @@ implementation
     constSetFlag:= copyComp.isSetConstant();
 
   end;
+
+  function TSBMLcompartment.printStr: string;
+  begin
+    Result := '';
+    Result := ' Comp ID: ' + self.id;
+    if self.nameSetFlag then Result := Result + ', Comp name: ' + self.name
+    else Result := Result + ', No Comp name';
+    if self.sizeSetFlag then Result := Result + ', Comp size: ' + floattostr(self.getSize)
+    else Result := Result + ', Comp size: ' + floattostr(self.getVolume);
+    if self.isSetConstant then Result := Result + ', Comp constant, '
+    else Result := Result + ', Comp is Not constant, ';
+
+  end;
+
   function TSBMLcompartment.getConstant(): boolean; // true if compartment size constant
   begin
       Result:= constSetFlag;
@@ -706,6 +770,36 @@ implementation
      paramIds:= Copy(paramArr, 0, Length(paramArr));
      numParams:= Length(paramArr);
    end;
+
+   constructor SBMLkineticlaw.create(newId: String; newFormula: String; paramArr: array of TSBMLparameter); Overload;
+   var i: integer;
+   begin
+     id:= newId;
+     formula:= newFormula;
+     name:= '';
+     nameFlagSet:= false;
+     setLength( self.paramIds, Length(paramArr) );
+     for i := 0 to Length(paramArr) -1 do
+       self.paramIds[i] := paramArr[i].getId;
+     numParams:= Length(paramArr);
+   end;
+
+   function SBMLkineticlaw.printStr: string;
+var
+  i: Integer;
+   begin
+     Result := '';
+     Result := ' Kinetic Law id: ' + self.id;
+     if self.isNameFlagSet then Result := Result + ', Kinetic Law name: ' + self.name
+     else Result := Result + ', Kinetic Law No name';
+     Result := Result + ', Kinetic Law formula: ' + self.getFormula;
+     Result := Result + ', Kinetic Law params: ';
+     for i := 0 to Length(self.paramIds) -1 do
+       Result := Result + 'self.paramIds[i], ';
+     Result := Result + ' End of Kinetic Law param list. ';
+
+   end;
+
    function SBMLkineticlaw.getId(): String;
    begin
      Result:= id;
@@ -808,6 +902,28 @@ implementation
   kineticlaw:= nil;
   kineticLawFlagSet:= false;
   self.reversible := false;
+ end;
+
+ function SBMLReaction.printStr: string;
+var
+  i: Integer;
+ begin
+   Result := '';
+   Result := ', Rxn ID: ' + self.rxnID;
+   if self.rxnNameFlagSet then Result := Result + ', Rxn Name: ' + self.name
+   else Result := Result + ', No Rxn Name';
+   if self.isSetCompartment then Result := Result + ', Rxn Comp: ' + self.compartment
+   else Result := Result + ', No Rxn Comp ';
+   if self.reversible then Result := Result +', Rxn reversible'
+   else Result := Result +', Rxn Not reversible';
+   Result := Result + ', Rxn products: ';
+   for i := 0 to self.numbProducts -1 do
+      Result := Result + self.rxnProducts[i].printStr;
+   Result := Result + ', Rxn reactants: ';
+   for i := 0 to self.numbReactants -1 do
+     Result := Result + self.rxnReactants[i].printStr;
+   Result := Result + ', Rxn KinLaw: ' + self.kineticlaw.printStr;
+
  end;
 
  function SBMLReaction.getCompartment(): String;

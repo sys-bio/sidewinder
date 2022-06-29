@@ -10,7 +10,8 @@ class ProcessSBML {
    this.model = libSBMLModel; // Model from libSBML doc.getModel()
    this.isLocalRenderSet = false;
    this.isGlobalRenderSet = false;
-   this.glyphIds = new Array();
+   this.glyphIds = new Array(); // needed for render styles
+   this.specIds = new Array();  // needed for render styles, coyote uses this
    this.spRefRoles = ['substrate', 'product', 'sidesubstrate', 'sideproduct', 'modifier',
                       'activator', 'inhibitor', 'undefined'];
    this.glyphTypes = ['COMPARTMENTGLYPH', 'SPECIESGLYPH', 'REACTIONGLYPH',
@@ -18,15 +19,16 @@ class ProcessSBML {
    console.log(' # ofplugins: ', this.model.getNumPlugins() );
    if(this.model.getNumPlugins() >0) {
      this.SBMLLayOut = this.model.findPlugin('layout');
-
-   // this.SBMLGlobalRender = libsbml.RenderExtension.prototype.getXmlnsL3V1V1()
-   
-    if(this.model.hasPlugin('layout')) {
+     this.SBMLGlobalRender = libsbml.RenderExtension.prototype.getXmlnsL3V1V1()
+    // if(this.model.hasPlugin('render')) {
+    //   console.log(' model has render plugin' );
+    // }
+     if(this.model.hasPlugin('layout')) {
        console.log(' model has layout plugin' );
-    }
+     }
      if(this.SBMLLayOut == undefined) {
        console.log('No layout plugin defined');
-       }
+     }
      else {
        this.newLayoutPlug = this.SBMLLayOut.asLayout();
        this.numLayouts = this.newLayoutPlug.getNumLayouts(); // why does it report 2 if only one?
@@ -113,6 +115,7 @@ getRules(tModela, tRule) {
    // generate array of TSBMLSpecies for model:
       const newSpecies = this.model.getSpecies(i);
       tSpecies.setID(newSpecies.getId());
+      this.specIds.push(newSpecies.getId()); // for render styles
       if (newSpecies.isSetInitialAmount())
         { tSpecies.setInitialAmount(newSpecies.getInitialAmount());}
       else if (newSpecies.isSetInitialConcentration())
@@ -266,8 +269,8 @@ getRules(tModela, tRule) {
             tSpGlyph, tSpRefGlyph, tRxnGlyph, tTextGlyph) {
     var i;
   
-   // for(i=0; i< this.numLayouts; i++) {
-    for(i=0; i< 1; i++) { // cap at one for now, numLayouts reports 2 when there is one?
+    for(i=0; i< this.numLayouts; i++) {
+   // for(i=0; i< 1; i++) { // cap at one for now, numLayouts reports 2 when there is one?
       console.log(' Getting next layout #: ', i);
       const aLayout = this.newLayoutPlug.getLayout(i);
       const rPlugin = this.libSBML.castObject(aLayout.getPlugin("render"), this.libSBML.RenderLayoutPlugin);
@@ -278,10 +281,10 @@ getRules(tModela, tRule) {
         this.localRenderInfo = rPlugin.getRenderInformation(numLocalRenderPlug-1); // works for localInfo, not GlobalInfo
       this.isLocalRenderSet = true;
       }
-    // global:
- //   const rGlobalPluginList = this.libSBML.castObject(aLayout.getPlugin("render"), this.libSBML.RenderListOfLayoutsPlugin);   // none found
- 
- //   const numGlobalObj = rGlobalRenderList.getNumGlobalRenderInformationObjects();
+    // global?: NO ...
+//    const rGlobalPluginList = this.libSBML.castObject(aLayout.getPlugin("render"), this.libSBML.RenderListOfLayoutsPlugin);   // none found
+//    const numGlobalInfo = rGlobalRenderList.getRenderInformation();
+//    const numGlobalObj = rGlobalRenderList.getNumGlobalRenderInformationObjects();
  //   if( numGlobalObj > 0 ) {
  //     this.globalRenderInfo = rGlobalRenderList.getRenderGlobalInformation(numGlobalObj -1 );
  //   }
@@ -678,11 +681,19 @@ getRules(tModela, tRule) {
            nRenderStyle.addRole(this.spRefRoles[j]);
          }
        }
-     }
+     }      // check glyph Ids:
      for( let i=0; i< sbmlRenderStyle.getNumIds(); i++ ) {
        for( let j=0; j < this.glyphIds.length; j++ ) {
          if(sbmlRenderStyle.isInIdList( this.glyphIds[j] )) {
            nRenderStyle.addGoId( this.glyphIds[j] );
+         }
+       }
+     }
+          // check if IdList contains species node Id as well:
+     for( let i=0; i< sbmlRenderStyle.getNumIds(); i++ ) {
+       for( let j=0; j < this.specIds.length; j++ ) {
+         if(sbmlRenderStyle.isInIdList( this.specIds[j] )) {
+           nRenderStyle.addGoId( this.specIds[j] );
          }
        }
      }

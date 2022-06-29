@@ -6,7 +6,7 @@
         <Projects Include="sidewinder.dproj">
             <Dependencies/>
         </Projects>
-        <Projects Include="math\lsoda\Sidewinder.Test.LSODA.dproj">
+        <Projects Include="Sidewinder.Tests.dproj">
             <Dependencies/>
         </Projects>
     </ItemGroup>
@@ -26,23 +26,23 @@
     <Target Name="sidewinder:Make">
         <MSBuild Projects="sidewinder.dproj" Targets="Make"/>
     </Target>
-    <Target Name="Sidewinder_Test_LSODA">
-        <MSBuild Projects="math\lsoda\Sidewinder.Test.LSODA.dproj"/>
+    <Target Name="Sidewinder_Tests">
+        <MSBuild Projects="Sidewinder.Tests.dproj"/>
     </Target>
-    <Target Name="Sidewinder_Test_LSODA:Clean">
-        <MSBuild Projects="math\lsoda\Sidewinder.Test.LSODA.dproj" Targets="Clean"/>
+    <Target Name="Sidewinder_Tests:Clean">
+        <MSBuild Projects="Sidewinder.Tests.dproj" Targets="Clean"/>
     </Target>
-    <Target Name="Sidewinder_Test_LSODA:Make">
-        <MSBuild Projects="math\lsoda\Sidewinder.Test.LSODA.dproj" Targets="Make"/>
+    <Target Name="Sidewinder_Tests:Make">
+        <MSBuild Projects="Sidewinder.Tests.dproj" Targets="Make"/>
     </Target>
     <Target Name="Build">
-        <CallTarget Targets="sidewinder;Sidewinder_Test_LSODA"/>
+        <CallTarget Targets="sidewinder;Sidewinder_Tests"/>
     </Target>
     <Target Name="Clean">
-        <CallTarget Targets="sidewinder:Clean;Sidewinder_Test_LSODA:Clean"/>
+        <CallTarget Targets="sidewinder:Clean;Sidewinder_Tests:Clean"/>
     </Target>
     <Target Name="Make">
-        <CallTarget Targets="sidewinder:Make;Sidewinder_Test_LSODA:Make"/>
+        <CallTarget Targets="sidewinder:Make;Sidewinder_Tests:Make"/>
     </Target>
     <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
 </Project>

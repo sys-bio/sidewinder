@@ -88,7 +88,7 @@ implementation
  procedure TFormAssignments.fillAssignmentList();
  var i, newHeight: integer;
  begin
-   newHeight := self.listOfAssignments.Count *20 + 20;
+   newHeight := self.listOfAssignments.Count *30 + 20;
    self.Height := newHeight + 50;
    self.lbSBMLAssignments.Height := newHeight;
    self.lbSBMLAssignments.Items := self.listOfAssignments;

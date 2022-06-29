@@ -1,7 +1,7 @@
 unit uModel;
 
 interface
-uses Web, JS, System.Generics.Collections, uSBMLClasses, uSBMLClasses.rule,
+uses System.SysUtils, Web, JS, System.Generics.Collections, uSBMLClasses, uSBMLClasses.rule,
      uSBMLClasses.Layout, uSBMLClasses.Render, uSidewinderTypes, uSBMLClasses.FuncDefinition;
 
 type
@@ -90,8 +90,8 @@ type
    function  getSBMLLayout(): TSBMLLayout;
    procedure setSBMLRenderInfo( newRender: TSBMLRenderInformation );
    function  getSBMLRenderInfo(): TSBMLRenderInformation;
-   function  getRenderStyle(newGlyphId: string; newGlyphType: string;
-                      newGlyphRole: string ): TSBMLRenderStyle;
+   function  getRenderStyle(newGlyphId: string; newSpeciesId: string;
+                 newGlyphType: string; newGlyphRole: string ): TSBMLRenderStyle;
 
    function  getS_Names(): array of String;
    function  getS_Vals(): array of Double; // remove at some point, only getS_initVals needed ?
@@ -116,14 +116,13 @@ type
     { Triggers the event if anything is registered }
    procedure SBML_UpdateEvent(); // SBML model updated.
    procedure testModelUpdate(); // check model update mechanism
-
+   function printStr(): string; // serialize as string, use for testing
  end;
 
 implementation
 
 constructor TModel.create();
 begin
-  //  errors:=0;
     self.strSBMLErrors := TList<string>.create;
     self.modelInitialAssignments := TList<TSBMLInitialAssignment>.create;
     self.modelFuncDefList := TList<TSBMLFuncDefinition>.create;
@@ -136,6 +135,48 @@ begin
     self.modelRendering := nil;
 end;
 
+function TModel.printStr(): string;
+var
+  i: Integer;
+begin
+  Result := '';
+  Result := ' Model id: ' + self.modelId + ', Species: ';
+  for i := 0 to self.getSpeciesNumb - 1 do
+    Result := Result + self.getSBMLspecies(i).printStr;
+  Result := Result + sLineBreak;
+  Result := Result + ' Model compartments: ';
+  for i := 0 to self.getCompNumb -1 do
+    Result := Result + self.getSBMLcompartment(i).printStr;
+  Result := Result + sLineBreak;
+  Result := Result + ' Model params: ';
+  for i := 0 to self.getParamNumb -1 do
+    Result := Result + self.getSBMLparameter(i).printStr;
+  Result := Result + sLineBreak;
+  Result := Result + ' Model Rxns: ';
+  for i := 0 to self.getNumReactions -1 do
+    Result := Result + self.getReaction(i).printStr;
+  Result := Result + sLineBreak;
+  Result := Result + ' Model Initial Assignments: ';
+  for i := 0 to self.getNumInitialAssignments -1 do
+    Result := Result + self.getInitialAssignment(i).printStr;
+  Result := Result + sLineBreak;
+  Result := Result + ' Model Rules: ';
+  for i := 0 to self.numRules -1 do
+    Result := Result + self.getSBMLRule(i).printStr;
+  Result := Result + sLineBreak;
+  Result := Result + ' Model events: ' + inttostr(self.numEvents);
+  Result := Result + sLineBreak;
+  Result := Result + ' Model Func definitions: ';
+  for i := 0 to self.getNumFuncDefs -1 do
+    Result := Result + self.modelFuncDefList[i].printStr;
+
+  Result := Result + sLineBreak;
+  Result := Result + ' Model Layout: ';
+  if self.modelLayout <> nil then Result := Result + self.getSBMLLayout.printStr
+  else Result := Result + 'NO layout';
+
+
+end;
 
 procedure TModel.setNumReactions (rnxNumb : integer); // remove, use addSBMLReaction
 begin
@@ -155,10 +196,10 @@ begin
   Result := self.strSBMLErrors.Count;
 end;
 
-
 function TModel.getNumReactions () : integer;
 begin
-   result:= numReactions;
+   //result:= numReactions;
+   Result := length(self.sbmlreactions);
 end;
 
 // Notify others that model has been loaded/changed
@@ -512,12 +553,14 @@ procedure TModel.SBML_UpdateEvent();
    Result := self.modelRendering;
  end;
 
- function  TModel.getRenderStyle(newGlyphId: string; newGlyphType: string;
-                          newGlyphRole: string ): TSBMLRenderStyle;
+ //function  TModel.getRenderStyle(newGlyphId: string; newGlyphType: string;
+ //                         newGlyphRole: string ): TSBMLRenderStyle;
+ function  TModel.getRenderStyle(newGlyphId: string; newSpeciesId: string;
+             newGlyphType: string; newGlyphRole: string ): TSBMLRenderStyle;
  var i,j: integer;
  begin
   // See SBML Render Spec: C.2 Style Resolution for details.
-  Result := nil;
+  Result := nil;    // does not work if idList is actual node species name and not speciesGlyph
   for i := 0 to self.modelRendering.getNumberStyles -1 do
     begin
       for j := 0 to self.modelRendering.getStyle(i).getNumbGoIds -1 do
@@ -526,9 +569,19 @@ procedure TModel.SBML_UpdateEvent();
           begin
           Result := self.modelRendering.getStyle(i);
           exit;
+          end
+        else
+          begin
+          if self.modelRendering.getStyle(i).getGoId(j) = newSpeciesId then
+          begin
+          Result := self.modelRendering.getStyle(i);
+          exit;
+          end
           end;
 
         end;
+
+
       if newGlyphRole <> '' then
       begin
         for j := 0 to self.modelRendering.getStyle(j).getNumbRoles -1 do

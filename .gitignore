@@ -11,3 +11,5 @@ SidewinderGroup.groupproj.local
 math/lsoda/Sidewinder.Test.LSODA.dproj.local
 math/lsoda/Sidewinder.Test.LSODA.identcache
 ufMain.vlb
+Sidewinder.Tests.dproj.local
+Sidewinder.Tests.identcache

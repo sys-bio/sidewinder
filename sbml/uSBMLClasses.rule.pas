@@ -46,9 +46,10 @@ type
    function isSetName(): boolean;
    procedure setPiecewise(piecewiseVal: boolean);
    function  containsPiecewise(): boolean;
+   function printStr(): string;
  end;
 
- {SBMLalgebraicrule = class(SBMLrule)
+ {TSBMLalgebraicrule = class(TSBMLrule)
  private
 
  public
@@ -104,10 +105,10 @@ begin
    begin
      self.SBMLvar:= cpyRule.getVariable;
    end;
-   if cpyRule.isParameter then
+   {if cpyRule.isParameter then
    begin
      self.isParam:= cpyRule.isParameter;
-   end;
+   end;}
    self.id:= cpyRule.getId;
    self.name:= cpyRule.getName;
    self.RateR:= cpyRule.isRate;
@@ -118,6 +119,35 @@ begin
    self.isParam:= cpyRule.isParameter;
    self.isSpeciesRef := cpyRule.isSpeciesRef;
    self.piecewiseUsed := cpyRule.containsPiecewise;
+end;
+
+function TSbmlRule.printStr(): string;
+begin
+  Result := '';
+  //Result := ' Rule ID: ' + self.id;
+  if self.isRate then Result := ' Rate Rule ID: ' + self.id
+  else
+    begin
+    if self.isAssignment then Result := ' Assignment Rule ID: ' + self.id;
+    if self.isAlgebraic then Result := ' Algebraic Rule ID: ' + self.id;
+    if self.isScaler then Result := Result + ', Rule is scaler';
+
+    end;
+  if self.isSetName then Result := Result + ', Rule name: ' + self.name
+  else Result := Result + ', No Rule name';
+  if self.isSpeciesConc then Result := Result + ', Rule is for species conc';
+  if self.isSpeciesRef then Result := Result + ', Rule is for species reference';
+  if self.isParam then Result := Result + ', Rule is for parameter';
+  Result := Result + ', Rule variable: ' + self.SBMLvar;
+  Result := Result + ', Rule formula: ' + self.formula;
+  if self.piecewiseUsed then Result := Result + ', Rule uses piecewise. '
+  else Result := Result + ', Rule Does not use piecewise. ';
+
+
+
+
+
+
 end;
 
 function TSBMLRule.isRate(): boolean; //virtual; abstract; // rate rule

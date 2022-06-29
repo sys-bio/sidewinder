@@ -122,6 +122,15 @@ implementation
         const model = doc.getModel();
         const moreReading = new ProcessSBML(model, libsbml);
 
+        newModel = moreReading.getNumbers(newModel);
+        newModel = moreReading.getInitialAssignments(newModel, jsInitAssign);
+        newModel = moreReading.getRules(newModel,jsRule);
+        newModel = moreReading.getSpecies(newModel, jsSpecies );
+        newModel = moreReading.getCompartments(newModel, jsComp);
+        newModel = moreReading.getParameters(newModel, jsParam);
+        newModel = moreReading.getFuncDefs(newModel, jsFuncDef);
+        newModel = moreReading.getReactions(newModel);
+
        if(model.getNumPlugins() >0) {
          if(model.findPlugin('layout') != undefined) {
           // Load layout information for model:
@@ -145,16 +154,6 @@ implementation
 
         }
 
-        newModel = moreReading.getNumbers(newModel);
-        newModel = moreReading.getInitialAssignments(newModel, jsInitAssign);
-        newModel = moreReading.getRules(newModel,jsRule);
-        newModel = moreReading.getSpecies(newModel, jsSpecies );
-        newModel = moreReading.getCompartments(newModel, jsComp);
-        newModel = moreReading.getParameters(newModel, jsParam);
-
-        newModel = moreReading.getFuncDefs(newModel, jsFuncDef);
-
-        newModel = moreReading.getReactions(newModel);
       }
       newModel.SBML_UpdateEvent();  // libsbml loaded and model processed.
      libsbml.destroy(doc);
@@ -178,6 +177,15 @@ implementation
            const model = doc.getModel();
            const moreReading = new ProcessSBML(model, libsbml);
 
+           newModel = moreReading.getNumbers(newModel);
+           newModel = moreReading.getInitialAssignments(newModel, jsInitAssign);
+           newModel = moreReading.getRules(newModel,jsRule);
+           newModel = moreReading.getSpecies(newModel, jsSpecies );
+           newModel = moreReading.getCompartments(newModel, jsComp);
+           newModel = moreReading.getParameters(newModel, jsParam);
+           newModel = moreReading.getFuncDefs(newModel, jsFuncDef);
+           newModel = moreReading.getReactions(newModel);
+
            if(model.getNumPlugins() >0) {
              if(model.findPlugin('layout') != undefined) {
               // Load layout information for model:
@@ -200,12 +208,7 @@ implementation
 
              }
            }
-           newModel = moreReading.getNumbers(newModel);
-           newModel = moreReading.getRules(newModel,jsRule);
-           newModel = moreReading.getSpecies(newModel, jsSpecies );
-           newModel = moreReading.getCompartments(newModel, jsComp);
-           newModel = moreReading.getParameters(newModel, jsParam);
-           newModel = moreReading.getReactions(newModel);
+
          }
          newModel.SBML_UpdateEvent();  // libsbml loaded and model processed.
          libsbml.destroy(doc);

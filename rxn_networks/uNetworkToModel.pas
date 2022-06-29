@@ -60,6 +60,7 @@ begin
   self.setSpecies;
   self.setReactions;
   self.setAssignmentRules;
+  self.setInitialAssignments;
   self.model.setSBMLLayout(self.layout);
   self.model.setSBMLRenderInfo(self.renderInfo);
 

@@ -490,7 +490,6 @@ object mainForm: TmainForm
         Min = 1
         Position = 10
         Role = ''
-        ShowHint = True
         OnChange = trackBarSimSpeedChange
       end
     end
@@ -1087,6 +1086,9 @@ object mainForm: TmainForm
           Top = 84
           Width = 90
           Height = 22
+          Hint = 
+            'Only real numbers. Algebraic expressions are not allowed to be e' +
+            'ntered, only read from existing model.'
           ChildOrder = 7
           ElementFont = efCSS
           Enabled = False
@@ -1098,6 +1100,7 @@ object mainForm: TmainForm
           HeightStyle = ssAuto
           HeightPercent = 100.000000000000000000
           ParentFont = False
+          ShowHint = True
           WidthPercent = 100.000000000000000000
           OnExit = editNodeConcExit
         end
@@ -1378,8 +1381,6 @@ object mainForm: TmainForm
         ChildOrder = 4
         ElementBodyClassName = 'card-body'
         ElementFont = efCSS
-        ExplicitLeft = 255
-        ExplicitWidth = 271
         object pnlSimResultsFile: TWebPanel
           Left = 0
           Top = 687
@@ -1401,7 +1402,6 @@ object mainForm: TmainForm
           Font.Style = []
           ParentFont = False
           ShowCaption = False
-          ExplicitWidth = 216
           object lblFileName: TWebLabel
             Left = 16
             Top = 45
@@ -1497,7 +1497,6 @@ object mainForm: TmainForm
           SelStart = 0
           Visible = False
           WidthPercent = 100.000000000000000000
-          ExplicitWidth = 305
         end
         object WebConsoleLog1: TWebConsoleLog
           Left = 6
@@ -1641,7 +1640,6 @@ object mainForm: TmainForm
       Color = clBtnFace
       OnClick = splitterClick
       OnMoved = splitterMoved
-      ExplicitLeft = 954
     end
     object RNodeEditWPanel: TWebPanel
       Left = 1114
@@ -1860,10 +1858,15 @@ object mainForm: TmainForm
           Top = 70
           Width = 138
           Height = 22
+          Hint = 
+            'Only real numbers. If disabled then Assignment Rule exits for th' +
+            'e parameter. Algebraic expressions are not allowed to be entered' +
+            ', only read from existing model.'
           ChildOrder = 2
           ElementClassName = 'form-control'
           ElementFont = efCSS
           HeightPercent = 100.000000000000000000
+          ShowHint = True
           WidthPercent = 100.000000000000000000
           OnExit = RxnParamEditExit
         end

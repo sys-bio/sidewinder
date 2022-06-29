@@ -973,10 +973,39 @@ end;
 
 procedure TMainForm.RxnParamComboBoxChange(Sender: TObject);  // NOT needed. ??
 var i: integer;
+    paramInitAssign: string;
+    curAssignRule: TSBMLRule;
 begin
  //console.log('TMainForm.RxnParamComboBoxChange');
+ paramInitAssign := '';
+ curAssignRule := nil;
+ self.rxnParamEdit.Enabled := true;
  i := self.RxnParamComboBox.ItemIndex;
- self.rxnParamEdit.text := floattostr(networkController.selectedObjects[0].reaction.state.rateParams[i].getValue);
+ if self.networkController.network.getNumInitalAssignments > 0 then
+   begin
+   if self.networkController.network.getInitialAssignmentWithVarId(networkController.selectedObjects[0].reaction.state.rateParams[i].getId ) <> nil then
+      paramInitAssign := self.networkController.network.getInitialAssignmentWithVarId(networkController.selectedObjects[0].reaction.state.rateParams[i].getId ).getFormula;
+   end;
+ if paramInitAssign = '' then
+   begin  // If param has assignmentRule then do not allow editing.
+   if self.networkController.network.getNumRules > 0 then
+     begin
+     curAssignRule := self.networkController.network.getAssignmentRuleWithVarId(networkController.selectedObjects[0].reaction.state.rateParams[i].getId);
+     if curAssignRule = nil then
+       self.rxnParamEdit.text := floattostr(networkController.selectedObjects[0].reaction.state.rateParams[i].getValue)
+     else
+       begin
+       self.rxnParamEdit.Enabled := false;
+       self.rxnParamEdit.text := curAssignRule.getFormula;
+       end;
+     end
+   else
+     self.rxnParamEdit.text := floattostr(networkController.selectedObjects[0].reaction.state.rateParams[i].getValue);
+
+
+   end
+ else self.rxnParamEdit.text := paramInitAssign;
+ // TODO: What to do if someone removes initial Assignment?
 end;
 
 procedure TMainForm.RxnParamComboBoxClick(Sender: TObject);
@@ -997,7 +1026,7 @@ begin
  // self.rxnParamEdit.text := floattostr(networkController.network.reactions[networkController.selectedEdge].state.rateParams[i].getValue);
 end;
 
-
+  // TODO: CHeck if edited param has an initialAssignment, if it does, then delete it if user put in new value.
 procedure TMainForm.RxnParamEditExit(Sender: TObject);
 var newVal: double;
     paramId: string;
@@ -1009,6 +1038,8 @@ begin
       newVal := strtofloat(self.RxnParamEdit.text);
       reaction.state.rateParams[self.RxnParamComboBox.ItemIndex].setValue(newVal);
       self.networkController.updateParamVal(reaction.state.rateParams[self.RxnParamComboBox.ItemIndex].getId, newVal);
+      if self.network.getNumInitalAssignments > 0 then // Remove initial assignment:
+        self.networkController.network.deleteInitialAssignment(reaction.state.rateParams[self.RxnParamComboBox.ItemIndex].getId);
     end;
   except
     on Exception : EConvertError do
@@ -1044,9 +1075,10 @@ procedure TMainForm.networkPB1MouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
 var
   v: TPointF;
+  selectedNodeConc: string;
 begin
   v := ScreenToWorld(X, Y);
-
+  selectedNodeConc := '';
   networkController.OnMouseDown(Sender, Button, Shift, v.X, v.Y);
   if networkController.selectedObjects.count > 0 then
      begin
@@ -1072,7 +1104,15 @@ begin
     if Assigned(networkController.selectedObjects[0].node.state) then
       begin
       self.editNodeId.Text := networkController.selectedObjects[0].node.state.species;
-      self.editNodeConc.Text := networkCOntroller.selectedObjects[0].node.state.conc.ToString;
+      selectedNodeConc := networkController.selectedObjects[0].node.state.conc.ToString;
+      if networkController.network.getNumInitalAssignments > 0 then
+        if networkController.network.getInitialAssignmentWithVarId(networkController.selectedObjects[0].node.state.id)<> nil then
+          selectedNodeConc := networkController.network.getInitialAssignmentWithVarId(networkController.selectedObjects[0].node.state.id).getFormula;
+      if networkController.network.getNumRules > 0 then
+        if networkController.network.getAssignmentRuleWithVarId(networkController.selectedObjects[0].node.state.id)<> nil then
+          selectedNodeConc := networkController.network.getAssignmentRuleWithVarId(networkController.selectedObjects[0].node.state.id).getFormula;
+
+      self.editNodeConc.Text := selectedNodeConc;
       self.checkBoxBoundarySp.Checked := networkCOntroller.selectedObjects[0].node.state.boundarySp;
       end;
 
@@ -2201,6 +2241,7 @@ end;
 
 procedure TMainForm.updateRxnParamPanel();
 var paramTStr: string;
+   // paramAssignStr: string;
     i: integer;
 begin
   paramTStr:= '';

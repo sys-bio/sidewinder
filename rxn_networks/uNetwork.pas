@@ -218,6 +218,7 @@ type
        procedure   addRule (newRule: TSBMLRule);
        function    getRule (index: integer): TSBMLRule;
        function    getRuleWithVarId (varId: string): TSBMLRule;
+       function    getAssignmentRuleWithVarId (varId: string): TSBMLRule;
        function    getRuleList(): TList<TSBMLRule>;
        function    getNumRules(): integer;
 
@@ -225,6 +226,7 @@ type
        function    getInitialAssignment(index: integer): TSBMLInitialAssignment;
        function    getInitialAssignmentWithVarId (varId: string): TSBMLInitialAssignment;
        function    getInitialAssignmentList(): TList<TSBMLInitialAssignment>;
+       function    deleteInitialAssignment(varId: string): boolean;
        function    getNumInitalAssignments(): integer;
 
        function    findReaction(id: string; var index: integer): boolean;
@@ -1413,10 +1415,12 @@ function TNetwork.getSpeciesRenderStyle(newSpeciesGlyph:TSBMLLayoutSpeciesGlyph;
 var i, j: integer;
     renderStyle: TSBMLRenderStyle;
     glyphId: string;
+    spId: string; // id of actual species represented by node
 begin
   glyphId := newSpeciesGlyph.getId;
+  spId := newSpeciesGlyph.getSpeciesId;
   Result := nil;
-  Result := newModel.getRenderStyle( glyphId, 'SPECIESGLYPH', '' );
+  Result := newModel.getRenderStyle( glyphId, spId, 'SPECIESGLYPH', '' );
 
 end;
 
@@ -1834,6 +1838,20 @@ function TNetwork.getRuleWithVarId (varId: string): TSBMLRule;
      end;
  end;
 
+ function TNetwork.getAssignmentRuleWithVarId (varId: string): TSBMLRule;
+ var i: integer;
+ begin
+   Result := nil;
+   for i := 0 to self.listOfSBMLRules.Count -1 do
+     begin
+     if self.listOfSBMLRules[i].isAssignment then
+       begin
+       if self.listOfSBMLRules[i].getVariable = varId then
+         Result := self.listOfSBMLRules[i];
+       end;
+     end;
+ end;
+
  function TNetwork.getRuleList(): TList<TSBMLRule>;
  begin
    Result := self.listOfSBMLRules;
@@ -1869,6 +1887,23 @@ function TNetwork.getRuleWithVarId (varId: string): TSBMLRule;
      if self.listOfSBMLInitAssignments[i].getSymbol = varId then
        Result := self.listOfSBMLInitAssignments[i];
      end;
+ end;
+
+ function   TNetwork.deleteInitialAssignment(varId: string): boolean;
+ var i, foundIndex: integer;
+ begin
+   foundIndex := -1;
+   for i := 0 to self.listOfSBMLInitAssignments.Count -1 do
+     begin
+     if self.listOfSBMLInitAssignments[i].getSymbol = varId then
+       foundIndex := i;
+     end;
+   if foundIndex > -1 then
+     begin
+     self.listOfSBMLInitAssignments.Delete(foundIndex);
+     Result := true;
+     end
+   else Result := false;
  end;
 
  function  TNetwork.getInitialAssignmentList(): TList<TSBMLInitialAssignment>;

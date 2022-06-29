@@ -37,6 +37,7 @@ type
    function isDepthSet(): boolean;
    function getId(): string;
    procedure setId(newId: string);
+   function printStr(): string;
 
  end;
  TSBMLLayoutPoint = class
@@ -61,6 +62,7 @@ type
    procedure setZ(newZ: double);
    function getId(): string;
    procedure setId(newId: string);
+   function printStr(): string;
 
  end;
 
@@ -84,6 +86,7 @@ type
    procedure setId( newId: string);
    function isSetId(): boolean;
    function getId(): string;
+   function printStr(): string;
    end;
 
  TSBMLLayoutLineSegment = class
@@ -101,6 +104,7 @@ type
    procedure setEndPt(newEnd: TSBMLLayoutPoint);
    function getId(): string;
    procedure setId( newId: string);
+   function printStr: string;
 
  end;
 
@@ -130,6 +134,7 @@ type
    procedure setEnd(x: double; y: double) overload;
    function getId(): string;
    procedure setId(newId: string);
+   function printStr: string;
  end;
 
  TSBMLLayoutCurve = class
@@ -153,6 +158,7 @@ type
  //  function getId(): string;
    procedure setCurveId(newId: string);
    function getCurveId(): string;
+   function printStr: string;
 
  end;
 
@@ -170,6 +176,7 @@ type
    procedure unsetBoundingBox();
    function getBoundingBox(): TSBMLLayoutBoundingBox;
    function boundingBoxIsSet(): boolean;
+   function printStr: string;
  end;
 
  // 3.11 The GeneralGlyph class: Used to facilitate the representation of elements
@@ -184,7 +191,7 @@ type
    constructor create(cpy: TSBMLLayoutGeneralGlyph) overload;
    procedure setNotes(newN: string);
    function getNotes(): string;
-
+   function printStr: string;
  end;
 
  TSBMLLayoutCompartmentGlyph = class(TSBMLLayoutGraphicalObject)
@@ -198,6 +205,7 @@ type
    function getOrder(): double;
    procedure setCompId(newId: string);
    function getCompId(): string;
+   function printStr: string;
  end;
 
  TSBMLLayoutSpeciesGlyph = class(TSBMLLayoutGraphicalObject)
@@ -208,7 +216,7 @@ type
    constructor create(cpy: TSBMLLayoutSpeciesGlyph) overload;
    procedure setSpeciesId( newSpId: string);
    function getSpeciesId(): string;
-
+   function printStr: string;
  end;
 
  TSBMLLayoutSpeciesReferenceGlyph = class(TSBMLLayoutGraphicalObject)
@@ -236,7 +244,7 @@ type
    procedure setCurve(newCurve: TSBMLLayoutCurve);
    function  getCurve(): TSBMLLayoutCurve;
    function  isCurveSet(): boolean;
-
+   function  printStr: string;
  end;
 
  TSBMLLayoutReactionGlyph = class(TSBMLLayoutGraphicalObject)
@@ -259,6 +267,7 @@ type
    procedure setCurve(newCurve: TSBMLLayoutCurve);
    function getCurve(): TSBMLLayoutCurve;
    function isCurveSet(): boolean;
+   function printStr: string;
  end;
 
  // spec 3.12
@@ -277,6 +286,7 @@ type
    function getOriginOfText: string;
    procedure setGraphicalObjId(newId: string);
    function getGraphicalObjId(): string;
+   function printStr: string;
 
  end;
 
@@ -325,6 +335,7 @@ type
    function getNumTextGlyphs(): integer;
    function getTextGlyph(index: integer): TSBMLLayoutTextGlyph;
    function deleteTextGlyph(index: integer): boolean;
+   function printStr: string;
 
  end;
 
@@ -371,6 +382,13 @@ implementation
     self.height := h;
     self.depth := d;
     self.depthSet := true;
+  end;
+
+  function TSBMLLayoutDims.printStr: string;
+  begin
+    Result := ' Layout Dims ID: ' + self.id;
+    Result := Result + ' Layout w, h: ' + floattostr(self.width) + ', ' + floattostr(self.height);
+    if self.depthSet then Result := Result + ' Layout depth: ' + floattostr(self.depth);
   end;
 
   procedure TSBMLLayoutDims.setId(newId: string);
@@ -450,6 +468,15 @@ implementation
 
   end;
 
+  function TSBMLLayoutPoint.printStr(): string;
+  begin
+    Result := '';
+    Result := ' Layout Pt ID: ' + self.id;
+    Result := Result + ' Layout Pt XY: ' + floattostr(self.xPt) + ', ' +floattostr(self.yPt);
+    if self.isZSet then Result := Result + ', Layout Pt Z: ' + floattostr(self.zPt);
+
+  end;
+
   procedure TSBMLLayoutPoint.setId(newId: string);
   begin
     self.id := newId;
@@ -516,7 +543,13 @@ implementation
       self.dims := TSBMLLayoutDims.create(cpy.getDims);
     end
     else notifyUser('TSBMLLayoutBoundingBox: no bounding box to copy');
+  end;
 
+  function TSBMLLayoutBoundingBox.printStr: string;
+  begin
+    Result := '';
+    Result := ' BoundingBox ID: ' + self.id + ', BB pt: ' + self.point.printStr;
+    Result := Result + self.dims.printStr;
   end;
 
   procedure TSBMLLayoutBoundingBox.clear();
@@ -594,6 +627,12 @@ implementation
     self.endPt := TSBMLLayoutPoint.create(cpy.getEndPt);
   end;
 
+  function TSBMLLayoutLineSegment.printStr: string;
+  begin
+    Result := ', Layout LineSeg ID: '+ self.id +', Start: ' + self.getStartPt.printStr +
+     ', End: ' + self.getEndPt.printStr;
+  end;
+
   function TSBMLLayoutLineSegment.getStartPt(): TSBMLLayoutPoint;
   begin
     Result := self.startPt;
@@ -650,6 +689,14 @@ implementation
     self.endPt := TSBMLLayoutPoint.create(cpy.getEnd);
     self.basePt1 := TSBMLLayoutPoint.create(cpy.getBasePoint1);
     self.basePt2 := TSBMLLayoutPoint.create(cpy.getBasePoint2);
+  end;
+
+  function TSBMLLayoutCubicBezier.printStr: string;
+  begin
+    Result := ', Layout Bezier ID: ' + self.getId +', Bezier Start: ' + self.getStart.printStr +
+     ', Bezier End: ' + self.getEnd.printStr;
+     Result := Result + 'Bezier BPt 1: ' + self.getBasePoint1.printStr +
+     ', Bezier BPt 2: ' + self.getBasePoint2.printStr;
   end;
 
   function TSBMLLayoutCubicBezier.getBasePoint1(): TSBMLLayoutPoint;
@@ -732,8 +779,18 @@ implementation
     end;
   end;
 
+  function TSBMLLayoutCurve.printStr: string;
+  var i: integer;
+  begin
+    Result := ', Layout Curve ID: ' + self.getCurveId;
+    for i := 0 to self.lineSegmentList.Count -1 do
+      Result := Result + 'Layout Curve lineSeg:' + self.getLineSegment(i).printStr;
+    for i := 0 to self.cubicBezList.Count -1 do
+      Result := Result + 'Layout Curve Bezier:' + self.getCubicBezier(i).printStr;
+  end;
+
   procedure TSBMLLayoutCurve.clear();
-var
+  var
   i: Integer;
   begin
     self.curveId := '';
@@ -822,6 +879,13 @@ var
     else self.boundingBoxSet := false;
   end;
 
+  function TSBMLLayoutGraphicalObject.printStr: string;
+  begin
+    Result := ', Layout Graph Object ID:' + self.getId;
+    if self.boundingBoxSet then Result := Result + self.getBoundingBox.printStr
+    else Result := Result + ' No bounding box';
+  end;
+
   procedure TSBMLLayoutGraphicalObject.setId(newId: string);
   begin
     self.id := newId;
@@ -862,6 +926,13 @@ var
     self.boundingBox := TSBMLLayoutBoundingBox.create(cpy.getBoundingBox);
     self.notes := cpy.getNotes;
   end;
+
+  function TSBMLLayoutGeneralGlyph.printStr: string;
+  begin
+    Result := ', Layout General Glyph ID: ' + inherited printstr;
+    Result := Result + ' General glyph Notes: ' + self.getNotes;
+  end;
+
   procedure TSBMLLayoutGeneralGlyph.setNotes(newN: string);
   begin
     self.notes := newN;
@@ -882,6 +953,13 @@ var
     self.boundingBox := TSBMLLayoutBoundingBox.create(cpy.getBoundingBox);
     self.order := cpy.getOrder;
     self.compId := cpy.getCompId;
+  end;
+
+  function TSBMLLayoutCompartmentGlyph.printStr: string;
+  begin
+    Result := ', Layout Comp Glyph: ' + inherited printstr;
+    Result := Result + ', Comp Glyph compartment Id: ' + self.getCompId;
+    Result := Result + ', Comp Glyph order: ' + floattostr(self.getOrder);
   end;
 
   procedure TSBMLLayoutCompartmentGlyph.setOrder(newOrder: double);
@@ -915,6 +993,12 @@ var
     self.boundingBoxSet := cpy.boundingBoxIsSet;
     self.speciesId := cpy.getSpeciesId;
 
+  end;
+
+  function TSBMLLayoutSpeciesGlyph.printStr: string;
+  begin
+    Result := ' Layout species glyph: ' + inherited printStr;
+    Result := Result + ', species Glyph: species id: ' + self.getSpeciesId;
   end;
 
   procedure TSBMLLayoutSpeciesGlyph.setSpeciesId( newSpId: string);
@@ -959,6 +1043,16 @@ var
       self.curveFlag := true;
     end
     else self.curveFlag := false;
+  end;
+
+  function TSBMLLayoutSpeciesReferenceGlyph.printStr: string;
+  begin
+    Result := ', Layout Species Ref Glyph: ' + inherited printStr;
+    Result := Result + ', Sp Glyph ID: ' + self.getSpeciesGlyphId;
+    Result := Result + ', Sp Ref ID: ' + self.getSpeciesRefId;
+    Result := Result + ', Role: ' + self.getStringRole;
+    if self.isCurveSet then Result := Result + ' Sp Ref Glyph Curve: ' + self.getCurve.printStr
+    else Result := Result + ' Sp Ref Glyph Curve: None';
   end;
 
   procedure TSBMLLayoutSpeciesReferenceGlyph.clear;
@@ -1065,8 +1159,21 @@ var
       self.boundingBox := TSBMLLayoutBoundingBox.create(cpy.getBoundingBox);
   end;
 
+  function TSBMLLayoutReactionGlyph.printStr: string;
+  var i: integer;
+  begin
+    Result := ', Layout Reaction Glyph: ' + inherited printStr;
+    Result := Result + ', Reaction Glyph Rxn Id: ' + self.getReactionId;
+    if self.isCurveSet then
+      Result := Result + ', Reaction Glyph Curve: ' + self.getCurve.printStr
+    else Result := Result + ', Reaction Glyph No Curve ';
+    Result := Result + ', Reaction Glyph SpRefGlyphs: ';
+    for i := 0 to self.getNumSpeciesRefGlyphs -1 do
+      Result := Result + self.getSpeciesRefGlyph(i).printStr + sLineBreak;
+  end;
+
   procedure TSBMLLayoutReactionGlyph.clear();
-var
+  var
   i: Integer;
   begin
     self.rxnId := '';
@@ -1208,6 +1315,14 @@ end;
     self.boundingBox := TSBMLLayoutBoundingBox.create(cpy.getBoundingBox);
   end;
 
+  function TSBMLLayoutTextGlyph.printStr: string;
+  begin
+    Result := ', Layout TextGlyph: ' + inherited printStr;
+    Result := Result + ', TextGlyph text: ' + self.getText;
+    Result := Result + ', TextGlyph text origin: ' + self.getOriginOfText;
+    Result := Result + ', TextGlyph GraphObj ID: ' + self.getGraphicalObjId;
+  end;
+
   procedure TSBMLLayoutTextGlyph.clear();
   begin
     self.text := '';
@@ -1291,6 +1406,33 @@ end;
     self.dims := TSBMLLayoutDims.create(cpy.getDims);
 
   end;
+
+  function TSBMLLayout.printStr: string;
+  var i: integer;
+  begin
+    Result := ' Layout ID: ' + self.getId + ', Layout dims: ' + self.getDims.printStr + sLineBreak;
+    Result := Result + ' Additional Graphical Glyphs: ';
+    for i := 0 to self.getNumAddionalGraphObjs -1 do
+      Result := Result + self.getAdditionalGraphObj(i).printStr;
+    Result := Result + sLineBreak + ' Additional General Glyphs: ';
+    for i := 0 to self.getNumGenGlyphs -1 do
+      Result := Result + self.getGenGlyph(i).printStr;
+    Result := Result + sLineBreak + ' Compartment Glyphs: ';
+    for i := 0 to self.getNumCompGlyphs -1 do
+      Result := Result + self.getCompGlyph(i).printStr;
+    Result := Result + sLineBreak + ' Species Glyphs: ';
+    for i := 0 to self.getNumSpGlyphs -1 do
+      Result := Result + self.getSpGlyph(i).printStr;
+    Result := Result + sLineBreak + ' Reaction and Sp Ref Glyphs: ';
+    for i := 0 to self.getNumRxnGlyphs -1 do
+      Result := Result + self.getRxnGlyph(i).printStr;
+    Result := Result + sLineBreak + ' Text Glyphs: ';
+    for i := 0 to self.getNumTextGlyphs -1 do
+      Result := Result + self.getTextGlyph(i).printStr;
+    Result := Result + sLineBreak;
+
+  end;
+
 
   procedure TSBMLLayout.setId(newId: string);
   begin
