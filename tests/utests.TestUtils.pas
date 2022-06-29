@@ -6,6 +6,12 @@ interface
  WEBLib.Forms, WEBLib.Dialogs, Vcl.Controls, Vcl.StdCtrls, WEBLib.StdCtrls,
  System.Generics.Collections;
 
+ {type
+ TStringTestCase = record  // Used for tests that are represented by a string.
+      testName : string;
+      strSerializedTest : string;
+  end;            }
+
  function compareStrResults(testResult: string; refResult: string): TList<string>;
 
 implementation

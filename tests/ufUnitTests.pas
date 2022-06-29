@@ -1,5 +1,17 @@
 unit ufUnitTests;
 
+{ Test harness. To add/modify tests, look for instructions in the following groups:
+  1. ../math/lsoda/LSODA.test.pas or ../lsoda/uTestLSODA_JS.pas
+  2. ../sbml/uTestSBMLReadWrite.pas
+  3. uTestSBMLGenerateEqs.pas
+  4. or create a new test group.
+  5. If adding a new test group:
+    a. add string to 'TESTGROUPS'
+    b. Add new method to TfUnitTests, such as 'runNewGroupTests()'
+    c. Add call to new method in TfUnitTests.testsDone() .
+    d. Add call to new method in TfUnitTests.btnRunSpecifiedTestsClick().
+}
+
 interface
 
 uses
@@ -8,7 +20,7 @@ uses
   System.Generics.Collections, LSODA.test, uTestLSODA_JS, uTestCase, uTestSBMLReadWrite,
   uTestSBMLReadGenerateEqs, uSidewinderTypes;
 
-const TESTGROUPS: array [0..2] of string = ('Simulation tests', 'Reading/Writing SBML models',
+const TESTGROUPS: array [0..2] of string = ('Simulation tests', 'Reading/Writing SBML model tests',
       'Read SBML Model and generate equations list for Sim');
 
 type

@@ -7,7 +7,7 @@ uses
   System.Generics.Collections;
 
 type
- TTestCase = class
+ TTestCaseResult = class
    private
    intTestId: integer;
    testResult: boolean;
@@ -16,7 +16,7 @@ type
    public
    sTestInfoList: TList<string>; // contains any error info
    constructor create(newTestId: integer; newTestName: string) overload;
-   constructor create(cpTestCase: TTestCase) overload;
+   constructor create(cpTestCase: TTestCaseResult) overload;
    procedure testPass;
    procedure testFail;
    function getBooleanTestResult(): boolean;
@@ -29,7 +29,7 @@ type
 
 implementation
 
-   constructor  TTestCase.create(newTestId: integer; newTestName: string) overload;
+   constructor  TTestCaseResult.create(newTestId: integer; newTestName: string) overload;
    begin
      self.intTestId := newTestId;
      self.strTestName := newTestName;
@@ -37,7 +37,7 @@ implementation
      self.sTestInfoList := TList<string>.create;
    end;
 
-   constructor TTestCase.create(cpTestCase: TTestCase) overload;
+   constructor TTestCaseResult.create(cpTestCase: TTestCaseResult) overload;
    var i: integer;
    begin
      self.intTestId := cpTestCase.getTestId;
@@ -48,32 +48,32 @@ implementation
        self.sTestInfoList.Add(cpTestCase.sTestInfoList[i]);
    end;
 
-   procedure  TTestCase.testPass;
+   procedure  TTestCaseResult.testPass;
    begin
      self.testResult := true;
    end;
 
-   procedure  TTestCase.testFail;
+   procedure  TTestCaseResult.testFail;
    begin
      self.testResult := false;
    end;
 
-   function TTestCase.getBooleanTestResult: boolean;
+   function TTestCaseResult.getBooleanTestResult: boolean;
    begin
      Result := self.testResult;
    end;
 
-   function TTestCase.getTestId(): integer;
+   function TTestCaseResult.getTestId(): integer;
    begin
      Result := self.intTestId;
    end;
-   procedure TTestCase.setTestId( newId: integer);
+   procedure TTestCaseResult.setTestId( newId: integer);
    begin
      if newId >0 then self.intTestId := newId;
 
    end;
 
-   function TTestCase.getTestName(): string;
+   function TTestCaseResult.getTestName(): string;
    begin
      Result := self.strTestName;
    end;
