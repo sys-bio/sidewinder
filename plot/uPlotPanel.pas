@@ -160,7 +160,6 @@ implementation
       if self.plotGraph <> nil then
         if self.plotGraph.bitmap <> nil then
           self.plotPB.canvas.draw(0, 0, self.plotGraph.bitmap);
-
     end;
   end;
 
@@ -171,6 +170,7 @@ implementation
     if plot_i = self.plotLegendPB.tag then
     begin
     //  console.log('TPlotPanel.plotLegendPBOnPaint, tag: ', plot_i);
+    //  console.log('Obj calling onpaint: ', sender.ClassName );
       self.plotLegendPB.canvas.Draw(0, 0, self.plotLegendBMap);
     end;
   end;
