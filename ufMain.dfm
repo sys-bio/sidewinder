@@ -1086,6 +1086,9 @@ object mainForm: TmainForm
           Top = 84
           Width = 90
           Height = 22
+          Hint = 
+            'Only real numbers. Algebraic expressions are not allowed to be e' +
+            'ntered, only read from existing model.'
           ChildOrder = 7
           ElementFont = efCSS
           Enabled = False
@@ -1097,6 +1100,7 @@ object mainForm: TmainForm
           HeightStyle = ssAuto
           HeightPercent = 100.000000000000000000
           ParentFont = False
+          ShowHint = True
           WidthPercent = 100.000000000000000000
           OnExit = editNodeConcExit
         end

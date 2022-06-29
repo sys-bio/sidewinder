@@ -981,14 +981,26 @@ begin
  curAssignRule := nil;
  self.rxnParamEdit.Enabled := true;
  i := self.RxnParamComboBox.ItemIndex;
- if self.network.getInitialAssignmentWithVarId(networkController.selectedObjects[0].reaction.state.rateParams[i].getId ) <> nil then
-    paramInitAssign := self.network.getInitialAssignmentWithVarId(networkController.selectedObjects[0].reaction.state.rateParams[i].getId ).getFormula;
+ if self.networkController.network.getNumInitalAssignments > 0 then
+   begin
+   if self.networkController.network.getInitialAssignmentWithVarId(networkController.selectedObjects[0].reaction.state.rateParams[i].getId ) <> nil then
+      paramInitAssign := self.networkController.network.getInitialAssignmentWithVarId(networkController.selectedObjects[0].reaction.state.rateParams[i].getId ).getFormula;
+   end;
  if paramInitAssign = '' then
    begin  // If param has assignmentRule then do not allow editing.
-   curAssignRule := self.networkController.network.getAssignmentRuleWithVarId(networkController.selectedObjects[0].reaction.state.rateParams[i].getId);
-   if curAssignRule = nil then
-     self.rxnParamEdit.text := floattostr(networkController.selectedObjects[0].reaction.state.rateParams[i].getValue)
-   else self.rxnParamEdit.Enabled := false;
+   if self.networkController.network.getNumRules > 0 then
+     begin
+     curAssignRule := self.networkController.network.getAssignmentRuleWithVarId(networkController.selectedObjects[0].reaction.state.rateParams[i].getId);
+     if curAssignRule = nil then
+       self.rxnParamEdit.text := floattostr(networkController.selectedObjects[0].reaction.state.rateParams[i].getValue)
+     else
+       begin
+       self.rxnParamEdit.Enabled := false;
+       self.rxnParamEdit.text := curAssignRule.getFormula;
+       end;
+     end
+   else
+     self.rxnParamEdit.text := floattostr(networkController.selectedObjects[0].reaction.state.rateParams[i].getValue);
 
 
    end
@@ -1063,9 +1075,10 @@ procedure TMainForm.networkPB1MouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
 var
   v: TPointF;
+  selectedNodeConc: string;
 begin
   v := ScreenToWorld(X, Y);
-
+  selectedNodeConc := '';
   networkController.OnMouseDown(Sender, Button, Shift, v.X, v.Y);
   if networkController.selectedObjects.count > 0 then
      begin
@@ -1091,7 +1104,15 @@ begin
     if Assigned(networkController.selectedObjects[0].node.state) then
       begin
       self.editNodeId.Text := networkController.selectedObjects[0].node.state.species;
-      self.editNodeConc.Text := networkCOntroller.selectedObjects[0].node.state.conc.ToString;
+      selectedNodeConc := networkController.selectedObjects[0].node.state.conc.ToString;
+      if networkController.network.getNumInitalAssignments > 0 then
+        if networkController.network.getInitialAssignmentWithVarId(networkController.selectedObjects[0].node.state.id)<> nil then
+          selectedNodeConc := networkController.network.getInitialAssignmentWithVarId(networkController.selectedObjects[0].node.state.id).getFormula;
+      if networkController.network.getNumRules > 0 then
+        if networkController.network.getAssignmentRuleWithVarId(networkController.selectedObjects[0].node.state.id)<> nil then
+          selectedNodeConc := networkController.network.getAssignmentRuleWithVarId(networkController.selectedObjects[0].node.state.id).getFormula;
+
+      self.editNodeConc.Text := selectedNodeConc;
       self.checkBoxBoundarySp.Checked := networkCOntroller.selectedObjects[0].node.state.boundarySp;
       end;
 
