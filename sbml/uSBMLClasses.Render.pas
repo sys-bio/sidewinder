@@ -1000,6 +1000,12 @@ implementation
     end;
   end;
 
+  function TSBMLRenderPrimitive1D.printStr: string;
+  begin
+    Result := ' Primative 1D id: ' + self.id + ', stroke: ' + self.stroke +
+              ', stroke width: ' + floattostr(self.strokeWidth);
+  end;
+
   procedure TSBMLRenderPrimitive1D.setId( newId: string );
   begin
     self.id := newId;
@@ -1058,9 +1064,11 @@ implementation
   end;
 
   function TSBMLRenderPolygon.printStr: string;
+  var i: integer;
   begin
-    Result := ' Render Polygon id: ' + self.id + ', stroke: ' + self.stroke;
-    Result := Result + ', stroke Width: ' + floattostr(self.strokeWidth) + ', fill: ' + self.fill;
+    Result := ' Render Polygon: ' + inherited printStr + ', fill: ' + self.fill;
+    for i := 0 to self.renderPtList.Count -1 do
+      Result := Result + self.renderPtList[i].printStr;
 
   end;
 

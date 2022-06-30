@@ -143,7 +143,7 @@ getRules(tModela, tRule) {
         tFuncDef.clear();
         const newFuncDef = this.model.getFunctionDefinition(i);
         if( newFuncDef.isSetIdAttribute()) {
-          console.log('func Def: ', newFuncDef.getId());
+        //  console.log('func Def: ', newFuncDef.getId());
           tFuncDef.setId(newFuncDef.getId());
         }
         if( newFuncDef.isSetName() ) {
@@ -151,12 +151,14 @@ getRules(tModela, tRule) {
         }
         if( newFuncDef.isSetBody() ) {
           const newBody = newFuncDef.getBody();
-          const strBody = new this.libSBML.SBMLFormulaParser().formulaToL3String(newBody);
+       //   const strBody = new this.libSBML.SBMLFormulaParser().formulaToL3String(newBody);  // exponent is represented as x^2
+          const strBody = new this.libSBML.SBMLFormulaParser().formulaToString(newBody); // exponent is represented as pow(x,2)
           tFuncDef.setFuncFormula(strBody.trim());
         }
         const newMath = newFuncDef.getMath();
-        console.log(' func Math: ', newMath.getType() );
+        //console.log(' func Math: ', newMath.getType() );
         const strMath = new this.libSBML.SBMLFormulaParser().formulaToL3String(newMath);
+      //  console.log('** Func def Math: ', strMath.trim());
         var fullFuncLabel = tFuncDef.getId() + '('; // func name with comma sep vars in parenthesis
         let varArr = strMath.split(',');
         const numVars = varArr.length -1; // last element is formula
@@ -173,7 +175,7 @@ getRules(tModela, tRule) {
         fullFuncLabel = fullFuncLabel + ')';
         tFuncDef.setFullFuncLabel( fullFuncLabel );
         tModela.addFuncDef( tFuncDef );
-        console.log(' Func eq: ', strMath);
+       // console.log(' Func eq: ', strMath);
       }
     }
     //else { console.log('No SBML Func Defs!');}
@@ -271,7 +273,7 @@ getRules(tModela, tRule) {
   
     for(i=0; i< this.numLayouts; i++) {
    // for(i=0; i< 1; i++) { // cap at one for now, numLayouts reports 2 when there is one?
-      console.log(' Getting next layout #: ', i);
+    //  console.log(' Getting next layout #: ', i);
       const aLayout = this.newLayoutPlug.getLayout(i);
       const rPlugin = this.libSBML.castObject(aLayout.getPlugin("render"), this.libSBML.RenderLayoutPlugin);
 

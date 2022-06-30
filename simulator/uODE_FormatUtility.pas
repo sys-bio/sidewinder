@@ -255,10 +255,10 @@ begin
   parList:= ['v1','Vm3','m', 'n', 'Kr','Ka','p'];
   for i := 0 to Length(testEq)-1 do
     begin
-    console.log('TEST - Init Eq: ', testEq[i]);
+    //console.log('TEST - Init Eq: ', testEq[i]);
     finalEq:= replaceStrNames(spList, testEq[i],'s');
     finalEq:= replaceStrNames(parList, finalEq,'p');
-    console.log('TEST -> Final Eq: ', finalEq);
+    //console.log('TEST -> Final Eq: ', finalEq);
     end;
 end;
 

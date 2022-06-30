@@ -1463,7 +1463,7 @@ procedure TNetwork.autoBuildNetworkFromSBML(model: TModel);
     for j := 0 to model.getNumReactions - 1 do
         begin
           reactionState.loadFromSBML (nil, model.getReaction(j), model.getSBMLparameterAr,
-                             nil, nil, model.getSBMLcompartmentsArr(), nil);
+                             model.getFuncDefList, nil, model.getSBMLcompartmentsArr(), nil);
 
           reaction := addReaction (reactionState);
           reaction.state.arcCenter.x := 20 + j*2; // default, could be zero as well?
