@@ -31,6 +31,7 @@ interface
     procedure setValueRGBAInts( red, green, blue, alpha: integer );
     function  containsValue( sCmpValue: string ): boolean;
     procedure clear();
+    function printStr(): string;
 
  end;
 
@@ -50,6 +51,7 @@ interface
      procedure setStrokeWidth( newW: double );
      function getStrokeWidth(): double;
      function isStrokeWidthSet(): boolean;
+     function printStr(): string;
 
  end;
 
@@ -73,6 +75,7 @@ interface
      function getY(): double;
      procedure setRelCoordinate(newVal: boolean);
      function  isRelCoordinate(): boolean;
+     function printStr(): string;
  end;
  {TODO:
  TSBMLRenderListOfElements = class
@@ -120,6 +123,7 @@ interface
      function  getPt( index: integer ): TSBMLRenderPoint;
      function  getNumbPts(): integer;
      procedure clear();
+     function printStr(): string;
  end;
 
  TSBMLRenderRectangle = class( TSBMLRenderPrimitive1D )
@@ -354,6 +358,11 @@ implementation
      self.value := '#' + newColorStr;
   end;
 
+  function TSBMLRenderColorDefinition.printStr(): string;
+  begin
+    Result := ' Color id: ' +self.id + ', value: ' + self.value;
+  end;
+
   procedure TSBMLRenderColorDefinition.setId( sNewId: string);
   begin
     self.id := sNewId;
@@ -412,6 +421,13 @@ implementation
     self.id := '';
     self.x := newX;
     self.y := newY;
+  end;
+
+  function TSBMLRenderPoint.printStr(): string;
+  begin
+    Result := ' Render pt ID: ' + self.id + ', x,y: ' + floattostr(self.x) + ', '+ floattostr(self.y);
+    if self.relCoordinate then Result := Result + ', Rel Coord,'
+    else Result := Result + ', Abs Coord,';
   end;
 
   procedure TSBMLRenderPoint.setRelCoordinate(newVal: boolean);
@@ -1039,6 +1055,13 @@ implementation
         end;
     end
     else console.log( 'cpy is nil: TSBMLRenderPolygon.create' );
+  end;
+
+  function TSBMLRenderPolygon.printStr: string;
+  begin
+    Result := ' Render Polygon id: ' + self.id + ', stroke: ' + self.stroke;
+    Result := Result + ', stroke Width: ' + floattostr(self.strokeWidth) + ', fill: ' + self.fill;
+
   end;
 
   procedure TSBMLRenderPolygon.clear();
