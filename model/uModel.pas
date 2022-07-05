@@ -74,6 +74,7 @@ type
    procedure addFuncDef( newFuncDef: TSBMLFuncDefinition );
    function  getFuncDef( index: integer ): TSBMLFuncDefinition;
    function  getFuncDefList(): TList<TSBMLFuncDefinition>;
+   function  convertFuncDefToKineticLaw(sKineticLaw: string): string;
    function  getSpeciesNumb(): integer;
    procedure addSBMLspecies(newSpecies: TSBMLSpecies);
    function  getSBMLspecies(i:integer): TSBMLSpecies; overload;
@@ -318,6 +319,35 @@ procedure TModel.SBML_UpdateEvent();
  begin
    Result:= self.modelFuncDefList;
  end;
+
+
+ // Convert any SBML func defs that are used for reaction kinetic laws:
+ // Used to generate list of ODE equations to integrate.
+function TModel.convertFuncDefToKineticLaw(sKineticLaw: string): string;
+var i: integer;
+   strNewKLaw: string;
+   formula: string;
+begin
+  strNewKLaw := '';
+  strNewKLaw := sKineticLaw;
+ // console.log(' Initial NewFormula:', strNewKLaw);
+  if self.modelFuncDefList <> nil then
+    begin
+    for i := 0 to self.modelFuncDefList.count -1 do
+      begin
+      formula := '';
+      if strNewKLaw.Contains(self.modelFuncDefList[i].getId) then
+        begin
+        formula := '(' + self.modelFuncDefList[i].getFuncFormula + ')';
+        strNewKLaw := strNewKLaw.Replace(self.modelFuncDefList[i].getFullFuncLabel, formula);
+        end;
+
+      end;
+    end;
+  //console.log(' Final NewFormula:', strNewKLaw);
+  Result := strNewKLaw;
+end;
+
 
  function TModel.getSpeciesNumb(): integer;
  begin

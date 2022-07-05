@@ -450,7 +450,7 @@ begin
     '</listOfReactions>' + sLineBreak +
   '</model>' + sLineBreak +
   '</sbml>';
-    2:
+    2:    // COPASI SBML model with function def in rate law and assignment rule
     Result := '<?xml version="1.0" encoding="UTF-8"?>' + sLineBreak +
 '<!-- Created by COPASI version 4.36 (Build 260) on 2022-06-30 08:56 with libSBML version 5.19.4. -->' + sLineBreak +
 '<sbml xmlns="http://www.sbml.org/sbml/level3/version1/core" xmlns:layout="http://www.sbml.org/sbml/level3/version1/layout/version1" xmlns:render="http://www.sbml.org/sbml/level3/version1/render/version1" level="3" version="1" layout:required="false" render:required="false">' + sLineBreak +

@@ -97,6 +97,7 @@ begin
          begin
          lhsSymbols := buildODE_LHS(rxns[j]);  // check if existing LHS, then just // add eq to it.
          curODE := rxns[j].getKineticLaw().getFormula();
+         curODE := model.convertFuncDefToKineticLaw(curODE); // Get any Func Def that kin law uses, and substiute
          end
       else odeStrs[j] := '';
 

@@ -131,14 +131,9 @@ type
       function  setBezierHandles(): boolean;
       procedure saveAsJSON (reactionObject : TJSONObject);
       procedure loadFromJSON (obj : TJSONObject);
-      procedure loadFromSBML (glyphRxn : TSBMLLayoutReactionGlyph; modelRxn: SBMLReaction;
-         paramAr: array of TSBMLparameter; funcDefList: TList<TSBMLFuncDefinition>;
-         spGlyphList: TList<TSBMLLayoutSpeciesGlyph>; compAr: array of TSBMLcompartment;
-         modelRender: TSBMLRenderInformation);
+      procedure loadFromSBML (glyphRxn : TSBMLLayoutReactionGlyph; newModelRxn: SBMLReaction;
+                                       newModel: TModel );
 
-      // Convert any SBML func defs that are used for reaction kinetic laws:
-      function convertFuncDefsToKineticLaws(funcDefList: TList<TSBMLFuncDefinition>;
-                strKinLaw: string ): string; // Returns updated kinetic law
       function getMassCenter(): TPointF; // Calc mass center for reaction, where each node has mass of 1.
       function clone : TReactionState;
   end;
@@ -609,10 +604,8 @@ begin
 end;
 
 
-procedure TReactionState.loadFromSBML (glyphRxn : TSBMLLayoutReactionGlyph; modelRxn: SBMLReaction;
-         paramAr: array of TSBMLparameter; funcDefList: TList<TSBMLFuncDefinition>;
-         spGlyphList: TList<TSBMLLayoutSpeciesGlyph>; compAr: array of TSBMLcompartment;
-         modelRender: TSBMLRenderInformation);
+procedure TReactionState.loadFromSBML (glyphRxn : TSBMLLayoutReactionGlyph; newModelRxn: SBMLReaction;
+                                       newModel: TModel );
 var  newParam : TSBMLparameter;
      speciesName, paramName : string;
      updatedKineticLaw: string; // kinetic law with funcDef id replaced with funcDef equation.
@@ -620,26 +613,28 @@ var  newParam : TSBMLparameter;
      i, j, k : integer;
      intNumCurveSeg: integer; // number of line segments
      intReactNode, intProdNode : integer; // node index.
+     modelRender: TSBMLRenderInformation;
+     spGlyphList: TList<TSBMLLayoutSpeciesGlyph>;
      spRefGlyphUsed: TList<boolean>; // check if glyph already used.
+
      rxnStyle: TSBMLRenderStyle;
 begin
-  id := modelRxn.getId;
+  id := newModelRxn.getId;
+  modelRender := newModel.getSBMLRenderInfo;
   speciesName := '';
   intReactNode := 0;
   intProdNode := 0;
   intNumCurveSeg := 0;
+  if newModel.getSBMLLayout <> nil then
+    spGlyphList := newModel.getSBMLLayout.getSpGlyphList;
   rateParams := TList<TSBMLparameter>.create;
   self.lineType := ltBezier;    // default
   // get reactants:
-  self.nReactants := modelRxn.getNumReactants;
+  self.nReactants := newModelRxn.getNumReactants;
   createReactantSpace (nReactants);
-  //spRefGlyphUsed := TList<boolean>.create;
-
-
-  for i := 0 to modelRxn.getNumReactants - 1 do
+  for i := 0 to newModelRxn.getNumReactants - 1 do
       begin
-   //   for i := 0 to glyphRxn.getNumSpeciesRefGlyphs -1 do
-   //     spRefGlyphUsed[i] := false;
+  
       srcId[i] := '';
       if glyphRxn <> nil then
         begin
@@ -649,22 +644,21 @@ begin
           spGlyphId := '';
           spGlyphId := glyphRxn.getSpeciesRefGlyph(j).getSpeciesGlyphId;
           speciesName := getSpeciesIdFromSpGlyphId(spGlyphId, spGlyphList);
-          if speciesName = modelRxn.getReactant(i).getSpecies then
+          if speciesName = newModelRxn.getReactant(i).getSpecies then
             begin
-            srcId[i] := spGlyphId;  // different srcId can have same spGlyphId  (
-           // spRefGlyphUsed[j] := true;
+            srcId[i] := spGlyphId;  // different srcId can have same spGlyphId
             end;
           end;
         end;
-      if srcId[i] = '' then srcId[i] := modelRxn.getReactant(i).getSpecies;
-      srcStoich[i] := modelRxn.getReactant(i).getStoichiometry;
+      if srcId[i] = '' then srcId[i] := newModelRxn.getReactant(i).getSpecies;
+      srcStoich[i] := newModelRxn.getReactant(i).getStoichiometry;
       end;
 
   // get products:
-  nProducts := modelRxn.getNumProducts;
+  nProducts := newModelRxn.getNumProducts;
   createProductSpace (nProducts);
 
-  for i := 0 to modelRxn.getNumProducts - 1 do
+  for i := 0 to newModelRxn.getNumProducts - 1 do
     begin
     destId[i] := '';
     if glyphRxn <> nil then
@@ -675,34 +669,33 @@ begin
           spGlyphId := '';
           spGlyphId := glyphRxn.getSpeciesRefGlyph(j).getSpeciesGlyphId;
           speciesName := getSpeciesIdFromSpGlyphId(spGlyphId, spGlyphList);
-          if speciesName = modelRxn.getProduct(i).getSpecies then
+          if speciesName = newModelRxn.getProduct(i).getSpecies then
             destId[i] := spGlyphId; // different destId can have same spGlyphId
           end;
       end;
 
-    if destId[i] = '' then destId[i] := modelRxn.getProduct(i).getSpecies;
-    destStoich[i] := modelRxn.getProduct(i).getStoichiometry;
+    if destId[i] = '' then destId[i] := newModelRxn.getProduct(i).getSpecies;
+    destStoich[i] := newModelRxn.getProduct(i).getStoichiometry;
     end;
   updatedKineticLaw := '';
-  updatedKineticLaw := self.convertFuncDefsToKineticLaws( funcDefList,
-                                           modelRxn.getKineticLaw.getFormula);
+  updatedKineticLaw := newModel.convertFuncDefToKineticLaw( newModelRxn.getKineticLaw.getFormula);
   // Grab parameters that are used in reaction:
-  for j := 0 to Length(paramAr) - 1 do
+  for j := 0 to Length(newModel.getSBMLparameterAr) - 1 do
     begin
-      paramName := paramAr[j].getId;
-      if modelRxn.getKineticLaw.getFormula.Contains(paramName) then
-        rateParams.Add(paramAr[j]);
-      // console.log('param: ',modelRxn.getKineticLaw.getParameter(i),', model param: ',paramAr[j].getId);
+      paramName := newModel.getSBMLparameterAr[j].getId;
+      if newModelRxn.getKineticLaw.getFormula.Contains(paramName) then
+        rateParams.Add(newModel.getSBMLparameterAr[j]);
+      // console.log('param: ',modelRxn.getKineticLaw.getParameter(i),', model param: ',newModel.getSBMLparameterAr[j].getId);
     end;
 
   // Currently just add all compartments as params:
-  for i := 0 to Length(compAr) -1 do
+  for i := 0 to Length(newModel.getSBMLcompartmentsArr) -1 do
     begin
-      newParam := TSBMLparameter.create(compAr[i].getId);
-      if compAr[i].isSetSize then
-        newParam.setValue(compAr[i].getSize)
+      newParam := TSBMLparameter.create(newModel.getSBMLcompartmentsArr[i].getId);
+      if newModel.getSBMLcompartmentsArr[i].isSetSize then
+        newParam.setValue(newModel.getSBMLcompartmentsArr[i].getSize)
       else
-        newParam.setValue(compAr[i].getVolume);
+        newParam.setValue(newModel.getSBMLcompartmentsArr[i].getVolume);
       rateParams.Add(newParam);
     end;
 
@@ -717,7 +710,7 @@ begin
   arcCenter.x := 0; arcCenter.y := 0; // default, need something else here?
   if glyphRxn <> nil then  // check if any layout info available
     begin
-    if processReactionSpeciesReferenceCurves(glyphRxn, modelRxn, spGlyphList, modelRender ) = false then
+    if processReactionSpeciesReferenceCurves(glyphRxn, newModelRxn, spGlyphList, modelRender ) = false then
       begin
       if glyphRxn.getCurve <> nil then // Next try to get rxn curves with glyphRxn
         begin
@@ -749,35 +742,7 @@ begin
 
 end;
 
- // Convert any SBML func defs that are used for reaction kinetic laws:
-function TReactionState.convertFuncDefsToKineticLaws(funcDefList: TList<TSBMLFuncDefinition>;
-                strKinLaw: string ): string;
-var i: integer;
-   strNewKLaw: string;
-   formula: string;
-begin
-  strNewKLaw := '';
-  strNewKLaw := strKinLaw;
- // console.log(' Initial NewFormula:', strNewKLaw);
-  if funcDefList <> nil then
-    begin
-    for i := 0 to funcDefList.count -1 do
-      begin
-      formula := '';
-      if strNewKLaw.Contains(funcDefList[i].getId) then
-        begin
-        formula := '(' + funcDefList[i].getFuncFormula + ')';
-        strNewKLaw := strNewKLaw.Replace(funcDefList[i].getFullFuncLabel, formula);
-       // console.log(' Current NewFormula:', strNewKLaw);
-        end;
-
-      end;
-    end;
-  //console.log(' Final NewFormula:', strNewKLaw);
-  Result := strNewKLaw;
-end;
-
-       // Returns true if curve for reaction was found and processed.
+      // Returns true if curve for reaction was found and processed.
 function  TReactionState.processReactionSpeciesReferenceCurves(newGlyphRxn: TSBMLLayoutReactionGlyph;
           newModelRxn: SBMLReaction; newSpGlyphList: TList<TSBMLLayoutSpeciesGlyph>;
           reactionRenderInfo: TSBMLRenderInformation ): boolean;
@@ -1357,10 +1322,7 @@ begin
           begin
             if reactionGlyphId = model.getReaction(j).getID then
             begin
-              reactionState.loadFromSBML (reactionGlyph, model.getReaction(j),
-                   model.getSBMLparameterAr, model.getFuncDefList,
-                   modelLayout.getSpGlyphList, model.getSBMLcompartmentsArr(),
-                   model.getSBMLRenderInfo);
+              reactionState.loadFromSBML(reactionGlyph, model.getReaction(j), model);
               reaction := addReaction (reactionState);
              // Set the node pointers based on the node Ids
               for k := 0 to reaction.state.nReactants - 1 do
@@ -1380,8 +1342,7 @@ begin
                       reaction.state.destPtr[k] := nodes[l];
                       break;
                     end;
-              //reaction.state.setBezierHandles; // Do not need this as SBML layout
-                                                // has this already specified.
+              
             end;
 
              // ************************
@@ -1462,9 +1423,7 @@ procedure TNetwork.autoBuildNetworkFromSBML(model: TModel);
    // load reactions:
     for j := 0 to model.getNumReactions - 1 do
         begin
-          reactionState.loadFromSBML (nil, model.getReaction(j), model.getSBMLparameterAr,
-                             model.getFuncDefList, nil, model.getSBMLcompartmentsArr(), nil);
-
+          reactionState.loadFromSBML(nil, model.getReaction(j), model);
           reaction := addReaction (reactionState);
           reaction.state.arcCenter.x := 20 + j*2; // default, could be zero as well?
           reaction.state.arcCenter.y := 60 + j*2;
