@@ -170,12 +170,12 @@ begin
   Result := Result + ' Model Func definitions: ';
   for i := 0 to self.getNumFuncDefs -1 do
     Result := Result + self.modelFuncDefList[i].printStr;
-
-  Result := Result + sLineBreak;
-  Result := Result + ' Model Layout: ';
+  Result := Result + sLineBreak + ' Model Layout: ';
   if self.modelLayout <> nil then Result := Result + self.getSBMLLayout.printStr
   else Result := Result + 'NO layout';
-
+  Result := Result + sLineBreak + ' Model Render Info: ';
+  if self.modelRendering <> nil then Result := Result + self.getSBMLRenderInfo.printStr
+  else Result := Result + 'NO Render Info';
 
 end;
 
