@@ -658,8 +658,7 @@ getRules(tModela, tRule) {
                           tPolygon, tRectangle, tRenderPt );
        tLineE.setRenderGroup( tRenderGroup );
        console.log('tLineE- id: ',tLineE.getId() );
-     //   nRenderInfo.setRenderGroup( tlineEnding );
-    //   nRenderInfo.addLineEnding( tlineE ); //ReferenceError: tlineE is not defined
+       nRenderInfo.addLineEnding( tLineE );
       // tRenderGroup.clear(); // needed?
      }
      return nRenderInfo;
