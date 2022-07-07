@@ -2,14 +2,22 @@ unit uTestSBMLReadWrite;
 
 // Test reading a SBML file and storing in a TModel using TSBML Classes
 // Test writing a SBML file from TModel
+//
+// Add tests:
+// 1a. If Read test then add sbml model to uTestSBML_ReadModels.pas
+//     Update SBML_TEST_MODELS (in uTestSBML_ReadModels) by one.
+// 1b. If Write test then add TModel test to generateWriteTestModel() method.
+// 2. Run 'Reading/Writing SBML models' test group from testing harness
+// 3. Open up browser console window and grab pertinent output from newly added test.
+//    Ouptut string should be after 'MODEL for SBML write test' or 'MODEL for SBML read test'
+// 4a. Read test: add output to getWriteTestReferenceString() method
+// 4b. Write test: add output to getReadTestReferenceString() method
+
 
 interface
 uses   System.SysUtils, System.Classes, JS, Web, System.Generics.Collections,
  uTestCase, utests.TestUtils, uSBMLClasses, uSBMLWriter, uSBMLReader, uModel, uTestModel,
  uTestSBML_ReadModels;
-
-const NUM_WRITE_TESTS = 1;
-      NUM_READ_TESTS = 3;
 
 type
  TReadWriteTestsFinished = procedure(readWriteTestCase: TList<TTestCaseResult>) of object;  // Notify when done testing
@@ -17,12 +25,19 @@ type
   private
     FNotify: TReadWriteTestsFinished; // send sbml info to listener once asynchronous read done.
     testModel: TModel;
+    writeRefResults: TList<string>;
+    readRefResults: TList<string>;
     currentWriteTestIndex: integer; // Due to asynchronous calls to libsbml.js, need to keep track of this?
     currentReadTestIndex: integer;
-    function generateWriteTestModel(testIndex: integer): TModel;
-    function generateReadTestModel(testIndex: integer): string;
-    function getWriteTestReferenceString(testIndex: integer): string;
-    function getReadTestReferenceString(testIndex: integer): string;
+    function  generateWriteTestModel(testIndex: integer): TModel;
+    function  generateReadTestModel(testIndex: integer): string;
+    procedure generateWriteTestReferences();
+    procedure generateReadTestReferences();
+    function  getWriteTestReferenceString(testIndex: integer): string;
+    function  getReadTestReferenceString(testIndex: integer): string;
+    function  getNumReadTests(): integer;
+    function  getNumWriteTests(): integer;
+    function  getNumReadWriteTests(): integer;
   public
     resultInfo: TList<string>;
     testResultList: TList<TTestCaseResult>;
@@ -42,9 +57,24 @@ implementation
 
 constructor TTestSBMLReadWrite.create();
 begin
+  self.generateWriteTestReferences;
+  self.generateReadTestReferences;
   self.testResultList := TList<TTestCaseResult>.create;
   self.currentWriteTestIndex := 0;
   self.currentReadTestIndex := 0;
+end;
+
+function  TTestSBMLReadWrite.getNumReadTests(): integer;
+begin
+  Result := self.readRefResults.count;
+end;
+function TTestSBMLReadWrite.getNumWriteTests(): integer;
+begin
+  Result := self.writeRefResults.count;
+end;
+function TTestSBMLReadWrite.getNumReadWriteTests(): integer;
+begin
+  Result := self.readRefResults.count + self.writeRefResults.count;
 end;
 
 procedure TTestSBMLReadWrite.modelWritten(modelStr: String);
@@ -71,13 +101,14 @@ if self.currentWriteTestIndex > -1 then
 
     end;
   end;
- console.log('MODEL: ', modelStr);
+ console.log('MODEL for SBML write test: ', self.currentWriteTestIndex + 1);
+ console.log(modelStr);
  inc(self.currentWriteTestIndex); // next test...
- if self.currentWriteTestIndex < NUM_WRITE_TESTS then
+ if self.currentWriteTestIndex < self.writeRefResults.count then
    runWriteSBMLTest( )
  else
    begin
-   if self.currentReadTestIndex < NUM_READ_TESTS then
+   if self.currentReadTestIndex < self.readRefResults.count then
      runReadSBMLTest()
    else self.testsFinished;
    end
@@ -88,7 +119,7 @@ var i: integer; refStr, testModelStr: string;
     refResultsList: TList<string>;
 // self.testResultList index is assumed to be at self.currentWriteTestIndex + self.currentReadTestIndex
 begin
-  console.log('MODEL read: test', self.currentReadTestIndex +1 );
+  console.log('MODEL for SBML read test: ', self.currentReadTestIndex +1 );
   if self.currentReadTestIndex > -1 then
     begin
     testModelStr := self.testModel.printStr;
@@ -113,7 +144,7 @@ begin
     end;
 
   inc(self.currentReadTestIndex);
-  if self.currentReadTestIndex < NUM_READ_TESTS then
+  if self.currentReadTestIndex < self.readRefResults.count then
     begin
     self.testModel.Free;
     runReadSBMLTest( )
@@ -123,9 +154,9 @@ end;
 
 procedure TTEstSBMLReadWrite.runTests;
 begin
-  if NUM_WRITE_TESTS > 0 then
+  if self.writeRefResults.count > 0 then
     self.runWriteSBMLTest
-  else if NUM_READ_TESTS > 0 then self.runReadSBMLTest;
+  else if self.readRefResults.count > 0 then self.runReadSBMLTest;
 
 
 end;
@@ -216,11 +247,14 @@ begin
 
 end;
 
- function TTestSBMLReadWrite.getWriteTestReferenceString(testIndex: Integer): string;
-  var refTestStrList: TList<string>;
-  begin
-    refTestStrList := TList<string>.create;
-    refTestStrList.Add('<?xml version="1.0" encoding="UTF-8"?>' + sLineBreak +
+// ********************************************************************************************
+// ********************************************************************************************
+// TEST Write REFERENCE results for comparison:
+
+procedure TTestSBMLReadWrite.generateWriteTestReferences();
+begin
+  self.writeRefResults := TList<string>.create;
+  self.writeRefResults.Add('<?xml version="1.0" encoding="UTF-8"?>' + sLineBreak +
 '<sbml xmlns="http://www.sbml.org/sbml/level3/version2/core" xmlns:layout="http://www.sbml.org/sbml/level3/version1/layout/version1" xmlns:render="http://www.sbml.org/sbml/level3/version1/render/version1" level="3" version="2" layout:required="false" render:required="false">' + sLineBreak +
   '<model>' + sLineBreak +
     '<listOfCompartments>' + sLineBreak +
@@ -263,20 +297,26 @@ end;
   '</model>' + sLineBreak +
 '</sbml>' );
 
+end;
+
+ function TTestSBMLReadWrite.getWriteTestReferenceString(testIndex: Integer): string;
+ var refTestStrList: TList<string>;
+ begin
+   if self.writeRefResults.count > testIndex then
+     Result := self.writeRefResults[testIndex]
+   else Result := '';
+
+ end;
 
 
-  if refTestStrList.count > testIndex then
-    Result := refTestStrList[testIndex]
-  else Result := '';
+// ********************************************************************************************
+// ********************************************************************************************
+// TEST Read REFERENCE results for comparieson:
+ procedure TTestSBMLReadWrite.generateReadTestReferences();
+ begin
+   self.readRefResults := TList<string>.create;
 
-  end;
-
-
-  function TTestSBMLReadWrite.getReadTestReferenceString(testIndex: integer): string;
-  var refTestStrList: TList<string>;
-  begin
-    refTestStrList := TList<string>.create;
-    refTestStrList.Add('Model id: , Species:  Species ID: S1, Boundary sp: false, Init Conc: 20, Comp: default_compartment Species ID: S2, Boundary sp: false, Init Conc: 0, Comp: default_compartment Species ID: S3, Boundary sp: false, Init Conc: 0, Comp: default_compartment Species ID: S4, Boundary sp: false, Init Conc: 0, Comp: default_compartment' + sLineBreak +
+   self.readRefResults.Add('Model id: , Species:  Species ID: S1, Boundary sp: false, Init Conc: 20, Comp: default_compartment Species ID: S2, Boundary sp: false, Init Conc: 0, Comp: default_compartment Species ID: S3, Boundary sp: false, Init Conc: 0, Comp: default_compartment Species ID: S4, Boundary sp: false, Init Conc: 0, Comp: default_compartment' + sLineBreak +
  'Model compartments:  Comp ID: default_compartment, No Comp name, Comp size: 1, Comp constant, ' + sLineBreak +
  'Model params:  Param ID: k1, No Param name, Value: 0.1, Param Const Param ID: k2, No Param name, Value: 0.2, Param Const Param ID: k3, No Param name, Value: 0.1, Param Const Param ID: k4, No Param name, Value: 0.2, Param Const ' + sLineBreak +
  'Model Rxns: , Rxn ID: J1, No Rxn Name, No Rxn Comp , Rxn reversible, Rxn products:  SpRef ID: S2J1, SpRef species: S2, Stoich Coeff: 1, Rxn reactants:  SpRef ID: S1J1, SpRef species: S1, Stoich Coeff: 1, Rxn KinLaw:  Kinetic Law id: dummy, Kinetic Law No name, Kinetic Law formula: k1 * S1, Kinetic Law params: self.paramIds[i], self.paramIds[i],  End of Kinetic Law param list. , Rxn ID: J2, No Rxn Name, No Rxn Comp , Rxn reversible, Rxn products:  SpRef ID: S3J2, SpRef species: S3, Stoich Coeff: 1, Rxn reactants:  SpRef ID: S2J2, SpRef species: S2, Stoich Coeff: 1, Rxn KinLaw:  Kinetic Law id: dummy, Kinetic Law No name, Kinetic Law formula: k2 * S2, Kinetic Law params: self.paramIds[i], self.paramIds[i],  End of Kinetic Law param list. , Rxn ID: J3, No Rxn Name, No Rxn Comp , Rxn reversible, Rxn products:  SpRef ID: S4J3, SpRef species: S4, Stoich Coeff: 1, Rxn reactants:  SpRef ID: S3J3, SpRef species: S3, Stoich Coeff: 1, Rxn KinLaw:  Kinetic Law id: dummy, Kinetic Law No name, Kinetic Law formula: k3 * S3, Kinetic Law params: self.paramIds[i], self.paramIds[i],  End of Kinetic Law param list. , Rxn ID: J4, No Rxn Name, No Rxn Comp , Rxn reversible, Rxn products:  SpRef ID: S2J4, SpRef species: S2, Stoich Coeff: 1, Rxn reactants:  SpRef ID: S4J4, SpRef species: S4, Stoich Coeff: 1, Rxn KinLaw:  Kinetic Law id: dummy, Kinetic Law No name, Kinetic Law formula: k4 * S4, Kinetic Law params: self.paramIds[i], self.paramIds[i],  End of Kinetic Law param list. ' + sLineBreak +
@@ -287,7 +327,7 @@ end;
  'Model Layout: NO layout' + sLineBreak +
  'Model Render Info: NO Render Info' );
 
-    refTestStrList.Add( 'Model id: , Species:  Species ID: X0, Boundary sp: true, Init Conc: 10, Comp: unit_compartment Species ID: S1, Boundary sp: false, Init Conc: 0, Comp: unit_compartment Species ID: S4, Boundary sp: false, Init Conc: 0, Comp: unit_compartment Species ID: S2, Boundary sp: false, Init Conc: 0, Comp: unit_compartment Species ID: S3, Boundary sp: false, Init Conc: 0, Comp: unit_compartment Species ID: X1, Boundary sp: true, Init Conc: 0, Comp: unit_compartment' + sLineBreak +
+    self.readRefResults.Add( 'Model id: , Species:  Species ID: X0, Boundary sp: true, Init Conc: 10, Comp: unit_compartment Species ID: S1, Boundary sp: false, Init Conc: 0, Comp: unit_compartment Species ID: S4, Boundary sp: false, Init Conc: 0, Comp: unit_compartment Species ID: S2, Boundary sp: false, Init Conc: 0, Comp: unit_compartment Species ID: S3, Boundary sp: false, Init Conc: 0, Comp: unit_compartment Species ID: X1, Boundary sp: true, Init Conc: 0, Comp: unit_compartment' + sLineBreak +
  'Model compartments:  Comp ID: unit_compartment, No Comp name, Comp size: 1, Comp constant,' + sLineBreak +
  'Model params:  Param ID: VM1, No Param name, Value: 10, Param Const Param ID: Keq1, No Param name, Value: 10, Param Const Param ID: h, No Param name, Value: 10, Param Const Param ID: default_compartment, No Param name, Value: 1, Param can vary Param ID: V4, No Param name, Value: 2.5, Param Const Param ID: KS4, No Param name, Value: 0.5, Param Const' + sLineBreak +
  'Model Rxns: , Rxn ID: J0, No Rxn Name, No Rxn Comp , Rxn Not reversible, Rxn products:  SpRef ID: S1J0, SpRef species: S1, Stoich Coeff: 1, Rxn reactants:  SpRef ID: X0J0, SpRef species: X0, Stoich Coeff: 1, Rxn KinLaw:  Kinetic Law id: dummy, Kinetic Law No name, Kinetic Law formula: VM1 * (X0 - S1 / Keq1) / (1 + X0 + S1 + pow(S4, h)), Kinetic Law params: self.paramIds[i], self.paramIds[i],  End of Kinetic Law param list. , Rxn ID: J1, No Rxn Name, No Rxn Comp , Rxn Not reversible, Rxn products:  SpRef ID: S2J1, SpRef species: S2, Stoich Coeff: 1, Rxn reactants:  SpRef ID: S1J1, SpRef species: S1, Stoich Coeff: 1, Rxn KinLaw:  Kinetic Law id: dummy, Kinetic Law No name, Kinetic Law formula: (10 * S1 - 2 * S2) / (1 + S1 + S2), Kinetic Law params: self.paramIds[i], self.paramIds[i],  End of Kinetic Law param list. , Rxn ID: J2, No Rxn Name, No Rxn Comp , Rxn Not reversible, Rxn products:  SpRef ID: S3J2, SpRef species: S3, Stoich Coeff: 1, Rxn reactants:  SpRef ID: S2J2, SpRef species: S2, Stoich Coeff: 1, Rxn KinLaw:  Kinetic Law id: dummy, Kinetic Law No name, Kinetic Law formula: (10 * S2 - 2 * S3) / (1 + S2 + S3), Kinetic Law params: self.paramIds[i], self.paramIds[i],  End of Kinetic Law param list. , Rxn ID: J3, No Rxn Name, No Rxn Comp , Rxn Not reversible, Rxn products:  SpRef ID: S4J3, SpRef species: S4, Stoich Coeff: 1, Rxn reactants:  SpRef ID: S3J3, SpRef species: S3, Stoich Coeff: 1, Rxn KinLaw:  Kinetic Law id: dummy, Kinetic Law No name, Kinetic Law formula: (10 * S3 - 2 * S4) / (1 + S3 + S4), Kinetic Law params: self.paramIds[i], self.paramIds[i],  End of Kinetic Law param list. , Rxn ID: J4, No Rxn Name, No Rxn Comp , Rxn Not reversible, Rxn products:  SpRef ID: X1J4, SpRef species: X1, Stoich Coeff: 1, Rxn reactants:  SpRef ID: S4J4, SpRef species: S4, Stoich Coeff: 1, Rxn KinLaw:  Kinetic Law id: dummy, Kinetic Law No name, Kinetic Law formula: V4 * S4 / (KS4 + S4), Kinetic Law params: self.paramIds[i], self.paramIds[i],  End of Kinetic Law param list. ' + sLineBreak +
@@ -338,7 +378,6 @@ end;
 '--  Render style id:reaction_product_Style_J3, RG:  Render group: Stoke width: 3, Stroke color: fillColorReaction_specRefGlyphS4J3, fill color: fillColorReaction_specRefGlyphS4J3, font size: -1, font style: normal, vTextAnchor: V_MIDDLE, hTextAnchor: H_MIDDLE, start head: , end head: arrowHead_productJ3, types: , roles: product, , Graphical Obj Ids: specRefGlyphS4J3 ' + sLineBreak +
 '--  Render style id:reaction_reactant_Style_J4, RG:  Render group: Stoke width: 3, Stroke color: fillColorReaction_specRefGlyphS4J4, fill color: fillColorReaction_specRefGlyphS4J4, font size: -1, font style: normal, vTextAnchor: V_MIDDLE, hTextAnchor: H_MIDDLE, start head: , end head: , types: , roles: , Graphical Obj Ids: specRefGlyphS4J4 ' + sLineBreak +
 '--  Render style id:reaction_product_Style_J4, RG:  Render group: Stoke width: 3, Stroke color: fillColorReaction_specRefGlyphX1J4, fill color: fillColorReaction_specRefGlyphX1J4, font size: -1, font style: normal, vTextAnchor: V_MIDDLE, hTextAnchor: H_MIDDLE, start head: , end head: arrowHead_productJ4, types: , roles: product, , Graphical Obj Ids: specRefGlyphX1J4 ' + sLineBreak +
-sLineBreak +
  'Line endings: --  Render line ending, id: arrowHead_productJ0, stroke color: , stroke width: -1, Rotational mapping: true BoundingBox ID: , BB pt:  Layout Pt ID:  Layout Pt XY: -4.5, -7, Layout Pt Z: 0 Layout Dims ID:  Layout w, h: 9, 14 Render group: Stoke width: 3, Stroke color: fillColorReaction_specRefGlyphS1J0, fill color: fillColorReaction_specRefGlyphS1J0, font size: -1, font style: normal, vTextAnchor: V_MIDDLE, hTextAnchor: H_MIDDLE, start head: , end head:  Render Polygon:  Primative 1D id: , stroke: , stroke width: -1, fill:  Render pt ID: , x,y: 0, 14, Abs Coord, Render pt ID: , x,y: 3, 7, Abs Coord, Render pt ID: , x,y: 0, 0, Rel Coord, Render pt ID: , x,y: 9, 7, Abs Coord,' + sLineBreak +
 '--  Render line ending, id: arrowHead_productJ1, stroke color: , stroke width: -1, Rotational mapping: true BoundingBox ID: , BB pt:  Layout Pt ID:  Layout Pt XY: -4.5, -7, Layout Pt Z: 0 Layout Dims ID:  Layout w, h: 9, 14 Render group: Stoke width: 3, Stroke color: fillColorReaction_specRefGlyphS2J1, fill color: fillColorReaction_specRefGlyphS2J1, font size: -1, font style: normal, vTextAnchor: V_MIDDLE, hTextAnchor: H_MIDDLE, start head: , end head:  Render Polygon:  Primative 1D id: , stroke: , stroke width: -1, fill:  Render pt ID: , x,y: 0, 14, Abs Coord, Render pt ID: , x,y: 3, 7, Abs Coord, Render pt ID: , x,y: 0, 0, Rel Coord, Render pt ID: , x,y: 9, 7, Abs Coord,' + sLineBreak +
 '--  Render line ending, id: arrowHead_productJ2, stroke color: , stroke width: -1, Rotational mapping: true BoundingBox ID: , BB pt:  Layout Pt ID:  Layout Pt XY: -4.5, -7, Layout Pt Z: 0 Layout Dims ID:  Layout w, h: 9, 14 Render group: Stoke width: 3, Stroke color: fillColorReaction_specRefGlyphS3J2, fill color: fillColorReaction_specRefGlyphS3J2, font size: -1, font style: normal, vTextAnchor: V_MIDDLE, hTextAnchor: H_MIDDLE, start head: , end head:  Render Polygon:  Primative 1D id: , stroke: , stroke width: -1, fill:  Render pt ID: , x,y: 0, 14, Abs Coord, Render pt ID: , x,y: 3, 7, Abs Coord, Render pt ID: , x,y: 0, 0, Rel Coord, Render pt ID: , x,y: 9, 7, Abs Coord,' + sLineBreak +
@@ -346,7 +385,7 @@ sLineBreak +
 '--  Render line ending, id: arrowHead_productJ4, stroke color: , stroke width: -1, Rotational mapping: true BoundingBox ID: , BB pt:  Layout Pt ID:  Layout Pt XY: -4.5, -7, Layout Pt Z: 0 Layout Dims ID:  Layout w, h: 9, 14 Render group: Stoke width: 3, Stroke color: fillColorReaction_specRefGlyphX1J4, fill color: fillColorReaction_specRefGlyphX1J4, font size: -1, font style: normal, vTextAnchor: V_MIDDLE, hTextAnchor: H_MIDDLE, start head: , end head:  Render Polygon:  Primative 1D id: , stroke: , stroke width: -1, fill:  Render pt ID: , x,y: 0, 14, Abs Coord, Render pt ID: , x,y: 3, 7, Abs Coord, Render pt ID: , x,y: 0, 0, Rel Coord, Render pt ID: , x,y: 9, 7, Abs Coord,'
      );
 
-     refTestStrList.Add('Model id: , Species:  Species ID: X0, Boundary sp: true, Init Conc: 10, Comp: default_compartment Species ID: S1, Boundary sp: false, Init Conc: 0, Comp: default_compartment Species ID: S4, Boundary sp: false, Init Conc: 0, Comp: default_compartment Species ID: S2, Boundary sp: false, Init Conc: 0, Comp: default_compartment Species ID: S3, Boundary sp: false, Init Conc: 0, Comp: default_compartment Species ID: X1, Boundary sp: true, Init Conc: 0, Comp: default_compartment' + sLineBreak +
+     self.readRefResults.Add('Model id: , Species:  Species ID: X0, Boundary sp: true, Init Conc: 10, Comp: default_compartment Species ID: S1, Boundary sp: false, Init Conc: 0, Comp: default_compartment Species ID: S4, Boundary sp: false, Init Conc: 0, Comp: default_compartment Species ID: S2, Boundary sp: false, Init Conc: 0, Comp: default_compartment Species ID: S3, Boundary sp: false, Init Conc: 0, Comp: default_compartment Species ID: X1, Boundary sp: true, Init Conc: 0, Comp: default_compartment' + sLineBreak +
  'Model compartments:  Comp ID: default_compartment, No Comp name, Comp size: 1, Comp constant, ' + sLineBreak +
  'Model params:  Param ID: VM1, No Param name, Value: 0, Param can vary Param ID: Keq1, No Param name, Value: 0, Param can vary Param ID: h, No Param name, Value: 0, Param can vary Param ID: V4, No Param name, Value: 2.5, Param Const Param ID: KS4, No Param name, Value: 0.5, Param Const' + sLineBreak +
  'Model Rxns: , Rxn ID: J0, No Rxn Name, No Rxn Comp , Rxn reversible, Rxn products:  SpRef ID: S1J0, SpRef species: S1, Stoich Coeff: 1, Rxn reactants:  SpRef ID: X0J0, SpRef species: X0, Stoich Coeff: 1, Rxn KinLaw:  Kinetic Law id: dummy, Kinetic Law No name, Kinetic Law formula: VM1 * (X0 - S1 / Keq1) / (1 + X0 + S1 + pow(S4, h)), Kinetic Law params: self.paramIds[i], self.paramIds[i],  End of Kinetic Law param list. , Rxn ID: J1, No Rxn Name, No Rxn Comp , Rxn reversible, Rxn products:  SpRef ID: S2J1, SpRef species: S2, Stoich Coeff: 1, Rxn reactants:  SpRef ID: S1J1, SpRef species: S1, Stoich Coeff: 1, Rxn KinLaw:  Kinetic Law id: dummy, Kinetic Law No name, Kinetic Law formula: (10 * S1 - 2 * S2) / (1 + S1 + S2), Kinetic Law params: self.paramIds[i], self.paramIds[i],  End of Kinetic Law param list. , Rxn ID: J2, No Rxn Name, No Rxn Comp , Rxn reversible, Rxn products:  SpRef ID: S3J2, SpRef species: S3, Stoich Coeff: 1, Rxn reactants:  SpRef ID: S2J2, SpRef species: S2, Stoich Coeff: 1, Rxn KinLaw:  Kinetic Law id: dummy, Kinetic Law No name, Kinetic Law formula: (10 * S2 - 2 * S3) / (1 + S2 + S3), Kinetic Law params: self.paramIds[i], self.paramIds[i],  End of Kinetic Law param list. , Rxn ID: J3, No Rxn Name, No Rxn Comp , Rxn reversible, Rxn products:  SpRef ID: S4J3, SpRef species: S4, Stoich Coeff: 1, Rxn reactants:  SpRef ID: S3J3, SpRef species: S3, Stoich Coeff: 1, Rxn KinLaw:  Kinetic Law id: dummy, Kinetic Law No name, Kinetic Law formula: (10 * S3 - 2 * S4) / (1 + S3 + S4), Kinetic Law params: self.paramIds[i], self.paramIds[i],  End of Kinetic Law param list. , Rxn ID: J4, No Rxn Name, No Rxn Comp , Rxn reversible, Rxn products:  SpRef ID: X1J4, SpRef species: X1, Stoich Coeff: 1, Rxn reactants:  SpRef ID: S4J4, SpRef species: S4, Stoich Coeff: 1, Rxn KinLaw:  Kinetic Law id: dummy, Kinetic Law No name, Kinetic Law formula: V4 * S4 / (KS4 + S4), Kinetic Law params: self.paramIds[i], self.paramIds[i],  End of Kinetic Law param list.' + sLineBreak +
@@ -357,8 +396,13 @@ sLineBreak +
  'Model Layout: NO layout' + sLineBreak +
  'Model Render Info: NO Render Info' );
 
-    if refTestStrList.count > testIndex then
-      Result := refTestStrList[testIndex]
+
+ end;
+
+  function TTestSBMLReadWrite.getReadTestReferenceString(testIndex: integer): string;
+  begin
+    if self.readRefResults.count > testIndex then
+      Result := self.readRefResults[testIndex]
     else Result := '';
   end;
 

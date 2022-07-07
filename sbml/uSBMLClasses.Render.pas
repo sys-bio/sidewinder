@@ -968,10 +968,9 @@ implementation
     for i := 0 to self.getNumberStyles -1 do
       Result := Result + '-- ' + self.getStyle(i).printStr + sLineBreak;
 
-    Result := Result + sLineBreak + ' Line endings: ';
+    Result := Result + ' Line endings: ';
     for i := 0 to self.getNumbLineEndings -1 do
       Result := Result + '-- ' + self.getLineEnding(i).printStr + sLineBreak;
-    Result := Result + sLineBreak;
 
   end;
 
