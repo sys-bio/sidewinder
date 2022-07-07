@@ -19,10 +19,11 @@ class ProcessSBML {
    console.log(' # ofplugins: ', this.model.getNumPlugins() );
    if(this.model.getNumPlugins() >0) {
      this.SBMLLayOut = this.model.findPlugin('layout');
-     this.SBMLGlobalRender = libsbml.RenderExtension.prototype.getXmlnsL3V1V1()
-    // if(this.model.hasPlugin('render')) {
-    //   console.log(' model has render plugin' );
-    // }
+    // this.SBMLGlobalR = this.model.findPlugin('render');  BAD
+     this.SBMLGlobalRender = libsbml.RenderExtension.prototype.getXmlnsL3V1V1() // just a string with url for namespace
+     if(this.model.hasPlugin('render')) {
+       console.log(' model has render plugin' );
+     }
      if(this.model.hasPlugin('layout')) {
        console.log(' model has layout plugin' );
      }
@@ -41,7 +42,7 @@ class ProcessSBML {
    tModela.numSpecies = this.model.getNumSpecies();
    tModela.numParams = this.model.getNumParameters();
    tModela.numCompartments = this.model.getNumCompartments();
-   const numInitAssignments = this.model.getNumInitialAssignments(); // TODO: Need to get these
+   const numInitAssignments = this.model.getNumInitialAssignments();
    console.log(' Number of Init assignments: ',numInitAssignments);
    tModela.numEvents = this.model.getNumEvents();
    console.log( 'Number of events: ', this.model.getNumEvents() );
@@ -279,14 +280,15 @@ getRules(tModela, tRule) {
 
 
       const numLocalRenderPlug = rPlugin.getNumLocalRenderInformationObjects();
+     // const numGlobalRenderPlug = rPlugin.getNumGlobalRenderInformationObjects() BAD
       if( numLocalRenderPlug > 0 ) {
         this.localRenderInfo = rPlugin.getRenderInformation(numLocalRenderPlug-1); // works for localInfo, not GlobalInfo
       this.isLocalRenderSet = true;
       }
-    // global?: NO ...
-//    const rGlobalPluginList = this.libSBML.castObject(aLayout.getPlugin("render"), this.libSBML.RenderListOfLayoutsPlugin);   // none found
-//    const numGlobalInfo = rGlobalRenderList.getRenderInformation();
-//    const numGlobalObj = rGlobalRenderList.getNumGlobalRenderInformationObjects();
+    // global?:
+    const rGlobalPluginList = this.libSBML.castObject(aLayout.getPlugin("render"), this.libSBML.RenderListOfLayoutsPlugin);   // none found
+    const renderInfo = rGlobalPluginList.getRenderInformation(); // gives '0', none for globalRender
+    const numGlobalObj = rGlobalPluginList.getNumGlobalRenderInformationObjects();
  //   if( numGlobalObj > 0 ) {
  //     this.globalRenderInfo = rGlobalRenderList.getRenderGlobalInformation(numGlobalObj -1 );
  //   }
