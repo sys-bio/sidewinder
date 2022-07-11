@@ -18,6 +18,7 @@ class ProcessSBML {
      'SPECIESREFERENCEGLYPH', 'TEXTGLYPH', 'GENERALGLYPH', 'GRAPHICALOBJECT', 'ANY'];
    console.log(' # ofplugins: ', this.model.getNumPlugins() );
    if(this.model.getNumPlugins() >0) {
+   //const rGPlugin = libsbml.castObject(this.model.getPlugin("render"), libsbml.RenderLayoutPlugin); // holds nothing
      this.SBMLLayOut = this.model.findPlugin('layout');
     // this.SBMLGlobalR = this.model.findPlugin('render');  BAD
      this.SBMLGlobalRender = libsbml.RenderExtension.prototype.getXmlnsL3V1V1() // just a string with url for namespace
@@ -32,6 +33,7 @@ class ProcessSBML {
      }
      else {
        this.newLayoutPlug = this.SBMLLayOut.asLayout();
+       //layoutRender = this.SBMLLayout.asRenderLayoutPlugin(); BAD
        this.numLayouts = this.newLayoutPlug.getNumLayouts(); // why does it report 2 if only one?
 
      }
@@ -277,7 +279,9 @@ getRules(tModela, tRule) {
     //  console.log(' Getting next layout #: ', i);
       const aLayout = this.newLayoutPlug.getLayout(i);
       const rPlugin = this.libSBML.castObject(aLayout.getPlugin("render"), this.libSBML.RenderLayoutPlugin);
-
+      // 888
+    //  const rGPlugin = libsbml.castObject(aLayout.getPlugin("render"), libsbml.RenderLayoutPlugin);
+    //  const rGInfo = rGPlugin.createGlobalRenderInformation(); // No function called that here...
 
       const numLocalRenderPlug = rPlugin.getNumLocalRenderInformationObjects();
      // const numGlobalRenderPlug = rPlugin.getNumGlobalRenderInformationObjects() BAD
@@ -659,7 +663,7 @@ getRules(tModela, tRule) {
        tRenderGroup = this.assignRenderGroup(tRenderGroup, newRenderGroup,
                           tPolygon, tRectangle, tRenderPt );
        tLineE.setRenderGroup( tRenderGroup );
-       console.log('tLineE- id: ',tLineE.getId() );
+       //console.log('tLineE- id: ',tLineE.getId() );
        nRenderInfo.addLineEnding( tLineE );
       // tRenderGroup.clear(); // needed?
      }
