@@ -142,7 +142,7 @@ implementation
                 newModel.setSBMLLayout(jsLayout);
               }
             }
-            if( moreReading.isLocalRenderSet ) {
+            if( moreReading.isLocalRenderSet || moreReading.isGlobalRenderSet ) {
               jsRenderInfo = moreReading.getSBMLRenderInformation( jsRenderInfo, jsRenderStyle,
                 jsLineEnding, jsRenderGroup, jsEllipse, jsRectangle, jsPolygon,
                 jsRenderPt, jsRender1D, jsColorDef, jsBBox, jsDims, jsPt );

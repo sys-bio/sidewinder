@@ -18,10 +18,15 @@ class ProcessSBML {
      'SPECIESREFERENCEGLYPH', 'TEXTGLYPH', 'GENERALGLYPH', 'GRAPHICALOBJECT', 'ANY'];
    console.log(' # ofplugins: ', this.model.getNumPlugins() );
    if(this.model.getNumPlugins() >0) {
-   //const rGPlugin = libsbml.castObject(this.model.getPlugin("render"), libsbml.RenderLayoutPlugin); // holds nothing
+     const rGPluginList = libsbml.castObject(this.model.getPlugin("render"), libsbml.RenderListOfLayoutsPlugin);
+     const rGPluginListNum = rGPluginList.getNumGlobalRenderInformationObjects();
+     if(rGPluginListNum > 0) {
+           this.globalRenderInfo = rGPluginList.getRenderInformation(0);
+           this.isGlobalRenderSet = true;
+           console.log(' model has global render info' );
+     }
+
      this.SBMLLayOut = this.model.findPlugin('layout');
-    // this.SBMLGlobalR = this.model.findPlugin('render');  BAD
-     this.SBMLGlobalRender = libsbml.RenderExtension.prototype.getXmlnsL3V1V1() // just a string with url for namespace
      if(this.model.hasPlugin('render')) {
        console.log(' model has render plugin' );
      }
@@ -33,9 +38,16 @@ class ProcessSBML {
      }
      else {
        this.newLayoutPlug = this.SBMLLayOut.asLayout();
-       //layoutRender = this.SBMLLayout.asRenderLayoutPlugin(); BAD
-       this.numLayouts = this.newLayoutPlug.getNumLayouts(); // why does it report 2 if only one?
-
+       this.numLayouts = this.newLayoutPlug.getNumLayouts(); // sometimes it reports 2 ?
+       console.log('Num layouts: ', this.numLayouts);
+       const layout_rGPluginList = libsbml.castObject(this.SBMLLayOut, libsbml.RenderListOfLayoutsPlugin);
+       const numGlobRender = layout_rGPluginList.getNumGlobalRenderInformationObjects();
+       if(numGlobRender >0) {
+         const globRenderInfo = layout_rGPluginList.getRenderInformation(0);
+         console.log('GlobalRenderInfo present');
+       }
+       //const globRenderList = this.SBMLLayOut.asRenderListOfLayoutsPlugin();// uncaught error
+      // const globRender = this.SBMLLayOut.asRenderLayoutPlugin();  // uncaught error
      }
    }
  }
@@ -128,7 +140,6 @@ getRules(tModela, tRule) {
         tSpecies.setCompartment(newSpecies.getCompartment()); }
       if (newSpecies.isSetBoundaryCondition()) {
         tSpecies.setBoundaryCondition(newSpecies.getBoundaryCondition());}
-      // console.log( ' Setting boundary condition to true') }
       if (newSpecies.isSetName()) {
         tSpecies.setName(newSpecies.getName()); }
       if (newSpecies.isSetHasOnlySubstanceUnits()) {
@@ -146,7 +157,6 @@ getRules(tModela, tRule) {
         tFuncDef.clear();
         const newFuncDef = this.model.getFunctionDefinition(i);
         if( newFuncDef.isSetIdAttribute()) {
-        //  console.log('func Def: ', newFuncDef.getId());
           tFuncDef.setId(newFuncDef.getId());
         }
         if( newFuncDef.isSetName() ) {
@@ -154,12 +164,11 @@ getRules(tModela, tRule) {
         }
         if( newFuncDef.isSetBody() ) {
           const newBody = newFuncDef.getBody();
-       //   const strBody = new this.libSBML.SBMLFormulaParser().formulaToL3String(newBody);  // exponent is represented as x^2
+       //  const strBody = new this.libSBML.SBMLFormulaParser().formulaToL3String(newBody);  // exponent is represented as x^2
           const strBody = new this.libSBML.SBMLFormulaParser().formulaToString(newBody); // exponent is represented as pow(x,2)
           tFuncDef.setFuncFormula(strBody.trim());
         }
         const newMath = newFuncDef.getMath();
-        //console.log(' func Math: ', newMath.getType() );
         const strMath = new this.libSBML.SBMLFormulaParser().formulaToL3String(newMath);
       //  console.log('** Func def Math: ', strMath.trim());
         var fullFuncLabel = tFuncDef.getId() + '('; // func name with comma sep vars in parenthesis
@@ -278,24 +287,13 @@ getRules(tModela, tRule) {
    // for(i=0; i< 1; i++) { // cap at one for now, numLayouts reports 2 when there is one?
     //  console.log(' Getting next layout #: ', i);
       const aLayout = this.newLayoutPlug.getLayout(i);
+      // Grab any local Render information:
       const rPlugin = this.libSBML.castObject(aLayout.getPlugin("render"), this.libSBML.RenderLayoutPlugin);
-      // 888
-    //  const rGPlugin = libsbml.castObject(aLayout.getPlugin("render"), libsbml.RenderLayoutPlugin);
-    //  const rGInfo = rGPlugin.createGlobalRenderInformation(); // No function called that here...
-
       const numLocalRenderPlug = rPlugin.getNumLocalRenderInformationObjects();
-     // const numGlobalRenderPlug = rPlugin.getNumGlobalRenderInformationObjects() BAD
       if( numLocalRenderPlug > 0 ) {
         this.localRenderInfo = rPlugin.getRenderInformation(numLocalRenderPlug-1); // works for localInfo, not GlobalInfo
       this.isLocalRenderSet = true;
       }
-    // global?:
-    const rGlobalPluginList = this.libSBML.castObject(aLayout.getPlugin("render"), this.libSBML.RenderListOfLayoutsPlugin);   // none found
-    const renderInfo = rGlobalPluginList.getRenderInformation(); // gives '0', none for globalRender
-    const numGlobalObj = rGlobalPluginList.getNumGlobalRenderInformationObjects();
- //   if( numGlobalObj > 0 ) {
- //     this.globalRenderInfo = rGlobalRenderList.getRenderGlobalInformation(numGlobalObj -1 );
- //   }
 
       const dims = aLayout.getDimensions()
       tDims = this.assignDims(tDims, dims);
@@ -488,18 +486,16 @@ getRules(tModela, tRule) {
            }
            sbmlSpRefGlyph.setCurve(sbmlCurve);
          }
-         //else { sbmlSpRefGlyph.
+
          if(curSpRefGlyph.getBoundingBox() != null ) {
-    //     console.log('spRefGlyphs, assignBBox() call.');
            sbmlBBox = this.assignBBox(sbmlBBox,curSpRefGlyph.getBoundingBox(),sbmlDims, sbmlPt);
            sbmlSpRefGlyph.setBoundingBox(sbmlBBox);
          }
          sbmlRxnGlyph.addSpeciesRefGlyph(sbmlSpRefGlyph);
        }
 
-       nLayout.addRxnGlyph(sbmlRxnGlyph);
-      // sbmlRxnGlyph.clear();
-      console.log('end of getRxnGlyph');
+      nLayout.addRxnGlyph(sbmlRxnGlyph);
+      //console.log('end of getRxnGlyph');
      }
 
      return nLayout;
@@ -538,19 +534,28 @@ getRules(tModela, tRule) {
 
      return nLayout;
    }
-    // TODO: deal with global render info..
+
    getSBMLRenderInformation( tRenderInfo, tRenderStyle, tLineEnding, tRenderGroup,
          tEllipse, tRectangle, tPolygon, tRenderPt, tRender1D, tColorDef, tBBox,
          tDims, tPt )
    {
-     if( this.localRenderInfo.isSetId() ) {
-       tRenderInfo.setId( this.localRenderInfo.getId() );
+
+     if (this.isLocalRenderSet){
+       this.currentRenderInfo = this.localRenderInfo;
+     }
+     else if (this.isGlobalRenderSet) {
+       this.currentRenderInfo = this.globalRenderInfo;
+       console.log('GlobalRender id: ', this.globalRenderInfo.getId());
+     }
+
+     if(this.currentRenderInfo.isSetId()){
+       tRenderInfo.setId(this.currentRenderInfo.getId());
      }
      tRenderInfo = this.getColorDefs( tRenderInfo, tColorDef );
      tRenderInfo = this.getLineEndings(tRenderInfo, tLineEnding, tRenderGroup, tBBox,
                                   tPolygon, tRectangle, tRenderPt, tDims, tPt );
-     for( var i=0; i< this.localRenderInfo.getNumStyles(); i++ ) {
-       const newRenderStyle = this.localRenderInfo.getStyle(i);
+     for( var i=0; i< this.currentRenderInfo.getNumStyles(); i++ ) {
+       const newRenderStyle = this.currentRenderInfo.getStyle(i);
        tRenderStyle = this.getStyle( newRenderStyle,tRenderStyle, tRenderGroup,
                     tPolygon, tRectangle, tEllipse, tBBox, tRenderPt, tDims, tPt );
        tRenderInfo.addStyle(tRenderStyle);
@@ -563,12 +568,10 @@ getRules(tModela, tRule) {
    getColorDefs( nRenderInfo, tColorDef ) {
      var i;
      var numbObjs = 0;
-     if( this.isLocalRenderSet ) {
+     numbObjs = this.currentRenderInfo.getNumColorDefinitions();
 
-       numbObjs = this.localRenderInfo.getNumColorDefinitions();
-     } //else this.global
      for( i=0; i< numbObjs; i++ ) {
-       const newColorDef = this.localRenderInfo.getColorDefinition(i);
+       const newColorDef = this.currentRenderInfo.getColorDefinition(i);
        if( newColorDef.isSetId() ) { tColorDef.setId( newColorDef.getId() ); }
        const red =  newColorDef.getRed(); // int
        const blue = newColorDef.getBlue();
@@ -617,7 +620,7 @@ getRules(tModela, tRule) {
 
       const numElements = sbmlRenderGroup.getNumElements(); // not necessary/used?
       const newPoly = sbmlRenderGroup.polygons;
-      //if(newPoly.length > 0) {
+
       for( var i = 0; i < newPoly.length ; i++ ){  // assume only one polygon ber render group.
         tPolygon = this.getPolygon(tPolygon, newPoly[i], tRenderPt);
         console.log('Polygons present in Render group');
@@ -648,13 +651,13 @@ getRules(tModela, tRule) {
                   tRectangle, tRenderPt, tDims, tPt )
    {
      var numObjs;
-     if( this.isLocalRenderSet ) {
-       numObjs = this.localRenderInfo.getNumLineEndings();
-     }
-     else { numObjs = this.globalRenderInfo.getNumLineEndings(); }
+   //  if( this.isLocalRenderSet ) {
+       numObjs = this.currentRenderInfo.getNumLineEndings();
+    // }
+     //else { numObjs = this.globalRenderInfo.getNumLineEndings(); }
      for( let i=0; i< numObjs; i++ ) {
-       var newLineEnd;// = this.localRenderInfo.getLineEnding(i);
-       newLineEnd = this.localRenderInfo.getLineEnding(i);
+       var newLineEnd;
+       newLineEnd = this.currentRenderInfo.getLineEnding(i);
        tLineE.setId(newLineEnd.getId());
        tLineE.setRotationalMapping(newLineEnd.getIsEnabledRotationalMapping());
        tBBox = this.assignBBox(tBBox, newLineEnd.getBoundingBox(), tDims, tPt);
