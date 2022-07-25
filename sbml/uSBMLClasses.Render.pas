@@ -300,7 +300,7 @@ interface
   // gradientDefList: TList<TSBMLRenderGradientDefinition>;
    lineEndingList: TList<TSBMLRenderLineEnding>;
    styleList: TList<TSBMLRenderStyle>;
-
+   bLocalRenderInfo: boolean;
    id: string;
  public
    constructor create() overload;
@@ -308,6 +308,8 @@ interface
    function  getNumbColorDefs(): integer;
    procedure setId( sNewId: string );
    function  getId(): string;
+   function  isLocalRenderInfo(): boolean;
+   procedure setLocalRenderInfo( newVal: boolean );
    procedure addColorDef( newColor: TSBMLRenderColorDefinition );
    function  getColorDef( index: integer): TSBMLRenderColorDefinition;
  //  function  getNumbGradientDefs(): integer;
@@ -928,6 +930,7 @@ implementation
   constructor TSBMLRenderInformation.create() overload;
   begin
     self.id := '';
+    self.bLocalRenderInfo := false;
     self.colorDefList := TList<TSBMLRenderColorDefinition>.create;
   //  self.gradientDefList := TList<TSBMLRenderGradientDefinition>.create;
     self.styleList := TList<TSBMLRenderStyle>.create;
@@ -938,6 +941,7 @@ implementation
   var i: integer;
   begin
     self.id := cpy.getId;
+    self.bLocalRenderInfo := cpy.isLocalRenderInfo;
     self.colorDefList := TList<TSBMLRenderColorDefinition>.create;
     self.styleList := TList<TSBMLRenderStyle>.create;
     self.lineEndingList := TList<TSBMLRenderLineEnding>.create;
@@ -958,8 +962,13 @@ implementation
 
   function TSBMLRenderInformation.printStr: string;
   var i: integer;
+     bStr: string;
   begin
-    Result :=  sLineBreak + ' Render Information - id: ' + self.getId + sLineBreak;
+    if self.bLocalRenderInfo then bStr := 'true'
+    else bStr := 'false';
+
+    Result :=  sLineBreak + ' Render Information - id: ' + self.getId +
+     ', Local Render Info: ' + bStr + sLineBreak;
     Result := Result + ' Color Definitions: ';
     for i := 0 to self.getNumbColorDefs -1 do
       Result := Result + self.getColorDef(i).printStr + ', ';
@@ -972,6 +981,15 @@ implementation
     for i := 0 to self.getNumbLineEndings -1 do
       Result := Result + '-- ' + self.getLineEnding(i).printStr + sLineBreak;
 
+  end;
+
+  function  TSBMLRenderInformation.isLocalRenderInfo(): boolean;
+  begin
+    Result := self.bLocalRenderInfo;
+  end;
+  procedure TSBMLRenderInformation.setLocalRenderInfo( newVal: boolean );
+  begin
+    self.bLocalRenderInfo := newVal;
   end;
 
   function  TSBMLRenderInformation.getNumbColorDefs(): integer;

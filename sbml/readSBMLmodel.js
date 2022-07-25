@@ -16,17 +16,22 @@ class ProcessSBML {
                       'activator', 'inhibitor', 'undefined'];
    this.glyphTypes = ['COMPARTMENTGLYPH', 'SPECIESGLYPH', 'REACTIONGLYPH',
      'SPECIESREFERENCEGLYPH', 'TEXTGLYPH', 'GENERALGLYPH', 'GRAPHICALOBJECT', 'ANY'];
-   console.log(' # ofplugins: ', this.model.getNumPlugins() );
+   //console.log(' # ofplugins: ', this.model.getNumPlugins() );
    if(this.model.getNumPlugins() >0) {
-     const rGPluginList = libsbml.castObject(this.model.getPlugin("render"), libsbml.RenderListOfLayoutsPlugin);
-     const rGPluginListNum = rGPluginList.getNumGlobalRenderInformationObjects();
-     if(rGPluginListNum > 0) {
-           this.globalRenderInfo = rGPluginList.getRenderInformation(0);
-           this.isGlobalRenderSet = true;
-           console.log(' model has global render info' );
-     }
 
      this.SBMLLayOut = this.model.findPlugin('layout');
+
+     const layoutplugin = libsbml.castObject(this.SBMLLayOut, libsbml.LayoutModelPlugin);
+     const lol = layoutplugin.getListOfLayouts();
+     const rPluginList = libsbml.castObject(lol.getPlugin("render"), libsbml.RenderListOfLayoutsPlugin);
+     const numGRInfo = rPluginList.getNumGlobalRenderInformationObjects();
+     if( numGRInfo > 0) {
+       this.globalRenderInfo = rPluginList.getRenderInformation(0);
+       this.isGlobalRenderSet = true;
+       console.log(' model has global render info' );
+     }
+
+
      if(this.model.hasPlugin('render')) {
        console.log(' model has render plugin' );
      }
@@ -39,15 +44,7 @@ class ProcessSBML {
      else {
        this.newLayoutPlug = this.SBMLLayOut.asLayout();
        this.numLayouts = this.newLayoutPlug.getNumLayouts(); // sometimes it reports 2 ?
-       console.log('Num layouts: ', this.numLayouts);
-       const layout_rGPluginList = libsbml.castObject(this.SBMLLayOut, libsbml.RenderListOfLayoutsPlugin);
-       const numGlobRender = layout_rGPluginList.getNumGlobalRenderInformationObjects();
-       if(numGlobRender >0) {
-         const globRenderInfo = layout_rGPluginList.getRenderInformation(0);
-         console.log('GlobalRenderInfo present');
-       }
-       //const globRenderList = this.SBMLLayOut.asRenderListOfLayoutsPlugin();// uncaught error
-      // const globRender = this.SBMLLayOut.asRenderLayoutPlugin();  // uncaught error
+       //console.log('Num layouts: ', this.numLayouts);
      }
    }
  }
@@ -284,12 +281,13 @@ getRules(tModela, tRule) {
     var i;
   
     for(i=0; i< this.numLayouts; i++) {
-   // for(i=0; i< 1; i++) { // cap at one for now, numLayouts reports 2 when there is one?
+    //  numLayouts reports 2 sometimes when there is one?
     //  console.log(' Getting next layout #: ', i);
       const aLayout = this.newLayoutPlug.getLayout(i);
       // Grab any local Render information:
       const rPlugin = this.libSBML.castObject(aLayout.getPlugin("render"), this.libSBML.RenderLayoutPlugin);
       const numLocalRenderPlug = rPlugin.getNumLocalRenderInformationObjects();
+
       if( numLocalRenderPlug > 0 ) {
         this.localRenderInfo = rPlugin.getRenderInformation(numLocalRenderPlug-1); // works for localInfo, not GlobalInfo
       this.isLocalRenderSet = true;
@@ -464,8 +462,8 @@ getRules(tModela, tRule) {
            sbmlSpRefGlyph.setSpeciesRefId(curSpRefGlyph.getSpeciesReferenceId()); }
          else { sbmlSpRefGlyph.setSpeciesRefId('');}
          if(curSpRefGlyph.isSetRole() ){
-           sbmlSpRefGlyph.setRole(curSpRefGlyph.getRoleString()); }
-         else {sbmlSpRefGlyph.setRole('undefined'); }
+           sbmlSpRefGlyph.setStrRole(curSpRefGlyph.getRoleString()); }
+         else {sbmlSpRefGlyph.setStrRole('undefined'); }
          // If the curve is specified, it overrides the inherited bounding box:
          if(curSpRefGlyph.isSetCurve()) {
            const curCurve = curSpRefGlyph.getCurve();
@@ -540,8 +538,9 @@ getRules(tModela, tRule) {
          tDims, tPt )
    {
 
-     if (this.isLocalRenderSet){
+     if (this.isLocalRenderSet){  // local has precedence over global
        this.currentRenderInfo = this.localRenderInfo;
+       tRenderInfo.setLocalRenderInfo(true);
      }
      else if (this.isGlobalRenderSet) {
        this.currentRenderInfo = this.globalRenderInfo;
@@ -668,7 +667,7 @@ getRules(tModela, tRule) {
        tLineE.setRenderGroup( tRenderGroup );
        //console.log('tLineE- id: ',tLineE.getId() );
        nRenderInfo.addLineEnding( tLineE );
-      // tRenderGroup.clear(); // needed?
+
      }
      return nRenderInfo;
    }
@@ -678,32 +677,39 @@ getRules(tModela, tRule) {
    {
      nRenderStyle.clear();
      if( sbmlRenderStyle.isSetId() ) { nRenderStyle.setId(sbmlRenderStyle.getId()); }
-     for( let i =0; i < sbmlRenderStyle.getNumTypes(); i++ ) {
+     if(sbmlRenderStyle.getNumTypes() > 0) {
+       const crType = sbmlRenderStyle.createTypeString(); // whitespace separated list
        for( let j=0; j < this.glyphTypes.length; j ++) {
-         if(sbmlRenderStyle.isInTypeList(this.glyphTypes[j])) {
+         if ( crType.includes(this.glyphTypes[j]) ) {
+           //console.log( ' Adding glyph Type',this.glyphTypes[j] );
            nRenderStyle.addType(this.glyphTypes[j]);
          }
        }
      }
-     for( let i=0; i < sbmlRenderStyle.getNumRoles(); i++ ) {
+     if( sbmlRenderStyle.getNumRoles() > 0) {
+     //console.log('roles: ', sbmlRenderStyle.createRoleString());
        for( let j=0; j < this.spRefRoles.length; j ++) {
          if(sbmlRenderStyle.isInRoleList(this.spRefRoles[j])) {
+          // console.log( ' Adding Sp Glyph Role: ',this.spRefRoles[j] );
            nRenderStyle.addRole(this.spRefRoles[j]);
          }
        }
-     }      // check glyph Ids:
-     for( let i=0; i< sbmlRenderStyle.getNumIds(); i++ ) {
-       for( let j=0; j < this.glyphIds.length; j++ ) {
-         if(sbmlRenderStyle.isInIdList( this.glyphIds[j] )) {
-           nRenderStyle.addGoId( this.glyphIds[j] );
+     }
+     // Local Render Info ONLY, check glyph Ids:
+     if(this.isLocalRenderSet) {
+       for( let i=0; i< sbmlRenderStyle.getNumIds(); i++ ) {
+         for( let j=0; j < this.glyphIds.length; j++ ) {
+           if(sbmlRenderStyle.isInIdList( this.glyphIds[j] )) {
+             nRenderStyle.addGoId( this.glyphIds[j] );
+           }
          }
        }
-     }
           // check if IdList contains species node Id as well:
-     for( let i=0; i< sbmlRenderStyle.getNumIds(); i++ ) {
-       for( let j=0; j < this.specIds.length; j++ ) {
-         if(sbmlRenderStyle.isInIdList( this.specIds[j] )) {
-           nRenderStyle.addGoId( this.specIds[j] );
+       for( let i=0; i< sbmlRenderStyle.getNumIds(); i++ ) {
+         for( let j=0; j < this.specIds.length; j++ ) {
+           if(sbmlRenderStyle.isInIdList( this.specIds[j] )) {
+             nRenderStyle.addGoId( this.specIds[j] );
+           }
          }
        }
      }

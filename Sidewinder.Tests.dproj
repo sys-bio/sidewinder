@@ -123,6 +123,7 @@
         <DCCReference Include="tests\uTestSBMLReadGenerateEqs.pas"/>
         <DCCReference Include="simulator\uSimulation.pas"/>
         <DCCReference Include="sbml\uSBMLClasses.Render.pas"/>
+        <DCCReference Include="sbml\uSBMLClasses.Layout.pas"/>
         <None Include="AllTests_index.html"/>
         <None Include="sbml\readSBMLmodel.js"/>
         <BuildConfiguration Include="Release">
