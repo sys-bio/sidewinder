@@ -583,8 +583,6 @@ end;
    Result := self.modelRendering;
  end;
 
- //function  TModel.getRenderStyle(newGlyphId: string; newGlyphType: string;
- //                         newGlyphRole: string ): TSBMLRenderStyle;
  function  TModel.getRenderStyle(newGlyphId: string; newSpeciesId: string;
              newGlyphType: string; newGlyphRole: string ): TSBMLRenderStyle;
  var i,j: integer;
@@ -628,7 +626,10 @@ end;
       for j := 0 to self.modelRendering.getStyle(i).getNumbTypes -1 do
         begin
         if self.modelRendering.getStyle(i).getType(j) = newGlyphType then
+          begin
           Result := self.modelRendering.getStyle(i);
+          exit;
+          end;
         end;
 
     end;

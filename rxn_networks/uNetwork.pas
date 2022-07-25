@@ -366,12 +366,25 @@ begin
         end;
       end;
 
+       // Next check if style has hex color listed, rather than color Def:
       if strokeCFound = false then
-        self.outlineColor := RGB(255,102,0); // default
+        begin
+        if nodeStyle.getRenderGroup.getStrokeColor <> '' then
+          self.outlineColor := HexToColor(nodeStyle.getRenderGroup.getStrokeColor)
+        else
+          self.outlineColor := RGB(255,102,0); // default
+        end;
       if fillCFound = false then
-        self.fillColor := RGB(255,204,153);  // default
+        begin
+        if nodeStyle.getRenderGroup.getFillColor <> '' then
+          self.fillColor := HexToColor(nodeStyle.getRenderGroup.getFillColor)
+        else
+          self.fillColor := RGB(255,204,153);  // default
+        end;
       self.outLineThickness := nodeStyle.getRenderGroup.getStrokeWidth;
-      if self.outlineThickness < 1 then self.outlineThickness := DEFAULT_NODE_OUTLINE_THICKNESS;
+      if self.outlineThickness = 0 then self.outlineColor := self.fillColor; // No outline
+
+      if self.outlineThickness < 0 then self.outlineThickness := DEFAULT_NODE_OUTLINE_THICKNESS;
 
      // TODO: render node shape
     end
@@ -379,7 +392,7 @@ begin
     begin
     fillColor := RGB(255,204,153);// clWebPeachPuff;
     outlineColor := RGB(255,102,0);
-    outlineThickness := DEFAULT_NODE_OUTLINE_THICKNESS;  //3;
+    outlineThickness := DEFAULT_NODE_OUTLINE_THICKNESS;
     // TODO call function to draw default node shape
     end;
 
@@ -774,6 +787,11 @@ begin                // if dest spRefGlyph is the same as another then set curve
         begin
         spRefGlyphStyle := reactionRenderInfo.getGlyphRenderStyle(newGlyphRxn.getSpeciesRefGlyph(i).getId,
               'SPECIESREFERENCEGLYPH',newGlyphRxn.getSpeciesRefGlyph(i).getRole );
+        if spRefGlyphStyle = nil then  // Now check if any syles associates with REACTIONGLYPH:
+          begin
+          spRefGlyphStyle := reactionRenderInfo.getGlyphRenderStyle(newGlyphRxn.getId,
+              'REACTIONGLYPH',newGlyphRxn.getSpeciesRefGlyph(i).getRole );
+          end;
         if spRefGlyphStyle <> nil then
           begin
           if spRefGlyphStyle.getRenderGroup <> nil then
@@ -789,7 +807,12 @@ begin                // if dest spRefGlyph is the same as another then set curve
             self.thickness := spRefGlyphStyle.getRenderGroup.getStrokeWidth;
             if self.thickness < 1 then self.thickness := DEFAULT_REACTION_THICKNESS;
             if colorFound = false then
-              self.fillColor := DEFAULT_REACTION_COLOR;
+              begin
+              if spRefGlyphStyle.getRenderGroup.getFillColor <> '' then
+                self.fillColor := HexToTColor( spRefGlyphStyle.getRenderGroup.getFillColor )
+              else
+                self.fillColor := DEFAULT_REACTION_COLOR;
+              end;
             end;
           end
         else
@@ -1265,6 +1288,7 @@ var i, j, k, l: integer;
    reactionState: TReactionState;
    nodeColorDefList: TList<TSBMLRenderColorDefinition>;
 begin
+    console.log(model.printStr);
     modelRender := nil;
     modelLayout := model.getSBMLLayout;
     if model.getSBMLRenderInfo <> nil then
@@ -1348,7 +1372,7 @@ begin
              // ************************
           end;
       end;
-   //console.log('Done loading SBML network layout');
+  // console.log('Done loading SBML network layout');
 end;
 
 function TNetwork.getColorDefs(newStyle: TSBMLRenderStyle;
@@ -1712,7 +1736,7 @@ begin
   //console.log('Node h: ', nodes[length(nodes) -1].state.h, ', width: ',nodes[length(nodes) -1].state.w);
   result := nodes[length (nodes)-1];
   result.state.x := x; result.state.y := y;
-  result.state.outlineThickness :=  DEFAULT_NODE_OUTLINE_THICKNESS;
+  result.state.outlineThickness := DEFAULT_NODE_OUTLINE_THICKNESS;
   result.state.id := id;
   result.state.species := id; // default
   self.networkEvent(nil); // Notify listener
@@ -1726,7 +1750,7 @@ begin
   result := nodes[length (nodes)-1];
   result.state.x := x; result.state.y := y;
   result.state.h := h; result.state.w := w;
-  result.state.outlineThickness :=  DEFAULT_NODE_OUTLINE_THICKNESS;
+  result.state.outlineThickness := DEFAULT_NODE_OUTLINE_THICKNESS;
   result.state.id := id;
   result.state.species := id;  // default
   self.networkEvent(nil); // Notify listener
