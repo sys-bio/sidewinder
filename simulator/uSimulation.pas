@@ -191,7 +191,7 @@ begin
     self.p_InitAssignEqs := self.p_InitAssignEqs + 'return p;' + sLineBreak;
   if self.s_InitAssignEqs <> '' then
     self.s_InitAssignEqs := self.s_InitAssignEqs + 'return s;' + sLineBreak;
- // console.log( '*** p Init eqs: ', self.p_InitAssignEqs );
+//  console.log( '*** p Init eqs: ', self.p_InitAssignEqs );
 //  console.log( '** s Init eqs: ', self.s_InitAssignEqs );
 end;
 

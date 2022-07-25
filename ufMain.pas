@@ -1370,7 +1370,8 @@ end;
 
 procedure TMainForm.refreshPlotAndSliderPanels();
 begin
-  self.refreshPlotPanels;
+  if not self.mainController.IsOnline then
+    self.refreshPlotPanels;
   self.refreshSliderPanels;
 
 end;

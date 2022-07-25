@@ -12,7 +12,7 @@ interface
  TVTextAnchorTypes = ( V_NULL, V_TOP, V_MIDDLE, V_BOTTOM, V_BASELINE );
  THTextAnchorTypes = ( H_NULL, H_START, H_MIDDLE, H_END );
     // pas2js compiler currently does not support enum constant where you sent
-    // initial val to something other than 0;
+    // first val to something other than 0;
     // Would like this:
  //  TVTextAnchorTypes = ( V_TOP = 1, V_MIDDLE, V_BOTTOM, V_BASELINE );
 
@@ -31,6 +31,7 @@ interface
     procedure setValueRGBAInts( red, green, blue, alpha: integer );
     function  containsValue( sCmpValue: string ): boolean;
     procedure clear();
+    function printStr(): string;
 
  end;
 
@@ -50,6 +51,7 @@ interface
      procedure setStrokeWidth( newW: double );
      function getStrokeWidth(): double;
      function isStrokeWidthSet(): boolean;
+     function printStr(): string;
 
  end;
 
@@ -73,6 +75,7 @@ interface
      function getY(): double;
      procedure setRelCoordinate(newVal: boolean);
      function  isRelCoordinate(): boolean;
+     function printStr(): string;
  end;
  {TODO:
  TSBMLRenderListOfElements = class
@@ -120,6 +123,7 @@ interface
      function  getPt( index: integer ): TSBMLRenderPoint;
      function  getNumbPts(): integer;
      procedure clear();
+     function printStr(): string;
  end;
 
  TSBMLRenderRectangle = class( TSBMLRenderPrimitive1D )
@@ -152,6 +156,7 @@ interface
      function getRatio(): double;
      procedure setFill( newFill: string );
      function getFill(): string;
+     function printStr(): string;
 
  end;
 
@@ -178,6 +183,7 @@ interface
    function isRatioSet(): boolean;
    procedure setFill( newFill: string );
    function getFill(): string;
+   function printStr(): string;
 
  end;
 
@@ -226,12 +232,15 @@ interface
      function isEllipseSet(): boolean;
      procedure setVTextAnchor( newAnchor: TVTextAnchorTypes );
      function getVTextAnchor(): TVTextAnchorTypes;
+     function getStrVTextAnchor(): string;
      procedure setHTextAnchor( newAnchor: THTextAnchorTypes );
      function getHTextAnchor(): THTextAnchorTypes;
+     function getStrHTextAnchor(): string;
      procedure setStartHead( headId: string );
      function getStartHead(): string;
      procedure setEndHead( headId: string );
      function getEndHead(): string;
+     function printStr(): string;
      procedure clear();
  end;
 
@@ -249,6 +258,7 @@ interface
      function getRenderGroup(): TSBMLRenderGroup;
      function isSetRotationalMapping(): boolean;
      procedure setRotationalMapping( value: boolean );
+     function printStr(): string;
  end;
 
  TSBMLRenderStyle = class
@@ -275,6 +285,7 @@ interface
     function  getGoId( index: integer ): string;
     function  getNumbGoIds(): integer;
     procedure clear();
+    function printStr(): string;
 
  end;
  {
@@ -289,7 +300,7 @@ interface
   // gradientDefList: TList<TSBMLRenderGradientDefinition>;
    lineEndingList: TList<TSBMLRenderLineEnding>;
    styleList: TList<TSBMLRenderStyle>;
-
+   bLocalRenderInfo: boolean;
    id: string;
  public
    constructor create() overload;
@@ -297,6 +308,8 @@ interface
    function  getNumbColorDefs(): integer;
    procedure setId( sNewId: string );
    function  getId(): string;
+   function  isLocalRenderInfo(): boolean;
+   procedure setLocalRenderInfo( newVal: boolean );
    procedure addColorDef( newColor: TSBMLRenderColorDefinition );
    function  getColorDef( index: integer): TSBMLRenderColorDefinition;
  //  function  getNumbGradientDefs(): integer;
@@ -310,6 +323,7 @@ interface
    function  getStyle( index: integer ): TSBMLRenderStyle;
    function  getGlyphRenderStyle(newGlyphId: string; newGlyphType: string;
                           newGlyphRole: TSPECIES_REF_ROLE ): TSBMLRenderStyle;
+   function  printStr(): string;
 
  end;
 
@@ -352,6 +366,11 @@ implementation
   begin
      self.id := newId;
      self.value := '#' + newColorStr;
+  end;
+
+  function TSBMLRenderColorDefinition.printStr(): string;
+  begin
+    Result := ' Color id: ' +self.id + ', value: ' + self.value;
   end;
 
   procedure TSBMLRenderColorDefinition.setId( sNewId: string);
@@ -412,6 +431,13 @@ implementation
     self.id := '';
     self.x := newX;
     self.y := newY;
+  end;
+
+  function TSBMLRenderPoint.printStr(): string;
+  begin
+    Result := ' Render pt ID: ' + self.id + ', x,y: ' + floattostr(self.x) + ', '+ floattostr(self.y);
+    if self.relCoordinate then Result := Result + ', Rel Coord,'
+    else Result := Result + ', Abs Coord,';
   end;
 
   procedure TSBMLRenderPoint.setRelCoordinate(newVal: boolean);
@@ -516,6 +542,18 @@ implementation
     self.ellipseSet := false;
   end;
 
+  function TSBMLRenderGroup.printStr(): string;
+  begin
+    Result := ' Render group: Stoke width: ' + inttostr(self.getStrokeWidth) + ', Stroke color: ' + self.getStrokeColor;
+    Result := Result + ', fill color: ' + self.getFillColor + ', font size: ' + inttostr(self.getFontSize);
+    Result := Result + ', font style: ' + self.getFontStyle + ', vTextAnchor: ' + self.getStrVTextAnchor;
+    Result := Result + ', hTextAnchor: ' + self.getStrHTextAnchor + ', start head: ' + self.getStartHead;
+    Result := Result + ', end head: ' + self.getEndHead;
+    if self.isRectangleSet then Result := Result + self.getRectangle.printStr;
+    if self.isPolygonSet then Result := Result + self.getPolygon.printStr;
+    if self.isEllipseSet then Result := Result + self.getEllipse.printStr;
+  end;
+
   procedure TSBMLRenderGroup.setStartHead( headId: string );
   begin
     self.startHead := headId;
@@ -596,6 +634,18 @@ implementation
   begin
     Result := self.vTextAnchor;
   end;
+
+  function TSBMLRenderGroup.getStrVTextAnchor(): string;
+  begin
+    case self.vTextAnchor of
+      V_NULL: Result := 'V_NULL';
+      V_TOP: Result := 'V_TOP';
+      V_MIDDLE: Result := 'V_MIDDLE';
+      V_BOTTOM: Result := 'V_BOTTOM';
+      V_BASELINE: Result := 'V_BASELINE';
+    end;
+  end;
+
   procedure TSBMLRenderGroup.setHTextAnchor( newAnchor: THTextAnchorTypes );
   begin
     self.hTextAnchor := newAnchor;
@@ -604,6 +654,18 @@ implementation
   begin
     Result := self.hTextAnchor;
   end;
+
+  function TSBMLRenderGroup.getStrHTextAnchor: string;
+  begin
+    case self.hTextAnchor of
+      H_NULL: Result := 'H_NULL';
+      H_START: Result := 'H_START' ;
+      H_MIDDLE: Result := 'H_MIDDLE';
+      H_END: Result := 'h_END';
+    end;
+  end;
+
+
 
   procedure TSBMLRenderGroup.setRectangle( newR: TSBMLRenderRectangle );
   begin
@@ -668,6 +730,18 @@ implementation
     self.enableRotationalMapping := cpy.isSetRotationalMapping;
     self.endBBox := TSBMLLayoutBoundingBox.create( cpy.getBoundingBox );
     self.endRenderGroup := TSBMLRenderGroup.create( cpy.getRenderGroup );
+  end;
+
+  function TSBMLRenderLineEnding.printStr: string;
+  begin
+    Result := ' Render line ending, id: ' + self.getId;
+    Result := Result + ', stroke color: ' + self.getStroke + ', stroke width: ' +
+            floattostr(self.getStrokeWidth) + ', Rotational mapping: ';
+    if self.isSetRotationalMapping then Result := Result + 'true'
+    else Result := Result + 'false';
+    Result := Result + self.getBoundingBox.printStr;
+    Result := Result + self.getRenderGroup.printStr;
+
   end;
 
   function TSBMLRenderLineEnding.isSetRotationalMapping(): boolean;
@@ -744,6 +818,22 @@ implementation
     self.typeList := TList<string>.create;
     self.goIdList := TList<string>.create;
     self.roleList := TList<string>.create;
+  end;
+
+  function TSBMLRenderStyle.printStr: string;
+  var i: integer;
+  begin
+    Result := ' Render style id:' + self.getId + ', RG: ' + self.getRenderGroup.printStr;
+    Result := Result + ', types: ';
+    for i := 0 to self.getNumbTypes -1 do
+      Result := Result + self.getType(i) + ', ';
+    Result := Result + ', roles: ';
+    for i := 0 to self.getNumbRoles - 1 do
+      Result := Result + self.getRole(i) + ', ';
+    Result := Result + ', Graphical Obj Ids: ';
+    for i := 0 to self.getNumbGoIds -1 do
+      Result := Result + self.getGoId(i) + ' ';
+
   end;
 
   procedure TSBMLRenderStyle.setId( newId: string);
@@ -840,6 +930,7 @@ implementation
   constructor TSBMLRenderInformation.create() overload;
   begin
     self.id := '';
+    self.bLocalRenderInfo := false;
     self.colorDefList := TList<TSBMLRenderColorDefinition>.create;
   //  self.gradientDefList := TList<TSBMLRenderGradientDefinition>.create;
     self.styleList := TList<TSBMLRenderStyle>.create;
@@ -850,6 +941,7 @@ implementation
   var i: integer;
   begin
     self.id := cpy.getId;
+    self.bLocalRenderInfo := cpy.isLocalRenderInfo;
     self.colorDefList := TList<TSBMLRenderColorDefinition>.create;
     self.styleList := TList<TSBMLRenderStyle>.create;
     self.lineEndingList := TList<TSBMLRenderLineEnding>.create;
@@ -866,6 +958,38 @@ implementation
       begin
         self.lineEndingList.Add( TSBMLRenderLineEnding.create(cpy.getLineEnding(i)) );
       end;
+  end;
+
+  function TSBMLRenderInformation.printStr: string;
+  var i: integer;
+     bStr: string;
+  begin
+    if self.bLocalRenderInfo then bStr := 'true'
+    else bStr := 'false';
+
+    Result :=  sLineBreak + ' Render Information - id: ' + self.getId +
+     ', Local Render Info: ' + bStr + sLineBreak;
+    Result := Result + ' Color Definitions: ';
+    for i := 0 to self.getNumbColorDefs -1 do
+      Result := Result + self.getColorDef(i).printStr + ', ';
+
+    Result := Result + sLineBreak + ' Style list: ';
+    for i := 0 to self.getNumberStyles -1 do
+      Result := Result + '-- ' + self.getStyle(i).printStr + sLineBreak;
+
+    Result := Result + ' Line endings: ';
+    for i := 0 to self.getNumbLineEndings -1 do
+      Result := Result + '-- ' + self.getLineEnding(i).printStr + sLineBreak;
+
+  end;
+
+  function  TSBMLRenderInformation.isLocalRenderInfo(): boolean;
+  begin
+    Result := self.bLocalRenderInfo;
+  end;
+  procedure TSBMLRenderInformation.setLocalRenderInfo( newVal: boolean );
+  begin
+    self.bLocalRenderInfo := newVal;
   end;
 
   function  TSBMLRenderInformation.getNumbColorDefs(): integer;
@@ -984,6 +1108,12 @@ implementation
     end;
   end;
 
+  function TSBMLRenderPrimitive1D.printStr: string;
+  begin
+    Result := ' Primative 1D id: ' + self.id + ', stroke: ' + self.stroke +
+              ', stroke width: ' + floattostr(self.strokeWidth);
+  end;
+
   procedure TSBMLRenderPrimitive1D.setId( newId: string );
   begin
     self.id := newId;
@@ -1039,6 +1169,15 @@ implementation
         end;
     end
     else console.log( 'cpy is nil: TSBMLRenderPolygon.create' );
+  end;
+
+  function TSBMLRenderPolygon.printStr: string;
+  var i: integer;
+  begin
+    Result := ' Render Polygon: ' + inherited printStr + ', fill: ' + self.fill;
+    for i := 0 to self.renderPtList.Count -1 do
+      Result := Result + self.renderPtList[i].printStr;
+
   end;
 
   procedure TSBMLRenderPolygon.clear();
@@ -1100,6 +1239,17 @@ implementation
     else console.log( 'cpy is nil: TSBMLRenderRectangle.create' );
 
   end;
+
+  function TSBMLRenderRectangle.printStr: string;
+  begin
+    Result := ' Render rectangle: ' + inherited printstr;
+    Result := Result + ', fill color: ' + self.getFill + ', get x: ' +
+         floattostr(self.getX) + ', getY: ' + floattostr(self.getY) +
+         ', height: ' + floattostr(self.getHeight) + ', width: ' + floattostr(self.getWidth);
+    Result := Result + ', curve radius x:' + floattostr(self.getRx) + ', curve radius y: ' +
+              floattostr(self.getRy) + ', Ratio: ' + floattostr(self.getRatio);
+  end;
+
   procedure TSBMLRenderRectangle.setX( newX: double );
   begin
     self.x := newX;
@@ -1190,6 +1340,14 @@ implementation
       self.ry := cpy.getRy;
       self.Ratio := cpy.getRatio;
     end;
+  end;
+
+  function TSBMLRenderEllipse.printStr: string;
+  begin
+    Result := ' Render Ellipse: ' + inherited printStr;
+    Result := ', centerX: ' + floattostr(self.getCx) + ', centerY: ' + floattostr(self.getCy) +
+         ', radius X: ' + floattostr(self.getRx) + ', radius Y: ' + floattostr(self.getRy);
+    Result := Result + ', ratio: ' + floattostr(self.getRatio);
   end;
 
   function TSBMLRenderEllipse.getCx(): double;

@@ -13,7 +13,9 @@ uses
   uTestSBML_ReadModels in 'sbml\uTestSBML_ReadModels.pas',
   uSBMLReader in 'sbml\uSBMLReader.pas',
   uTestSBMLReadGenerateEqs in 'tests\uTestSBMLReadGenerateEqs.pas',
-  uSimulation in 'simulator\uSimulation.pas';
+  uSimulation in 'simulator\uSimulation.pas',
+  uSBMLClasses.Render in 'sbml\uSBMLClasses.Render.pas',
+  uSBMLClasses.Layout in 'sbml\uSBMLClasses.Layout.pas';
 
 {$R *.res}
 

@@ -36,7 +36,8 @@ implementation
        end
      else Result.Add('Test line blank, Ref: ' +refList[i]);
      end;
-
+   if testResultList.Count > refList.Count then
+     Result.Add(testResultList[refList.Count] + ', *** Ref: Empty,');
  end;
 
 

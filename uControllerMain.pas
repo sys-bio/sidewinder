@@ -50,7 +50,7 @@ type
     procedure SetStepSize(newStepSize: double); // default 0.1 = 100 msec
     function  getCurrTime: double;
     procedure setCurrTime( newTime: double );
-    function  IsOnline(): Boolean;
+    function  IsOnline(): Boolean;  // Simulation running
     procedure SetOnline(bOnline: Boolean);
     procedure SetModelLoaded(bModelLoaded: boolean);
     function  IsModelLoaded(): Boolean;

@@ -1422,8 +1422,8 @@ end;
       Result := Result + self.getCompGlyph(i).printStr;
     Result := Result + sLineBreak + ' Species Glyphs: ';
     for i := 0 to self.getNumSpGlyphs -1 do
-      Result := Result + self.getSpGlyph(i).printStr;
-    Result := Result + sLineBreak + ' Reaction and Sp Ref Glyphs: ';
+      Result := Result + self.getSpGlyph(i).printStr + sLineBreak;
+    Result := Result + ' Reaction and Sp Ref Glyphs: ';
     for i := 0 to self.getNumRxnGlyphs -1 do
       Result := Result + self.getRxnGlyph(i).printStr;
     Result := Result + sLineBreak + ' Text Glyphs: ';

@@ -16,13 +16,25 @@ class ProcessSBML {
                       'activator', 'inhibitor', 'undefined'];
    this.glyphTypes = ['COMPARTMENTGLYPH', 'SPECIESGLYPH', 'REACTIONGLYPH',
      'SPECIESREFERENCEGLYPH', 'TEXTGLYPH', 'GENERALGLYPH', 'GRAPHICALOBJECT', 'ANY'];
-   console.log(' # ofplugins: ', this.model.getNumPlugins() );
+   //console.log(' # ofplugins: ', this.model.getNumPlugins() );
    if(this.model.getNumPlugins() >0) {
+
      this.SBMLLayOut = this.model.findPlugin('layout');
-     this.SBMLGlobalRender = libsbml.RenderExtension.prototype.getXmlnsL3V1V1()
-    // if(this.model.hasPlugin('render')) {
-    //   console.log(' model has render plugin' );
-    // }
+
+     const layoutplugin = libsbml.castObject(this.SBMLLayOut, libsbml.LayoutModelPlugin);
+     const lol = layoutplugin.getListOfLayouts();
+     const rPluginList = libsbml.castObject(lol.getPlugin("render"), libsbml.RenderListOfLayoutsPlugin);
+     const numGRInfo = rPluginList.getNumGlobalRenderInformationObjects();
+     if( numGRInfo > 0) {
+       this.globalRenderInfo = rPluginList.getRenderInformation(0);
+       this.isGlobalRenderSet = true;
+       console.log(' model has global render info' );
+     }
+
+
+     if(this.model.hasPlugin('render')) {
+       console.log(' model has render plugin' );
+     }
      if(this.model.hasPlugin('layout')) {
        console.log(' model has layout plugin' );
      }
@@ -31,8 +43,8 @@ class ProcessSBML {
      }
      else {
        this.newLayoutPlug = this.SBMLLayOut.asLayout();
-       this.numLayouts = this.newLayoutPlug.getNumLayouts(); // why does it report 2 if only one?
-
+       this.numLayouts = this.newLayoutPlug.getNumLayouts(); // sometimes it reports 2 ?
+       //console.log('Num layouts: ', this.numLayouts);
      }
    }
  }
@@ -41,7 +53,7 @@ class ProcessSBML {
    tModela.numSpecies = this.model.getNumSpecies();
    tModela.numParams = this.model.getNumParameters();
    tModela.numCompartments = this.model.getNumCompartments();
-   const numInitAssignments = this.model.getNumInitialAssignments(); // TODO: Need to get these
+   const numInitAssignments = this.model.getNumInitialAssignments();
    console.log(' Number of Init assignments: ',numInitAssignments);
    tModela.numEvents = this.model.getNumEvents();
    console.log( 'Number of events: ', this.model.getNumEvents() );
@@ -125,7 +137,6 @@ getRules(tModela, tRule) {
         tSpecies.setCompartment(newSpecies.getCompartment()); }
       if (newSpecies.isSetBoundaryCondition()) {
         tSpecies.setBoundaryCondition(newSpecies.getBoundaryCondition());}
-      // console.log( ' Setting boundary condition to true') }
       if (newSpecies.isSetName()) {
         tSpecies.setName(newSpecies.getName()); }
       if (newSpecies.isSetHasOnlySubstanceUnits()) {
@@ -143,7 +154,6 @@ getRules(tModela, tRule) {
         tFuncDef.clear();
         const newFuncDef = this.model.getFunctionDefinition(i);
         if( newFuncDef.isSetIdAttribute()) {
-          console.log('func Def: ', newFuncDef.getId());
           tFuncDef.setId(newFuncDef.getId());
         }
         if( newFuncDef.isSetName() ) {
@@ -151,12 +161,13 @@ getRules(tModela, tRule) {
         }
         if( newFuncDef.isSetBody() ) {
           const newBody = newFuncDef.getBody();
-          const strBody = new this.libSBML.SBMLFormulaParser().formulaToL3String(newBody);
+       //  const strBody = new this.libSBML.SBMLFormulaParser().formulaToL3String(newBody);  // exponent is represented as x^2
+          const strBody = new this.libSBML.SBMLFormulaParser().formulaToString(newBody); // exponent is represented as pow(x,2)
           tFuncDef.setFuncFormula(strBody.trim());
         }
         const newMath = newFuncDef.getMath();
-        console.log(' func Math: ', newMath.getType() );
         const strMath = new this.libSBML.SBMLFormulaParser().formulaToL3String(newMath);
+      //  console.log('** Func def Math: ', strMath.trim());
         var fullFuncLabel = tFuncDef.getId() + '('; // func name with comma sep vars in parenthesis
         let varArr = strMath.split(',');
         const numVars = varArr.length -1; // last element is formula
@@ -173,7 +184,7 @@ getRules(tModela, tRule) {
         fullFuncLabel = fullFuncLabel + ')';
         tFuncDef.setFullFuncLabel( fullFuncLabel );
         tModela.addFuncDef( tFuncDef );
-        console.log(' Func eq: ', strMath);
+       // console.log(' Func eq: ', strMath);
       }
     }
     //else { console.log('No SBML Func Defs!');}
@@ -270,24 +281,17 @@ getRules(tModela, tRule) {
     var i;
   
     for(i=0; i< this.numLayouts; i++) {
-   // for(i=0; i< 1; i++) { // cap at one for now, numLayouts reports 2 when there is one?
-      console.log(' Getting next layout #: ', i);
+    //  numLayouts reports 2 sometimes when there is one?
+    //  console.log(' Getting next layout #: ', i);
       const aLayout = this.newLayoutPlug.getLayout(i);
+      // Grab any local Render information:
       const rPlugin = this.libSBML.castObject(aLayout.getPlugin("render"), this.libSBML.RenderLayoutPlugin);
-
-
       const numLocalRenderPlug = rPlugin.getNumLocalRenderInformationObjects();
+
       if( numLocalRenderPlug > 0 ) {
         this.localRenderInfo = rPlugin.getRenderInformation(numLocalRenderPlug-1); // works for localInfo, not GlobalInfo
       this.isLocalRenderSet = true;
       }
-    // global?: NO ...
-//    const rGlobalPluginList = this.libSBML.castObject(aLayout.getPlugin("render"), this.libSBML.RenderListOfLayoutsPlugin);   // none found
-//    const numGlobalInfo = rGlobalRenderList.getRenderInformation();
-//    const numGlobalObj = rGlobalRenderList.getNumGlobalRenderInformationObjects();
- //   if( numGlobalObj > 0 ) {
- //     this.globalRenderInfo = rGlobalRenderList.getRenderGlobalInformation(numGlobalObj -1 );
- //   }
 
       const dims = aLayout.getDimensions()
       tDims = this.assignDims(tDims, dims);
@@ -458,8 +462,8 @@ getRules(tModela, tRule) {
            sbmlSpRefGlyph.setSpeciesRefId(curSpRefGlyph.getSpeciesReferenceId()); }
          else { sbmlSpRefGlyph.setSpeciesRefId('');}
          if(curSpRefGlyph.isSetRole() ){
-           sbmlSpRefGlyph.setRole(curSpRefGlyph.getRoleString()); }
-         else {sbmlSpRefGlyph.setRole('undefined'); }
+           sbmlSpRefGlyph.setStrRole(curSpRefGlyph.getRoleString()); }
+         else {sbmlSpRefGlyph.setStrRole('undefined'); }
          // If the curve is specified, it overrides the inherited bounding box:
          if(curSpRefGlyph.isSetCurve()) {
            const curCurve = curSpRefGlyph.getCurve();
@@ -480,18 +484,16 @@ getRules(tModela, tRule) {
            }
            sbmlSpRefGlyph.setCurve(sbmlCurve);
          }
-         //else { sbmlSpRefGlyph.
+
          if(curSpRefGlyph.getBoundingBox() != null ) {
-    //     console.log('spRefGlyphs, assignBBox() call.');
            sbmlBBox = this.assignBBox(sbmlBBox,curSpRefGlyph.getBoundingBox(),sbmlDims, sbmlPt);
            sbmlSpRefGlyph.setBoundingBox(sbmlBBox);
          }
          sbmlRxnGlyph.addSpeciesRefGlyph(sbmlSpRefGlyph);
        }
 
-       nLayout.addRxnGlyph(sbmlRxnGlyph);
-      // sbmlRxnGlyph.clear();
-      console.log('end of getRxnGlyph');
+      nLayout.addRxnGlyph(sbmlRxnGlyph);
+      //console.log('end of getRxnGlyph');
      }
 
      return nLayout;
@@ -530,19 +532,29 @@ getRules(tModela, tRule) {
 
      return nLayout;
    }
-    // TODO: deal with global render info..
+
    getSBMLRenderInformation( tRenderInfo, tRenderStyle, tLineEnding, tRenderGroup,
          tEllipse, tRectangle, tPolygon, tRenderPt, tRender1D, tColorDef, tBBox,
          tDims, tPt )
    {
-     if( this.localRenderInfo.isSetId() ) {
-       tRenderInfo.setId( this.localRenderInfo.getId() );
+
+     if (this.isLocalRenderSet){  // local has precedence over global
+       this.currentRenderInfo = this.localRenderInfo;
+       tRenderInfo.setLocalRenderInfo(true);
+     }
+     else if (this.isGlobalRenderSet) {
+       this.currentRenderInfo = this.globalRenderInfo;
+       console.log('GlobalRender id: ', this.globalRenderInfo.getId());
+     }
+
+     if(this.currentRenderInfo.isSetId()){
+       tRenderInfo.setId(this.currentRenderInfo.getId());
      }
      tRenderInfo = this.getColorDefs( tRenderInfo, tColorDef );
      tRenderInfo = this.getLineEndings(tRenderInfo, tLineEnding, tRenderGroup, tBBox,
                                   tPolygon, tRectangle, tRenderPt, tDims, tPt );
-     for( var i=0; i< this.localRenderInfo.getNumStyles(); i++ ) {
-       const newRenderStyle = this.localRenderInfo.getStyle(i);
+     for( var i=0; i< this.currentRenderInfo.getNumStyles(); i++ ) {
+       const newRenderStyle = this.currentRenderInfo.getStyle(i);
        tRenderStyle = this.getStyle( newRenderStyle,tRenderStyle, tRenderGroup,
                     tPolygon, tRectangle, tEllipse, tBBox, tRenderPt, tDims, tPt );
        tRenderInfo.addStyle(tRenderStyle);
@@ -555,12 +567,10 @@ getRules(tModela, tRule) {
    getColorDefs( nRenderInfo, tColorDef ) {
      var i;
      var numbObjs = 0;
-     if( this.isLocalRenderSet ) {
+     numbObjs = this.currentRenderInfo.getNumColorDefinitions();
 
-       numbObjs = this.localRenderInfo.getNumColorDefinitions();
-     } //else this.global
      for( i=0; i< numbObjs; i++ ) {
-       const newColorDef = this.localRenderInfo.getColorDefinition(i);
+       const newColorDef = this.currentRenderInfo.getColorDefinition(i);
        if( newColorDef.isSetId() ) { tColorDef.setId( newColorDef.getId() ); }
        const red =  newColorDef.getRed(); // int
        const blue = newColorDef.getBlue();
@@ -609,7 +619,7 @@ getRules(tModela, tRule) {
 
       const numElements = sbmlRenderGroup.getNumElements(); // not necessary/used?
       const newPoly = sbmlRenderGroup.polygons;
-      //if(newPoly.length > 0) {
+
       for( var i = 0; i < newPoly.length ; i++ ){  // assume only one polygon ber render group.
         tPolygon = this.getPolygon(tPolygon, newPoly[i], tRenderPt);
         console.log('Polygons present in Render group');
@@ -640,13 +650,13 @@ getRules(tModela, tRule) {
                   tRectangle, tRenderPt, tDims, tPt )
    {
      var numObjs;
-     if( this.isLocalRenderSet ) {
-       numObjs = this.localRenderInfo.getNumLineEndings();
-     }
-     else { numObjs = this.globalRenderInfo.getNumLineEndings(); }
+   //  if( this.isLocalRenderSet ) {
+       numObjs = this.currentRenderInfo.getNumLineEndings();
+    // }
+     //else { numObjs = this.globalRenderInfo.getNumLineEndings(); }
      for( let i=0; i< numObjs; i++ ) {
-       var newLineEnd;// = this.localRenderInfo.getLineEnding(i);
-       newLineEnd = this.localRenderInfo.getLineEnding(i);
+       var newLineEnd;
+       newLineEnd = this.currentRenderInfo.getLineEnding(i);
        tLineE.setId(newLineEnd.getId());
        tLineE.setRotationalMapping(newLineEnd.getIsEnabledRotationalMapping());
        tBBox = this.assignBBox(tBBox, newLineEnd.getBoundingBox(), tDims, tPt);
@@ -655,10 +665,9 @@ getRules(tModela, tRule) {
        tRenderGroup = this.assignRenderGroup(tRenderGroup, newRenderGroup,
                           tPolygon, tRectangle, tRenderPt );
        tLineE.setRenderGroup( tRenderGroup );
-       console.log('tLineE- id: ',tLineE.getId() );
-     //   nRenderInfo.setRenderGroup( tlineEnding );
-    //   nRenderInfo.addLineEnding( tlineE ); //ReferenceError: tlineE is not defined
-      // tRenderGroup.clear(); // needed?
+       //console.log('tLineE- id: ',tLineE.getId() );
+       nRenderInfo.addLineEnding( tLineE );
+
      }
      return nRenderInfo;
    }
@@ -668,32 +677,39 @@ getRules(tModela, tRule) {
    {
      nRenderStyle.clear();
      if( sbmlRenderStyle.isSetId() ) { nRenderStyle.setId(sbmlRenderStyle.getId()); }
-     for( let i =0; i < sbmlRenderStyle.getNumTypes(); i++ ) {
+     if(sbmlRenderStyle.getNumTypes() > 0) {
+       const crType = sbmlRenderStyle.createTypeString(); // whitespace separated list
        for( let j=0; j < this.glyphTypes.length; j ++) {
-         if(sbmlRenderStyle.isInTypeList(this.glyphTypes[j])) {
+         if ( crType.includes(this.glyphTypes[j]) ) {
+           //console.log( ' Adding glyph Type',this.glyphTypes[j] );
            nRenderStyle.addType(this.glyphTypes[j]);
          }
        }
      }
-     for( let i=0; i < sbmlRenderStyle.getNumRoles(); i++ ) {
+     if( sbmlRenderStyle.getNumRoles() > 0) {
+     //console.log('roles: ', sbmlRenderStyle.createRoleString());
        for( let j=0; j < this.spRefRoles.length; j ++) {
          if(sbmlRenderStyle.isInRoleList(this.spRefRoles[j])) {
+          // console.log( ' Adding Sp Glyph Role: ',this.spRefRoles[j] );
            nRenderStyle.addRole(this.spRefRoles[j]);
          }
        }
-     }      // check glyph Ids:
-     for( let i=0; i< sbmlRenderStyle.getNumIds(); i++ ) {
-       for( let j=0; j < this.glyphIds.length; j++ ) {
-         if(sbmlRenderStyle.isInIdList( this.glyphIds[j] )) {
-           nRenderStyle.addGoId( this.glyphIds[j] );
+     }
+     // Local Render Info ONLY, check glyph Ids:
+     if(this.isLocalRenderSet) {
+       for( let i=0; i< sbmlRenderStyle.getNumIds(); i++ ) {
+         for( let j=0; j < this.glyphIds.length; j++ ) {
+           if(sbmlRenderStyle.isInIdList( this.glyphIds[j] )) {
+             nRenderStyle.addGoId( this.glyphIds[j] );
+           }
          }
        }
-     }
           // check if IdList contains species node Id as well:
-     for( let i=0; i< sbmlRenderStyle.getNumIds(); i++ ) {
-       for( let j=0; j < this.specIds.length; j++ ) {
-         if(sbmlRenderStyle.isInIdList( this.specIds[j] )) {
-           nRenderStyle.addGoId( this.specIds[j] );
+       for( let i=0; i< sbmlRenderStyle.getNumIds(); i++ ) {
+         for( let j=0; j < this.specIds.length; j++ ) {
+           if(sbmlRenderStyle.isInIdList( this.specIds[j] )) {
+             nRenderStyle.addGoId( this.specIds[j] );
+           }
          }
        }
      }

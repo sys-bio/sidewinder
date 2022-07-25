@@ -122,7 +122,10 @@
         <DCCReference Include="sbml\uSBMLReader.pas"/>
         <DCCReference Include="tests\uTestSBMLReadGenerateEqs.pas"/>
         <DCCReference Include="simulator\uSimulation.pas"/>
+        <DCCReference Include="sbml\uSBMLClasses.Render.pas"/>
+        <DCCReference Include="sbml\uSBMLClasses.Layout.pas"/>
         <None Include="AllTests_index.html"/>
+        <None Include="sbml\readSBMLmodel.js"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>
@@ -158,6 +161,12 @@
                 <DeployFile LocalName="Win32\Debug\Sidewinder.Tests.exe" Configuration="Debug" Class="ProjectOutput">
                     <Platform Name="Win32">
                         <RemoteName>Sidewinder_Tests.exe</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="sbml\readSBMLmodel.js" Configuration="Debug" Class="ProjectFile">
+                    <Platform Name="Win32">
+                        <RemoteDir>.\</RemoteDir>
                         <Overwrite>true</Overwrite>
                     </Platform>
                 </DeployFile>
