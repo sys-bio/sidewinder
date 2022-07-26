@@ -608,31 +608,40 @@ end;
           end;
 
         end;
+    end;
 
-
-      if newGlyphRole <> '' then
+    if newGlyphRole <> '' then
       begin
-        for j := 0 to self.modelRendering.getStyle(j).getNumbRoles -1 do
+        for i := 0 to self.modelRendering.getNumberStyles -1 do
+        begin
+          for j := 0 to self.modelRendering.getStyle(j).getNumbRoles -1 do
+            begin
+            if self.modelRendering.getStyle(j).getRole(j) = newGlyphRole then
+              begin
+              Result := self.modelRendering.getStyle(i);
+              exit;
+              end;
+
+            end;
+        end;
+      end;
+
+    if newGlyphType <> '' then
+      begin
+      for i := 0 to self.modelRendering.getNumberStyles -1 do
+        begin
+        for j := 0 to self.modelRendering.getStyle(i).getNumbTypes -1 do
           begin
-          if self.modelRendering.getStyle(j).getRole(j) = newGlyphRole then
+          if self.modelRendering.getStyle(i).getType(j) = newGlyphType then
             begin
             Result := self.modelRendering.getStyle(i);
             exit;
             end;
-
-          end;
-      end;
-
-      for j := 0 to self.modelRendering.getStyle(i).getNumbTypes -1 do
-        begin
-        if self.modelRendering.getStyle(i).getType(j) = newGlyphType then
-          begin
-          Result := self.modelRendering.getStyle(i);
-          exit;
           end;
         end;
+      end;
 
-    end;
+
 
 
 

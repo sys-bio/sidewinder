@@ -762,7 +762,7 @@ function  TReactionState.processReactionSpeciesReferenceCurves(newGlyphRxn: TSBM
 var i, j, k, nodeIndex: integer;
     spRefGlyph: TSBMLLayoutSpeciesReferenceGlyph;
     spRefGlyphStyle: TSBMLRenderStyle;  // Style associated with species reference Glyph
-    spGlyphId, spId: string; // SpeciesGlyph id, species id
+    spGlyphId, spId, rxnId: string; // SpeciesGlyph id, species id, reaction id
     reactant: boolean;
     colorFound: boolean;
     arcCenterFound: boolean;
@@ -778,6 +778,7 @@ begin                // if dest spRefGlyph is the same as another then set curve
     begin
       spGlyphId := '';
       spId := '';   // Actual species id used in reaction
+      rxnId := newGlyphRxn.getReactionId; // Actual reaction id to check.
       Result := false;
       reactant := false;
       spRefGlyph := newGlyphRxn.getSpeciesRefGlyph(i);
@@ -785,17 +786,17 @@ begin                // if dest spRefGlyph is the same as another then set curve
       if i = 0 then  // Only use style from first spRefGlyph to draw reaction line:
         begin
         spRefGlyphStyle := reactionRenderInfo.getGlyphRenderStyle(newGlyphRxn.getSpeciesRefGlyph(i).getId,
-              'SPECIESREFERENCEGLYPH',newGlyphRxn.getSpeciesRefGlyph(i).getStringRole );
+              'SPECIESREFERENCEGLYPH',newGlyphRxn.getSpeciesRefGlyph(i).getStringRole, rxnId );
         if spRefGlyphStyle = nil then  // Now check if any syles associates with REACTIONGLYPH:
           begin
           spRefGlyphStyle := reactionRenderInfo.getGlyphRenderStyle(newGlyphRxn.getId,
-              'REACTIONGLYPH', newGlyphRxn.getSpeciesRefGlyph(i).getStringRole );
+              'REACTIONGLYPH', newGlyphRxn.getSpeciesRefGlyph(i).getStringRole, rxnId );
           end;
 
-        if spRefGlyphStyle = nil then  // Now check catch-all type ANY is defined:
+        if spRefGlyphStyle = nil then  // Now check if catch-all type ANY is defined:
           begin
           spRefGlyphStyle := reactionRenderInfo.getGlyphRenderStyle(newGlyphRxn.getId,
-              'ANY',newGlyphRxn.getSpeciesRefGlyph(i).getStringRole );
+              'ANY',newGlyphRxn.getSpeciesRefGlyph(i).getStringRole, '' );
           end;
 
         if spRefGlyphStyle <> nil then
@@ -1377,7 +1378,7 @@ begin
              // ************************
           end;
       end;
-  // console.log('Done loading SBML network layout');
+   console.log('Done loading SBML network layout');
 end;
 
 function TNetwork.getColorDefs(newStyle: TSBMLRenderStyle;
