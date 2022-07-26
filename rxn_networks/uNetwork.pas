@@ -755,7 +755,7 @@ begin
 
 end;
 
-      // Returns true if curve for reaction was found and processed.
+   // Returns true if curve for reaction was found and processed.
 function  TReactionState.processReactionSpeciesReferenceCurves(newGlyphRxn: TSBMLLayoutReactionGlyph;
           newModelRxn: SBMLReaction; newSpGlyphList: TList<TSBMLLayoutSpeciesGlyph>;
           reactionRenderInfo: TSBMLRenderInformation ): boolean;
@@ -765,7 +765,6 @@ var i, j, k, nodeIndex: integer;
     spGlyphId, spId: string; // SpeciesGlyph id, species id
     reactant: boolean;
     colorFound: boolean;
-   // currBezier: TSBMLLayoutCubicBezier;
     arcCenterFound: boolean;
     strMsg: string;
 begin                // if dest spRefGlyph is the same as another then set curve the same.
@@ -786,12 +785,19 @@ begin                // if dest spRefGlyph is the same as another then set curve
       if i = 0 then  // Only use style from first spRefGlyph to draw reaction line:
         begin
         spRefGlyphStyle := reactionRenderInfo.getGlyphRenderStyle(newGlyphRxn.getSpeciesRefGlyph(i).getId,
-              'SPECIESREFERENCEGLYPH',newGlyphRxn.getSpeciesRefGlyph(i).getRole );
+              'SPECIESREFERENCEGLYPH',newGlyphRxn.getSpeciesRefGlyph(i).getStringRole );
         if spRefGlyphStyle = nil then  // Now check if any syles associates with REACTIONGLYPH:
           begin
           spRefGlyphStyle := reactionRenderInfo.getGlyphRenderStyle(newGlyphRxn.getId,
-              'REACTIONGLYPH',newGlyphRxn.getSpeciesRefGlyph(i).getRole );
+              'REACTIONGLYPH', newGlyphRxn.getSpeciesRefGlyph(i).getStringRole );
           end;
+
+        if spRefGlyphStyle = nil then  // Now check catch-all type ANY is defined:
+          begin
+          spRefGlyphStyle := reactionRenderInfo.getGlyphRenderStyle(newGlyphRxn.getId,
+              'ANY',newGlyphRxn.getSpeciesRefGlyph(i).getStringRole );
+          end;
+
         if spRefGlyphStyle <> nil then
           begin
           if spRefGlyphStyle.getRenderGroup <> nil then
@@ -849,7 +855,6 @@ begin                // if dest spRefGlyph is the same as another then set curve
                 if self.destId[k] = spGlyphId then nodeIndex := k;
 
               end;
-
 
             end;
         end;
