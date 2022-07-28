@@ -242,7 +242,7 @@ begin
     '</listOfReactions>' + sLineBreak +
   '</model>' + sLineBreak +
 '</sbml>';
-
+   // ***************************************************************************************
     1:  // Test SBML species initial assignment:
     Result := '<?xml version="1.0" encoding="UTF-8"?>' + sLineBreak +
    '<!-- Created by libAntimony version v2.12.0.3 with libSBML version 5.18.1. -->' + sLineBreak +
@@ -450,7 +450,8 @@ begin
     '</listOfReactions>' + sLineBreak +
   '</model>' + sLineBreak +
   '</sbml>';
-    2:    // COPASI SBML model with function def in rate law and assignment rule
+  // *********************************************************************************
+    2:    // COPASI SBML model with function def in rate law and assignment rule      *
     Result := '<?xml version="1.0" encoding="UTF-8"?>' + sLineBreak +
 '<!-- Created by COPASI version 4.36 (Build 260) on 2022-06-30 08:56 with libSBML version 5.19.4. -->' + sLineBreak +
 '<sbml xmlns="http://www.sbml.org/sbml/level3/version1/core" xmlns:layout="http://www.sbml.org/sbml/level3/version1/layout/version1" xmlns:render="http://www.sbml.org/sbml/level3/version1/render/version1" level="3" version="1" layout:required="false" render:required="false">' + sLineBreak +
@@ -1046,24 +1047,12 @@ begin
   '</model>' + sLineBreak +
 '</sbml>';
 
+// ************************************************************************************************
  3:    // COPASI SBML model with global Render information
     Result := '<?xml version="1.0" encoding="UTF-8"?>' + sLineBreak +
 '<!-- Created by COPASI version 4.36 (Build 260) on 2022-07-07 12:12 with libSBML version 5.19.4. -->' + sLineBreak +
 '<sbml xmlns="http://www.sbml.org/sbml/level3/version1/core" xmlns:layout="http://www.sbml.org/sbml/level3/version1/layout/version1" xmlns:render="http://www.sbml.org/sbml/level3/version1/render/version1" level="3" version="1" layout:required="false" render:required="false">' + sLineBreak +
-  '<model metaid="feedback" id="feedback" name="NoName" substanceUnits="substance" timeUnits="time" volumeUnits="volume" areaUnits="area" lengthUnits="length" extentUnits="substance">' + sLineBreak +
-    '<annotation>' + sLineBreak +
-      '<COPASI xmlns="http://www.copasi.org/static/sbml">' + sLineBreak +
-        '<rdf:RDF xmlns:dcterms="http://purl.org/dc/terms/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">' + sLineBreak +
-          '<rdf:Description rdf:about="#feedback">' + sLineBreak +
-            '<dcterms:created>' + sLineBreak +
-              '<rdf:Description>' + sLineBreak +
-                '<dcterms:W3CDTF>2022-06-30T15:56:04Z</dcterms:W3CDTF>' + sLineBreak +
-              '</rdf:Description>' + sLineBreak +
-            '</dcterms:created>' + sLineBreak +
-          '</rdf:Description>' + sLineBreak +
-        '</rdf:RDF>' + sLineBreak +
-      '</COPASI>' + sLineBreak +
-    '</annotation>' + sLineBreak +
+  '<model metaid="feedback" id="feedback_GlobalRender" name="NoName" substanceUnits="substance" timeUnits="time" volumeUnits="volume" areaUnits="area" lengthUnits="length" extentUnits="substance">' + sLineBreak +
     '<listOfFunctionDefinitions>' + sLineBreak +
       '<functionDefinition metaid="COPASI22" id="Function_for_J0" name="Function for J0">' + sLineBreak +
         '<annotation>' + sLineBreak +
@@ -1479,7 +1468,7 @@ begin
               '<ci> S2 </ci>' + sLineBreak +
               '<cn> 5 </cn>' + sLineBreak +
             '</apply>' + sLineBreak +
-            '<cn> + sLineBreak + 5 </cn>' + sLineBreak +
+            '<cn> 5 </cn>' + sLineBreak +
           '</apply>' + sLineBreak +
         '</math>' + sLineBreak +
       '</assignmentRule>' + sLineBreak +
@@ -2054,7 +2043,8 @@ begin
       '</render:listOfGlobalRenderInformation>' + sLineBreak +
     '</layout:listOfLayouts>' + sLineBreak +
   '</model>' + sLineBreak +
-'</sbml>';
+'</sbml>'
+
 
   // *************************************************************
   else Result := '';

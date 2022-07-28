@@ -1053,6 +1053,10 @@ implementation
  var i,j: integer;
  begin
   // See SBML Render Spec: C.2 Style Resolution for details.
+  // Order of precedence:
+  // 1. Graphical Obj id , otherId
+  // 2. Role
+  // 3. Type
   Result := nil;
 
   for i := 0 to self.getNumberStyles -1 do
