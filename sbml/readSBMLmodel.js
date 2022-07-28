@@ -50,6 +50,11 @@ class ProcessSBML {
  }
 
  getNumbers(tModela) { //  class TModel
+   if( this.model.isSetIdAttribute()) {
+     tModela.setModelId(this.model.getId()); }
+   else {
+     if( this.model.isSetName()) { tModela.setModelId(this.model.getName()); }
+     }
    tModela.numSpecies = this.model.getNumSpecies();
    tModela.numParams = this.model.getNumParameters();
    tModela.numCompartments = this.model.getNumCompartments();
