@@ -322,7 +322,7 @@ interface
    procedure addStyle( newStyle: TSBMLRenderStyle );
    function  getStyle( index: integer ): TSBMLRenderStyle;
    function  getGlyphRenderStyle(newGlyphId: string; newGlyphType: string;
-                            newStrGlyphRole: string ): TSBMLRenderStyle;
+                            newStrGlyphRole: string; otherId: string ): TSBMLRenderStyle;
    //                       newGlyphRole: TSPECIES_REF_ROLE ): TSBMLRenderStyle;
    function  printStr(): string;
 
@@ -1047,31 +1047,58 @@ implementation
     Result := self.lineEndingList[index];
   end;
 
-  // Given a glyph id, glyph role, or glyph type, return a matching Render Style, if it exists.
-  function  TSBMLRenderInformation.getGlyphRenderStyle(newGlyphId: string; newGlyphType: string;
-                           newStrGlyphRole: string ): TSBMLRenderStyle;
- //                         newGlyphRole: TSPECIES_REF_ROLE ): TSBMLRenderStyle;
-  var i,j: integer;
-    //  strGlyphRole: string;
+  // Given a glyph id, other id, glyph role, or glyph type, return a matching Render Style, if it exists.
+ function  TSBMLRenderInformation.getGlyphRenderStyle(newGlyphId: string; newGlyphType: string;
+                           newStrGlyphRole: string; otherId: string ): TSBMLRenderStyle;
+ var i,j: integer;
  begin
   // See SBML Render Spec: C.2 Style Resolution for details.
-  //strGlyphRole := STRING_SPECIES_REF_ROLES[0]; // 'undefined'
   Result := nil;
-  //if ord(newGlyphRole) < length(STRING_SPECIES_REF_ROLES) then
-  //  strGlyphRole := STRING_SPECIES_REF_ROLES[ord(newGlyphRole)];
 
   for i := 0 to self.getNumberStyles -1 do
     begin
-      for j := 0 to self.getStyle(i).getNumbGoIds -1 do
+    for j := 0 to self.getStyle(i).getNumbGoIds -1 do
+      begin
+      if self.getStyle(i).getGoId(j) = newGlyphId then
         begin
-        if self.getStyle(i).getGoId(j) = newGlyphId then
+        Result := self.getStyle(i);
+        exit;
+        end
+      else
+        begin
+        if otherId <> '' then // just in case sbml model uses something other than graphical object id
+          begin
+          if self.getStyle(i).getGoId(j) = otherId then
+            begin
+            Result := self.getStyle(i);
+            exit;
+            end
+          end;
+        end;
+
+      end;
+    end;
+
+  if newStrGlyphRole <> '' then
+  begin
+    for i := 0 to self.getNumberStyles -1 do
+      begin
+      for j := 0 to self.getStyle(i).getNumbRoles -1 do
+        begin
+        if self.getStyle(i).getRole(j) = newStrGlyphRole then
           begin
           Result := self.getStyle(i);
           exit;
           end;
-
         end;
 
+      end;
+  end;
+
+  if newGlyphType <> '' then
+    begin
+    for i := 0 to self.getNumberStyles -1 do
+      begin
       for j := 0 to self.getStyle(i).getNumbTypes -1 do
         begin
         if self.getStyle(i).getType(j) = newGlyphType then
@@ -1080,20 +1107,10 @@ implementation
           exit;
           end;
         end;
-
-      if newStrGlyphRole <> STRING_SPECIES_REF_ROLES[0] then  // no compartment
-      begin
-        for j := 0 to self.getStyle(i).getNumbRoles -1 do
-          begin
-          if self.getStyle(i).getRole(j) = newStrGlyphRole then
-            begin
-            Result := self.getStyle(i);
-            exit;
-            end;
-          end;
       end;
-
     end;
+
+
  end;
 
   constructor TSBMLRenderPrimitive1D.create() overload;

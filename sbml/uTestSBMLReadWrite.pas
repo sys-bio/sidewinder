@@ -144,7 +144,8 @@ begin
     end;
 
   inc(self.currentReadTestIndex);
-  if self.currentReadTestIndex < self.readRefResults.count then
+  //if self.currentReadTestIndex < self.readRefResults.count then    // add one if adding new test
+  if self.currentReadTestIndex < 2 + SBML_TEST_MODELS then
     begin
     self.testModel.Free;
     runReadSBMLTest( )

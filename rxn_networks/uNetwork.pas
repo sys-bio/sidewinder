@@ -761,7 +761,8 @@ function  TReactionState.processReactionSpeciesReferenceCurves(newGlyphRxn: TSBM
           reactionRenderInfo: TSBMLRenderInformation ): boolean;
 var i, j, k, nodeIndex: integer;
     spRefGlyph: TSBMLLayoutSpeciesReferenceGlyph;
-    spRefGlyphStyle: TSBMLRenderStyle;  // Style associated with species reference Glyph
+    //spRefGlyphStyle: TSBMLRenderStyle;  // Style associated with species reference Glyph
+    curGlyphStyle: TSBMLRenderStyle;  // Style associated with current species reference or reaction Glyph
     spGlyphId, spId, rxnId: string; // SpeciesGlyph id, species id, reaction id
     reactant: boolean;
     colorFound: boolean;
@@ -782,43 +783,52 @@ begin                // if dest spRefGlyph is the same as another then set curve
       Result := false;
       reactant := false;
       spRefGlyph := newGlyphRxn.getSpeciesRefGlyph(i);
-
-      if i = 0 then  // Only use style from first spRefGlyph to draw reaction line:
-        begin
-        spRefGlyphStyle := reactionRenderInfo.getGlyphRenderStyle(newGlyphRxn.getSpeciesRefGlyph(i).getId,
+    //  if i = 0 then  // Only use style from first spRefGlyph to draw reaction line:
+      //  begin
+        curGlyphStyle := reactionRenderInfo.getGlyphRenderStyle(newGlyphRxn.getSpeciesRefGlyph(i).getId,
               'SPECIESREFERENCEGLYPH',newGlyphRxn.getSpeciesRefGlyph(i).getStringRole, rxnId );
-        if spRefGlyphStyle = nil then  // Now check if any syles associates with REACTIONGLYPH:
+        if curGlyphStyle = nil then  // Now check if any render styles associates with REACTIONGLYPH:
           begin
-          spRefGlyphStyle := reactionRenderInfo.getGlyphRenderStyle(newGlyphRxn.getId,
+          curGlyphStyle := reactionRenderInfo.getGlyphRenderStyle(newGlyphRxn.getId,
               'REACTIONGLYPH', newGlyphRxn.getSpeciesRefGlyph(i).getStringRole, rxnId );
           end;
 
-        if spRefGlyphStyle = nil then  // Now check if catch-all type ANY is defined:
+        if curGlyphStyle = nil then  // Now check if catch-all render style type ANY is defined:
           begin
-          spRefGlyphStyle := reactionRenderInfo.getGlyphRenderStyle(newGlyphRxn.getId,
+          curGlyphStyle := reactionRenderInfo.getGlyphRenderStyle(newGlyphRxn.getId,
               'ANY',newGlyphRxn.getSpeciesRefGlyph(i).getStringRole, '' );
           end;
-
-        if spRefGlyphStyle <> nil then
+            // For rxn lines, check for fill color first, if not found try stroke color, then default
+        if curGlyphStyle <> nil then
           begin
-          if spRefGlyphStyle.getRenderGroup <> nil then
+          if curGlyphStyle.getRenderGroup <> nil then
             begin
             for j := 0 to reactionRenderInfo.getNumbColorDefs -1 do
               begin
-              if spRefGlyphStyle.getRenderGroup.getFillColor = reactionRenderInfo.getColorDef(j).getId then
+              if curGlyphStyle.getRenderGroup.getFillColor = reactionRenderInfo.getColorDef(j).getId then
                 begin
                 self.fillColor := HexToTColor( reactionRenderInfo.getColorDef(j).getValue() );
                 colorFound := true;
-                end;
-            end;
-            self.thickness := spRefGlyphStyle.getRenderGroup.getStrokeWidth;
+                end
+              else if curGlyphStyle.getRenderGroup.getStrokeColor = reactionRenderInfo.getColorDef(j).getId then
+                   begin
+                   self.fillColor := HexToTColor( reactionRenderInfo.getColorDef(j).getValue() );
+                   colorFound := true;
+                   end;
+
+
+              end;
+            self.thickness := curGlyphStyle.getRenderGroup.getStrokeWidth;
             if self.thickness < 1 then self.thickness := DEFAULT_REACTION_THICKNESS;
             if colorFound = false then
               begin
-              if spRefGlyphStyle.getRenderGroup.getFillColor <> '' then
-                self.fillColor := HexToTColor( spRefGlyphStyle.getRenderGroup.getFillColor )
-              else
-                self.fillColor := DEFAULT_REACTION_COLOR;
+              if curGlyphStyle.getRenderGroup.getFillColor <> '' then
+                self.fillColor := HexToTColor( curGlyphStyle.getRenderGroup.getFillColor )
+              else if curGlyphStyle.getRenderGroup.getStrokeColor <> '' then
+                   begin
+                   self.fillColor := HexToTColor( curGlyphStyle.getRenderGroup.getStrokeColor )
+                   end
+                   else self.fillColor := DEFAULT_REACTION_COLOR;
               end;
             end;
           end
@@ -827,7 +837,7 @@ begin                // if dest spRefGlyph is the same as another then set curve
           self.fillColor := DEFAULT_REACTION_COLOR;
           self.thickness := DEFAULT_REACTION_THICKNESS;
           end;
-        end;
+    //    end;
       spGlyphId := spRefGlyph.getSpeciesGlyphId; // species glyph id used to find spId
       for j := 0 to newSpGlyphList.Count -1 do
         begin
@@ -1284,7 +1294,6 @@ var i, j, k, l: integer;
    speciesGlyph: TSBMLLayoutSpeciesGlyph;
    reactionGlyph: TSBMLLayoutReactionGlyph;
    reactionGlyphId: string; // name of reaction, used to find reaction details.
- //  spAr: array of string;
    spAr: array of TSBMLSpecies;
    initVal: double;
    boundarySp: boolean;
@@ -1294,7 +1303,7 @@ var i, j, k, l: integer;
    reactionState: TReactionState;
    nodeColorDefList: TList<TSBMLRenderColorDefinition>;
 begin
-    console.log(model.printStr);
+   // console.log(model.printStr);
     modelRender := nil;
     modelLayout := model.getSBMLLayout;
     if model.getSBMLRenderInfo <> nil then
@@ -1317,7 +1326,6 @@ begin
     for i := 0 to modelLayout.getNumSpGlyphs - 1 do
       begin
         initVal := 0;
-       // spAr := model.getS_Names;
         spAr := model.getSBMLspeciesAr;
         speciesGlyph := modelLayout.getSpGlyph(i);
         for j := 0 to Length(spAr) -1 do
@@ -1346,7 +1354,6 @@ begin
     for i := 0 to modelLayout.getNumRxnGlyphs - 1 do
       begin
         reactionGlyph := modelLayout.getRxnGlyph(i);
-      //  rxnStyle := model.getRenderStyle(reactionGlyph.getId, STYLE_TYPES[2],nil);  //not necessary?
         reactionGlyphId := reactionGlyph.getReactionId;
         for j := 0 to model.getNumReactions - 1 do
           begin
@@ -1411,14 +1418,12 @@ begin
   glyphId := newSpeciesGlyph.getId;
   spId := newSpeciesGlyph.getSpeciesId;
   Result := nil;
-  Result := newModel.getRenderStyle( glyphId, spId, 'SPECIESGLYPH', '' );
-
+  Result := newModel.getSBMLRenderInfo.getGlyphRenderStyle( glyphId, 'SPECIESGLYPH', '', spId );
 end;
 
     // No SBML layout present:
 procedure TNetwork.autoBuildNetworkFromSBML(model: TModel);
  var i, j, k, l, index: integer;
-   //spAr: array of string;
    spAr: array of TSBMLSpecies;
    initVal: double;
    node : TNode;
@@ -1426,7 +1431,6 @@ procedure TNetwork.autoBuildNetworkFromSBML(model: TModel);
    nodeState : TNodeState;
    reactionState: TReactionState;
  begin
-    //spAr := model.getS_Names;
     spAr := model.getSBMLspeciesAr;
     for j := 0 to Length(spAr) -1 do
       begin
@@ -1436,7 +1440,6 @@ procedure TNetwork.autoBuildNetworkFromSBML(model: TModel);
         if spAr[j].isSetInitialConcentration then
           nodeState.conc := spAr[j].getInitialConcentration
         else nodeState.conc := spAr[j].getInitialAmount;
-       // nodeState.conc := spAr[j].getmodel.getS_initVals[j];
         nodeState.x := 30 + j; // default values
         nodeState.y := 40 + j; //   "
         nodeState.w := 60;     //   "
