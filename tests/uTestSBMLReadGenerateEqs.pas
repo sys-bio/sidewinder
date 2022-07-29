@@ -8,6 +8,7 @@ unit uTestSBMLReadGenerateEqs;
     3. Run test group 'Read SBML model and generate Eqs list'
     4. Open browser console window and grab string after 'EqList:' Use previous test for reference.
     5. Format as string for insertion into TTestSBMLReadGenerateEqs.generateRefEqsList()
+    6. Since the SBML read tests use the same model, update uTestSBMLReadWrite.pas with the expected output
  }
 
 interface
@@ -130,6 +131,10 @@ implementation
 'return p;' + sLineBreak +
 'let dydt_s = pas.uVector.TVector.$create("create$1",[s.length]); p[1] = s[2] * 5 + 5;dydt_s.setVal(1, (1)*(1)* (p[5] * (p[0] * (p[6] - s[0] / p[1]) / (1 + p[6] + s[0] + Math.pow(s[1], p[2])) / p[5]))+  (-1)*(1)* (p[5] * ((10 * s[0] - 2 * s[2]) / (1 + s[0] + s[2]) / p[5])));dydt_s.setVal(3, (1)*(1)* (p[5] * ((10 * s[0] - 2 * s[2]) / (1 + s[0] + s[2]) / p[5]))+  (-1)*(1)* (p[5] * ((5 * s[2] - 2 * s[3]) / (1 + s[2] + s[3]) / p[5])));dydt_s.setVal(4, (1)*(1)* (p[5] * ((5 * s[2] - 2 * s[3]) / (1 + s[2] + s[3]) / p[5]))+  (-1)*(1)* (p[5] * ((10 * s[3] - 2 * s[1]) / (1 + s[3] + s[1]) / p[5])));dydt_s.setVal(2, (1)*(1)* (p[5] * ((10 * s[3] - 2 * s[1]) / (1 + s[3] + s[1]) / p[5]))+  (-1)*(1)* (p[5] * (p[3] * s[1] / (p[4] + s[1]) / p[5]))); return dydt_s;');
 
+   // Test #4 (results should be the same as #3:
+   self.equationsRefList.Add('p[1] = s[2] * 5 + 5' + sLineBreak +
+'return p;' + sLineBreak +
+'let dydt_s = pas.uVector.TVector.$create("create$1",[s.length]); p[1] = s[2] * 5 + 5;dydt_s.setVal(1, (1)*(1)* (p[5] * (p[0] * (p[6] - s[0] / p[1]) / (1 + p[6] + s[0] + Math.pow(s[1], p[2])) / p[5]))+  (-1)*(1)* (p[5] * ((10 * s[0] - 2 * s[2]) / (1 + s[0] + s[2]) / p[5])));dydt_s.setVal(3, (1)*(1)* (p[5] * ((10 * s[0] - 2 * s[2]) / (1 + s[0] + s[2]) / p[5]))+  (-1)*(1)* (p[5] * ((5 * s[2] - 2 * s[3]) / (1 + s[2] + s[3]) / p[5])));dydt_s.setVal(4, (1)*(1)* (p[5] * ((5 * s[2] - 2 * s[3]) / (1 + s[2] + s[3]) / p[5]))+  (-1)*(1)* (p[5] * ((10 * s[3] - 2 * s[1]) / (1 + s[3] + s[1]) / p[5])));dydt_s.setVal(2, (1)*(1)* (p[5] * ((10 * s[3] - 2 * s[1]) / (1 + s[3] + s[1]) / p[5]))+  (-1)*(1)* (p[5] * (p[3] * s[1] / (p[4] + s[1]) / p[5]))); return dydt_s;');
 
    self.numTests := self.equationsRefList.Count;
  end;

@@ -347,6 +347,7 @@ end;
   function TPlotPanel.getMaxYValue(): double;
   begin
     // TODO
+    Result := 0;
   end;
 
   procedure TPlotPanel.setPlotPBWidth();

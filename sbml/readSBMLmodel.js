@@ -11,7 +11,7 @@ class ProcessSBML {
    this.isLocalRenderSet = false;
    this.isGlobalRenderSet = false;
    this.glyphIds = new Array(); // needed for render styles
-   this.specIds = new Array();  // needed for render styles, coyote uses this
+   this.specRxnIds = new Array();  // needed for render styles, coyote/SBMLDiagrams uses these instead of glypIds
    this.spRefRoles = ['substrate', 'product', 'sidesubstrate', 'sideproduct', 'modifier',
                       'activator', 'inhibitor', 'undefined'];
    this.glyphTypes = ['COMPARTMENTGLYPH', 'SPECIESGLYPH', 'REACTIONGLYPH',
@@ -50,6 +50,11 @@ class ProcessSBML {
  }
 
  getNumbers(tModela) { //  class TModel
+   if( this.model.isSetIdAttribute()) {
+     tModela.setModelId(this.model.getId()); }
+   else {
+     if( this.model.isSetName()) { tModela.setModelId(this.model.getName()); }
+     }
    tModela.numSpecies = this.model.getNumSpecies();
    tModela.numParams = this.model.getNumParameters();
    tModela.numCompartments = this.model.getNumCompartments();
@@ -127,7 +132,7 @@ getRules(tModela, tRule) {
    // generate array of TSBMLSpecies for model:
       const newSpecies = this.model.getSpecies(i);
       tSpecies.setID(newSpecies.getId());
-      this.specIds.push(newSpecies.getId()); // for render styles
+      this.specRxnIds.push(newSpecies.getId()); // for render styles
       if (newSpecies.isSetInitialAmount())
         { tSpecies.setInitialAmount(newSpecies.getInitialAmount());}
       else if (newSpecies.isSetInitialConcentration())
@@ -259,6 +264,7 @@ getRules(tModela, tRule) {
       }
       var kineticForm = this.model.getReaction(i).getKineticLaw().getFormula();
       var rxnReversible;
+      this.specRxnIds.push(this.model.getReaction(i).getId());
       if (this.model.getReaction(i).isSetReversible()) {
         rxnReversible = this.model.getReaction(i).getReversible(); }
       else { rxnReversible = true; } // level 2 default is true
@@ -706,9 +712,9 @@ getRules(tModela, tRule) {
        }
           // check if IdList contains species node Id as well:
        for( let i=0; i< sbmlRenderStyle.getNumIds(); i++ ) {
-         for( let j=0; j < this.specIds.length; j++ ) {
-           if(sbmlRenderStyle.isInIdList( this.specIds[j] )) {
-             nRenderStyle.addGoId( this.specIds[j] );
+         for( let j=0; j < this.specRxnIds.length; j++ ) {
+           if(sbmlRenderStyle.isInIdList( this.specRxnIds[j] )) {
+             nRenderStyle.addGoId( this.specRxnIds[j] );
            }
          }
        }

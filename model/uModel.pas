@@ -91,8 +91,6 @@ type
    function  getSBMLLayout(): TSBMLLayout;
    procedure setSBMLRenderInfo( newRender: TSBMLRenderInformation );
    function  getSBMLRenderInfo(): TSBMLRenderInformation;
-   function  getRenderStyle(newGlyphId: string; newSpeciesId: string;
-                 newGlyphType: string; newGlyphRole: string ): TSBMLRenderStyle;
 
    function  getS_Names(): array of String;
    function  getS_Vals(): array of Double; // remove at some point, only getS_initVals needed ?
@@ -581,60 +579,6 @@ end;
  function  TModel.getSBMLRenderInfo(): TSBMLRenderInformation;
  begin
    Result := self.modelRendering;
- end;
-
- //function  TModel.getRenderStyle(newGlyphId: string; newGlyphType: string;
- //                         newGlyphRole: string ): TSBMLRenderStyle;
- function  TModel.getRenderStyle(newGlyphId: string; newSpeciesId: string;
-             newGlyphType: string; newGlyphRole: string ): TSBMLRenderStyle;
- var i,j: integer;
- begin
-  // See SBML Render Spec: C.2 Style Resolution for details.
-  Result := nil;    // does not work if idList is actual node species name and not speciesGlyph
-  for i := 0 to self.modelRendering.getNumberStyles -1 do
-    begin
-      for j := 0 to self.modelRendering.getStyle(i).getNumbGoIds -1 do
-        begin
-        if self.modelRendering.getStyle(i).getGoId(j) = newGlyphId then
-          begin
-          Result := self.modelRendering.getStyle(i);
-          exit;
-          end
-        else
-          begin
-          if self.modelRendering.getStyle(i).getGoId(j) = newSpeciesId then
-          begin
-          Result := self.modelRendering.getStyle(i);
-          exit;
-          end
-          end;
-
-        end;
-
-
-      if newGlyphRole <> '' then
-      begin
-        for j := 0 to self.modelRendering.getStyle(j).getNumbRoles -1 do
-          begin
-          if self.modelRendering.getStyle(j).getRole(j) = newGlyphRole then
-            begin
-            Result := self.modelRendering.getStyle(i);
-            exit;
-            end;
-
-          end;
-      end;
-
-      for j := 0 to self.modelRendering.getStyle(i).getNumbTypes -1 do
-        begin
-        if self.modelRendering.getStyle(i).getType(j) = newGlyphType then
-          Result := self.modelRendering.getStyle(i);
-        end;
-
-    end;
-
-
-
  end;
 
 

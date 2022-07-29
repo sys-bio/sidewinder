@@ -38,8 +38,10 @@ class GenerateSBMLModel {
      this.createLayout();
    }
    this.modelRendering = this.rxnModel.getSBMLRenderInfo();
-   this.libSBMLrInfo.setId( modelName + this.modelRendering.getId() );
-   this.createModelRendering();
+   if( this.modelRendering != undefined ) {
+     this.libSBMLrInfo.setId( modelName + this.modelRendering.getId() );
+     this.createModelRendering();
+    }
  }
 
  getSBMLString() {
