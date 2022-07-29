@@ -1358,7 +1358,7 @@ object mainForm: TmainForm
       object SplitterPlotSlider: TWebSplitter
         Left = 300
         Top = 0
-        Width = 5
+        Width = 10
         Height = 760
         HeightPercent = 100.000000000000000000
         WidthPercent = 100.000000000000000000
@@ -1368,9 +1368,9 @@ object mainForm: TmainForm
         OnMoved = SplitterPlotSliderMoved
       end
       object pnlSliderContainer: TWebPanel
-        Left = 305
+        Left = 310
         Top = 0
-        Width = 221
+        Width = 216
         Height = 760
         ElementClassName = 'card'
         HeightPercent = 100.000000000000000000
@@ -1381,10 +1381,12 @@ object mainForm: TmainForm
         ChildOrder = 4
         ElementBodyClassName = 'card-body'
         ElementFont = efCSS
+        ExplicitLeft = 305
+        ExplicitWidth = 221
         object pnlSimResultsFile: TWebPanel
           Left = 0
           Top = 687
-          Width = 221
+          Width = 216
           Height = 73
           ElementClassName = 'card'
           HeightPercent = 100.000000000000000000
@@ -1402,6 +1404,7 @@ object mainForm: TmainForm
           Font.Style = []
           ParentFont = False
           ShowCaption = False
+          ExplicitWidth = 221
           object lblFileName: TWebLabel
             Left = 16
             Top = 45
@@ -1511,7 +1514,7 @@ object mainForm: TmainForm
     object pnlCenter: TWebPanel
       Left = 185
       Top = 0
-      Width = 774
+      Width = 769
       Height = 760
       ElementClassName = 'card rounded-0'
       HeightPercent = 100.000000000000000000
@@ -1522,10 +1525,11 @@ object mainForm: TmainForm
       ChildOrder = 2
       ElementBodyClassName = 'card-body'
       ElementFont = efCSS
+      ExplicitWidth = 774
       object networkPB1: TWebPaintBox
         Left = 0
         Top = 0
-        Width = 756
+        Width = 751
         Height = 742
         HeightPercent = 100.000000000000000000
         WidthPercent = 100.000000000000000000
@@ -1539,9 +1543,10 @@ object mainForm: TmainForm
         OnMouseMove = networkPB1MouseMove
         OnMouseUp = networkPB1MouseUp
         OnMouseWheel = networkPB1MouseWheel
+        ExplicitWidth = 756
       end
       object netDrawScrollBarVert: TTMSFNCScrollBar
-        Left = 756
+        Left = 751
         Top = 0
         Width = 18
         Height = 742
@@ -1582,11 +1587,12 @@ object mainForm: TmainForm
         Max = 1000.000000000000000000
         PageSize = 10.000000000000000000
         OnValueChanged = netDrawScrollBarVertValueChanged
+        ExplicitLeft = 756
       end
       object netDrawScrollBarHoriz: TTMSFNCScrollBar
         Left = 0
         Top = 742
-        Width = 774
+        Width = 769
         Height = 18
         Align = alBottom
         ParentDoubleBuffered = False
@@ -1626,12 +1632,13 @@ object mainForm: TmainForm
         Max = 1000.000000000000000000
         PageSize = 10.000000000000000000
         OnValueChanged = netDrawScrollBarHorizValueChanged
+        ExplicitWidth = 774
       end
     end
     object splitter: TWebSplitter
-      Left = 959
+      Left = 954
       Top = 0
-      Width = 5
+      Width = 10
       Height = 760
       HeightPercent = 100.000000000000000000
       WidthPercent = 100.000000000000000000
@@ -1640,6 +1647,7 @@ object mainForm: TmainForm
       Color = clBtnFace
       OnClick = splitterClick
       OnMoved = splitterMoved
+      ExplicitLeft = 959
     end
     object RNodeEditWPanel: TWebPanel
       Left = 1114
