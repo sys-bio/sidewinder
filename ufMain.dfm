@@ -11,11 +11,7 @@ object mainForm: TmainForm
     Width = 1800
     Height = 60
     ElementClassName = 'card rounded-0'
-    HeightPercent = 100.000000000000000000
-    WidthPercent = 100.000000000000000000
     Align = alTop
-    BorderColor = clSilver
-    BorderStyle = bsSingle
     ElementBodyClassName = 'card-body-10  bg-dark text-white'
     object newNetworkBtn: TWebButton
       Left = 16
@@ -57,6 +53,7 @@ object mainForm: TmainForm
       Caption = 'Start Simulation'
       ChildOrder = 5
       ElementClassName = 'btn btn-danger btn-sm'
+      ElementFont = efCSS
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clRed
       Font.Height = -11
@@ -210,11 +207,7 @@ object mainForm: TmainForm
     Width = 1800
     Height = 85
     ElementClassName = 'card border-0'
-    HeightPercent = 100.000000000000000000
-    WidthPercent = 100.000000000000000000
     Align = alBottom
-    BorderColor = clSilver
-    BorderStyle = bsSingle
     ChildOrder = 4
     ElementBodyClassName = 'card-body-10  bg-dark text-white'
     object btnRandomNetwork: TWebButton
@@ -285,10 +278,6 @@ object mainForm: TmainForm
       Width = 120
       Height = 47
       ElementClassName = 'card'
-      HeightPercent = 100.000000000000000000
-      WidthPercent = 100.000000000000000000
-      BorderColor = clSilver
-      BorderStyle = bsSingle
       ChildOrder = 4
       ElementBodyClassName = 'card-body-shadow'
       DesignSize = (
@@ -379,10 +368,6 @@ object mainForm: TmainForm
       Width = 176
       Height = 79
       ElementClassName = 'card'
-      HeightPercent = 100.000000000000000000
-      WidthPercent = 100.000000000000000000
-      BorderColor = clSilver
-      BorderStyle = bsSingle
       ChildOrder = 8
       ElementBodyClassName = 'card-body-shadow'
       object zoomCtlLabel: TWebLabel
@@ -405,8 +390,6 @@ object mainForm: TmainForm
         Top = 40
         Width = 145
         Height = 20
-        HeightPercent = 100.000000000000000000
-        WidthPercent = 100.000000000000000000
         ChildOrder = 1
         Max = 100
         Min = 0
@@ -422,10 +405,6 @@ object mainForm: TmainForm
       Height = 79
       Hint = 'Speed up simulation, limited by computer resources.'
       ElementClassName = 'card'
-      HeightPercent = 100.000000000000000000
-      WidthPercent = 100.000000000000000000
-      BorderColor = clSilver
-      BorderStyle = bsSingle
       ChildOrder = 8
       ElementBodyClassName = 'card-body'
       ElementFont = efCSS
@@ -482,8 +461,6 @@ object mainForm: TmainForm
         Height = 20
         Hint = 'Speed up/down simulation'
         ElementClassName = 'custom-range'
-        HeightPercent = 100.000000000000000000
-        WidthPercent = 100.000000000000000000
         ChildOrder = 13
         ElementFont = efCSS
         Max = 30
@@ -499,10 +476,6 @@ object mainForm: TmainForm
       Width = 125
       Height = 79
       ElementClassName = 'card'
-      HeightPercent = 100.000000000000000000
-      WidthPercent = 100.000000000000000000
-      BorderColor = clSilver
-      BorderStyle = bsSingle
       ChildOrder = 9
       ElementBodyClassName = 'card-body-shadow'
       ElementFont = efCSS
@@ -559,8 +532,6 @@ object mainForm: TmainForm
     Top = 95
     Width = 1800
     Height = 760
-    HeightPercent = 100.000000000000000000
-    WidthPercent = 100.000000000000000000
     Align = alClient
     BorderColor = clGray
     BorderStyle = bsNone
@@ -574,13 +545,10 @@ object mainForm: TmainForm
       Width = 185
       Height = 760
       ElementClassName = 'card rounded-0'
-      HeightPercent = 100.000000000000000000
-      WidthPercent = 100.000000000000000000
       Align = alLeft
-      BorderColor = clSilver
       BorderStyle = bsNone
       ChildOrder = 1
-      ElementBodyClassName = 'card-body-24  pl-10 bg-dark text-white '
+      ElementBodyClassName = 'card-body bg-dark'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clBlack
       Font.Height = -11
@@ -941,10 +909,6 @@ object mainForm: TmainForm
         Width = 160
         Height = 247
         ElementClassName = 'card'
-        HeightPercent = 100.000000000000000000
-        WidthPercent = 100.000000000000000000
-        BorderColor = clSilver
-        BorderStyle = bsSingle
         ChildOrder = 1
         ElementBodyClassName = 'card-body-shadow'
         ElementFont = efCSS
@@ -1043,8 +1007,6 @@ object mainForm: TmainForm
           Height = 33
           ElementClassName = 'btn'
           HeightStyle = ssAuto
-          HeightPercent = 100.000000000000000000
-          WidthPercent = 100.000000000000000000
           ChildOrder = 3
           Color = 36095
           Enabled = False
@@ -1073,8 +1035,6 @@ object mainForm: TmainForm
           Height = 33
           ElementClassName = 'btn btn-primary'
           HeightStyle = ssAuto
-          HeightPercent = 100.000000000000000000
-          WidthPercent = 100.000000000000000000
           ChildOrder = 3
           Color = 11788021
           Enabled = False
@@ -1158,10 +1118,6 @@ object mainForm: TmainForm
         Width = 160
         Height = 180
         ElementClassName = 'card'
-        HeightPercent = 100.000000000000000000
-        WidthPercent = 100.000000000000000000
-        BorderColor = clSilver
-        BorderStyle = bsSingle
         ChildOrder = 7
         ElementBodyClassName = 'card-body'
         ElementFont = efCSS
@@ -1275,8 +1231,6 @@ object mainForm: TmainForm
           Height = 33
           ElementClassName = 'btn'
           HeightStyle = ssAuto
-          HeightPercent = 100.000000000000000000
-          WidthPercent = 100.000000000000000000
           ChildOrder = 3
           Color = 11788021
           Enabled = False
@@ -1289,8 +1243,6 @@ object mainForm: TmainForm
           Width = 52
           Height = 22
           HeightStyle = ssAuto
-          HeightPercent = 100.000000000000000000
-          WidthPercent = 100.000000000000000000
           AutoSize = False
           BorderStyle = bsSingle
           ChildOrder = 6
@@ -1312,10 +1264,7 @@ object mainForm: TmainForm
       Width = 526
       Height = 760
       ElementClassName = 'card rounded-0'
-      HeightPercent = 100.000000000000000000
-      WidthPercent = 100.000000000000000000
       Align = alRight
-      BorderColor = clSilver
       BorderStyle = bsNone
       ChildOrder = 2
       ElementBodyClassName = 'card-body-shadow'
@@ -1335,11 +1284,11 @@ object mainForm: TmainForm
         Font.Style = []
         HeightPercent = 100.000000000000000000
         ItemHeight = 13
-        ItemIndex = -1
         ParentFont = False
         Visible = False
         WidthPercent = 100.000000000000000000
         OnClick = plotEditLBClick
+        ItemIndex = -1
       end
       object SliderEditLB: TWebListBox
         Left = 263
@@ -1350,18 +1299,16 @@ object mainForm: TmainForm
         ElementFont = efCSS
         HeightPercent = 100.000000000000000000
         ItemHeight = 13
-        ItemIndex = -1
         Visible = False
         WidthPercent = 100.000000000000000000
         OnClick = SliderEditLBClick
+        ItemIndex = -1
       end
       object SplitterPlotSlider: TWebSplitter
         Left = 300
         Top = 0
         Width = 10
         Height = 760
-        HeightPercent = 100.000000000000000000
-        WidthPercent = 100.000000000000000000
         Align = alLeft
         ChildOrder = 3
         Color = clBtnFace
@@ -1373,27 +1320,17 @@ object mainForm: TmainForm
         Width = 216
         Height = 760
         ElementClassName = 'card'
-        HeightPercent = 100.000000000000000000
-        WidthPercent = 100.000000000000000000
         Align = alClient
-        BorderColor = clSilver
-        BorderStyle = bsSingle
         ChildOrder = 4
         ElementBodyClassName = 'card-body'
         ElementFont = efCSS
-        ExplicitLeft = 305
-        ExplicitWidth = 221
         object pnlSimResultsFile: TWebPanel
           Left = 0
           Top = 687
           Width = 216
           Height = 73
           ElementClassName = 'card'
-          HeightPercent = 100.000000000000000000
-          WidthPercent = 100.000000000000000000
           Align = alBottom
-          BorderColor = clSilver
-          BorderStyle = bsSingle
           Caption = 'pnlSimResultsFile'
           ElementBodyClassName = 'card-body-shadow'
           ElementFont = efCSS
@@ -1404,7 +1341,6 @@ object mainForm: TmainForm
           Font.Style = []
           ParentFont = False
           ShowCaption = False
-          ExplicitWidth = 221
           object lblFileName: TWebLabel
             Left = 16
             Top = 45
@@ -1476,11 +1412,7 @@ object mainForm: TmainForm
         Width = 300
         Height = 760
         ElementClassName = 'card'
-        HeightPercent = 100.000000000000000000
-        WidthPercent = 100.000000000000000000
         Align = alLeft
-        BorderColor = clSilver
-        BorderStyle = bsSingle
         ChildOrder = 3
         ElementBodyClassName = 'card-body'
         ElementFont = efCSS
@@ -1506,8 +1438,6 @@ object mainForm: TmainForm
           Top = 107
           Width = 261
           Height = 224
-          HeightPercent = 100.000000000000000000
-          WidthPercent = 100.000000000000000000
         end
       end
     end
@@ -1517,22 +1447,16 @@ object mainForm: TmainForm
       Width = 769
       Height = 760
       ElementClassName = 'card rounded-0'
-      HeightPercent = 100.000000000000000000
-      WidthPercent = 100.000000000000000000
       Align = alClient
-      BorderColor = clSilver
       BorderStyle = bsNone
       ChildOrder = 2
       ElementBodyClassName = 'card-body'
       ElementFont = efCSS
-      ExplicitWidth = 774
       object networkPB1: TWebPaintBox
         Left = 0
         Top = 0
         Width = 751
         Height = 742
-        HeightPercent = 100.000000000000000000
-        WidthPercent = 100.000000000000000000
         Align = alClient
         ChildOrder = 3
         ElementFont = efCSS
@@ -1543,7 +1467,6 @@ object mainForm: TmainForm
         OnMouseMove = networkPB1MouseMove
         OnMouseUp = networkPB1MouseUp
         OnMouseWheel = networkPB1MouseWheel
-        ExplicitWidth = 756
       end
       object netDrawScrollBarVert: TTMSFNCScrollBar
         Left = 751
@@ -1587,7 +1510,6 @@ object mainForm: TmainForm
         Max = 1000.000000000000000000
         PageSize = 10.000000000000000000
         OnValueChanged = netDrawScrollBarVertValueChanged
-        ExplicitLeft = 756
       end
       object netDrawScrollBarHoriz: TTMSFNCScrollBar
         Left = 0
@@ -1632,7 +1554,6 @@ object mainForm: TmainForm
         Max = 1000.000000000000000000
         PageSize = 10.000000000000000000
         OnValueChanged = netDrawScrollBarHorizValueChanged
-        ExplicitWidth = 774
       end
     end
     object splitter: TWebSplitter
@@ -1640,14 +1561,11 @@ object mainForm: TmainForm
       Top = 0
       Width = 10
       Height = 760
-      HeightPercent = 100.000000000000000000
-      WidthPercent = 100.000000000000000000
       Align = alRight
       ChildOrder = 3
       Color = clBtnFace
       OnClick = splitterClick
       OnMoved = splitterMoved
-      ExplicitLeft = 959
     end
     object RNodeEditWPanel: TWebPanel
       Left = 1114
@@ -1655,10 +1573,7 @@ object mainForm: TmainForm
       Width = 160
       Height = 760
       ElementClassName = 'card'
-      HeightPercent = 100.000000000000000000
-      WidthPercent = 100.000000000000000000
       Align = alRight
-      BorderColor = clSilver
       BorderStyle = bsNone
       ChildOrder = 4
       ElementBodyClassName = 'card-body'
@@ -1671,11 +1586,7 @@ object mainForm: TmainForm
       Width = 150
       Height = 760
       ElementClassName = 'card'
-      HeightPercent = 100.000000000000000000
-      WidthPercent = 100.000000000000000000
       Align = alRight
-      BorderColor = clSilver
-      BorderStyle = bsSingle
       ChildOrder = 5
       ElementBodyClassName = 'card-body'
       ElementFont = efCSS
@@ -1686,11 +1597,7 @@ object mainForm: TmainForm
         Width = 150
         Height = 60
         ElementClassName = 'card'
-        HeightPercent = 100.000000000000000000
-        WidthPercent = 100.000000000000000000
         Align = alTop
-        BorderColor = clSilver
-        BorderStyle = bsSingle
         ChildOrder = 2
         ElementBodyClassName = 'card-body-shadow'
         ElementFont = efCSS
@@ -1763,11 +1670,7 @@ object mainForm: TmainForm
         Width = 150
         Height = 210
         ElementClassName = 'card'
-        HeightPercent = 100.000000000000000000
-        WidthPercent = 100.000000000000000000
         Align = alTop
-        BorderColor = clSilver
-        BorderStyle = bsSingle
         ChildOrder = 1
         ElementBodyClassName = 'card-body-shadow'
         ElementFont = efCSS
@@ -1824,11 +1727,7 @@ object mainForm: TmainForm
         Width = 150
         Height = 145
         ElementClassName = 'card'
-        HeightPercent = 100.000000000000000000
-        WidthPercent = 100.000000000000000000
         Align = alTop
-        BorderColor = clSilver
-        BorderStyle = bsSingle
         ChildOrder = 2
         ElementBodyClassName = 'card-body-shadow'
         ElementFont = efCSS
@@ -1905,11 +1804,7 @@ object mainForm: TmainForm
     Width = 1800
     Height = 35
     ElementClassName = 'card'
-    HeightPercent = 100.000000000000000000
-    WidthPercent = 100.000000000000000000
     Align = alTop
-    BorderColor = clSilver
-    BorderStyle = bsSingle
     ChildOrder = 3
     ElementBodyClassName = 'card-body card text-white bg-secondary mb-3'
     ElementFont = efCSS
