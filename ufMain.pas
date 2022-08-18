@@ -750,7 +750,7 @@ begin
   self.btnAddPlot.Enabled := false;
   self.btnParamAddSlider.Enabled := false;
   self.enableStepSizeEdit;
-  //onLineSimButton.Enabled := false;
+
 end;
 
 procedure TMainForm.btnOnLineSimClick(Sender: TObject);

@@ -52,15 +52,9 @@ object mainForm: TmainForm
       Hint = 'If network ready, start simulation'
       Caption = 'Start Simulation'
       ChildOrder = 5
-      ElementClassName = 'btn btn-danger btn-sm'
+      ElementClassName = 'btn btn-primary btn-sm'
       ElementFont = efCSS
-      Font.Charset = DEFAULT_CHARSET
-      Font.Color = clRed
-      Font.Height = -11
-      Font.Name = 'Tahoma'
-      Font.Style = [fsBold]
       HeightPercent = 100.000000000000000000
-      ParentFont = False
       ShowHint = True
       WidthPercent = 100.000000000000000000
       OnClick = btnOnLineSimClick
@@ -239,11 +233,13 @@ object mainForm: TmainForm
       Top = 34
       Width = 185
       Height = 25
+      Hint = 'Examples'
       Caption = 'Sample Networks'
       ChildOrder = 2
       ElementClassName = 'btn btn-primary btn-sm'
       ElementFont = efCSS
       HeightPercent = 100.000000000000000000
+      ShowHint = False
       WidthPercent = 100.000000000000000000
       OnClick = btnDrawClick
     end
