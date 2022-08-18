@@ -16,7 +16,7 @@ uses
   uPlotPanel, uParamSliderLayout, uSidewinderTypes, WEBLib.ComCtrls, WEBLib.Miletus,
   WEBLib.JQCtrls, ufAssignments, ufSelectExample;
 
-const SIDEWINDER_VERSION = 'Version 0.48 alpha';
+const SIDEWINDER_VERSION = 'Version 0.49 alpha';
       DEFAULT_RUNTIME = 10000;
       EDITBOX_HT = 25;
       ZOOM_SCALE = 20;
@@ -750,7 +750,7 @@ begin
   self.btnAddPlot.Enabled := false;
   self.btnParamAddSlider.Enabled := false;
   self.enableStepSizeEdit;
-  //onLineSimButton.Enabled := false;
+
 end;
 
 procedure TMainForm.btnOnLineSimClick(Sender: TObject);
