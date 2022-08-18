@@ -537,7 +537,7 @@ end;
  begin
    if self.modelInitialAssignments = nil then
      self.modelInitialAssignments := TList<TSBMLInitialAssignment>.create;
-   self.modelInitialAssignments.Add(newInitAssign);
+   self.modelInitialAssignments.Add( TSBMLInitialAssignment.create(newInitAssign) );
  end;
 
  function  TModel.getNumInitialAssignments(): integer;
