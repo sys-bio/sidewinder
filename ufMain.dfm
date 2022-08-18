@@ -49,13 +49,12 @@ object mainForm: TmainForm
       Top = 10
       Width = 120
       Height = 28
-      Hint = 'If network ready, start simulation'
       Caption = 'Start Simulation'
       ChildOrder = 5
       ElementClassName = 'btn btn-primary btn-sm'
       ElementFont = efCSS
       HeightPercent = 100.000000000000000000
-      ShowHint = True
+      ShowHint = False
       WidthPercent = 100.000000000000000000
       OnClick = btnOnLineSimClick
     end
@@ -239,7 +238,6 @@ object mainForm: TmainForm
       ElementClassName = 'btn btn-primary btn-sm'
       ElementFont = efCSS
       HeightPercent = 100.000000000000000000
-      ShowHint = False
       WidthPercent = 100.000000000000000000
       OnClick = btnDrawClick
     end
