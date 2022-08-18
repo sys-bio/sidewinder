@@ -124,6 +124,8 @@
         <DCCReference Include="simulator\uSimulation.pas"/>
         <DCCReference Include="sbml\uSBMLClasses.Render.pas"/>
         <DCCReference Include="sbml\uSBMLClasses.Layout.pas"/>
+        <DCCReference Include="sbml\uSBMLClasses.pas"/>
+        <DCCReference Include="sbml\uSBMLClasses.rule.pas"/>
         <None Include="AllTests_index.html"/>
         <None Include="sbml\readSBMLmodel.js"/>
         <BuildConfiguration Include="Release">
