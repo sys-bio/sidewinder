@@ -17,7 +17,8 @@ uses
   uSBMLClasses.Render in 'sbml\uSBMLClasses.Render.pas',
   uSBMLClasses.Layout in 'sbml\uSBMLClasses.Layout.pas',
   uSBMLClasses in 'sbml\uSBMLClasses.pas',
-  uSBMLClasses.rule in 'sbml\uSBMLClasses.rule.pas';
+  uSBMLClasses.rule in 'sbml\uSBMLClasses.rule.pas',
+  uSBMLWriter in 'sbml\uSBMLWriter.pas';
 
 {$R *.res}
 

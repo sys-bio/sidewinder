@@ -136,6 +136,12 @@ implementation
 'return p;' + sLineBreak +
 'let dydt_s = pas.uVector.TVector.$create("create$1",[s.length]); p[1] = s[2] * 5 + 5;dydt_s.setVal(1, (1)*(1)* (p[5] * (p[0] * (p[6] - s[0] / p[1]) / (1 + p[6] + s[0] + Math.pow(s[1], p[2])) / p[5]))+  (-1)*(1)* (p[5] * ((10 * s[0] - 2 * s[2]) / (1 + s[0] + s[2]) / p[5])));dydt_s.setVal(3, (1)*(1)* (p[5] * ((10 * s[0] - 2 * s[2]) / (1 + s[0] + s[2]) / p[5]))+  (-1)*(1)* (p[5] * ((5 * s[2] - 2 * s[3]) / (1 + s[2] + s[3]) / p[5])));dydt_s.setVal(4, (1)*(1)* (p[5] * ((5 * s[2] - 2 * s[3]) / (1 + s[2] + s[3]) / p[5]))+  (-1)*(1)* (p[5] * ((10 * s[3] - 2 * s[1]) / (1 + s[3] + s[1]) / p[5])));dydt_s.setVal(2, (1)*(1)* (p[5] * ((10 * s[3] - 2 * s[1]) / (1 + s[3] + s[1]) / p[5]))+  (-1)*(1)* (p[5] * (p[3] * s[1] / (p[4] + s[1]) / p[5]))); return dydt_s;');
 
+   // Test #5 2 init assignments and 1 assignment rule:
+   self.equationsRefList.Add('p[1] = s[0] * 10 + 10' + sLineBreak +
+'p[2] = p[1] + 2' + sLineBreak +
+'p[0] = 10 + s[2]' + sLineBreak +
+'return p;' + sLineBreak +
+'let dydt_s = pas.uVector.TVector.$create("create$1",[s.length]); p[1] = s[0] * 10 + 10;dydt_s.setVal(1, (1)*(1)* (p[0] * (p[6] - s[0] / p[1]) / (1 + p[6] + s[0] + Math.pow(s[1], p[2])))+  (-1)*(1)* ((10 * s[0] - 2 * s[2]) / (1 + s[0] + s[2])));dydt_s.setVal(3, (1)*(1)* ((10 * s[0] - 2 * s[2]) / (1 + s[0] + s[2]))+  (-1)*(1)* ((10 * s[2] - 2 * s[3]) / (1 + s[2] + s[3])));dydt_s.setVal(4, (1)*(1)* ((10 * s[2] - 2 * s[3]) / (1 + s[2] + s[3]))+  (-1)*(1)* ((10 * s[3] - 2 * s[1]) / (1 + s[3] + s[1])));dydt_s.setVal(2, (1)*(1)* ((10 * s[3] - 2 * s[1]) / (1 + s[3] + s[1]))+  (-1)*(1)* (p[3] * s[1] / (p[4] + s[1]))); return dydt_s;' );
    self.numTests := self.equationsRefList.Count;
  end;
 

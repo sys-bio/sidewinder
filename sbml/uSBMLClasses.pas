@@ -186,7 +186,7 @@ type
    function printStr(): string;
 
  end;
-     // reaction Modifiers not implimented
+
  SBMLReaction = class
  private
   rxnID, name: String;
@@ -198,13 +198,13 @@ type
   reversible: boolean;
   kineticlaw: SBMLkineticlaw;
   kineticLawFlagSet: boolean;
- // products: array of String;   // remove at some point
+ // products: array of String;   // remove at some point, replaced by rxnProducts
  // reactants: array of String;  // remove at "
 
   numbProducts, numbReactants: integer;
   rxnProducts: array of TSBMLSpeciesReference;
   rxnReactants: array of TSBMLSpeciesReference;
-
+// rxnModifiers: TList<TSBMLSpeciesReferences>; Currently not implimented.
  public
   kineticLawStr: String;  // temporary, use SBMLkineticlaw class later
   constructor create(id:String; prod: array of String; reactant: array of String); Overload; // remove at some point
