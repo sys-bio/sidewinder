@@ -81,7 +81,7 @@ type
    function  getSBMLspecies(spId:string): TSBMLSpecies; overload;
    function  getSBMLspeciesAr(): array of TSBMLSpecies;  // All species
    function  getSBML_BC_SpeciesAr(): array of TSBMLSpecies; // Just species listed as boundary condition for a species
-   function  getSBMLdynamicSpeciesAr(): array of TSBMLSpecies;  // return species that are not a bc or amt (not conc) is constant.
+   function  getSBMLFloatSpeciesAr(): array of TSBMLSpecies;  // return species that are not a bc or amt (not conc) is constant.
    function  getCompNumb(): integer;
    function  getSBMLcompartmentsArr(): array of TSBMLcompartment;
    function  getSBMLcompartment(i:integer): TSBMLcompartment; overload;
@@ -402,7 +402,7 @@ end;
  end;
 
  // return species that are not a bc or amt (not conc) is constant.
- function TModel.getSBMLdynamicSpeciesAr(): array of TSBMLSpecies;
+ function TModel.getSBMLFloatSpeciesAr(): array of TSBMLSpecies;
  var i, j: integer;
  begin
   j := 0;
@@ -590,7 +590,7 @@ var
 begin
   if self.getSpeciesNumb() > 0 then
     begin
-      spAr := self.getSBMLdynamicSpeciesAr; // Do not include BCs and consts
+      spAr := self.getSBMLFloatSpeciesAr; // Do not include BCs and consts
       self.s_NameValAr := TVarNameValList.create();
       for i := 0 to Length(spAr) - 1 do
         begin
