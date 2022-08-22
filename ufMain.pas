@@ -1729,7 +1729,12 @@ procedure TMainForm.selectPlotSpecies(plotnumb: Integer);
     lgth := 0;
    // TODO: Need Additional (non default) plots to allow plotting of boundary species.
    //  Need to look at plots, as new data is only plotted for species, change plot species array to handle boundary species.
-   // for i := 0 to Length(self.mainController.getModel.getSBMLspeciesAr) -1 do
+   // --> So check if plot # > 1:  if self.plotsPanelList.Count > 0 then
+   //     add any BC species to list to plot for user to chose.
+   // TModel.getSBML_BC_SpeciesAr()
+   // TModel.getSBMLFloatSpeciesAr()
+   // TModel.getModel.getSBMLspeciesAr() : All species
+
     for i := 0 to length(self.mainController.getModel.getS_Names) -1 do
     begin
       curStr := '';

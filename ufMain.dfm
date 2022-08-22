@@ -54,7 +54,6 @@ object mainForm: TmainForm
       ElementClassName = 'btn btn-primary btn-sm'
       ElementFont = efCSS
       HeightPercent = 100.000000000000000000
-      ShowHint = False
       WidthPercent = 100.000000000000000000
       OnClick = btnOnLineSimClick
     end
