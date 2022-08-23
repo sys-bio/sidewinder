@@ -16,10 +16,11 @@ uses
   uPlotPanel, uParamSliderLayout, uSidewinderTypes, WEBLib.ComCtrls, WEBLib.Miletus,
   WEBLib.JQCtrls, ufAssignments, ufSelectExample;
 
-const SIDEWINDER_VERSION = 'Version 0.49 alpha';
+const SIDEWINDER_VERSION = 'Version 0.50 alpha';
       DEFAULT_RUNTIME = 10000;
       EDITBOX_HT = 25;
       ZOOM_SCALE = 20;
+      MAX_SLIDERS = 10;
       MAX_STR_LENGTH = 50;  // Max User inputed string length for Rxn/spec/param id
       DEBUG = false; // true then show debug console output and any other debug related info
 
@@ -262,6 +263,7 @@ type
     procedure EditSliderList(sn: Integer);
             // delete, change param slider as needed using TWebListBox.
     procedure resetBtnOnLineSim(); // reset to default look and caption of 'Start simulation'
+    procedure clearSlider(sn: Integer); // sn: slider index, clear values so that it can be used again.
     procedure deleteSlider(sn: Integer); // sn: slider index
     procedure deleteAllSliders();
     procedure adjustRightTabWPanels(); // Adjust all right panels
@@ -296,10 +298,8 @@ type
     fPlotSpecies: TVarSelectForm;
     plotSpecies: TList<TSpeciesList>; // species to graph for each plot
     plotsPanelList: TList<TPlotPanel>; // Panels in which each plot resides
- //   fSliderParameter: TParamSliderSForm;// Pop up form to choose parameter for slider.
     fSliderParameter: TVarSelectForm;// Pop up form to choose parameter for slider.
-    sliderParamAr: array of Integer;
-    // holds parameter array index of parameter (p_vals) for each slider
+    sliderParamAr: array of Integer;// holds parameter array index (p_vals) of parameter to use for each slider
     pnlSliderAr: array of TWebPanel; // Holds parameter sliders
     sliderPHighAr: array of Double; // High value for parameter slider
     sliderPLowAr: array of Double; // Low value for parameter slider
@@ -784,15 +784,12 @@ begin
      // add a default plot:
     if self.numbPlots < 1 then
       begin
-     // if length( self.mainController.getModel.getS_Names ) < 10 then
         addPlotAll()
       end
     else self.btnAddPlotClick(nil);
       // add default param sliders:
     if self.numbSliders < 1 then
       begin
-      //if length( self.mainController.getModel.getP_Names ) < 11 then
-        //begin
       self.addAllParamSliders;
       if length( self.mainController.getModel.getP_Names ) < 11 then
         self.btnParamAddSlider.Enabled := false;
@@ -928,11 +925,6 @@ begin
       notifyUser(' SBML piecewise() function not supported at this time. Load a different SBML Model');
       clearNetwork();
       end
-  {  else if newModel.getNumFuncDefs > 0 then
-      begin
-      notifyUser(' SBML FunctionDefinition not supported at this time. Load a different SBML Model' );
-      clearNetwork();
-      end; }
 
   end;
   if assigned(newModel.getSBMLLayout) then  // may want try/catch for layout not existing
@@ -1203,9 +1195,31 @@ end;
 procedure TMainForm.btnParamAddSliderClick(Sender: TObject);
 var
   i: Integer;
+  strSliderLimitMsg: string;
+  found, emptySlider: boolean;
 begin
-  // TODO: Check if already 10 sliders, if so then showmessage( 'Only 10 parameter sliders allowed, edit existing one');
-  self.selectParameter(length(sliderParamAr));
+  strSliderLimitMsg := 'Only ' + inttostr(MAX_SLIDERS) + ' sliders allowed, edit existing slider to change parameter to adjust.';
+  emptySlider := false;
+  for i := 0 to length(self.sliderParamAr) -1 do
+    begin
+    if self.sliderParamAr[i] = -1 then emptySlider := true; // no param index, empty spot.
+    end;
+
+  if emptySlider or (length(self.sliderParamAr) < MAX_SLIDERS ) then
+    begin
+    found := false;
+    for i := 0 to length(sliderParamAr) -1 do
+      begin
+        if (sliderParamAr[i] = -1) and (not found) then
+          begin
+          found := true;
+          self.selectParameter(i);
+          end;
+      end;
+    if not found then self.selectParameter(length(sliderParamAr)); // new slider position
+    end
+
+  else notifyUser(strSliderLimitMsg);
 end;
 
 procedure TMainForm.btnParamResetClick(Sender: TObject);
@@ -1485,7 +1499,11 @@ begin
     end;
   if self.SliderEditLB.ItemIndex = 1 then // delete slider
     begin
-      self.deleteSlider(getSliderIndex(self.SliderEditLB.tag));
+      if getSliderIndex(self.SliderEditLB.tag) < length(self.pnlSliderAr) + 1 then
+        begin
+          self.clearSlider(getSliderIndex(self.SliderEditLB.tag));
+        end
+      else self.deleteSlider(getSliderIndex(self.SliderEditLB.tag));
     end;
   // else ShowMessage('Cancel');
   self.SliderEditLB.tag := -1;
@@ -1495,7 +1513,7 @@ end;
 
 procedure TMainForm.splitterClick(Sender: TObject);
 begin
- // TODO   Popup with trackbar/slider to adjust self.splitter.left
+ // TODO   Popup with trackbar/slider to adjust self.splitter.left ??
  // self.splitterMoved(nil);
 end;
 
@@ -1970,7 +1988,18 @@ begin
 
 end;
 
-// TODO still more cleanup .. reorder sliders if middle one deleted ?
+procedure TMainForm.clearSlider(sn: Integer); // sn: slider index
+begin
+  self.pnlSliderAr[sn].Visible := false;
+  self.sliderParamAr[sn] := -1; // no param index
+  self.sliderPHLabelAr[sn].Caption := '';
+  self.sliderPLLabelAr[sn].Caption := '';
+  self.sliderPTBLabelAr[sn].Caption := '';
+  self.sliderPHighAr[sn] := 0;
+  self.sliderPLowAr[sn] := 0;
+  self.RSimWPanel.Invalidate;
+end;
+
 procedure TMainForm.deleteSlider(sn: Integer); // sn: slider index
 begin
   // console.log('Delete Slider: slider #: ',sn);
@@ -2001,19 +2030,19 @@ var
   // Pass back to caller after closing popup:
   procedure AfterShowModal(AValue: TModalResult);
   var
-    i, sliderNumb:Integer;
+    i:Integer;
     addingSlider: Boolean;
     sliderP: string;
   begin
     addingSlider := false;
-    sliderNumb := 0;
     sliderP := '';
-    if length(self.sliderParamAr) < (sNumb +1) then
+    if sNumb > length(self.sliderParamAr) -1 then
       addingSlider := true
     else
       begin    // Changing species to plot, so clear out old param entries:
         addingSlider := false;
-        self.sliderParamAr[getSliderIndex(sNumb)] := -1; // Clear slider position, not needed here ?
+        self.clearSlider(sNumb);
+        self.sliderParamAr[getSliderIndex(sNumb)] := -1; // Clear param location in param Array
       end;
 
     for i := 0 to fSliderParameter.SpPlotCG.Items.Count - 1 do
@@ -2022,11 +2051,22 @@ var
         if fSliderParameter.SpPlotCG.checked[i] then
           begin
             if addingSlider then
-              SetLength(self.sliderParamAr, (sliderNumb + 1));    // add a slider
-           // sliderP := self.mainController.getModel.getP_names[i];   // needed?
-            self.sliderParamAr[sliderNumb] := i; // assign param indexto slider
-            self.addParamSlider(); // <-- Add dynamically created slider
-            inc(sliderNumb);
+              begin
+              SetLength(self.sliderParamAr, length(self.sliderParamAr) + 1);    // add a slider
+              self.sliderParamAr[length(self.sliderParamAr) -1] := i; // assign param index from param array to slider
+              end;
+            if not addingSlider then
+              begin
+              self.sliderParamAr[sNumb] := i; // assign param index from param array to slider
+              self.SetSliderParamValues(sNumb, self.sliderParamAr[sNumb]);
+              self.pnlSliderAr[sNumb].Visible := true;
+              self.pnlSliderAr[sNumb].Invalidate;
+              end
+            else
+              begin
+              self.addParamSlider(); // <-- Add dynamically created slider to end of array
+              end;
+
           end;
 
       end;
@@ -2048,11 +2088,11 @@ begin
   fSliderParameter.ShowClose := false;
   fSliderParameter.PopupOpacity := 0.3;
   fSliderParameter.Border := fbDialogSizeable;
+  fSliderParameter.unCheckGroup();
   fSliderParameter.caption := 'Pick parameters for sliders:';
   fSliderParameter.ShowModal(@AfterShowModal);
 
 end;
-
 
 // *******************************************************
 
@@ -2062,7 +2102,7 @@ var i, numParSliders: integer;
 begin
   numParSliders := 0;
   numParSliders := length(self.mainController.getModel.getP_Names);
-  if numParSliders > 10 then numParSliders := 10;
+  if numParSliders > MAX_SLIDERS then numParSliders := MAX_SLIDERS;
 
   for i := 0 to numParSliders -1 do
     begin

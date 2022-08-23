@@ -76,7 +76,7 @@ object mainForm: TmainForm
       Top = 10
       Width = 133
       Height = 32
-      Hint = 'Add parameter slider'
+      Hint = '10 sliders max, edit existing ones to change.'
       Caption = 'Add Param Slider'
       ChildOrder = 6
       ElementClassName = 'btn btn-primary btn-sm'
