@@ -1,7 +1,7 @@
 unit uTestSBMLReadWrite;
 
-// Test reading a SBML file and storing in a TModel using TSBML Classes
-// Test writing a SBML file from TModel
+// Test reading a SBML file and storing in a TModel using TSBML Classes and libsbml.js
+// Test writing a SBML file from TModel using TSBML classes and libsbml.js.
 //
 // Add tests:
 // 1a. If Read test then add sbml model to uTestSBML_ReadModels.pas
@@ -19,7 +19,7 @@ unit uTestSBMLReadWrite;
 interface
 uses   System.SysUtils, System.Classes, JS, Web, System.Generics.Collections,
  uTestCase, utests.TestUtils, uSBMLClasses, uSBMLWriter, uSBMLReader, uModel, uTestModel,
- uTestSBML_ReadModels;
+ uTestSBML_ReadModels, uSBMLClasses.rule;
 
 type
  TReadWriteTestsFinished = procedure(readWriteTestCase: TList<TTestCaseResult>) of object;  // Notify when done testing
@@ -200,9 +200,10 @@ begin
 
 function TTestSBMLReadWrite.generateWriteTestModel(testIndex: integer): TModel;
 var i: integer;
-    curModel: TModel;
+    curModel: TModel; testInitAssignAr: array of TSBMLInitialAssignment;
+    testAssignRuleAr: array of TSBMLRule;
     testSpeciesAr: array of TSBMLSpecies; testComp: TSBMLCompartment; testParamAr: array of TSBMLparameter;
-    testRxn: SBMLReaction;
+    testRxn: SBMLReaction; testRxnAr: array of SBMLReaction;
     testProdSpAr: array of TSBMLSpeciesReference; testReactSpAr: array of TSBMLSpeciesReference;
 begin
   case testIndex of
@@ -229,8 +230,117 @@ begin
        curModel.addSBMLReaction(testRxn);
 
        Result := curModel;
-    end;
+       end;
     // ****************************************
+    // Model with 2 init assignments, 1 assignment rule and 5 reactions
+    1: begin curModel := TModel.create;
+       curModel.setModelId('Feedback_with_InitAssignments');
+       setLength(testSpeciesAr, 6);
+       testSpeciesAr[0] := TSBMLSpecies.create('X0');
+       testSpeciesAr[0].setInitialConcentration(10);
+       testSpeciesAr[0].setBoundaryCondition(true);
+       curModel.addSBMLspecies(testSpeciesAr[0]);
+       testSpeciesAr[1] := TSBMLSpecies.create('S1');
+       testSpeciesAr[1].setInitialConcentration(0);
+       curModel.addSBMLspecies(testSpeciesAr[1]);
+       testSpeciesAr[2] := TSBMLSpecies.create('S2');
+       testSpeciesAr[2].setInitialConcentration(0);
+       curModel.addSBMLspecies(testSpeciesAr[2]);
+       testSpeciesAr[3] := TSBMLSpecies.create('S3');
+       testSpeciesAr[3].setInitialConcentration(0);
+       curModel.addSBMLspecies(testSpeciesAr[3]);
+       testSpeciesAr[4] := TSBMLSpecies.create('X1');
+       testSpeciesAr[4].setInitialConcentration(0);
+       testSpeciesAr[4].setBoundaryCondition(true);
+       curModel.addSBMLspecies(testSpeciesAr[4]);
+       testSpeciesAr[5] := TSBMLSpecies.create('S4');
+       testSpeciesAr[5].setInitialConcentration(0);
+       curModel.addSBMLspecies(testSpeciesAr[5]);
+       testComp := TSBMLCompartment.create('Compartment01');
+       testComp.setVolume(1.1);
+       curModel.addSBMLCompartment(testComp);
+       setLength(testParamAr, 5);
+       testParamAr[0] := TSBMLparameter.create('VM1');
+       //testParamAr[0].setValue(0.15);
+       testParamAr[0].setConstant(false);
+       curModel.addSBMLParameter(testParamAr[0]);
+       testParamAr[1] := TSBMLparameter.create('Keq1');
+       //testParamAr[0].setValue(0.15);
+       testParamAr[1].setConstant(false);
+       curModel.addSBMLParameter(testParamAr[1]);
+       testParamAr[2] := TSBMLparameter.create('h');
+       testParamAr[2].setConstant(false);
+       curModel.addSBMLParameter(testParamAr[2]);
+       testParamAr[3] := TSBMLparameter.create('V4');
+       testParamAr[0].setValue(2.5);
+       testParamAr[3].setConstant(false);
+       curModel.addSBMLParameter(testParamAr[3]);
+       testParamAr[4] := TSBMLparameter.create('KS4');
+       testParamAr[0].setValue(0.5);
+       testParamAr[4].setConstant(false);
+       curModel.addSBMLParameter(testParamAr[4]);
+       setLength(testInitAssignAr, 2);
+       testInitAssignAr[0] := TSBMLInitialAssignment.create();
+       testInitAssignAr[0].setId('initAssign_0');
+       testInitAssignAr[0].setSymbol('h');
+       testInitAssignAr[0].setFormula('Keq1 + 2');
+       curModel.addInitialAssignment(testInitAssignAr[0]);
+       testInitAssignAr[1] := TSBMLInitialAssignment.create();
+       testInitAssignAr[1].setId('initAssign_1');
+       testInitAssignAr[1].setSymbol('VM1');
+       testInitAssignAr[1].setFormula('10 + S2');
+       curModel.addInitialAssignment(testInitAssignAr[1]);
+       setLength(testAssignRuleAr, 1);
+       testAssignRuleAr[0] := TSBMLRule.create();
+       testAssignRuleAr[0].setId('AssignRule_0');
+       testAssignRuleAr[0].setAssignment(true);
+       testAssignRuleAr[0].setParameter(true);
+       testAssignRuleAr[0].setVariable('Keq1');
+       testAssignRuleAr[0].setFormula('S1*10+10');
+       curModel.addSBMLrule(testAssignRuleAr[0]);
+
+       setLength(testProdSpAr, 1); setLength(testReactSpAr, 1);
+       testReactSpAr[0] := TSBMLSpeciesReference.create('X0', 1);
+       testProdSpAr[0] := TSBMLSpeciesReference.create('S1', 1);
+       setLength(testRxnAr, 5);
+       testRxnAr[0] := SBMLReaction.create('J0', testProdSpAr, testReactSpAr);
+       testRxnAr[0].setReversible(true);
+       testRxnAr[0].setKineticLaw( SBMLKineticLaw.create('reaction0_kinlaw','(VM1 * (X0 - S1/Keq1))/(1 + X0 + S1 + S4^h)', testParamAr) );
+       curModel.addSBMLReaction(testRxnAr[0]);
+
+       setLength(testProdSpAr, 1); setLength(testReactSpAr, 1);
+       testReactSpAr[0] := TSBMLSpeciesReference.create('S1', 1);
+       testProdSpAr[0] := TSBMLSpeciesReference.create('S2', 1);
+       testRxnAr[1] := SBMLReaction.create('J1', testProdSpAr, testReactSpAr);
+       testRxnAr[1].setReversible(true);
+       testRxnAr[1].setKineticLaw( SBMLKineticLaw.create('reaction1_kinlaw','(10 * S1 - 2 * S2) / (1 + S1 + S2)', testParamAr) );
+       curModel.addSBMLReaction(testRxnAr[1]);
+
+       setLength(testProdSpAr, 1); setLength(testReactSpAr, 1);
+       testReactSpAr[0] := TSBMLSpeciesReference.create('S2', 1);
+       testProdSpAr[0] := TSBMLSpeciesReference.create('S3', 1);
+       testRxnAr[2] := SBMLReaction.create('J2', testProdSpAr, testReactSpAr);
+       testRxnAr[2].setReversible(true);
+       testRxnAr[2].setKineticLaw( SBMLKineticLaw.create('reaction2_kinlaw','(10 * S2 - 2 * S3) / (1 + S2 + S3)', testParamAr) );
+       curModel.addSBMLReaction(testRxnAr[2]);
+
+       setLength(testProdSpAr, 1); setLength(testReactSpAr, 1);
+       testReactSpAr[0] := TSBMLSpeciesReference.create('S3', 1);
+       testProdSpAr[0] := TSBMLSpeciesReference.create('S4', 1);
+       testRxnAr[3] := SBMLReaction.create('J3', testProdSpAr, testReactSpAr);
+       testRxnAr[3].setReversible(true);
+       testRxnAr[3].setKineticLaw( SBMLKineticLaw.create('reaction3_kinlaw','(10 * S3 - 2 * S4) / (1 + S3 + S4)', testParamAr) );
+       curModel.addSBMLReaction(testRxnAr[3]);
+
+       setLength(testProdSpAr, 1); setLength(testReactSpAr, 1);
+       testReactSpAr[0] := TSBMLSpeciesReference.create('S4', 1);
+       testProdSpAr[0] := TSBMLSpeciesReference.create('X1', 1);
+       testRxnAr[4] := SBMLReaction.create('J4', testProdSpAr, testReactSpAr);
+       testRxnAr[4].setReversible(true);
+       testRxnAr[4].setKineticLaw( SBMLKineticLaw.create('reaction3_kinlaw',' (V4 * S4) / (KS4 + S4)', testParamAr) );
+       curModel.addSBMLReaction(testRxnAr[4]);
+       Result := curModel;
+    end
 
     else Result := nil;
   end;
@@ -259,6 +369,7 @@ end;
 procedure TTestSBMLReadWrite.generateWriteTestReferences();
 begin
   self.writeRefResults := TList<string>.create;
+  // Test 1 ***********************************************************
   self.writeRefResults.Add('<?xml version="1.0" encoding="UTF-8"?>' + sLineBreak +
 '<sbml xmlns="http://www.sbml.org/sbml/level3/version2/core" xmlns:layout="http://www.sbml.org/sbml/level3/version1/layout/version1" xmlns:render="http://www.sbml.org/sbml/level3/version1/render/version1" level="3" version="2" layout:required="false" render:required="false">' + sLineBreak +
   '<model>' + sLineBreak +
@@ -286,6 +397,242 @@ begin
               '<times/>' + sLineBreak +
               '<ci> k1 </ci>' + sLineBreak +
               '<ci> S1 </ci>' + sLineBreak +
+            '</apply>' + sLineBreak +
+          '</math>' + sLineBreak +
+        '</kineticLaw>' + sLineBreak +
+      '</reaction>' + sLineBreak +
+    '</listOfReactions>' + sLineBreak +
+    '<layout:listOfLayouts xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:layout="http://www.sbml.org/sbml/level3/version1/layout/version1">' + sLineBreak +
+      '<layout:layout>' + sLineBreak +
+        '<layout:dimensions layout:width="0" layout:height="0"/>' + sLineBreak +
+        '<render:listOfRenderInformation xmlns:render="http://www.sbml.org/sbml/level3/version1/render/version1">' + sLineBreak +
+          '<render:renderInformation/>' + sLineBreak +
+        '</render:listOfRenderInformation>' + sLineBreak +
+      '</layout:layout>' + sLineBreak +
+    '</layout:listOfLayouts>' + sLineBreak +
+  '</model>' + sLineBreak +
+'</sbml>' );
+
+  // Test 2 *********************************************
+  self.writeRefResults.Add( '<?xml version="1.0" encoding="UTF-8"?>' + sLineBreak +
+'<sbml xmlns="http://www.sbml.org/sbml/level3/version2/core" xmlns:layout="http://www.sbml.org/sbml/level3/version1/layout/version1" xmlns:render="http://www.sbml.org/sbml/level3/version1/render/version1" level="3" version="2" layout:required="false" render:required="false">' + sLineBreak +
+  '<model id="Feedback_with_InitAssignments">' + sLineBreak +
+    '<listOfCompartments>' + sLineBreak +
+      '<compartment id="Compartment01" constant="false"/>' + sLineBreak +
+    '</listOfCompartments>' + sLineBreak +
+    '<listOfSpecies>' + sLineBreak +
+      '<species id="X0" initialConcentration="10" hasOnlySubstanceUnits="false" boundaryCondition="true" constant="false"/>' + sLineBreak +
+      '<species id="S1" initialConcentration="0" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false"/>' + sLineBreak +
+      '<species id="S2" initialConcentration="0" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false"/>' + sLineBreak +
+      '<species id="S3" initialConcentration="0" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false"/>' + sLineBreak +
+      '<species id="X1" initialConcentration="0" hasOnlySubstanceUnits="false" boundaryCondition="true" constant="false"/>' + sLineBreak +
+      '<species id="S4" initialConcentration="0" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false"/>' + sLineBreak +
+    '</listOfSpecies>' + sLineBreak +
+    '<listOfParameters>' + sLineBreak +
+      '<parameter id="VM1" constant="false"/>' + sLineBreak +
+      '<parameter id="Keq1" constant="false"/>' + sLineBreak +
+      '<parameter id="h" constant="false"/>' + sLineBreak +
+      '<parameter id="V4" constant="false"/>' + sLineBreak +
+      '<parameter id="KS4" constant="false"/>' + sLineBreak +
+    '</listOfParameters>' + sLineBreak +
+    '<listOfInitialAssignments>' + sLineBreak +
+      '<initialAssignment symbol="h">' + sLineBreak +
+        '<math xmlns="http://www.w3.org/1998/Math/MathML">' + sLineBreak +
+          '<apply>' + sLineBreak +
+            '<plus/>' + sLineBreak +
+            '<ci> Keq1 </ci>' + sLineBreak +
+            '<cn type="integer"> 2 </cn>' + sLineBreak +
+          '</apply>' + sLineBreak +
+        '</math>' + sLineBreak +
+      '</initialAssignment>' + sLineBreak +
+      '<initialAssignment symbol="VM1">' + sLineBreak +
+        '<math xmlns="http://www.w3.org/1998/Math/MathML">' + sLineBreak +
+          '<apply>' + sLineBreak +
+            '<plus/>' + sLineBreak +
+            '<cn type="integer"> 10 </cn>' + sLineBreak +
+            '<ci> S2 </ci>' + sLineBreak +
+          '</apply>' + sLineBreak +
+        '</math>' + sLineBreak +
+      '</initialAssignment>' + sLineBreak +
+    '</listOfInitialAssignments>' + sLineBreak +
+    '<listOfRules>' + sLineBreak +
+      '<assignmentRule variable="Keq1">' + sLineBreak +
+        '<math xmlns="http://www.w3.org/1998/Math/MathML">' + sLineBreak +
+          '<apply>' + sLineBreak +
+            '<plus/>' + sLineBreak +
+            '<apply>' + sLineBreak +
+              '<times/>' + sLineBreak +
+              '<ci> S1 </ci>' + sLineBreak +
+              '<cn type="integer"> 10 </cn>' + sLineBreak +
+            '</apply>' + sLineBreak +
+            '<cn type="integer"> 10 </cn>' + sLineBreak +
+          '</apply>' + sLineBreak +
+        '</math>' + sLineBreak +
+      '</assignmentRule>' + sLineBreak +
+    '</listOfRules>' + sLineBreak +
+    '<listOfReactions>' + sLineBreak +
+      '<reaction id="J0" reversible="true">' + sLineBreak +
+        '<listOfReactants>' + sLineBreak +
+          '<speciesReference id="X0" stoichiometry="1" constant="false"/>' + sLineBreak +
+        '</listOfReactants>' + sLineBreak +
+        '<listOfProducts>' + sLineBreak +
+          '<speciesReference id="S1" stoichiometry="1" constant="false"/>' + sLineBreak +
+        '</listOfProducts>' + sLineBreak +
+        '<kineticLaw id="reaction0_kinlaw">' + sLineBreak +
+          '<math xmlns="http://www.w3.org/1998/Math/MathML">' + sLineBreak +
+            '<apply>' + sLineBreak +
+              '<divide/>' + sLineBreak +
+              '<apply>' + sLineBreak +
+                '<times/>' + sLineBreak +
+                '<ci> VM1 </ci>' + sLineBreak +
+                '<apply>' + sLineBreak +
+                  '<minus/>' + sLineBreak +
+                  '<ci> X0 </ci>' + sLineBreak +
+                  '<apply>' + sLineBreak +
+                    '<divide/>' + sLineBreak +
+                    '<ci> S1 </ci>' + sLineBreak +
+                    '<ci> Keq1 </ci>' + sLineBreak +
+                  '</apply>' + sLineBreak +
+                '</apply>' + sLineBreak +
+              '</apply>' + sLineBreak +
+              '<apply>' + sLineBreak +
+                '<plus/>' + sLineBreak +
+                '<cn type="integer"> 1 </cn>' + sLineBreak +
+                '<ci> X0 </ci>' + sLineBreak +
+                '<ci> S1 </ci>' + sLineBreak +
+                '<apply>' + sLineBreak +
+                  '<power/>' + sLineBreak +
+                  '<ci> S4 </ci>' + sLineBreak +
+                  '<ci> h </ci>' + sLineBreak +
+                '</apply>' + sLineBreak +
+              '</apply>' + sLineBreak +
+            '</apply>' + sLineBreak +
+          '</math>' + sLineBreak +
+        '</kineticLaw>' + sLineBreak +
+      '</reaction>' + sLineBreak +
+      '<reaction id="J1" reversible="true">' + sLineBreak +
+        '<listOfReactants>' + sLineBreak +
+          '<speciesReference id="S1" stoichiometry="1" constant="false"/>' + sLineBreak +
+        '</listOfReactants>' + sLineBreak +
+        '<listOfProducts>' + sLineBreak +
+          '<speciesReference id="S2" stoichiometry="1" constant="false"/>' + sLineBreak +
+        '</listOfProducts>' + sLineBreak +
+        '<kineticLaw id="reaction1_kinlaw">' + sLineBreak +
+          '<math xmlns="http://www.w3.org/1998/Math/MathML">' + sLineBreak +
+            '<apply>' + sLineBreak +
+              '<divide/>' + sLineBreak +
+              '<apply>' + sLineBreak +
+                '<minus/>' + sLineBreak +
+                '<apply>' + sLineBreak +
+                  '<times/>' + sLineBreak +
+                  '<cn type="integer"> 10 </cn>' + sLineBreak +
+                  '<ci> S1 </ci>' + sLineBreak +
+                '</apply>' + sLineBreak +
+                '<apply>' + sLineBreak +
+                  '<times/>' + sLineBreak +
+                  '<cn type="integer"> 2 </cn>' + sLineBreak +
+                  '<ci> S2 </ci>' + sLineBreak +
+                '</apply>' + sLineBreak +
+              '</apply>' + sLineBreak +
+              '<apply>' + sLineBreak +
+                '<plus/>' + sLineBreak +
+                '<cn type="integer"> 1 </cn>' + sLineBreak +
+                '<ci> S1 </ci>' + sLineBreak +
+                '<ci> S2 </ci>' + sLineBreak +
+              '</apply>' + sLineBreak +
+            '</apply>' + sLineBreak +
+          '</math>' + sLineBreak +
+        '</kineticLaw>' + sLineBreak +
+      '</reaction>' + sLineBreak +
+      '<reaction id="J2" reversible="true">' + sLineBreak +
+        '<listOfReactants>' + sLineBreak +
+          '<speciesReference id="S2" stoichiometry="1" constant="false"/>' + sLineBreak +
+        '</listOfReactants>' + sLineBreak +
+        '<listOfProducts>' + sLineBreak +
+          '<speciesReference id="S3" stoichiometry="1" constant="false"/>' + sLineBreak +
+        '</listOfProducts>' + sLineBreak +
+        '<kineticLaw id="reaction2_kinlaw">' + sLineBreak +
+          '<math xmlns="http://www.w3.org/1998/Math/MathML">' + sLineBreak +
+            '<apply>' + sLineBreak +
+              '<divide/>' + sLineBreak +
+              '<apply>' + sLineBreak +
+                '<minus/>' + sLineBreak +
+                '<apply>' + sLineBreak +
+                  '<times/>' + sLineBreak +
+                  '<cn type="integer"> 10 </cn>' + sLineBreak +
+                  '<ci> S2 </ci>' + sLineBreak +
+                '</apply>' + sLineBreak +
+                '<apply>' + sLineBreak +
+                  '<times/>' + sLineBreak +
+                  '<cn type="integer"> 2 </cn>' + sLineBreak +
+                  '<ci> S3 </ci>' + sLineBreak +
+                '</apply>' + sLineBreak +
+              '</apply>' + sLineBreak +
+              '<apply>' + sLineBreak +
+                '<plus/>' + sLineBreak +
+                '<cn type="integer"> 1 </cn>' + sLineBreak +
+                '<ci> S2 </ci>' + sLineBreak +
+                '<ci> S3 </ci>' + sLineBreak +
+              '</apply>' + sLineBreak +
+            '</apply>' + sLineBreak +
+          '</math>' + sLineBreak +
+        '</kineticLaw>' + sLineBreak +
+      '</reaction>' + sLineBreak +
+      '<reaction id="J3" reversible="true">' + sLineBreak +
+        '<listOfReactants>' + sLineBreak +
+          '<speciesReference id="S3" stoichiometry="1" constant="false"/>' + sLineBreak +
+        '</listOfReactants>' + sLineBreak +
+        '<listOfProducts>' + sLineBreak +
+          '<speciesReference id="S4" stoichiometry="1" constant="false"/>' + sLineBreak +
+        '</listOfProducts>' + sLineBreak +
+        '<kineticLaw id="reaction3_kinlaw">' + sLineBreak +
+          '<math xmlns="http://www.w3.org/1998/Math/MathML">' + sLineBreak +
+            '<apply>' + sLineBreak +
+              '<divide/>' + sLineBreak +
+              '<apply>' + sLineBreak +
+                '<minus/>' + sLineBreak +
+                '<apply>' + sLineBreak +
+                  '<times/>' + sLineBreak +
+                  '<cn type="integer"> 10 </cn>' + sLineBreak +
+                  '<ci> S3 </ci>' + sLineBreak +
+                '</apply>' + sLineBreak +
+                '<apply>' + sLineBreak +
+                  '<times/>' + sLineBreak +
+                  '<cn type="integer"> 2 </cn>' + sLineBreak +
+                  '<ci> S4 </ci>' + sLineBreak +
+                '</apply>' + sLineBreak +
+              '</apply>' + sLineBreak +
+              '<apply>' + sLineBreak +
+                '<plus/>' + sLineBreak +
+                '<cn type="integer"> 1 </cn>' + sLineBreak +
+                '<ci> S3 </ci>' + sLineBreak +
+                '<ci> S4 </ci>' + sLineBreak +
+              '</apply>' + sLineBreak +
+            '</apply>' + sLineBreak +
+          '</math>' + sLineBreak +
+        '</kineticLaw>' + sLineBreak +
+      '</reaction>' + sLineBreak +
+      '<reaction id="J4" reversible="true">' + sLineBreak +
+        '<listOfReactants>' + sLineBreak +
+          '<speciesReference id="S4" stoichiometry="1" constant="false"/>' + sLineBreak +
+        '</listOfReactants>' + sLineBreak +
+        '<listOfProducts>' + sLineBreak +
+          '<speciesReference id="X1" stoichiometry="1" constant="false"/>' + sLineBreak +
+        '</listOfProducts>' + sLineBreak +
+        '<kineticLaw id="reaction3_kinlaw">' + sLineBreak +
+          '<math xmlns="http://www.w3.org/1998/Math/MathML">' + sLineBreak +
+            '<apply>' + sLineBreak +
+              '<divide/>' + sLineBreak +
+              '<apply>' + sLineBreak +
+                '<times/>' + sLineBreak +
+                '<ci> V4 </ci>' + sLineBreak +
+                '<ci> S4 </ci>' + sLineBreak +
+              '</apply>' + sLineBreak +
+              '<apply>' + sLineBreak +
+                '<plus/>' + sLineBreak +
+                '<ci> KS4 </ci>' + sLineBreak +
+                '<ci> S4 </ci>' + sLineBreak +
+              '</apply>' + sLineBreak +
             '</apply>' + sLineBreak +
           '</math>' + sLineBreak +
         '</kineticLaw>' + sLineBreak +
@@ -479,6 +826,17 @@ end;
 '--  Render line ending, id: ModulationHead, stroke color: , stroke width: -1, Rotational mapping: true BoundingBox ID: bb, BB pt:  Layout Pt ID:  Layout Pt XY: -5, -5, Layout Pt Z: 0 Layout Dims ID:  Layout w, h: 10, 10 Render group: Stoke width: 1, Stroke color: ModulationCurveColor, fill color: ModulationCurveColor, font size: -1, font style: normal, vTextAnchor: V_TOP, hTextAnchor: H_START, start head: , end head:' + sLineBreak +
 '--  Render line ending, id: InhibitionHead, stroke color: , stroke width: -1, Rotational mapping: true BoundingBox ID: bb, BB pt:  Layout Pt ID:  Layout Pt XY: -0.5, -4, Layout Pt Z: 0 Layout Dims ID:  Layout w, h: 0.6, 8 Render group: Stoke width: 2, Stroke color: black, fill color: black, font size: -1, font style: normal, vTextAnchor: V_TOP, hTextAnchor: H_START, start head: , end head:  Render Polygon:  Primative 1D id: , stroke: , stroke width: -1, fill:  Render pt ID: , x,y: 0, 0, Rel Coord, Render pt ID: , x,y: 0.3, 0, Abs Coord, Render pt ID: , x,y: 0.3, 8, Abs Coord, Render pt ID: , x,y: 0, 8, Abs Coord,'
  );
+   // getSBMLReadTestModel(4)
+   self.readRefResults.Add('Model id: feedback, Species:  Species ID: X0, Boundary sp: true, Init Conc: 10, Comp: default_compartment Species ID: S1, Boundary sp: false, Init Conc: 0, Comp: default_compartment Species ID: S4, Boundary sp: false, Init Conc: 0, Comp: default_compartment Species ID: S2, Boundary sp: false, Init Conc: 0, Comp: default_compartment Species ID: S3, Boundary sp: false, Init Conc: 0, Comp: default_compartment Species ID: X1, Boundary sp: true, Init Conc: 0, Comp: default_compartment' + sLineBreak +
+ 'Model compartments:  Comp ID: default_compartment, No Comp name, Comp size: 1, Comp constant,' + sLineBreak +
+ 'Model params:  Param ID: VM1, No Param name, Value: 0, Param can vary Param ID: Keq1, No Param name, Value: 0, Param can vary Param ID: h, No Param name, Value: 0, Param can vary Param ID: V4, No Param name, Value: 2.5, Param Const Param ID: KS4, No Param name, Value: 0.5, Param Const' + sLineBreak +
+ 'Model Rxns: , Rxn ID: J0, No Rxn Name, No Rxn Comp , Rxn reversible, Rxn products:  SpRef ID: S1J0, SpRef species: S1, Stoich Coeff: 1, Rxn reactants:  SpRef ID: X0J0, SpRef species: X0, Stoich Coeff: 1, Rxn KinLaw:  Kinetic Law id: dummy, Kinetic Law No name, Kinetic Law formula: VM1 * (X0 - S1 / Keq1) / (1 + X0 + S1 + pow(S4, h)), Kinetic Law params: self.paramIds[i], self.paramIds[i],  End of Kinetic Law param list. , Rxn ID: J1, No Rxn Name, No Rxn Comp , Rxn reversible, Rxn products:  SpRef ID: S2J1, SpRef species: S2, Stoich Coeff: 1, Rxn reactants:  SpRef ID: S1J1, SpRef species: S1, Stoich Coeff: 1, Rxn KinLaw:  Kinetic Law id: dummy, Kinetic Law No name, Kinetic Law formula: (10 * S1 - 2 * S2) / (1 + S1 + S2), Kinetic Law params: self.paramIds[i], self.paramIds[i],  End of Kinetic Law param list. , Rxn ID: J2, No Rxn Name, No Rxn Comp , Rxn reversible, Rxn products:  SpRef ID: S3J2, SpRef species: S3, Stoich Coeff: 1, Rxn reactants:  SpRef ID: S2J2, SpRef species: S2, Stoich Coeff: 1, Rxn KinLaw:  Kinetic Law id: dummy, Kinetic Law No name, Kinetic Law formula: (10 * S2 - 2 * S3) / (1 + S2 + S3), Kinetic Law params: self.paramIds[i], self.paramIds[i],  End of Kinetic Law param list. , Rxn ID: J3, No Rxn Name, No Rxn Comp , Rxn reversible, Rxn products:  SpRef ID: S4J3, SpRef species: S4, Stoich Coeff: 1, Rxn reactants:  SpRef ID: S3J3, SpRef species: S3, Stoich Coeff: 1, Rxn KinLaw:  Kinetic Law id: dummy, Kinetic Law No name, Kinetic Law formula: (10 * S3 - 2 * S4) / (1 + S3 + S4), Kinetic Law params: self.paramIds[i], self.paramIds[i],  End of Kinetic Law param list. , Rxn ID: J4, No Rxn Name, No Rxn Comp , Rxn reversible, Rxn products:  SpRef ID: X1J4, SpRef species: X1, Stoich Coeff: 1, Rxn reactants:  SpRef ID: S4J4, SpRef species: S4, Stoich Coeff: 1, Rxn KinLaw:  Kinetic Law id: dummy, Kinetic Law No name, Kinetic Law formula: V4 * S4 / (KS4 + S4), Kinetic Law params: self.paramIds[i], self.paramIds[i],  End of Kinetic Law param list.' + sLineBreak +
+ 'Model Initial Assignments:  InitAssign Id: InitAssign_h, Symbol: h, Formula: Keq1 + 2 InitAssign Id: InitAssign_VM1, Symbol: VM1, Formula: 10 + S2' + sLineBreak +
+ 'Model Rules:  Assignment Rule ID: , No Rule name, Rule is for parameter, Rule variable: Keq1, Rule formula: S1 * 10 + 10, Rule Does not use piecewise.' + sLineBreak +
+ 'Model events: 0' + sLineBreak +
+ 'Model Func definitions:' + sLineBreak +
+ 'Model Layout: NO layout' + sLineBreak +
+ 'Model Render Info: NO Render Info' );
 
  end;
 

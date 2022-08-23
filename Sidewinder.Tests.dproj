@@ -124,8 +124,12 @@
         <DCCReference Include="simulator\uSimulation.pas"/>
         <DCCReference Include="sbml\uSBMLClasses.Render.pas"/>
         <DCCReference Include="sbml\uSBMLClasses.Layout.pas"/>
+        <DCCReference Include="sbml\uSBMLClasses.pas"/>
+        <DCCReference Include="sbml\uSBMLClasses.rule.pas"/>
+        <DCCReference Include="sbml\uSBMLWriter.pas"/>
         <None Include="AllTests_index.html"/>
         <None Include="sbml\readSBMLmodel.js"/>
+        <None Include="sbml\writeSBMLmodel.js"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>
@@ -152,6 +156,12 @@
                 </Excluded_Packages>
             </Delphi.Personality>
             <Deployment Version="3">
+                <DeployFile LocalName="sbml\writeSBMLmodel.js" Configuration="Debug" Class="ProjectFile">
+                    <Platform Name="Win32">
+                        <RemoteDir>.\</RemoteDir>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
                 <DeployFile LocalName="AllTests_index.html" Configuration="Debug" Class="ProjectFile">
                     <Platform Name="Win32">
                         <RemoteDir>.\</RemoteDir>

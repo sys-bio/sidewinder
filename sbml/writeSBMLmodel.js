@@ -28,6 +28,7 @@ class GenerateSBMLModel {
    this.createCompartments();
    this.createParameters();
    this.createSpecies();
+   this.createInitialAssignments();
    this.createRules();
    this.createReactions();
    this.modelLayout = this.rxnModel.getSBMLLayout();
@@ -92,6 +93,22 @@ class GenerateSBMLModel {
      newSpecies.setConstant(rxnSpecies[i].getConstant());
      newSpecies.setHasOnlySubstanceUnits(rxnSpecies[i].getHasOnlySubstanceUnits());
    }
+ }
+
+ createInitialAssignments() {
+   var i;
+   const numbInitAssigns = this.rxnModel.getNumInitialAssignments();
+   for(i=0; i < numbInitAssigns; i++) {
+     var newSBMLInitAssign;
+     const rxnInitAssign = this.rxnModel.getInitialAssignment(i);
+     newSBMLInitAssign = this.libSBMLmodel.createInitialAssignment();
+     newSBMLInitAssign.setId( rxnInitAssign.getId() );
+     newSBMLInitAssign.setSymbol( rxnInitAssign.getSymbol() );
+     const rxnInitAssignFormula = rxnInitAssign.getFormula();
+     const astFormula = new libsbml.SBMLFormulaParser().parseL3Formula(rxnInitAssignFormula);
+     newSBMLInitAssign.setMath( astFormula );
+   }
+
  }
 
  createRules() {

@@ -54,7 +54,6 @@ object mainForm: TmainForm
       ElementClassName = 'btn btn-primary btn-sm'
       ElementFont = efCSS
       HeightPercent = 100.000000000000000000
-      ShowHint = False
       WidthPercent = 100.000000000000000000
       OnClick = btnOnLineSimClick
     end
@@ -77,7 +76,7 @@ object mainForm: TmainForm
       Top = 10
       Width = 133
       Height = 32
-      Hint = 'Add parameter slider'
+      Hint = '10 sliders max, edit existing ones to change.'
       Caption = 'Add Param Slider'
       ChildOrder = 6
       ElementClassName = 'btn btn-primary btn-sm'

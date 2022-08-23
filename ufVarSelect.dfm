@@ -6,7 +6,6 @@ object VarSelectForm: TVarSelectForm
   ElementClassName = ' bg-dark border border-dark'
   ShowClose = False
   OnCreate = plotFormCreate
-  OnShow = WebFormShow
   object okButton1: TWebButton
     Left = 145
     Top = 0
@@ -31,8 +30,6 @@ object VarSelectForm: TVarSelectForm
     Top = 31
     Width = 140
     Height = 91
-    HeightPercent = 100.000000000000000000
-    WidthPercent = 100.000000000000000000
     Caption = ''
     ChildOrder = 2
     Columns = 1
