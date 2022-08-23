@@ -2299,6 +2299,7 @@ begin
   end;
   if self.rxnParamComboBox.Items.count >0 then
   begin
+    self.rxnParamComboBox.ItemIndex := 0;
     self.rxnParamEdit.text := floattostr(networkController.selectedObjects[0].reaction.state.rateParams[0].getValue);
   end;
   self.RxnParamComboBox.invalidate;
