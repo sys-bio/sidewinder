@@ -365,7 +365,7 @@ begin
     if selectedObjects[0].node.state.species = network.nodes[i].state.species then
       begin
       network.nodes[i].state.conc := newConc;
-      network.networkEvent( network.nodes[i] );
+      //network.networkEvent( network.nodes[i] );    ?? needed.
       end;
 
     end;

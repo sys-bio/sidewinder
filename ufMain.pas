@@ -16,7 +16,7 @@ uses
   uPlotPanel, uParamSliderLayout, uSidewinderTypes, WEBLib.ComCtrls, WEBLib.Miletus,
   WEBLib.JQCtrls, ufAssignments, ufSelectExample;
 
-const SIDEWINDER_VERSION = 'Version 0.50 alpha';
+const SIDEWINDER_VERSION = 'Version 0.51 alpha';
       DEFAULT_RUNTIME = 10000;
       EDITBOX_HT = 25;
       ZOOM_SCALE = 20;
@@ -478,11 +478,8 @@ procedure TMainForm.btnDrawClick(Sender: TObject);
       self.stepSizeEdit1Exit(nil);
       end;
   end;
-//var
-  //n1, n2, n3, n4: TNode;
- // srcNodes, destNodes : array of TNode;
+
 begin
-  //setLength (srcNodes, 1); setLength (destNodes, 1);
   if length(network.getCurrentState.savedNodes) = 0 then
   begin
     // ****************************
@@ -1817,7 +1814,6 @@ begin
     end;
   for i := 0 to Length(self.mainController.getModel.getSBMLspeciesAr) -1 do
     begin
-    //  if length(self.mainController.getModel.getS_Names) < (i +1) then
       if numSpeciesToPlot < (i +1) then
         begin
         self.plotSpecies[self.numbPlots - 1].Add('');
@@ -2005,6 +2001,7 @@ begin
   // console.log('Delete Slider: slider #: ',sn);
   self.pnlSliderAr[sn].free;
   delete(self.pnlSliderAr, (sn), 1);
+  delete(self.sliderParamAr,(sn), 1);  // added
   delete(self.sliderPHLabelAr, (sn), 1);
   delete(self.sliderPLLabelAr, (sn), 1);
   delete(self.sliderPTBLabelAr, (sn), 1);
@@ -2299,6 +2296,7 @@ begin
   end;
   if self.rxnParamComboBox.Items.count >0 then
   begin
+    self.rxnParamComboBox.ItemIndex := 0;
     self.rxnParamEdit.text := floattostr(networkController.selectedObjects[0].reaction.state.rateParams[0].getValue);
   end;
   self.RxnParamComboBox.invalidate;
@@ -2512,10 +2510,11 @@ begin
     begin
       if length(self.pnlSliderAr) >0 then
       begin
-        for i := length(self.pnlSliderAr) -1 downto 0 do
+        self.deleteAllSliders;
+       { for i := length(self.pnlSliderAr) -1 downto 0 do
         begin
           self.DeleteSlider(i);
-        end;
+        end;                  }
         setLength(self.pnlSliderAr, 0);
       end;
     end;
