@@ -46,7 +46,15 @@ uses
   uSBMLClasses.FuncDefinition in 'sbml\uSBMLClasses.FuncDefinition.pas',
   ufAssignments in 'ufAssignments.pas' {FormAssignments: TWebForm} {*.html},
   ufSelectExample in 'ufSelectExample.pas' {formExamples: TWebForm} {*.html},
-  uTestCase in 'tests\uTestCase.pas';
+  uTestCase in 'tests\uTestCase.pas',
+  uScrollingTypes in 'Graph\ScrollingChart\uScrollingTypes.pas',
+  uWebComps in 'Graph\ScrollingChart\uWebComps.pas',
+  uWebContainer in 'Graph\ScrollingChart\uWebContainer.pas',
+  uWebDataSource in 'Graph\ScrollingChart\uWebDataSource.pas',
+  uWebGlobalData in 'Graph\ScrollingChart\uWebGlobalData.pas',
+  uWebScrollingChart in 'Graph\ScrollingChart\uWebScrollingChart.pas',
+  uWebStage in 'Graph\ScrollingChart\uWebStage.pas',
+  uGraphPanel in 'Graph\uGraphPanel.pas';
 
 {$R *.res}
 

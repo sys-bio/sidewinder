@@ -23,6 +23,9 @@ type
     pnlYminScale: TWebPanel;
     lblYMax: TWebLabel;
     lblYMin: TWebLabel;
+    pnlBase: TWebPanel;
+    pnlRight: TWebPanel;
+    WebSplitter1: TWebSplitter;
     procedure btnStartPlotClick(Sender: TObject);
     procedure WebFormCreate(Sender: TObject);
     procedure InitComps;
@@ -33,6 +36,7 @@ type
     procedure rbtAutoYMinClick(Sender: TObject);
     procedure editYMinExit(Sender: TObject);
     procedure editYMaxExit(Sender: TObject);
+    procedure WebSplitter1Move(Sender: TObject);
   //  procedure rbtAutoYMaxClick(Sender: TObject);
   //  procedure rbtAutoYMinClick(Sender: TObject);
 
@@ -170,7 +174,12 @@ begin
   self.WebTimer1.Enabled := false;
 end;
 
- procedure TForm1.initPlot();
+ procedure TForm1.WebSplitter1Move(Sender: TObject);
+begin
+  self.chart.Width := self.pnlPlot.Width;
+end;
+
+procedure TForm1.initPlot();
  begin
    self.chart := TWebScrollingChart.Create(self.pnlPlot);
    self.chart.Parent := self.pnlPlot;

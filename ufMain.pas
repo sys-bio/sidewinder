@@ -6,15 +6,14 @@ uses
   System.SysUtils, System.Classes, JS, Web, Types, WEBLib.Graphics,
   WEBLib.Controls, StrUtils,
   WEBLib.Forms, WEBLib.Dialogs, Vcl.Controls, Dialogs, WEBLib.ExtCtrls,
-  WEBLib.WebCtrls,
-  Vcl.StdCtrls, WEBLib.StdCtrls, WEBLib.Buttons, Vcl.Imaging.pngimage,
+  WEBLib.WebCtrls, Vcl.StdCtrls, WEBLib.StdCtrls, WEBLib.Buttons, Vcl.Imaging.pngimage,
   Vcl.Graphics,System.Generics.Collections,
   uControllerNetwork, uNetworkCanvas, uNetwork, Vcl.TMSFNCTypes, Vcl.TMSFNCUtils,
   Vcl.TMSFNCGraphics, Vcl.TMSFNCGraphicsTypes, Vcl.TMSFNCCustomControl, Vcl.TMSFNCScrollBar,
   uNetworkTypes, WEBLib.Lists, Vcl.Forms, uModel, uSBMLClasses, uSBMLClasses.rule, uSimulation,
   uControllerMain, uODE_FormatUtility, uGraphP, Vcl.Menus, WEBLib.Menus, ufVarSelect,
   uPlotPanel, uParamSliderLayout, uSidewinderTypes, WEBLib.ComCtrls, WEBLib.Miletus,
-  WEBLib.JQCtrls, ufAssignments, ufSelectExample;
+  WEBLib.JQCtrls, ufAssignments, ufSelectExample, uWebScrollingChart;
 
 const SIDEWINDER_VERSION = 'Version 0.51 alpha';
       DEFAULT_RUNTIME = 10000;
@@ -298,6 +297,7 @@ type
     fPlotSpecies: TVarSelectForm;
     plotSpecies: TList<TSpeciesList>; // species to graph for each plot
     plotsPanelList: TList<TPlotPanel>; // Panels in which each plot resides
+
     fSliderParameter: TVarSelectForm;// Pop up form to choose parameter for slider.
     sliderParamAr: array of Integer;// holds parameter array index (p_vals) of parameter to use for each slider
     pnlSliderAr: array of TWebPanel; // Holds parameter sliders
@@ -865,6 +865,18 @@ begin
   self.btnResetRun.Enabled := false;
 end;
 
+{procedure TMainForm.initializePlots();
+  var i: Integer;
+begin
+  if plotsPanelList <> nil then
+    begin
+    for i := 0 to plotsPanelList.Count - 1 do
+      begin
+      self.initializePlot(i);
+      end;
+    end;
+end; }
+
 procedure TMainForm.initializePlots();
   var i: Integer;
 begin
@@ -876,6 +888,19 @@ begin
       end;
     end;
 end;
+
+{procedure TMainForm.initializePlot( n: integer);
+// var yScaleWidth, newYMax : integer;
+begin
+  try
+    self.plotsPanelList[n].initializePlot( MainController.getRunTime,
+                             MainController.getStepSize, self.plotSpecies[n]);
+  except
+    on E: Exception do
+      notifyUser(E.message);
+  end;
+
+end;}
 
 procedure TMainForm.initializePlot( n: integer);
 // var yScaleWidth, newYMax : integer;
@@ -1397,10 +1422,11 @@ begin
      //console.log(' PlotWPanel width: ', plotsPanelList[0].plotWPanel.width, 'plot PB width: ', plotsPanelList[0].plotPB.width);
      for i := 0 to self.plotsPanelList.count -1 do
        begin
-          plotsPanelList[i].setPlotPBWidth();
-          plotsPanelList[i].initializePlot( MainController.getRunTime,
-                             MainController.getStepSize, self.plotSpecies[i]);
-          self.plotsPanelList[i].setPlotLegend(self.plotSpecies[i]);
+        //  plotsPanelList[i].setPlotPBWidth();
+        plotsPanelList[i].width
+        //  plotsPanelList[i].initializePlot( MainController.getRunTime,
+        //                     MainController.getStepSize, self.plotSpecies[i]);
+        //  self.plotsPanelList[i].setPlotLegend(self.plotSpecies[i]);
        end;
      end;
    end;

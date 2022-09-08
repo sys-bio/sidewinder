@@ -170,6 +170,14 @@
             <DesignClass>TWebForm</DesignClass>
         </DCCReference>
         <DCCReference Include="tests\uTestCase.pas"/>
+        <DCCReference Include="Graph\ScrollingChart\uScrollingTypes.pas"/>
+        <DCCReference Include="Graph\ScrollingChart\uWebComps.pas"/>
+        <DCCReference Include="Graph\ScrollingChart\uWebContainer.pas"/>
+        <DCCReference Include="Graph\ScrollingChart\uWebDataSource.pas"/>
+        <DCCReference Include="Graph\ScrollingChart\uWebGlobalData.pas"/>
+        <DCCReference Include="Graph\ScrollingChart\uWebScrollingChart.pas"/>
+        <DCCReference Include="Graph\ScrollingChart\uWebStage.pas"/>
+        <DCCReference Include="Graph\uGraphPanel.pas"/>
         <None Include="index.html"/>
         <None Include="sbml\libsbml.js"/>
         <None Include="sbml\libsbml.wasm"/>
