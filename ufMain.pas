@@ -13,7 +13,7 @@ uses
   uNetworkTypes, WEBLib.Lists, Vcl.Forms, uModel, uSBMLClasses, uSBMLClasses.rule, uSimulation,
   uControllerMain, uODE_FormatUtility, uGraphP, Vcl.Menus, WEBLib.Menus, ufVarSelect,
   uPlotPanel, uParamSliderLayout, uSidewinderTypes, WEBLib.ComCtrls, WEBLib.Miletus,
-  WEBLib.JQCtrls, ufAssignments, ufSelectExample, uWebScrollingChart;
+  WEBLib.JQCtrls, ufAssignments, ufSelectExample, uGraphPanel;
 
 const SIDEWINDER_VERSION = 'Version 0.51 alpha';
       DEFAULT_RUNTIME = 10000;
@@ -296,7 +296,8 @@ type
     currentGeneration: Integer; // Used by plots as current x axis point
     fPlotSpecies: TVarSelectForm;
     plotSpecies: TList<TSpeciesList>; // species to graph for each plot
-    plotsPanelList: TList<TPlotPanel>; // Panels in which each plot resides
+    //plotsPanelList: TList<TPlotPanel>; // Panels in which each plot resides
+    graphPanelList: TList<TGraphPanel>; // Panels in which each plot resides
 
     fSliderParameter: TVarSelectForm;// Pop up form to choose parameter for slider.
     sliderParamAr: array of Integer;// holds parameter array index (p_vals) of parameter to use for each slider
@@ -880,9 +881,9 @@ end; }
 procedure TMainForm.initializePlots();
   var i: Integer;
 begin
-  if plotsPanelList <> nil then
+  if graphPanelList <> nil then
     begin
-    for i := 0 to plotsPanelList.Count - 1 do
+    for i := 0 to graphPanelList.Count - 1 do
       begin
       self.initializePlot(i);
       end;
@@ -906,8 +907,12 @@ procedure TMainForm.initializePlot( n: integer);
 // var yScaleWidth, newYMax : integer;
 begin
   try
-    self.plotsPanelList[n].initializePlot( MainController.getRunTime,
-                             MainController.getStepSize, self.plotSpecies[n]);
+   // self.plotsPanelList[n].initializePlot( MainController.getRunTime,
+  //                           MainController.getStepSize, self.plotSpecies[n]);
+    self.graphPanelList[n].initializePlot( self.plotSpecies[n], 10 {newYMax},
+          0 {newYMin}, false {autoUp}; false {autoDown}, MainController.getStepSize,
+          clGray {newBkgrndColor});
+    self.mainController.addSimListener(self.graphPanelList[n].getVals());
   except
     on E: Exception do
       notifyUser(E.message);
@@ -1415,15 +1420,16 @@ end;
 procedure TMainForm.refreshPlotPanels;
 var i: integer;
 begin
- if assigned(self.plotsPanelList) then
+ if assigned(self.graphPanelList) then
    begin
-     if self.plotsPanelList.count >0 then
+     if self.graphPanelList.count >0 then
      begin
      //console.log(' PlotWPanel width: ', plotsPanelList[0].plotWPanel.width, 'plot PB width: ', plotsPanelList[0].plotPB.width);
-     for i := 0 to self.plotsPanelList.count -1 do
+     for i := 0 to self.graphPanelList.count -1 do
        begin
         //  plotsPanelList[i].setPlotPBWidth();
-        plotsPanelList[i].width
+        self.graphPanelList[i].Invalidate;
+
         //  plotsPanelList[i].initializePlot( MainController.getRunTime,
         //                     MainController.getStepSize, self.plotSpecies[i]);
         //  self.plotsPanelList[i].setPlotLegend(self.plotSpecies[i]);
@@ -1610,7 +1616,7 @@ begin
     end;
   simResultsMemo.Lines.Add(dataStr);
   // Update plots:
-  inc(self.currentGeneration);
+{  inc(self.currentGeneration);
 
   if plotsPanelList.count > 0 then
   begin
@@ -1619,7 +1625,7 @@ begin
       plotsPanelList[i].processOneScan(newTime, newValsAr,self.plotSpecies[i],
              self.currentGeneration );
       end;
-  end;
+  end;  }
 end;
 
 procedure TMainForm.loadNetworkButtonClick(Sender: TObject);
@@ -1752,10 +1758,10 @@ procedure TMainForm.selectPlotSpecies(plotnumb: Integer);
     if addingPlot then
       self.addPlot(maxYVal) // <-- Add dynamically created plot at this point
     else
-      begin
+      begin   // ???????
         self.plotsPanelList[getPlotPBIndex(plotNumb)].plotGraph.setY_ValsMax( maxYVal);
         // Update plot legend:
-         self.plotsPanelList[getPlotPBIndex(plotNumb)].setPlotLegend(self.plotSpecies.Items[getPlotPBIndex(plotNumb)]);
+       //  self.plotsPanelList[getPlotPBIndex(plotNumb)].setPlotLegend(self.plotSpecies.Items[getPlotPBIndex(plotNumb)]);
       end;
 
     self.refreshPlotAndSliderPanels;
@@ -1861,10 +1867,16 @@ begin
   plotWidth := 0;
   plotPositionToAdd := -1;
   plotPositionToAdd := self.getEmptyPlotPosition();
-  if self.plotsPanelList = nil then
+ { if self.plotsPanelList = nil then
     self.plotsPanelList := TList<TPlotPanel>.create;
   self.plotsPanelList.Add(TPlotPanel.create(pnlPlotContainer, plotPositionToAdd, yMax,
        self.mainController.getModel.getS_Names, self.mainController.getModel.getS_Vals));
+   }
+  if self.graphPanelList = nil then
+    self.graphPanelList := TList<TGraphPanel>.create;
+  self.graphPanelList.Add(TGraphPanel.create(pnlPlotContainer, plotPositionToAdd, yMax);
+     //  self.mainController.getModel.getS_Names, self.mainController.getModel.getS_Vals));
+
 
   newHeight := 200;  // default
   if self.numbPlots > DEFAULT_NUMB_PLOTS then
@@ -1872,12 +1884,12 @@ begin
     newHeight := round(self.pnlPlotContainer.Height/self.numbPlots);
   end;
 
-  self.plotsPanelList[self.numbPlots - 1].OnPlotUpdate := self.editPlotList;
+ // Not used for now: self.graphPanelList[self.numbPlots - 1].OnPlotUpdate := self.editPlotList;
   self.initializePlot (self.numbPlots - 1);
   if self.numbPlots > DEFAULT_NUMB_PLOTS then
   begin  // Adjust plots to new height:
     for i := 0 to self.numbPlots - 1 do
-      self.plotsPanelList[i].adjustPlotHeight(self.numbPlots, newHeight);
+      self.graphPanelList[i].adjustPlotHeight(self.numbPlots, newHeight);
 
   end;
  end;
@@ -1888,7 +1900,7 @@ begin
   Result := -1;
   for i := 0 to self.numbPlots -1 do
   begin
-    if self.plotsPanelList[i].plotWPanel.Tag = plotTag then
+    if self.graphPanelList[i].Tag = plotTag then
       Result := i;
   end;
 end;
@@ -1914,7 +1926,7 @@ begin
   begin
     for i := 0 to totalPlots -2 do
     begin
-      if self.plotsPanelList[i].plotWPanel.Tag = plotPosition then
+      if self.graphPanelList[i].Tag = plotPosition then
         inc(plotPosition);
     end;
   end;
