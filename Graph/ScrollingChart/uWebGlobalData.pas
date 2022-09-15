@@ -53,7 +53,7 @@ interface
         DEFAULT_X_MAX = 20;
         DEFAULT_Y_MIN = -2;
         DEFAULT_Y_MAX =  2;
-        DEFAULT_X_POINTS_DISPLAYED = 200;
+        DEFAULT_X_POINTS_DISPLAYED = 100;
         DEFAULT_LINEWIDTH_AXIS = 2;
         DEFAULT_COLOR_AXIS = clWhite;
         MAX_TICKS_X = 10;

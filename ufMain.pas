@@ -913,7 +913,7 @@ begin
   //                           MainController.getStepSize, self.plotSpecies[n]);
     self.graphPanelList[n].initializePlot( self.plotSpecies[n], 10 {newYMax},
           0 {newYMin}, false {autoUp}, false {autoDown}, self.stepSize,
-          clGray {newBkgrndColor});
+          clgray {newBkgrndColor});
     //self.mainController.addSimListener(@self.graphPanelList[n].getVals);  // slow??
   except
     on E: Exception do

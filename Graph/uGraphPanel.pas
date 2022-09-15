@@ -5,7 +5,7 @@ uses SysUtils, Classes, Graphics, Controls, System.Types, System.Generics.Collec
      Dialogs, WEBLib.StdCtrls, WEBLib.ExtCtrls, WEBLib.Forms, JS, Web,
      uWebScrollingChart, uWebGlobalData, uSidewinderTypes;
 
-const SERIESCOLORS: array[0..9] of integer = ( clRed, clBlue, clGreen,clBlack,
+const SERIESCOLORS: array[0..10] of integer = ( clRed, clBlue, clYellow, clGreen,clBlack,
                                    clAqua, clGray,clPurple,clOlive, clLime,clSkyBlue);
 
 type
