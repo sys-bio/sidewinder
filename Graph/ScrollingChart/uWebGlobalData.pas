@@ -43,16 +43,17 @@ interface
           (X : 0; Y: -1),
           (X : -1; Y: -1)
         ) ;
-        MARGIN_X = 40;
+        MARGIN_X = 20; //40;
         MARGIN_y = 20;
         ERROR_NAME_SERIE = 'Error!. The Identifier already exists. The series was not added';
         DEFAULT_NAME_SERIES = 'Serie %d';
         HEIGHT_X_AXIS = 60;
-        WIDTH_Y_AXIS = 80;
+        WIDTH_Y_AXIS = 40; //80;
         DEFAULT_X_MIN = 0;
         DEFAULT_X_MAX = 20;
         DEFAULT_Y_MIN = -2;
         DEFAULT_Y_MAX =  2;
+        DEFAULT_X_POINTS_DISPLAYED = 200;
         DEFAULT_LINEWIDTH_AXIS = 2;
         DEFAULT_COLOR_AXIS = clWhite;
         MAX_TICKS_X = 10;
@@ -60,10 +61,10 @@ interface
         DEFAULT_XAXIS_CAPTION = 'Time (sec)';
         DEFAULT_YAXIS_CAPTION = 'Y Axis';
         DEFAULT_FONTCOLOR_LEGEND = clBlack;
-        DEFAULT_FONTSIZE_LEGEND = 10;
+        DEFAULT_FONTSIZE_LEGEND = 8; //10;
         DEFAULT_FONTNAME_LEGEND = 'Arial';
         DEFAULT_BACKGROUNDCOLOR_LEGEND = clRed;
-        DEFAULT_PAD_LEGEND = 8;
+        DEFAULT_PAD_LEGEND = 4;// 8;
         DEFAULT_WIDTH_LINE_LEGEND = 40;
         DEFAULT_PIVOT_HOR_LEGEND = right;
         DEFAULT_PIVOT_VERT_LEGEND = top;
@@ -76,7 +77,7 @@ interface
         DEFAULT_FONTCOLOR_TITLE = clwhite;
         DEFAULT_BACKGROUNDCOLOR_TITLE = clBlack;
         DEFAULT_FONTNAME_TITLE = 'Arial';
-        DEFAULT_FONTSIZE_TITLE = 14;
+        DEFAULT_FONTSIZE_TITLE = 12; //14;
         DEFAULT_ALIGN_TITLE = center;
         DEFAULT_COLOR_GRID = clWhite;
         DEFAULT_LINEWIDTH_GRID = 1;
@@ -91,7 +92,7 @@ interface
         tickPercentAxisY = 0.5;
         FONT_COLOR = clWhite;
         FONT_NAME = 'ARIAL';
-        FONT_SIZE = 12;
+        FONT_SIZE = 10; //12;
         MARGIN_FONT = 6;
         DEFAULT_DELTA_X = 0.1;
     end;

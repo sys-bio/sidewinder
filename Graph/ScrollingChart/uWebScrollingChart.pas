@@ -12,8 +12,9 @@ type
    //   FParent: TWinControl;
       FParent: TWebControl;
      // timer: TTimer;
-      timer: TWebTimer;
+      timer: TWebTimer;   // Not needed?
       time: Double;
+      timeInterval: double; // seconds, replace timer.Interval
       obj: TObject;
       Sh: TShiftState;
       FMouseMoveEvent: TMouseMoveEvent;
@@ -60,11 +61,12 @@ type
       procedure SetLegendVisible(val: Boolean);
       function GetYAxisMin: Double;
       procedure SetYAxisMin(val: Double);
-      function GetYAxisMax: Double;
-      procedure SetYAxisMax(val: Double);
-
-      function GetXAxisMax: Double;
-      procedure SetXAxisMax(val: Double);
+      procedure SetXAxisRange(xMin, xMax: double);
+      procedure SetYAxisRange(yMin, yMax: double);
+  //    function GetYAxisMax: Double;
+  //    procedure SetYAxisMax(val: Double);
+  //    function GetXAxisMax: Double;
+  //    procedure SetXAxisMax(val: Double);
       //General
       procedure SetFMouseMoveEvent(val: TMouseMoveEvent);
       procedure SetDefaultValues;
@@ -82,8 +84,8 @@ type
  //     function GetTimer: TTimer;
       procedure SetTimer(Value: TWebTimer);
       function GetTimer: TWebTimer;
-      function GetInterval: Cardinal;
-      procedure SetInterval(Value: Cardinal);
+  //    function GetInterval: Cardinal; // msec
+  //    procedure SetInterval(Value: Cardinal); // msec
       procedure SetOnTimer(Value: TNotifyEvent);
       function GetOnTimer: TNotifyEvent;
       procedure SetEnabledTimer(Value: Boolean);
@@ -127,10 +129,15 @@ type
       procedure Run(t: double);
       procedure SaveToFile(FileName: String);
       procedure SaveToPNG(FileName: String);
-      procedure SetXAxisRange(xMin, xMax: double);
-      procedure SetYAxisRange(yMin, yMax: double);
+    //  procedure SetXAxisRange(xMin, xMax: double);
+    //  procedure SetYAxisRange(yMin, yMax: double);
+      function GetYAxisMax: Double;
+      procedure SetYAxisMax(val: Double);
+      function GetXAxisMax: Double;
+      procedure SetXAxisMax(val: Double);
       procedure plot;
-
+      function GetInterval: Cardinal; // msec
+      procedure SetInterval(Value: Cardinal); // msec
 
       property OnTimer: TNotifyEvent read GetOnTimer write SetOnTimer;
       property Enabled: Boolean read GetEnabledTimer write SetEnabledTimer default false;
@@ -667,14 +674,19 @@ function TWebScrollingChart.GetEnabledTimer: Boolean;
 begin
   Result := timer.Enabled;
 end;
-procedure TWebScrollingChart.SetInterval(Value: Cardinal);
+procedure TWebScrollingChart.SetInterval(Value: Cardinal); // value is in msec
 begin
 //  SetDefaultTimer;
-  timer.Interval := Value;
+  if timer <> nil then
+    timer.Interval := Value
+  else self.timeInterval := (Value/0.001);   //
+
 end;
-function TWebScrollingChart.GetInterval: Cardinal;
+function TWebScrollingChart.GetInterval: Cardinal;// returns msec
 begin
-  Result := timer.Interval;
+  if timer <> nil then
+    Result := timer.Interval
+  else Result := round(self.timeInterval *1000);
 end;
 procedure TWebScrollingChart.pause;
 begin
@@ -775,7 +787,7 @@ end;
 
 procedure TWebScrollingChart.updateSerie(index: Integer; t: double; y: double);
 begin
-console.log(' Y axisMin: ', self.GetYAxisMin);
+//console.log(' Y axisMin: ', self.GetYAxisMin);
   if not self.autoScaleUp then
     if self.GetYAxisMax < y then y := self.GetYAxisMax;
   if not self.autoScaleDown then
@@ -796,6 +808,7 @@ var
   j: Integer;
   y: double;
 begin
+//  console.log('TWebScrollingChart.run ');
   globaldata.dataSource.addX(t);
   for j := 0 to length(series) - 1 do
     if Assigned(series[j].functionTime) then
@@ -809,10 +822,13 @@ procedure TWebScrollingChart.plot;
 begin
  // repaint;
   self.Invalidate;  // Needed
+ // console.log('TWebScrollingChart.plot ');
   stage.checkLimits;
-  time := time + timer.Interval/1000;
+  if self.timer <> nil then
+    time := time + timer.Interval/1000
+  else time := time + self.timeInterval;
 end;
-procedure TWebScrollingChart.setDefaultValues;
+procedure TWebScrollingChart.setDefaultValues;  // This is it
 begin
   setXAxisRange(TConst.DEFAULT_X_MIN, TConst.DEFAULT_X_MAX);
   setYAxisRange(TConst.DEFAULT_Y_MIN, TConst.DEFAULT_Y_MAX);
@@ -871,6 +887,7 @@ var newPanel: TWebPanel;
 begin
   inherited;
  // getForm(AOwner);
+  self.timeInterval := 0.1; // default 100 msec
   if AOwner.ClassType = TWebPanel then
     begin
     newPanel := AOwner as TWebPanel;
@@ -907,9 +924,12 @@ begin
        xAxis := plane.xAxis;
        yAxis := plane.yAxis;
        grid := plane.grid;
-       setDefaultValues;
+       setDefaultValues;      // <--- Here
        series:= [];
        legend := TLegend.Create;
+       console.log('legendPosX, Y: ', self.LegendPosX, Self.legendPosY);
+       self.LegendPosX := -5;
+       self.LegendPosY := 20;
        timer := nil;
    end;
 end;
@@ -933,6 +953,7 @@ end;
 procedure TWebScrollingChart.Paint;
 begin
  // Clear(Canvas, backgroundColor);  //No
+//  console.log('TWebScrollingChart.Paint +++');
   if globalData = nil then Exit;
   globalData.chartWidth := Width;    // Plot area background
   globalData.chartHeight := Height;

@@ -171,6 +171,7 @@ var
 begin
   chart := Root as TWebScrollingChart;
   chart.legend := value;
+
 end;
 
 function TContainer.getPlane: TPlaneXY;

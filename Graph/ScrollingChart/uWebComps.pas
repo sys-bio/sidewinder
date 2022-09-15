@@ -5,7 +5,7 @@ interface
     Math, Classes, Types, System.UITypes, {System.UIConsts,} System.Contnrs, JS, Web, WebLib.Graphics,
     {Vcl.Graphics,} System.SysUtils, uWebContainer, uWebDataSource, uWebGlobalData,
     uScrollingTypes;
-
+  const LEGEND_SERIES_NAME_LENGTH =10; // Truncate labels over 10 char long
   type
 
   TBlockY = class (TContainer)
@@ -424,7 +424,7 @@ end;
 procedure TLeftBox.Draw;
 begin
    //clear;
-   console.log(' ++++ TLeftBox.Draw ..');
+ //  console.log(' ++++ TLeftBox.Draw ..');
    axisY.Draw;
    labelY.color := FPlane.yAxis.color;
    labelY.FText := FPlane.yAxis.caption;
@@ -483,7 +483,7 @@ var
 begin
  // hLine.Clear;
   plane := FPlane;
-  console.log(' ++ TAxisY.Draw ..');
+ // console.log(' ++ TAxisY.Draw ..');
   delta := plane.height/FPlane.yAxis.maxTicks;
   val := plane.y + plane.height;
   dy := -block.height/2;
@@ -584,7 +584,7 @@ var
   fABounds: TSizeF;
 begin
   title := data.title;
-  console.log(' *++ TTitleBox.Draw ..');
+//  console.log(' *++ TTitleBox.Draw ..');
   P := getGlobalPosition;
   data.canvas.Font.Name := title.fontName;
   data.canvas.Font.Size := title.fontSize;
@@ -666,8 +666,8 @@ procedure TLegendBox.draw;
          //ABounds := data.canvas.TextExtent(d.series[i].name);
          //if ABounds.Width > w then w := ABounds.Width;
          //h := h + ABounds.Height;
-         fABounds.cx := data.canvas.TextExtent(d.series[i].name).cx;
-         fABounds.cy := data.canvas.TextExtent(d.series[i].name).cy;
+         fABounds.cx := data.canvas.TextExtent(copy(d.series[i].name,0,LEGEND_SERIES_NAME_LENGTH)).cx;
+         fABounds.cy := data.canvas.TextExtent(copy(d.series[i].name,0,LEGEND_SERIES_NAME_LENGTH)).cy;
          if fABounds.Width > w then w := fABounds.Width;
          h := h + fABounds.Height;
          n := n + 1;
@@ -679,7 +679,7 @@ procedure TLegendBox.draw;
 
    offSet := data.getPivot(width, height, leg.reference);
    pivot := data.getPivot(widthBox, heightBox, leg.pivot);
-   console.log('LegendBox.draw, width, height: ', widthBox,', ', heightBox);
+ //  console.log('LegendBox.draw, width, height: ', widthBox,', ', heightBox);
 
 //   topLeft := P + offSet - pivot + TPointF.Create(leg.x, leg.y);
    topLeft := P.Add( offSet.Subtract( pivot.Add(TPointF.Create(leg.x, leg.y))) );
@@ -704,9 +704,9 @@ procedure TLegendBox.draw;
      if d.series[i].visible then
        begin
   //       ABounds := data.canvas.TextExtent(d.series[i].name);
-         fABounds.cx := data.canvas.TextExtent(d.series[i].name).cx;
-         fABounds.cy := data.canvas.TextExtent(d.series[i].name).cy;
-         d.canvas.TextOut(Round(tx), Round(ty), d.series[i].name);
+         fABounds.cx := data.canvas.TextExtent(copy(d.series[i].name,0,LEGEND_SERIES_NAME_LENGTH)).cx;
+         fABounds.cy := data.canvas.TextExtent(copy(d.series[i].name,0,LEGEND_SERIES_NAME_LENGTH)).cy;
+         d.canvas.TextOut(Round(tx), Round(ty), copy(d.series[i].name,0,LEGEND_SERIES_NAME_LENGTH));
          d.canvas.Pen.Width := 2;
          d.canvas.Pen.Color := d.series[i].color;
          d.canvas.MoveTo(Round(tx + w + leg.space), Round(ty + fABounds.Height/2));
@@ -760,7 +760,7 @@ end;
 
  procedure TGridBox.draw;
  begin
-   console.log(' **++ TGridBox.Draw ++**');
+ //  console.log(' **++ TGridBox.Draw ++**');
    widthBlock := width/fplane.xAxis.maxTicks;
    gridXContainer.x := -widthBlock/2 - offsetX;
    gridXContainer.Draw;
@@ -868,7 +868,7 @@ begin
   mask.y := 0;
   mask.width := width;
   mask.height := height;
-  console.log('**TGraph.resize, mask width, height: ', mask.width,', ', mask.height);
+  //console.log('**TGraph.resize, mask width, height: ', mask.width,', ', mask.height);
   legendBox.x := 0;
   legendBox.y := 0;
   legendBox.width := width;
@@ -890,7 +890,7 @@ begin
 
   scale := calculateScale;
   globalPos := getGlobalPosition;
-   console.log('TGraph.resize, width, height: ', width,', ', height);
+ //  console.log('TGraph.resize, width, height: ', width,', ', height);
 end;
 
 function TGraph.RealToScreen(x_w, y_w: double): TPointF; //Pixels
@@ -917,7 +917,7 @@ end;
 function TGraph.isInside(globalX, globalY: Single): Boolean;
 begin
    globalPos := getGlobalPosition;
-   console.log('TGraph.isInside: creating TRectF...');
+ //  console.log('TGraph.isInside: creating TRectF...');
    Result := TRectF.Create(globalPos, width, height).Contains(TPointF.Create(globalX, globalY));
 end;
 
@@ -941,7 +941,7 @@ begin
   data.Canvas.Brush.Style := bsClear;
   data.canvas.pen.Width := Round(FPlane.yAxis.lineWidth);
   data.canvas.pen.color := FPlane.yAxis.color;
-  console.log('TGraph.BorderDraw, calling TrectF.create');
+ // console.log('TGraph.BorderDraw, calling TrectF.create');
   R := TRectF.Create(TPointf.Create(globalPos.X, globalPos.Y), width, height);
   data.canvas.MoveTo(round(R.getLocation.X), round(R.getLocation.Y));
 //  data.canvas.LineTo(R.Location.X + R.Width, R.Location.Y);
@@ -967,7 +967,7 @@ begin
 
   gridX.draw;
   gridY.draw;  // X, Y grids are visible
-  console.log(' **** TGraph.Draw ****');
+ // console.log(' **** TGraph.Draw ****');
   //if temp.dataSource.cols.Count < 2 then Exit;
 
   scale := calculateScale;
@@ -1075,7 +1075,7 @@ end;
 procedure TBottomBox.Draw;
 begin
   // Clear; // clears plot area as well  ??
-   console.log(' ++** TBottomBox.Draw ..');
+ //  console.log(' ++** TBottomBox.Draw ..');
    //axisX.backgroundColor := data.BackgroundColor;
    axisX.Draw;
    labelX.color := FPlane.xAxis.color;
@@ -1119,7 +1119,7 @@ var
   widthBlock: double;
 begin
   //clear;
-  console.log(' $ TAxisX.Draw $');
+ // console.log(' $ TAxisX.Draw $');
   hLine.color := FPlane.xAxis.color;
   hLine.lineWidth := FPlane.xAxis.lineWidth;
   hLine.drawLine;
@@ -1362,7 +1362,7 @@ end;
 procedure TRightBox.Draw;
 begin
   clear;   // This draws correct rectangle on top of graph panel ??
-  console.log(' ^^++ TRightBox.Draw ++^^ ');
+ // console.log(' ^^++ TRightBox.Draw ++^^ ');
   self.graph.backgroundColor := self.data.plotPanelBackgroundColor;  // ISSUE ???  data?
   self.graph.Draw;
   bottomBox.backgroundColor := self.data.BackgroundColor;

@@ -3,7 +3,7 @@ unit uGraphPanel;
 interface
 uses SysUtils, Classes, Graphics, Controls, System.Types, System.Generics.Collections,
      Dialogs, WEBLib.StdCtrls, WEBLib.ExtCtrls, WEBLib.Forms, JS, Web,
-     uWebScrollingChart, uSidewinderTypes;
+     uWebScrollingChart, uWebGlobalData, uSidewinderTypes;
 
 const SERIESCOLORS: array[0..9] of integer = ( clRed, clBlue, clGreen,clBlack,
                                    clAqua, clGray,clPurple,clOlive, clLime,clSkyBlue);
@@ -16,18 +16,23 @@ private
   seriesStrList: TList<string>; // series label list, if '' then do not plot
  //pnlChart: TWebPanel;
 public
-  constructor create(newOwner: TWebPanel; graphPosition: integer);
+  constructor create(newParent: TWebPanel; graphPosition: integer; yMax: double);
   procedure initializePlot(newVarStrList: TList<string>; newYMax: double; newYMin: double;
   autoUp: boolean; autoDown: boolean; newDelta: double; newBkgrndColor: TColor);
   procedure setAutoScaleUp(autoScale: boolean); // true: autoscale
+  procedure setAutoScaleDown(autoScale: boolean); // true: autoscale
   procedure addChartSerie(varStr: string; maxYVal: double); // need max Y if autoScale off
   procedure setTimer(newTimer: TWebTimer); // Not sure this is necessary
   procedure setSeriesColors();
   procedure setSerieColor(index: integer; newColor: TColor);
   procedure deleteChartSerie(index: integer);
   procedure deleteChartSeries();
+  procedure restartChart(newInterval: double);
   procedure setChartDelta(newDelta: double);
-  procedure setChartWidth();
+  procedure setChartWidth(newWidth: integer);
+  procedure setChartTimeInterval(newInterval: double);
+  function  getChartTimeInterval(): double;
+  procedure setYMax(newYMax: double);
   procedure adjustPlotHeight(numPlots: integer; newHeight: integer);// adjust height based on numbre of plots
 
   procedure getVals( newTime: Double; newVals: TVarNameValList);// Get new values (species amt) from simulation run
@@ -35,14 +40,22 @@ end;
 
 implementation
 
-constructor TGraphPanel.create(newOwner: TWebPanel; graphPosition: integer);
+constructor TGraphPanel.create(newParent: TWebPanel; graphPosition: integer; yMax: double);
 begin
   //self.pnlChart := TWebPanel.Create(owner);
-  inherited create(newOwner);
-  self.SetParent(newOwner);
+  inherited create(newParent);
+  self.SetParent(newParent);
   self.tag := graphPosition;
+  self.Width := newParent.Width;
+  self.Anchors := [akLeft,akRight,akTop];
+  self.Height := 200;//round(panelH/3);
+  self.Left := 10; //10 gap between the network canvas and plot
+  self.Top := 4 + self.Height*(graphPosition-1);
+
   self.chart := TWebScrollingChart.Create(self);
-  self.chart.parent := self;
+  self.chart.Parent := self;
+  if yMax > 0 then self.chart.YAxisMax := yMax; // need a default ?
+
 
 end;
 
@@ -57,7 +70,9 @@ begin
   self.chart.YAxisMax := newYMax;
   self.chart.YAxisMin := newYMin;
   self.setChartDelta(newDelta);
-  if newBkgrndColor < 1 then self.chart.BackgroundColor := clGray // clNavy
+  self.setChartTimeInterval(newDelta);
+  self.chart.SetXAxisMax(TConst.DEFAULT_X_POINTS_DISPLAYED *newDelta); // deltaX same as interval
+  if newBkgrndColor < 1 then self.chart.BackgroundColor := clNavy // clNavy
   else self.chart.BackgroundColor := newBkgrndColor;
   self.chart.LegendBackgroundColor := clSilver;
   self.Color := clBlack;
@@ -65,12 +80,19 @@ begin
     begin
     if newVarStrList[i] <> '' then
       self.chart.AddSerie(newVarStrList[i]);
+      self.setSerieColor(i,0);
     end;
 end;
 
-procedure TGraphPanel.setChartWidth();
+procedure TGraphPanel.setYMax(newYMax: double);
 begin
-  self.chart.width := self.Width;
+  if self.chart.YAxisMin < newYMax then
+    self.chart.YAxisMax := newYMax;
+end;
+
+procedure TGraphPanel.setChartWidth(newWidth: integer);
+begin
+  if newWidth <= self.width then self.chart.width := newWidth;
 end;
 
 procedure TGraphPanel.setSeriesColors();
@@ -95,20 +117,35 @@ begin
     end;
 end;
 
-procedure TGraphPanel.setTimer(newTimer: TWebTimer);
+procedure TGraphPanel.setTimer(newTimer: TWebTimer);  // should not be necessary
 begin
   self.chart.ExternalTimer := newTimer;
 end;
 
+
+procedure TGraphPanel.setChartTimeInterval(newInterval: double); // seconds
+begin
+  self.chart.SetInterval(round(newInterval*1000)); // convert to msec (integer)
+end;
+
+function  TGraphPanel.getChartTimeInterval(): double;
+begin
+  Result := self.chart.GetInterval / 1000;
+end;
+
+
 procedure TGraphPanel.getVals(newTime: Double; newVals: TVarNameValList); // callback
 var i, j: integer;
 begin
+//  console.log('updating plot results....');
   for j := 0 to length(self.chart.series) -1 do
     begin
     if j < newVals.getNumPairs then
       self.chart.updateSerie(j, newTime, newVals.getNameValById(self.chart.series[j].name).Val );
 
     end;
+  self.chart.plot;
+  //self.chart.Invalidate;   // ??
 end;
 
 procedure TGraphPanel.setChartDelta(newDelta: double); // default is 0.1 (tenth of sec )
@@ -127,6 +164,13 @@ begin
 
 end;
 
+procedure TGraphPanel.addChartSerie(varStr: string; maxYVal: double);
+begin
+  if maxYVal > self.chart.YAxisMax then self.chart.YAxisMax := maxYVal;
+
+  self.chart.AddSerieByName(varStr);
+end;
+
 procedure TGraphPanel.deleteChartSerie(index: integer);
 begin
   self.deleteChartSerie(index);
@@ -135,6 +179,24 @@ end;
 procedure TGraphPanel.deleteChartSeries();
 begin
   self.chart.DeleteSeries;
+end;
+
+procedure TGraphPanel.restartChart(newInterval: double);
+begin
+  self.setChartDelta(newInterval); // ? chat delta versus chart time interval?
+  self.setChartTimeInterval(newInterval);
+  self.chart.SetXAxisMax(TConst.DEFAULT_X_POINTS_DISPLAYED * newInterval);
+  self.chart.Restart;
+end;
+
+procedure TGraphPanel.setAutoScaleUp(autoScale: boolean);
+begin
+  self.chart.autoScaleUp := autoScale;
+end;
+
+procedure TGraphPanel.setAutoScaleDown(autoScale: boolean);
+begin
+  self.chart.autoScaleDown := autoScale;
 end;
 
 end.

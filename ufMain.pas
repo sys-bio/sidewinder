@@ -278,6 +278,7 @@ type
     procedure refreshPlotAndSliderPanels();
     procedure refreshPlotPanels();
     procedure refreshSliderPanels();
+  //  procedure resetPlots();
     procedure clearNetwork(); // clear network canvas and delete all nodes, edges
 
     procedure enableEditNodePanel;
@@ -885,6 +886,7 @@ begin
     begin
     for i := 0 to graphPanelList.Count - 1 do
       begin
+
       self.initializePlot(i);
       end;
     end;
@@ -910,9 +912,9 @@ begin
    // self.plotsPanelList[n].initializePlot( MainController.getRunTime,
   //                           MainController.getStepSize, self.plotSpecies[n]);
     self.graphPanelList[n].initializePlot( self.plotSpecies[n], 10 {newYMax},
-          0 {newYMin}, false {autoUp}; false {autoDown}, MainController.getStepSize,
+          0 {newYMin}, false {autoUp}, false {autoDown}, self.stepSize,
           clGray {newBkgrndColor});
-    self.mainController.addSimListener(self.graphPanelList[n].getVals());
+    //self.mainController.addSimListener(@self.graphPanelList[n].getVals);  // slow??
   except
     on E: Exception do
       notifyUser(E.message);
@@ -921,8 +923,13 @@ begin
 end;
 
 procedure TMainForm.resetPlots();  // Reset plots for new simulation.
+ // self.initializePlots;
+ var i: integer;
 begin
-  self.initializePlots;
+  for i := 0 to self.graphPanelList.Count -1 do
+    begin
+    self.graphPanelList[i].restartChart(self.stepSize);
+    end;
 end;
 
 procedure TMainForm.PingSBMLLoaded(newModel:TModel);
@@ -1428,8 +1435,10 @@ begin
      for i := 0 to self.graphPanelList.count -1 do
        begin
         //  plotsPanelList[i].setPlotPBWidth();
-        self.graphPanelList[i].Invalidate;
 
+        self.graphPanelList[i].Width := self.graphPanelList[i].Parent.Width;
+        self.graphPanelList[i].setChartWidth( self.graphPanelList[i].Width );
+        self.graphPanelList[i].Invalidate;    // needed ??
         //  plotsPanelList[i].initializePlot( MainController.getRunTime,
         //                     MainController.getStepSize, self.plotSpecies[i]);
         //  self.plotsPanelList[i].setPlotLegend(self.plotSpecies[i]);
@@ -1579,7 +1588,8 @@ begin
   begin
     self.mainController.createSimulation();
     if self.numbPlots >0 then
-      self.initializePlots;
+      //self.initializePlots;
+      self.resetPlots;
     self.currentGeneration := 0;
   end;
 end;
@@ -1616,6 +1626,14 @@ begin
     end;
   simResultsMemo.Lines.Add(dataStr);
   // Update plots:
+
+  if self.graphPanelList.count > 0 then
+    begin
+    for i := 0  to self.graphPanelList.count -1 do
+      begin
+      self.graphPanelList[i].getVals(newTime, newVals); // Faster than own listener ??
+      end;
+    end;
 {  inc(self.currentGeneration);
 
   if plotsPanelList.count > 0 then
@@ -1759,7 +1777,8 @@ procedure TMainForm.selectPlotSpecies(plotnumb: Integer);
       self.addPlot(maxYVal) // <-- Add dynamically created plot at this point
     else
       begin   // ???????
-        self.plotsPanelList[getPlotPBIndex(plotNumb)].plotGraph.setY_ValsMax( maxYVal);
+       // self.plotsPanelList[getPlotPBIndex(plotNumb)].plotGraph.setY_ValsMax( maxYVal);
+      self.graphPanelList[getPlotPBIndex(plotNumb)].setYMax(maxYVal);
         // Update plot legend:
        //  self.plotsPanelList[getPlotPBIndex(plotNumb)].setPlotLegend(self.plotSpecies.Items[getPlotPBIndex(plotNumb)]);
       end;
@@ -1874,10 +1893,10 @@ begin
    }
   if self.graphPanelList = nil then
     self.graphPanelList := TList<TGraphPanel>.create;
-  self.graphPanelList.Add(TGraphPanel.create(pnlPlotContainer, plotPositionToAdd, yMax);
+  self.graphPanelList.Add( TGraphPanel.create(pnlPlotContainer, plotPositionToAdd, yMax) );
      //  self.mainController.getModel.getS_Names, self.mainController.getModel.getS_Vals));
 
-
+  self.graphPanelList[plotPositionToAdd -1].setChartTimeInterval(self.stepSize);
   newHeight := 200;  // default
   if self.numbPlots > DEFAULT_NUMB_PLOTS then
   begin
@@ -1942,10 +1961,15 @@ begin
     begin
       try
         begin
-          self.plotsPanelList[plotIndex].Destroy;
+         { self.plotsPanelList[plotIndex].Free;
           tempObj := self.plotsPanelList[plotIndex];
           tempObj.Free;
           self.plotsPanelList.Delete(plotIndex);
+          self.plotSpecies.Delete(plotIndex);  }
+          self.graphPanelList[plotIndex].deleteChartSeries;
+          tempObj := self.graphPanelList[plotIndex];
+          tempObj.Free;
+          self.graphPanelList.Delete(plotIndex);
           self.plotSpecies.Delete(plotIndex);
           self.numbPlots := self.numbPlots - 1;
         end;
@@ -1976,7 +2000,8 @@ begin
   plotIndex := -1;
   plotIndex := getPlotPBIndex(plotn);
   plotXposition := 40;
-  plotYposition := self.plotsPanelList[plotIndex].plotWPanel.Top + 20;
+  //plotYposition := self.plotsPanelList[plotIndex].plotWPanel.Top + 20;
+  plotYposition := self.graphPanelList[plotIndex].Top + 20;
   editList := TStringList.create();
   editList.Add('Change plot species.');
   editList.Add('Delete plot.');
@@ -2533,9 +2558,9 @@ begin
       // delete existing plots
     if self.numbPlots >0 then
     begin
-      if (self.plotsPanelList.Count) > 0 then
+      if (self.graphPanelList.Count) > 0 then
       begin
-        for i := self.plotsPanelList.Count-1 downto 0 do
+        for i := self.graphPanelList.Count-1 downto 0 do
         begin
           self.DeletePlot(i);
         end;
@@ -2620,10 +2645,21 @@ begin
   self.resetSliderPositions();
   self.enableStepSizeEdit;
   self.mainController.createSimulation();
-  self.initializePlots;
+ // self.initializePlots;
+  self.resetPlots;
   self.currentGeneration := 0;
 
 end;
+
+{procedure TMainForm.resetPlots();
+var i: integer;
+begin
+  for i := 0 to self.graphPanelList.Count -1 do
+    begin
+    self.graphPanelList[i].resetChartSeries(self.stepSize);
+    end;
+
+end;  }
 
 procedure TMainForm.edtReactionIdExit(Sender: TObject);
 var newId, cutNewId: string;
