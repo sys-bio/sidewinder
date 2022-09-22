@@ -7,6 +7,7 @@ uses SysUtils, Classes, WebLib.Controls, {VCL.Controls,} WebLib.ExtCtrls, {Vcl.E
      uWebGlobalData, Vcl.Imaging.pngimage, Vcl.StdCtrls, uScrollingTypes;
 type
  // TVCLScrollingChart = class (TGraphicControl)
+ // TRestartChartEvent = procedure( sender: TObject ) of object; //  ?? NO
   TWebScrollingChart = class (TWebGraphicControl)
     private
    //   FParent: TWinControl;
@@ -127,6 +128,7 @@ type
       procedure Restart;
       procedure RestartSeries;
       procedure Run(t: double);
+    //  procedure setTime(t: double);
       procedure SaveToFile(FileName: String);
       procedure SaveToPNG(FileName: String);
     //  procedure SetXAxisRange(xMin, xMax: double);
@@ -824,6 +826,12 @@ begin
       end;
   plot;
 end;
+
+{procedure TWebScrollingChart.setTime(t: double);
+begin
+  self.time := t;
+end;     }
+
 procedure TWebScrollingChart.plot;
 begin
  // repaint;

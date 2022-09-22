@@ -6,7 +6,7 @@ interface
 uses
   System.SysUtils, System.Classes, JS, Web, WEBLib.Graphics, WEBLib.Controls,
   WEBLib.Forms, WEBLib.Dialogs, Vcl.Controls, Vcl.StdCtrls, WEBLib.StdCtrls,
-  WEBLib.ExtCtrls, uWebScrollingChart, Math;
+  WEBLib.ExtCtrls, uWebScrollingChart,uWebGlobalData, Math;
 
 type
   TForm1 = class(TWebForm)
@@ -69,6 +69,7 @@ begin
        WebTimer1.Enabled := true;
     end;
 end;
+
 
 procedure TForm1.btnStartPlotClick(Sender: TObject);
 var

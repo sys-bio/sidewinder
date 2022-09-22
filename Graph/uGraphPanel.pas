@@ -14,11 +14,19 @@ TGraphPanel = class (TWebPanel)
 private
   chart: TWebScrollingChart;
   seriesStrList: TList<string>; // series label list, if '' then do not plot
+  yMaximum: double;
+  yMinimum: double;
+  yLabel: string;
+  xLabel: string;
+  autoUp: boolean;  // Auto scale y axis up
+  autoDown: boolean;
+  timeDelta: double;
+  chartBackGroundColor: TColor;
  //pnlChart: TWebPanel;
 public
   constructor create(newParent: TWebPanel; graphPosition: integer; yMax: double);
   procedure initializePlot(newVarStrList: TList<string>; newYMax: double; newYMin: double;
-  autoUp: boolean; autoDown: boolean; newDelta: double; newBkgrndColor: TColor);
+  newAutoUp: boolean; newAutoDown: boolean; newDelta: double; newBkgrndColor: TColor);
   procedure setAutoScaleUp(autoScale: boolean); // true: autoscale
   procedure setAutoScaleDown(autoScale: boolean); // true: autoscale
   procedure addChartSerie(varStr: string; maxYVal: double); // need max Y if autoScale off
@@ -27,7 +35,10 @@ public
   procedure setSerieColor(index: integer; newColor: TColor);
   procedure deleteChartSerie(index: integer);
   procedure deleteChartSeries();
-  procedure restartChart(newInterval: double);
+  procedure deleteChart(); // delete TWebScrollingChart
+  procedure createChart();
+  procedure setupChart(); // Setup chart based on existing values from and instance of TGraphPanel
+  procedure restartChart(newInterval: double); // Needed ??
   procedure setChartDelta(newDelta: double);
   procedure setChartWidth(newWidth: integer);
   procedure setChartTimeInterval(newInterval: double);
@@ -51,21 +62,42 @@ begin
   self.Height := round(newParent.height/3); // 3 plots // 200;
   self.Left := 10; //10 gap between the network canvas and plot
   self.Top := 4 + self.Height*(graphPosition -1);
-
-  self.chart := TWebScrollingChart.Create(self);
-  self.chart.Parent := self;
-  if yMax > 0 then self.chart.YAxisMax := yMax; // need a default ?
-
+  self.chartBackGroundColor := -1;
+ // self.chart := TWebScrollingChart.Create(self);
+ // self.chart.Parent := self;
+  self.yMinimum := 0;
+  if yMax > 0 then self.yMaximum := yMax
+  else self.yMaximum := 10; // default
+ // self.chart.YAxisMax := self.yMaximum;
+  self.createChart();
 
 end;
 
+ procedure TGraphPanel.createChart();
+ begin
+   try
+     self.chart := TWebScrollingChart.Create(self);
+     self.chart.Parent := self;
+     self.chart.YAxisMax := self.yMaximum;
+   except
+    on E: Exception do
+      notifyUser(E.message);
+  end;
+ end;
+
 procedure TGraphPanel.initializePlot( newVarStrList: TList<string>; newYMax: double;
-          newYMin: double; autoUp: boolean; autoDown: boolean; newDelta: double;
+          newYMin: double; newAutoUp: boolean; newAutoDown: boolean; newDelta: double;
           newBkgrndColor: TColor);
 var i: integer;
 begin
   self.seriesStrList := newVarStrList;
-  self.chart.autoScaleUp := autoUp;
+  if newYMax > 0 then self.yMaximum := newYmax; // Assume max value > zero
+  self.yMinimum := newYMin;
+  self.autoUp := newAutoUp;
+  self.autoDown := newAutoDown;
+  self.timeDelta := newDelta;
+  self.chartBackGroundColor := newBkgrndColor;
+{  self.chart.autoScaleUp := autoUp;
   self.chart.autoScaleDown := autoDown;
   self.chart.YAxisMax := newYMax;
   self.chart.YAxisMin := newYMin;
@@ -75,11 +107,11 @@ begin
   self.setChartDelta(newDelta);
   self.setChartTimeInterval(newDelta);
   self.chart.SetXAxisMax(TConst.DEFAULT_X_POINTS_DISPLAYED *newDelta); // deltaX same as interval
-  if newBkgrndColor < 1 then self.chart.BackgroundColor := clNavy // clNavy
+  if newBkgrndColor < 1 then self.chart.BackgroundColor := clNavy
   else self.chart.BackgroundColor := newBkgrndColor;
-  self.chart.LegendBackgroundColor := clSilver;
+  self.chart.LegendBackgroundColor := clSilver;}
   self.Color := clBlack;
-  self.chart.LegendPosX := 0;
+{  self.chart.LegendPosX := 0;
   self.chart.LegendPosY := 15;
   self.seriesStrList := newVarStrList;
   for i := 0 to newVarStrList.count -1 do
@@ -87,7 +119,38 @@ begin
     if newVarStrList[i] <> '' then
       self.chart.AddSerie(newVarStrList[i]);
     end;
+  self.setSeriesColors; }
+  self.setupChart();
+end;
+
+procedure TGraphPanel.setupChart;
+var i: integer;
+begin
+  self.yLabel := 'Conc';  // Default
+  self.xLabel := 'Time (sec)'; // Default
+  self.chart.autoScaleUp := self.autoUp;
+  self.chart.autoScaleDown := self.autoDown;
+  self.chart.YAxisMax := self.yMaximum;
+  self.chart.YAxisMin := self.yMinimum;
+  self.chart.SetChartTitle(''); // Do not use, if so then need to adjust plot grid height
+  self.chart.setYAxisCaption(''); // Add to bottom, xaxis label. Cannot rotate label in HTML ?
+  self.chart.SetXAxisCaption( self.yLabel + ' vs. '+ self.xLabel );
+  self.setChartDelta(self.timeDelta);
+  self.setChartTimeInterval(self.timeDelta);
+  self.chart.SetXAxisMax(TConst.DEFAULT_X_POINTS_DISPLAYED *self.timeDelta); // deltaX same as interval
+  if self.chartBackGroundColor < 1 then self.chart.BackgroundColor := clNavy
+  else self.chart.BackgroundColor := self.chartBackGroundColor;
+  self.chart.LegendBackgroundColor := clSilver;
+  self.chart.LegendPosX := 0;
+  self.chart.LegendPosY := 15;
+
+  for i := 0 to self.seriesStrList.count -1 do
+    begin
+    if self.seriesStrList[i] <> '' then
+      self.chart.AddSerie(self.seriesStrList[i]);
+    end;
   self.setSeriesColors;
+
 end;
 
 procedure TGraphPanel.setYMax(newYMax: double);
@@ -126,9 +189,6 @@ begin
            else self.chart.series[index].color := SERIESCOLORS[j mod length(SERIESCOLORS)];
            end;
         end;
-
-     // if index < length(SERIESCOLORS)then self.chart.series[index].color := SERIESCOLORS[index]
-     // else self.chart.series[index].color := SERIESCOLORS[index mod length(SERIESCOLORS)];
       end;
     end;
 end;
@@ -197,10 +257,17 @@ begin
   self.chart.DeleteSeries;
 end;
 
-procedure TGraphPanel.restartChart(newInterval: double);
+procedure TGraphPanel.deleteChart();
+begin
+  if self.chart <> nil then self.chart.Destroy;
+
+end;
+
+procedure TGraphPanel.restartChart(newInterval: double); // Needed ? Issue resetting xAis labels
 begin
   self.setChartDelta(newInterval); // ? chat delta versus chart time interval?
   self.setChartTimeInterval(newInterval);
+ // self.chart.setTime( 0 ); // added, not sure
   self.chart.SetXAxisMax(TConst.DEFAULT_X_POINTS_DISPLAYED * newInterval);
   self.chart.Restart;
 end;

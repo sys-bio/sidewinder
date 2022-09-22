@@ -914,7 +914,9 @@ begin
   try
    // self.plotsPanelList[n].initializePlot( MainController.getRunTime,
   //                           MainController.getStepSize, self.plotSpecies[n]);
-    self.graphPanelList[n].initializePlot( self.plotSpecies[n], 10 {newYMax},
+    //if n < self.graphPanelList.count then self.graphPanelList[n].deleteChartSeries;
+
+    self.graphPanelList[n].initializePlot( self.plotSpecies[n], 0 {newYMax},
           0 {newYMin}, false {autoUp}, false {autoDown}, self.stepSize,
           clWhite {newBkgrndColor});
     //self.mainController.addSimListener(@self.graphPanelList[n].getVals);  // slow??
@@ -931,7 +933,11 @@ procedure TMainForm.resetPlots();  // Reset plots for new simulation.
 begin
   for i := 0 to self.graphPanelList.Count -1 do
     begin
-    self.graphPanelList[i].restartChart(self.stepSize);
+    self.graphPanelList[i].deleteChart;
+    self.graphPanelList[i].createChart;
+    self.graphPanelList[i].setupChart;
+
+    //self.initializePlot(i);
     end;
 end;
 
@@ -1887,11 +1893,11 @@ var plotPositionToAdd: integer; // Add plot to next empty position.
     newHeight: integer; i: Integer;
 begin
 
-  if self.graphPanelList <> nil then self.btnResetRunClick(nil);
+  if self.graphPanelList <> nil then self.btnResetRunClick(nil); // need event notification
 
   plotWidth := 0;
   plotPositionToAdd := -1;
-  plotPositionToAdd := self.getEmptyPlotPosition();
+  plotPositionToAdd := self.getEmptyPlotPosition(); // position 1 is index 0
  { if self.plotsPanelList = nil then
     self.plotsPanelList := TList<TPlotPanel>.create;
   self.plotsPanelList.Add(TPlotPanel.create(pnlPlotContainer, plotPositionToAdd, yMax,

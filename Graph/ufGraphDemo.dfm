@@ -23,7 +23,7 @@ object Form1: TForm1
   end
   object btnPause: TWebButton
     Left = 8
-    Top = 312
+    Top = 231
     Width = 96
     Height = 25
     Caption = 'Pause'
@@ -125,8 +125,6 @@ object Form1: TForm1
       Align = alClient
       BorderColor = clNone
       ChildOrder = 2
-      ExplicitWidth = 713
-      ExplicitHeight = 685
     end
     object pnlRight: TWebPanel
       Left = 740
@@ -136,7 +134,6 @@ object Form1: TForm1
       Align = alRight
       Caption = 'pnlRight'
       ChildOrder = 1
-      ExplicitHeight = 685
     end
     object WebSplitter1: TWebSplitter
       Left = 915
@@ -147,7 +144,6 @@ object Form1: TForm1
       ChildOrder = 2
       Color = clBtnFace
       OnMove = WebSplitter1Move
-      ExplicitHeight = 685
     end
   end
   object WebTimer1: TWebTimer
