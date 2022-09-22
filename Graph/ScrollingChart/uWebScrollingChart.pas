@@ -37,12 +37,12 @@ type
       procedure SetXAxisTicks(val: Integer);
       function GetReferenceLegend: TPivot;
       procedure SetReferenceLegend(val: TPivot);
-      function GetChartTitle: String;
-      procedure SetChartTitle(val: String);
-      function GetXAxisCaption: String;
-      procedure SetXAxisCaption(val: String);
-      function GetYAxisCaption: String;
-      procedure SetYAxisCaption(val: String);
+   //   function GetChartTitle: String;
+   //   procedure SetChartTitle(val: String);
+   //   function GetXAxisCaption: String;
+   //   procedure SetXAxisCaption(val: String);
+   //   function GetYAxisCaption: String;
+   //   procedure SetYAxisCaption(val: String);
       function GetChartTitleColor: TColor;
       procedure SetChartTitleColor(val: TColor);
       procedure SetDeltaX(val: Single);
@@ -135,6 +135,12 @@ type
       procedure SetYAxisMax(val: Double);
       function GetXAxisMax: Double;
       procedure SetXAxisMax(val: Double);
+      function GetXAxisCaption: String;
+      procedure SetXAxisCaption(val: String);
+      function GetYAxisCaption: String;
+      procedure SetYAxisCaption(val: String);
+      function GetChartTitle: String;
+      procedure SetChartTitle(val: String);
       procedure plot;
       function GetInterval: Cardinal; // msec
       procedure SetInterval(Value: Cardinal); // msec
@@ -919,17 +925,16 @@ begin
      begin
        globalData := TGlobalData.Create;
        title := globalData.title;
+     //  console.log('ScrollingChart.init title.text: ',title.text);
        globalData.dataSource.Redraw := Paint;
        plane := globalData.plane;
        xAxis := plane.xAxis;
        yAxis := plane.yAxis;
        grid := plane.grid;
-       setDefaultValues;      // <--- Here
+       setDefaultValues;
        series:= [];
        legend := TLegend.Create;
-       console.log('legendPosX, Y: ', self.LegendPosX, Self.legendPosY);
-       self.LegendPosX := -5;
-       self.LegendPosY := 20;
+     //  console.log('legendPosX, Y: ', self.LegendPosX, Self.legendPosY);
        timer := nil;
    end;
 end;

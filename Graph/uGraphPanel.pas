@@ -5,8 +5,8 @@ uses SysUtils, Classes, Graphics, Controls, System.Types, System.Generics.Collec
      Dialogs, WEBLib.StdCtrls, WEBLib.ExtCtrls, WEBLib.Forms, JS, Web,
      uWebScrollingChart, uWebGlobalData, uSidewinderTypes;
 
-const SERIESCOLORS: array[0..10] of integer = ( clRed, clBlue, clYellow, clGreen,clBlack,
-                                   clAqua, clGray,clPurple,clOlive, clLime,clSkyBlue);
+const SERIESCOLORS: array[0..10] of integer = ( clRed, clBlue, clGreen,clBlack,
+                     clAqua, clGray,clPurple,clOlive, clLime,clSkyBlue, clYellow);
 
 type
 
@@ -48,9 +48,9 @@ begin
   self.tag := graphPosition;
   self.Width := newParent.Width;
   self.Anchors := [akLeft,akRight,akTop];
-  self.Height := 200;//round(panelH/3);
+  self.Height := round(newParent.height/3); // 3 plots // 200;
   self.Left := 10; //10 gap between the network canvas and plot
-  self.Top := 4 + self.Height*(graphPosition-1);
+  self.Top := 4 + self.Height*(graphPosition -1);
 
   self.chart := TWebScrollingChart.Create(self);
   self.chart.Parent := self;
@@ -69,6 +69,9 @@ begin
   self.chart.autoScaleDown := autoDown;
   self.chart.YAxisMax := newYMax;
   self.chart.YAxisMin := newYMin;
+  self.chart.SetChartTitle(''); // Do not use, if so then need to adjust plot grid height
+  self.chart.setYAxisCaption(''); // Add to bottom, xaxis label.
+  self.chart.SetXAxisCaption('Conc vs. Time (sec)');
   self.setChartDelta(newDelta);
   self.setChartTimeInterval(newDelta);
   self.chart.SetXAxisMax(TConst.DEFAULT_X_POINTS_DISPLAYED *newDelta); // deltaX same as interval
@@ -76,12 +79,15 @@ begin
   else self.chart.BackgroundColor := newBkgrndColor;
   self.chart.LegendBackgroundColor := clSilver;
   self.Color := clBlack;
+  self.chart.LegendPosX := 0;
+  self.chart.LegendPosY := 15;
+  self.seriesStrList := newVarStrList;
   for i := 0 to newVarStrList.count -1 do
     begin
     if newVarStrList[i] <> '' then
       self.chart.AddSerie(newVarStrList[i]);
-      self.setSerieColor(i,0);
     end;
+  self.setSeriesColors;
 end;
 
 procedure TGraphPanel.setYMax(newYMax: double);
@@ -105,14 +111,24 @@ begin
 end;
 
 procedure TGraphPanel.setSerieColor(index: Integer; newColor: TColor);
+var j: integer;
 begin
   if index < length(self.chart.series) then
     begin
     if newColor > 1 then self.chart.series[index].color := newColor
     else
       begin
-      if index < length(SERIESCOLORS)then self.chart.series[index].color := SERIESCOLORS[index]
-      else self.chart.series[index].color := SERIESCOLORS[index mod length(SERIESCOLORS)];
+      for j := 0 to self.seriesStrList.Count -1 do  // Want all charts to use same color for var
+        begin
+         if self.chart.series[index].name = self.seriesStrList[j] then
+           begin
+           if index < length(SERIESCOLORS)then self.chart.series[index].color := SERIESCOLORS[j]
+           else self.chart.series[index].color := SERIESCOLORS[j mod length(SERIESCOLORS)];
+           end;
+        end;
+
+     // if index < length(SERIESCOLORS)then self.chart.series[index].color := SERIESCOLORS[index]
+     // else self.chart.series[index].color := SERIESCOLORS[index mod length(SERIESCOLORS)];
       end;
     end;
 end;

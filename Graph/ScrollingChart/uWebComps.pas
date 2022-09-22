@@ -300,7 +300,6 @@ var
 begin
  // mcl := MakeColor(FPlane.grid.color, 0.90);
   mcl := FPlane.grid.color;
-  //console.log(' +++ TGridXContainer.Draw ..');
   for i := 0 to childs.Count - 1 do
     begin
       block := childs[i] as TMyBlockLine;
@@ -586,6 +585,7 @@ begin
   title := data.title;
 //  console.log(' *++ TTitleBox.Draw ..');
   P := getGlobalPosition;
+  console.log(' TTItleBox.Draw, P.x, y: ', P.x,', ',P.y);
   data.canvas.Font.Name := title.fontName;
   data.canvas.Font.Size := title.fontSize;
   data.canvas.Font.Color := title.fontcolor;
@@ -611,7 +611,7 @@ begin
   //clear;
  // t := P + offSet - pivotF;
   t.x:= P.x + offSet.x - pivotF.x;
-  t.y:= P.x + offSet.y - pivotF.y;
+  t.y:= P.y + offSet.y - pivotF.y;
   data.canvas.TextOut(Round(t.x), Round(t.y{ + ABounds.Height}), title.text);
 end;
 
@@ -882,7 +882,7 @@ begin
   gridX.resize;
 
 
-  gridY.x := 0;
+  gridY.x := TConst.DEFAULT_X_AXIS_START; //0;
   gridY.y := 0;
   gridY.width := width;
   gridY.height := height;
@@ -1006,18 +1006,17 @@ begin
         end;
     end;
 
-
   for j := 0 to length(temp.series) - 1 do
     begin
       serie := temp.series[j];
       if (serie.visible) and (serie.count >= 2) then serie.fromPoint.X := -1;
     end;
 
-   mask.Draw; // This causes background color to cover grid lines.....
-
+   mask.Draw;
+   BorderDraw;
    if legend.visible then legendBox.draw;
 
-   BorderDraw;
+   //BorderDraw;
 
    if Assigned(FOnComplete) then
      begin
@@ -1039,14 +1038,13 @@ begin
   axisX := TAxisX.Create(w, h/2, self);
   axisX.backgroundColor := data.BackgroundColor;
 
-
-  axisX.x := 0;
+  axisX.x := TConst.DEFAULT_X_AXIS_START; //0; // Start at right most edge of y axis.
   axisX.y := 0;
 
   labelX := TMyText.Create(TConst.FONT_NAME, TConst.FONT_SIZE, center, bottom, TConst.MARGIN_FONT, self);
   labelX.width := w;
   labelX.height := h/2;
-  labelX.x := 0;
+  labelX.x := TConst.DEFAULT_X_AXIS_START; // 0;
   labelX.y := axisX.height;
   labelX.color := xAxis.color;
   labelX.FText := xAxis.caption;
@@ -1056,13 +1054,13 @@ procedure TBottomBox.resize;
 begin
   axisX.width := width;
   axisX.height := height/2;
-  axisX.x := 0;
+  axisX.x := TConst.DEFAULT_X_AXIS_START; //0;
   axisX.y := 0;
   axisX.resize;
 
   labelX.width := width;
   labelX.height := height/2;
-  labelX.x := 0;
+  labelX.x := TConst.DEFAULT_X_AXIS_START; //0;
   labelX.y := axisX.height;
 end;
 
@@ -1363,7 +1361,9 @@ procedure TRightBox.Draw;
 begin
   clear;   // This draws correct rectangle on top of graph panel ??
  // console.log(' ^^++ TRightBox.Draw ++^^ ');
-  self.graph.backgroundColor := self.data.plotPanelBackgroundColor;  // ISSUE ???  data?
+ //  bottomBox.backgroundColor := self.data.BackgroundColor;
+ // bottomBox.Draw;
+  self.graph.backgroundColor := self.data.plotPanelBackgroundColor;
   self.graph.Draw;
   bottomBox.backgroundColor := self.data.BackgroundColor;
   bottomBox.Draw;

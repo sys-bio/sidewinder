@@ -2,8 +2,8 @@ unit uWebStage;
 
 interface
   uses
-   Math, System.Types, System.UITypes,{ System.UIConsts ??, }System.Contnrs,
-   System.SysUtils, JS, Web, WebLib.Graphics, {VCL.Graphics,} uWebContainer,
+   Math, System.Types, System.UITypes, System.Contnrs,
+   System.SysUtils, JS, Web, WebLib.Graphics, uWebContainer,
    uWebComps, uWebDataSource, uWebGlobalData;
 
 type
@@ -61,19 +61,19 @@ begin
    titleBox.y := 0;
    titleBox.width := width;
  //  console.log('TStage.resize');
- //  console.log(' title box width, height: ', self.titleBox.width, ', ', self.titleBox.height);
+   console.log(' title box width, height: ', self.titleBox.width, ', ', self.titleBox.height);
 
    leftBox.width := TConst.WIDTH_Y_AXIS;
-   leftBox.height := height - titleBox.height;
+   leftBox.height := height;// - titleBox.height;
    leftBox.x := 0;
-   leftBox.y := titleBox.height;
- //  console.log(' Left box width, height: ', self.leftBox.width, ', ', self.leftBox.height);
+   leftBox.y := 0; //titleBox.height;
+   console.log(' Left box width, height: ', self.leftBox.width, ', ', self.leftBox.height);
 
    rightBox.width := width - leftBox.width;
-   rightBox.height := height - titleBox.height;
+   rightBox.height := height;// - titleBox.height;
    rightBox.x := leftBox.width;
-   rightBox.y := titleBox.height;
- //  console.log(' right box width, height: ', self.rightBox.width, ', ', self.rightBox.height);
+   rightBox.y := 0; //titleBox.height;
+   console.log(' right box width, height: ', self.rightBox.width, ', ', self.rightBox.height);
    leftBox.resize;
    rightBox.resize;
 
@@ -88,22 +88,26 @@ begin
   width := w;
   height := h;
   title := data.title;
- // console.log(' TStage.create, width, height: ', self.width, ', ', self.height);
+  console.log(' TStage.create, width, height: ', self.width, ', ', self.height);
   //backgroundColor := clayellow; //DEFAULT_BACKGROUND_COLOR;
+ // title.text := '';
+  titleBox := TTitleBox.Create(w, {2*}title.pad + title.fontSize, self);
+ // titleBox.height := 0; // added
 
-  titleBox := TTitleBox.Create(w, 2*title.pad + title.fontSize, self);
   titleBox.x := 0;
-  titleBox.y := 0;
+  titleBox.y := 0; // this maybe it, set to bottom of chart - height -NO
 
   wLeftBox := TConst.WIDTH_Y_AXIS;
 
-  leftBox := TLeftBox.Create(wLeftBox, h - titleBox.height, self);
+ // leftBox := TLeftBox.Create(wLeftBox, h - titleBox.height, self);
+  leftBox := TLeftBox.Create(wLeftBox, h, self);
   //leftBox.backgroundColor := claAzure;
   leftBox.backgroundColor := clSkyBlue;
   leftBox.x := 0;
   leftBox.y := titleBox.height;
 
-  rightBox := TRightBox.Create(w - wLeftBox, h - titleBox.height, self);
+ // rightBox := TRightBox.Create(w - wLeftBox, h - titleBox.height, self);
+  rightBox := TRightBox.Create(w - wLeftBox, h , self);
   //rightBox.backgroundColor := self.data.plotPanelBackgroundColor;
   rightBox.backgroundColor := self.getAGlobalData.plotPanelBackgroundColor;
 
@@ -111,15 +115,11 @@ begin
   rightBox.y := titleBox.height;
 end;
 
-procedure TStage.borderDraw;
-//var
-//  R: TRect;
+procedure TStage.borderDraw;   // Fills all of chart
 begin
   data.Canvas.Brush.Style := bsClear;
   data.canvas.pen.Width := Round(FPlane.yAxis.lineWidth);
   data.canvas.pen.color := FPlane.yAxis.color;
-//  R := TRect.Create(TPoint.Create(0, 0), Round(data.chartWidth), Round(data.chartHeight));
- // data.canvas.Rectangle(R);
   data.canvas.Rectangle( 0, 0,Round(data.chartWidth), Round(data.chartHeight) );
 end;
 
@@ -147,13 +147,10 @@ begin
     end;
 
   //clear;
-
-  rightBox.Draw;
+  rightBox.Draw; // Including legend
   titleBox.draw;
   leftBox.Draw;
-
   borderDraw;
-
 end;
 
 end.

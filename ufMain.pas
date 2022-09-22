@@ -278,7 +278,6 @@ type
     procedure refreshPlotAndSliderPanels();
     procedure refreshPlotPanels();
     procedure refreshSliderPanels();
-  //  procedure resetPlots();
     procedure clearNetwork(); // clear network canvas and delete all nodes, edges
 
     procedure enableEditNodePanel;
@@ -766,7 +765,10 @@ begin
  if MainController.isOnline = false then
    self.runSim
  else  // stop simulation
+   begin
    self.stopSim;
+   self.btnAddPlot.Enabled := true;
+   end;
 end;
 
 procedure TMainForm.runSim();
@@ -810,6 +812,7 @@ begin
       self.btnOnLineSim.caption := 'Simulation: Pause';
       if DEBUG then
         simResultsMemo.visible := true;
+      self.btnAddPlot.Enabled := false; // Do not add plot while sim running
       self.mainController.SetRunTime(DEFAULT_RUNTIME);
        // default timer interval is 100 msec:
       // multiplier default is 10, range 1 - 50
@@ -913,7 +916,7 @@ begin
   //                           MainController.getStepSize, self.plotSpecies[n]);
     self.graphPanelList[n].initializePlot( self.plotSpecies[n], 10 {newYMax},
           0 {newYMin}, false {autoUp}, false {autoDown}, self.stepSize,
-          clgray {newBkgrndColor});
+          clWhite {newBkgrndColor});
     //self.mainController.addSimListener(@self.graphPanelList[n].getVals);  // slow??
   except
     on E: Exception do
@@ -1883,6 +1886,9 @@ var plotPositionToAdd: integer; // Add plot to next empty position.
     plotWidth: integer;
     newHeight: integer; i: Integer;
 begin
+
+  if self.graphPanelList <> nil then self.btnResetRunClick(nil);
+
   plotWidth := 0;
   plotPositionToAdd := -1;
   plotPositionToAdd := self.getEmptyPlotPosition();

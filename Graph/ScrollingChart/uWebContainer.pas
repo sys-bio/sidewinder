@@ -83,6 +83,7 @@ begin
    parent := P;
    width := w;
    height := h;
+
    clientWindow := client;
 end;
 
@@ -108,8 +109,10 @@ var
 begin
 
  // P := clientWindow.getGlobalPosition + TPointF.Create(x, y);
+
   P.x := clientWindow.getGlobalPosition.x + self.x;
-  P.x := clientWindow.getGlobalPosition.y + self.y;
+  P.y {x} := clientWindow.getGlobalPosition.y + self.y;
+  console.log('TMask.Draw: x,y: ', P.x, ', ',P.y);
   //paint := TSkPaint.Create;
   //blender := TSkBlender.MakeMode(TSkBlendMode.Clear);
   //paint.Blender := blender;
@@ -123,8 +126,10 @@ begin
   DrawRect(R, data.BackgroundColor); }// right middle side rect, right of actual graph gris
 
   topLeft := TPointF.Create(0, P.y);
-  R := TRectF.Create(topLeft, P.x, height);
-  DrawRect(R, data.BackgroundColor); // Top, left rect, above y axis
+ // R := TRectF.Create(topLeft, P.x, height);
+   R := TRectF.Create(topLeft, P.x, data.chartHeight);
+   DrawRect(R, data.BackgroundColor); // Top, left rect, above and left of y axis
+  // DrawRect(R, clRed);
 
  { topLeft := TPointF.Create(P.x + width, P.y);
   R := TRectF.Create(topLeft, data.chartWidth - P.x - width, height);

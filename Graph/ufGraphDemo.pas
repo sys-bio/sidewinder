@@ -187,15 +187,16 @@ procedure TForm1.initPlot();
    self.chart.autoScaleUp := self.rbtAutoYMax.Checked;
    self.chart.autoScaleDown := self.rbtAutoYMin.Checked;
   // if not self.rbtAutoYMax.Checked then
-     self.chart.YAxisMax := strtofloat(self.editYMax.Text);
+   self.chart.YAxisMax := strtofloat(self.editYMax.Text);
   // else self.chart.YAxisMax := 10000;
   // if not self.rbtAutoYMin.Checked then
-     self.chart.YAxisMin := strtofloat(self.editYMin.Text);
+   self.chart.YAxisMin := strtofloat(self.editYMin.Text);
   // else self.chart.YAxisMin := -1000;
 
    self.chart.BackgroundColor := clGray; //clNavy;
    self.chart.PlotPanelBackgroundColor := clBlack; // currently does not show.
    self.chart.LegendBackgroundColor := clSilver;
+   self.chart.GridColor := clBlack;
    self.chart.AddSerie;
    self.chart.AddSerie;
    self.chart.AddSerie;
