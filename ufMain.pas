@@ -818,7 +818,6 @@ begin
       // multiplier default is 10, range 1 - 50
       self.mainController.SetTimerInterval(round(1000/self.trackBarSimSpeed.position));
       self.mainController.SetStepSize(self.stepSize);
-       //  self.rtLengthEdit1.Text := FloatToStr(MainController.getRunTime);
       if self.mainController.getCurrTime = 0  then
         self.InitSimResultsTable();  // Set table of Sim results.
       self.rightPanelType := SIMULATION_PANEL;
@@ -870,18 +869,6 @@ begin
   self.btnResetRun.Enabled := false;
 end;
 
-{procedure TMainForm.initializePlots();
-  var i: Integer;
-begin
-  if plotsPanelList <> nil then
-    begin
-    for i := 0 to plotsPanelList.Count - 1 do
-      begin
-      self.initializePlot(i);
-      end;
-    end;
-end; }
-
 procedure TMainForm.initializePlots();
   var i: Integer;
 begin
@@ -894,19 +881,6 @@ begin
       end;
     end;
 end;
-
-{procedure TMainForm.initializePlot( n: integer);
-// var yScaleWidth, newYMax : integer;
-begin
-  try
-    self.plotsPanelList[n].initializePlot( MainController.getRunTime,
-                             MainController.getStepSize, self.plotSpecies[n]);
-  except
-    on E: Exception do
-      notifyUser(E.message);
-  end;
-
-end;}
 
 procedure TMainForm.initializePlot( n: integer);
 // var yScaleWidth, newYMax : integer;
@@ -928,17 +902,16 @@ begin
 end;
 
 procedure TMainForm.resetPlots();  // Reset plots for new simulation.
- // self.initializePlots;
  var i: integer;
-begin
+begin // Easier to just delete/create than reset time, xaxis labels, etc.
   for i := 0 to self.graphPanelList.Count -1 do
     begin
     self.graphPanelList[i].deleteChart;
     self.graphPanelList[i].createChart;
     self.graphPanelList[i].setupChart;
-
     //self.initializePlot(i);
     end;
+  self.refreshPlotPanels;
 end;
 
 procedure TMainForm.PingSBMLLoaded(newModel:TModel);
@@ -974,7 +947,6 @@ begin
     begin
     if newModel.getSBMLLayout <> nil then
       begin
-    //console.log(' layout Width: ', trunc(newModel.getSBMLLayout.getDims.getWidth));
       self.networkPB1.Width := trunc(newModel.getSBMLLayout.getDims.getWidth);
       self.networkPB1.Height := trunc(newModel.getSBMLLayout.getDims.getHeight);
       end;
@@ -1443,14 +1415,9 @@ begin
      //console.log(' PlotWPanel width: ', plotsPanelList[0].plotWPanel.width, 'plot PB width: ', plotsPanelList[0].plotPB.width);
      for i := 0 to self.graphPanelList.count -1 do
        begin
-        //  plotsPanelList[i].setPlotPBWidth();
-
-        self.graphPanelList[i].Width := self.graphPanelList[i].Parent.Width;
-        self.graphPanelList[i].setChartWidth( self.graphPanelList[i].Width );
-        self.graphPanelList[i].Invalidate;    // needed ??
-        //  plotsPanelList[i].initializePlot( MainController.getRunTime,
-        //                     MainController.getStepSize, self.plotSpecies[i]);
-        //  self.plotsPanelList[i].setPlotLegend(self.plotSpecies[i]);
+       self.graphPanelList[i].Width := self.graphPanelList[i].Parent.Width;
+       self.graphPanelList[i].setChartWidth( self.graphPanelList[i].Width );
+       self.graphPanelList[i].Invalidate;    // needed ??
        end;
      end;
    end;

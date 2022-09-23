@@ -6,8 +6,6 @@ uses SysUtils, Classes, WebLib.Controls, {VCL.Controls,} WebLib.ExtCtrls, {Vcl.E
      Graphics, WebLib.Graphics, uWebDataSource, WebLib.Forms, {VCL.Forms,} uWebStage,
      uWebGlobalData, Vcl.Imaging.pngimage, Vcl.StdCtrls, uScrollingTypes;
 type
- // TVCLScrollingChart = class (TGraphicControl)
- // TRestartChartEvent = procedure( sender: TObject ) of object; //  ?? NO
   TWebScrollingChart = class (TWebGraphicControl)
     private
    //   FParent: TWinControl;
