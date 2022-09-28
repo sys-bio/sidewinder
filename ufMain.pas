@@ -247,7 +247,7 @@ type
     function  getEmptyPlotPosition(): Integer;
     function  getPlotPBIndex(plotTag: integer): Integer; // Return Plot index of tag.
     function  getSliderIndex(sliderTag: integer): Integer;
-    procedure EditPlotList(plotn: Integer);
+  //  procedure EditPlotList(plotn: Integer);
     procedure updatePlots(); // Go through and remove species/plots no longer in model. needed ?
     procedure initializePlots();
     procedure initializePlot( n: integer);
@@ -1966,7 +1966,7 @@ begin
   self.pnlPlotContainer.Invalidate;
 end;
 
-procedure TMainForm.EditPlotList(plotn: Integer);
+{procedure TMainForm.EditPlotList(plotn: Integer);
 var
   plotXposition, plotYposition: Integer;
   plotIndex: Integer;
@@ -1988,7 +1988,7 @@ begin
   self.plotEditLB.bringToFront;
   self.plotEditLB.visible := true;
 
-end;
+end;    }
 
 procedure TMainForm.updatePlots(); // Go through and remove species/plots no longer in model.
 begin
