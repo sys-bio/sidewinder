@@ -54,7 +54,8 @@ uses
   uWebGlobalData in 'Graph\ScrollingChart\uWebGlobalData.pas',
   uWebScrollingChart in 'Graph\ScrollingChart\uWebScrollingChart.pas',
   uWebStage in 'Graph\ScrollingChart\uWebStage.pas',
-  uGraphPanel in 'Graph\uGraphPanel.pas';
+  uGraphPanel in 'Graph\uGraphPanel.pas',
+  ufYAxisMinMaxEdit in 'Graph\ufYAxisMinMaxEdit.pas' {FYAxisMinMaxEdit: TWebForm} {*.html};
 
 {$R *.res}
 
@@ -64,5 +65,6 @@ begin
   Application.CreateForm(TmainForm, mainForm);
   Application.CreateForm(TFormAssignments, FormAssignments);
   Application.CreateForm(TformExamples, formExamples);
+  Application.CreateForm(TFYAxisMinMaxEdit, FYAxisMinMaxEdit);
   Application.Run;
 end.

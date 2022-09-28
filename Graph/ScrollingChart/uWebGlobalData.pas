@@ -231,8 +231,6 @@ var
   Splitted: TArray<String>;
 begin
   s := FloatToStr(FDeltaX);
- // Splitted := s.Split(['.'], 2);
-
   Splitted := SplitString(s, '.'); // assume only 2 elements
   s := Splitted[1];
   n := countZeros(s);
@@ -312,11 +310,12 @@ begin
       end;
   Result := -1;
 end;
+
 function TLegend.getPos(val: TPivot): Integer;
 begin
   Result := getAlignIndex(val);
-  //Result := FPosition;
 end;
+
 procedure TLegend.setPos(val: TValuesLegend);
 begin
   FPosition := val;
@@ -324,18 +323,21 @@ begin
   pivot := TConst.AlignMat[val];
   reference := pivot;
 end;
+
 procedure TLegend.setMargin(val: Double);
 begin
   FMargin := val;
   x := FMargin * TConst.VUnits[FPosition].X;
   y := FMargin * TConst.VUnits[FPosition].Y;
 end;
+
 constructor TInfoAxis.Create;
 begin
   caption := '';
   color := TConst.DEFAULT_COLOR_AXIS;
   lineWidth := TConst.DEFAULT_LINEWIDTH_AXIS;
 end;
+
 constructor TPlaneXY.Create;
 begin
   xAxis := TInfoAxis.Create;
@@ -347,22 +349,26 @@ begin
   grid := TGridInfo.Create;
   DeltaX := TConst.DEFAULT_DELTA_X;
 end;
+
 destructor TPlaneXY.Destroy;
 begin
   xAxis.Destroy;
   yAxis.Destroy;
   grid.Destroy;
 end;
+
 procedure TPlaneXY.setXAxisRange(xMin, xMax: double);
 begin
   x := xMin;
   width := xMax - xMin;
 end;
+
 procedure TPlaneXY.setYAxisRange(yMin, yMax: double);
 begin
   y := yMin;
   height := yMax - yMin;
 end;
+
 function TGlobalData.getPivot(w, h: double; pivot: TPivot): TPointF;
 var
   pivotX, pivotY: Double;

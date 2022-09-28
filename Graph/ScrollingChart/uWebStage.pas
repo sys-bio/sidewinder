@@ -8,7 +8,6 @@ interface
 
 type
 
-
   TStage = class (TContainer)
      leftBox: TLeftBox;
      rightBox: TRightBox;
@@ -22,7 +21,6 @@ type
   end;
 
 implementation
-
 
 destructor TStage.Destroy;
 begin
@@ -38,14 +36,12 @@ var
   dataSource: TDataSource;
 begin
   dataSource := data.dataSource;
- // if length(dataSource.cols) = 0 then Exit;
   if dataSource.cols.Count = 0 then Exit;
 
   plane := FPlane;
  //console.log('TStage.checkLimits, FPlane height, width: ', self.FPlane.height, ', ', self.FPlane.width);
   if dataSource.isOut(plane.width) then
     begin
-  //    console.log('TStage.checkLimits: dataSource is out of width....');
       dataSource.removeFirst;
       dataSource.getNewLimits(xMin, xMax);
       plane.x := xMin;
@@ -60,20 +56,19 @@ begin
    titleBox.x := 0;
    titleBox.y := 0;
    titleBox.width := width;
- //  console.log('TStage.resize');
-   console.log(' title box width, height: ', self.titleBox.width, ', ', self.titleBox.height);
+ //  console.log(' title box width, height: ', self.titleBox.width, ', ', self.titleBox.height);
 
    leftBox.width := TConst.WIDTH_Y_AXIS;
    leftBox.height := height;// - titleBox.height;
    leftBox.x := 0;
    leftBox.y := 0; //titleBox.height;
-   console.log(' Left box width, height: ', self.leftBox.width, ', ', self.leftBox.height);
+ //  console.log(' Left box width, height: ', self.leftBox.width, ', ', self.leftBox.height);
 
    rightBox.width := width - leftBox.width;
    rightBox.height := height;// - titleBox.height;
    rightBox.x := leftBox.width;
    rightBox.y := 0; //titleBox.height;
-   console.log(' right box width, height: ', self.rightBox.width, ', ', self.rightBox.height);
+ //  console.log(' right box width, height: ', self.rightBox.width, ', ', self.rightBox.height);
    leftBox.resize;
    rightBox.resize;
 
@@ -99,18 +94,12 @@ begin
 
   wLeftBox := TConst.WIDTH_Y_AXIS;
 
- // leftBox := TLeftBox.Create(wLeftBox, h - titleBox.height, self);
   leftBox := TLeftBox.Create(wLeftBox, h, self);
-  //leftBox.backgroundColor := claAzure;
   leftBox.backgroundColor := clSkyBlue;
   leftBox.x := 0;
   leftBox.y := titleBox.height;
-
- // rightBox := TRightBox.Create(w - wLeftBox, h - titleBox.height, self);
   rightBox := TRightBox.Create(w - wLeftBox, h , self);
-  //rightBox.backgroundColor := self.data.plotPanelBackgroundColor;
   rightBox.backgroundColor := self.getAGlobalData.plotPanelBackgroundColor;
-
   rightBox.x := wLeftBox;
   rightBox.y := titleBox.height;
 end;

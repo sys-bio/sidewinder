@@ -3,17 +3,22 @@ unit uGraphPanel;
 interface
 uses SysUtils, Classes, Graphics, Controls, System.Types, System.Generics.Collections,
      Dialogs, WEBLib.StdCtrls, WEBLib.ExtCtrls, WEBLib.Forms, JS, Web,
-     uWebScrollingChart, uWebGlobalData, uSidewinderTypes;
+     uWebScrollingChart, uWebGlobalData, ufYAxisMinMaxEdit,  uSidewinderTypes;
 
 const SERIESCOLORS: array[0..10] of integer = ( clRed, clBlue, clGreen,clBlack,
                      clAqua, clGray,clPurple,clOlive, clLime,clSkyBlue, clYellow);
+      EDIT_TYPE_DELETEPLOT = 0;
+      EDIT_TYPE_SPECIES = 1;
+      DEFAULT_Y_MAX = 10;
 
 type
+TEditGraphEvent = procedure(position: integer; editType: integer) of object;
 
 TGraphPanel = class (TWebPanel)
 private
   chart: TWebScrollingChart;
   seriesStrList: TList<string>; // series label list, if '' then do not plot
+  lbEditGraph: TWebListBox;
   yMaximum: double;
   yMinimum: double;
   yLabel: string;
@@ -22,7 +27,12 @@ private
   autoDown: boolean;
   timeDelta: double;
   chartBackGroundColor: TColor;
- //pnlChart: TWebPanel;
+  fEditGraphEvent: TEditGraphEvent;
+
+  procedure graphEditMouseDown(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Integer);
+  procedure editGraphListBoxClick(Sender: TObject);
+
 public
   constructor create(newParent: TWebPanel; graphPosition: integer; yMax: double);
   procedure initializePlot(newVarStrList: TList<string>; newYMax: double; newYMin: double;
@@ -44,9 +54,11 @@ public
   procedure setChartTimeInterval(newInterval: double);
   function  getChartTimeInterval(): double;
   procedure setYMax(newYMax: double);
+  function  getYMax(): double;
   procedure adjustPlotHeight(numPlots: integer; newHeight: integer);// adjust height based on numbre of plots
-
   procedure getVals( newTime: Double; newVals: TVarNameValList);// Get new values (species amt) from simulation run
+  procedure notifyGraphEvent(plot_id: integer; eventType: integer);
+  property OnEditGraphEvent: TEditGraphEvent read fEditGraphEvent write fEditGraphEvent;
 end;
 
 implementation
@@ -56,27 +68,26 @@ begin
   //self.pnlChart := TWebPanel.Create(owner);
   inherited create(newParent);
   self.SetParent(newParent);
+  self.OnMouseDown := graphEditMouseDown;
   self.tag := graphPosition;
   self.Width := newParent.Width;
   self.Anchors := [akLeft,akRight,akTop];
-  self.Height := round(newParent.height/3); // 3 plots // 200;
+  self.Height := round(newParent.height/3); // 3 plots
   self.Left := 10; //10 gap between the network canvas and plot
   self.Top := 4 + self.Height*(graphPosition -1);
   self.chartBackGroundColor := -1;
- // self.chart := TWebScrollingChart.Create(self);
- // self.chart.Parent := self;
   self.yMinimum := 0;
   if yMax > 0 then self.yMaximum := yMax
-  else self.yMaximum := 10; // default
- // self.chart.YAxisMax := self.yMaximum;
+  else self.yMaximum := DEFAULT_Y_MAX;
   self.createChart();
-
+ // self.setUpEditListBox();
 end;
 
  procedure TGraphPanel.createChart();
  begin
    try
      self.chart := TWebScrollingChart.Create(self);
+     self.chart.OnMouseClickEvent := self.graphEditMouseDown;
      self.chart.Parent := self;
      self.chart.YAxisMax := self.yMaximum;
    except
@@ -97,29 +108,7 @@ begin
   self.autoDown := newAutoDown;
   self.timeDelta := newDelta;
   self.chartBackGroundColor := newBkgrndColor;
-{  self.chart.autoScaleUp := autoUp;
-  self.chart.autoScaleDown := autoDown;
-  self.chart.YAxisMax := newYMax;
-  self.chart.YAxisMin := newYMin;
-  self.chart.SetChartTitle(''); // Do not use, if so then need to adjust plot grid height
-  self.chart.setYAxisCaption(''); // Add to bottom, xaxis label.
-  self.chart.SetXAxisCaption('Conc vs. Time (sec)');
-  self.setChartDelta(newDelta);
-  self.setChartTimeInterval(newDelta);
-  self.chart.SetXAxisMax(TConst.DEFAULT_X_POINTS_DISPLAYED *newDelta); // deltaX same as interval
-  if newBkgrndColor < 1 then self.chart.BackgroundColor := clNavy
-  else self.chart.BackgroundColor := newBkgrndColor;
-  self.chart.LegendBackgroundColor := clSilver;}
   self.Color := clBlack;
-{  self.chart.LegendPosX := 0;
-  self.chart.LegendPosY := 15;
-  self.seriesStrList := newVarStrList;
-  for i := 0 to newVarStrList.count -1 do
-    begin
-    if newVarStrList[i] <> '' then
-      self.chart.AddSerie(newVarStrList[i]);
-    end;
-  self.setSeriesColors; }
   self.setupChart();
 end;
 
@@ -157,6 +146,11 @@ procedure TGraphPanel.setYMax(newYMax: double);
 begin
   if self.chart.YAxisMin < newYMax then
     self.chart.YAxisMax := newYMax;
+end;
+
+function  TGraphPanel.getYMax(): double;
+begin
+  Result := self.yMaximum;
 end;
 
 procedure TGraphPanel.setChartWidth(newWidth: integer);
@@ -213,7 +207,6 @@ end;
 procedure TGraphPanel.getVals(newTime: Double; newVals: TVarNameValList); // callback
 var i, j: integer;
 begin
-//  console.log('updating plot results....');
   for j := 0 to length(self.chart.series) -1 do
     begin
     if j < newVals.getNumPairs then
@@ -259,7 +252,11 @@ end;
 
 procedure TGraphPanel.deleteChart();
 begin
-  if self.chart <> nil then self.chart.Destroy;
+  if self.chart <> nil then
+    begin
+    self.deleteChartSeries;
+    self.chart.Destroy;
+    end;
 
 end;
 
@@ -267,7 +264,6 @@ procedure TGraphPanel.restartChart(newInterval: double); // Needed ? Issue reset
 begin
   self.setChartDelta(newInterval); // ? chat delta versus chart time interval?
   self.setChartTimeInterval(newInterval);
- // self.chart.setTime( 0 ); // added, not sure
   self.chart.SetXAxisMax(TConst.DEFAULT_X_POINTS_DISPLAYED * newInterval);
   self.chart.Restart;
 end;
@@ -280,6 +276,80 @@ end;
 procedure TGraphPanel.setAutoScaleDown(autoScale: boolean);
 begin
   self.chart.autoScaleDown := autoScale;
+end;
+
+procedure TGraphPanel.graphEditMouseDown(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Integer);
+var editList: TStringList;
+begin
+  self.lbEditGraph := TWebListBox.Create(self);
+  self.lbEditGraph.parent := self;
+  self.lbEditGraph.tag := self.tag;
+  self.lbEditGraph.ElementClassName := 'list-group form-control-sm bg-dark text-white';
+  self.lbEditGraph.OnClick := editGraphListBoxClick;
+  editList := TStringList.create();
+  editList.Add('Toggle legend.');
+  editList.Add('Toggle autoscale.');
+  editList.Add('Set Y max/min.');
+  editList.Add('Change plot species.');
+  editList.Add('Delete plot.');
+  editList.Add('Cancel');
+  self.lbEditGraph.Items := editList;
+  self.lbEditGraph.Top := 10;
+  self.lbEditGraph.left := 10;
+  self.lbEditGraph.Height := 120;
+  self.lbEditGraph.Width := 140;
+  self.lbEditGraph.bringToFront;
+  self.lbEditGraph.visible := true;
+end;
+
+procedure TGraphPanel.editGraphListBoxClick(Sender: TObject);
+begin
+  if self.lbEditGraph.ItemIndex < 3 then  // Handle these actions locally
+    begin
+    if self.lbEditGraph.ItemIndex = 0 then // toggle legend
+      begin
+      if self.chart.getLegendVisible then
+        self.chart.SetLegendVisible(false)
+      else self.chart.SetLegendVisible(true);
+      end;
+    if self.lbEditGraph.ItemIndex = 1 then //Toggle autoscale
+      begin
+      if self.chart.autoScaleUp then
+        begin
+        self.chart.autoScaleUp := false;
+        self.chart.autoScaleDown := false;
+        end
+      else
+        begin
+        self.chart.autoScaleUp := true;
+        self.chart.autoScaleDown := true;
+        end;
+      end;
+    if self.lbEditGraph.ItemIndex = 2 then  // Set Y max/min
+      begin
+      self.chart.userUpdateMinMax;
+      end;
+    self.lbEditGraph.Destroy;
+    end
+  else    // Handle these actions with external main form:
+    begin
+    if self.lbEditGraph.ItemIndex = 3 then // Change plot species. Done external to TGraphPanel
+      self.notifyGraphEvent(self.tag, EDIT_TYPE_SPECIES)
+
+    else if self.lbEditGraph.ItemIndex = 4 then // Delete plot
+      self.notifyGraphEvent(self.tag, EDIT_TYPE_DELETEPLOT)
+      else if self.lbEditGraph.ItemIndex = 5 then // Cancel
+        self.lbEditGraph.Destroy;
+    end;
+
+end;
+
+
+procedure TGraphPanel.notifyGraphEvent(plot_id: integer; eventType: integer);
+begin
+   if Assigned(fEditGraphEvent) then
+    fEditGraphEvent(plot_id, eventType);
 end;
 
 end.

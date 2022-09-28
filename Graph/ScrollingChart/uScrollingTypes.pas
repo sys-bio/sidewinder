@@ -24,7 +24,7 @@ type
     property Height: Single read cy write cy;
  end;
 
-
+  // Copied from Delphi
  TRectF = record
   private
     FWidth: single;
