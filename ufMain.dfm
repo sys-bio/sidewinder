@@ -1428,7 +1428,7 @@ object mainForm: TmainForm
         end
         object WebConsoleLog1: TWebConsoleLog
           Left = 6
-          Top = 107
+          Top = 115
           Width = 261
           Height = 224
         end

@@ -2,8 +2,8 @@ unit uWebContainer;
 
 interface
 uses
-  System.Classes, System.UITypes, {System.UIConsts,} System.SysUtils, JS, Web,
-  WebLib.Graphics, {Vcl.Graphics,} System.Types, uWebGlobalData, uScrollingTypes;
+  System.Classes, System.UITypes, System.SysUtils, JS, Web,
+  WebLib.Graphics, System.Types, uWebGlobalData, uScrollingTypes;
 
   type
     TOrientation = (horizontal, vertical);
@@ -11,13 +11,9 @@ uses
 
     TContainer = class (TObject)
       FRoot: TObject;
-      //fdata: TGlobalData;
       x, y, width, height: double;
-      //scaleX, scaleY: double;
       parent: TObject;
       name: string;
-      //childs: TObjectList;
-     // color, backgroundColor : TAlphaColor;
       color, backgroundColor : TColor;
       lineWidth: single;
       constructor Create(w, h: double; P: TObject); virtual;
@@ -25,24 +21,18 @@ uses
       procedure Clear;
       function getFRoot: TObject;
       function getGlobalPosition: TPointF;
-
       function getPlane: TPlaneXY;
       procedure setPlane(value: TPlaneXY);
-
       function getLegend: TLegend;
       procedure setLegend(value: TLegend);
-
 
       function getAGlobalData: TGlobalData;
       procedure setGlobalData(value: TGlobalData);
       property data: TGlobalData read getAGlobalData write setGlobalData;
       property FPlane: TPlaneXY read getPlane write setPlane;
       property legend: TLegend read getLegend write setLegend;
-
-
       property Root: TObject read getFRoot;
       procedure DrawRect(RF: TRectF; cl: TColor);
-    //  procedure DrawRect(RF: TRect; cl: TColor);
   end;
 
   TMyLine = class (TContainer)
@@ -87,16 +77,11 @@ begin
 end;
 
 procedure TContainer.DrawRect(RF: TRectF; cl: TColor);
-var
- // R: TRect;
-
 begin
   data.Canvas.Brush.Style := bsSolid;
   data.Canvas.Brush.Color := cl;
   data.canvas.pen.Width := 1;
   data.canvas.pen.color := cl;
- // R := TRect.Create(TPoint.Create(Round(RF.TopLeft.X), Round(RF.TopLeft.Y)), Round(RF.Width), Round(RF.Height));
- // data.canvas.Rectangle(R);
   data.canvas.Rectangle(RF.getLocation.X, RF.getLocation.Y, RF.Width, RF.Height);
 end;
 
@@ -106,29 +91,17 @@ var
   topLeft: TPointF;
   P: TPointF;
 begin
-
- // P := clientWindow.getGlobalPosition + TPointF.Create(x, y);
   P.x := clientWindow.getGlobalPosition.x + self.x;
-  P.x := clientWindow.getGlobalPosition.y + self.y;
-  //paint := TSkPaint.Create;
-  //blender := TSkBlender.MakeMode(TSkBlendMode.Clear);
-  //paint.Blender := blender;
+  P.y := clientWindow.getGlobalPosition.y + self.y;
+ // console.log('TMask.Draw: x,y: ', P.x, ', ',P.y);
 
   topLeft := TPointF.Create(0, 0);
   R := TRectF.Create(topLeft, data.chartWidth, P.y);
   DrawRect(R, data.BackgroundColor); // ??
 
-  {topLeft := TPointF.Create(0, P.y + height);
-  R := TRectF.Create(topLeft, data.chartWidth, data.chartHeight - P.y - height);
-  DrawRect(R, data.BackgroundColor); }// right middle side rect, right of actual graph gris
-
   topLeft := TPointF.Create(0, P.y);
-  R := TRectF.Create(topLeft, P.x, height);
-  DrawRect(R, data.BackgroundColor); // Top, left rect, above y axis
-
- { topLeft := TPointF.Create(P.x + width, P.y);
-  R := TRectF.Create(topLeft, data.chartWidth - P.x - width, height);
-  DrawRect(R, data.BackgroundColor);} // top rect, above actual graph grid
+  R := TRectF.Create(topLeft, P.x, data.chartHeight);
+  DrawRect(R, data.BackgroundColor); // Top, left rect, above and left of y axis
 
 end;
 
@@ -171,6 +144,7 @@ var
 begin
   chart := Root as TWebScrollingChart;
   chart.legend := value;
+
 end;
 
 function TContainer.getPlane: TPlaneXY;
@@ -205,7 +179,6 @@ var
   P: TContainer;
   Q: TObject;
 begin
-  //Result := TPoint.Zero;
   Result.x := 0;
   Result.y := 0;
 
@@ -213,7 +186,6 @@ begin
   while Q is TContainer do
     begin
       P := Q as TContainer;
-      //Result := Result + TPointF.Create(P.x, P.y);
       Result.x := Result.x + P.x;
       Result.y := Result.y + P.y;
       Q := P.parent;
@@ -237,7 +209,6 @@ var
   R: TRectF;
   topLeft: TPointF;
 begin
-//  topLeft := getGlobalPosition + TPointF.Create(x, y);
   topLeft.x := getGlobalPosition.x + self.x;
   topLeft.y := getGlobalPosition.y + self.y;
 
@@ -293,8 +264,6 @@ begin
       destino := TPointF.Create(x + width, y + height);
     end;
 
-  //origen := P + origen;
-  //destino := P + destino;
   origen.x := P.x + origen.x;
   origen.y := P.y + origen.y;
   destino.x := P.x + destino.x;
@@ -313,11 +282,9 @@ begin
   fontSize := Size;
   hAlign := _hAlign;
   vAlign := _vAlign;
- // backgroundColor := claAqua;
   backgroundColor := clAqua;
   rotate := false;
   FText := '';
- // color := claBlack;
   color := clBlack;
   margin := _margin;
 end;
@@ -394,12 +361,11 @@ begin
   P := getGlobalPosition;
   data.canvas.font.Name := fontName;
   data.canvas.font.Size := fontSize;
- // data.canvas.font.Quality := fqAntialiased;
+  //data.canvas.font.Quality := fqAntialiased;
   data.canvas.Font.Color := color;
   data.canvas.Font.Orientation := 0;
   data.canvas.Brush.color := data.BackgroundColor;
   data.canvas.Brush.Style := bsSolid;
-  //AB := data.canvas.TextExtent(FText);
   AB.Width := data.canvas.TextExtent(FText).cx;
   AB.Height := data.canvas.TextExtent(FText).cy;
 

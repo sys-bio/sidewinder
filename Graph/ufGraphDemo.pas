@@ -6,7 +6,7 @@ interface
 uses
   System.SysUtils, System.Classes, JS, Web, WEBLib.Graphics, WEBLib.Controls,
   WEBLib.Forms, WEBLib.Dialogs, Vcl.Controls, Vcl.StdCtrls, WEBLib.StdCtrls,
-  WEBLib.ExtCtrls, uWebScrollingChart, Math;
+  WEBLib.ExtCtrls, uWebScrollingChart,uWebGlobalData, Math;
 
 type
   TForm1 = class(TWebForm)
@@ -23,6 +23,9 @@ type
     pnlYminScale: TWebPanel;
     lblYMax: TWebLabel;
     lblYMin: TWebLabel;
+    pnlBase: TWebPanel;
+    pnlRight: TWebPanel;
+    WebSplitter1: TWebSplitter;
     procedure btnStartPlotClick(Sender: TObject);
     procedure WebFormCreate(Sender: TObject);
     procedure InitComps;
@@ -33,6 +36,7 @@ type
     procedure rbtAutoYMinClick(Sender: TObject);
     procedure editYMinExit(Sender: TObject);
     procedure editYMaxExit(Sender: TObject);
+    procedure WebSplitter1Move(Sender: TObject);
   //  procedure rbtAutoYMaxClick(Sender: TObject);
   //  procedure rbtAutoYMinClick(Sender: TObject);
 
@@ -65,6 +69,7 @@ begin
        WebTimer1.Enabled := true;
     end;
 end;
+
 
 procedure TForm1.btnStartPlotClick(Sender: TObject);
 var
@@ -170,7 +175,12 @@ begin
   self.WebTimer1.Enabled := false;
 end;
 
- procedure TForm1.initPlot();
+ procedure TForm1.WebSplitter1Move(Sender: TObject);
+begin
+  self.chart.Width := self.pnlPlot.Width;
+end;
+
+procedure TForm1.initPlot();
  begin
    self.chart := TWebScrollingChart.Create(self.pnlPlot);
    self.chart.Parent := self.pnlPlot;
@@ -178,15 +188,16 @@ end;
    self.chart.autoScaleUp := self.rbtAutoYMax.Checked;
    self.chart.autoScaleDown := self.rbtAutoYMin.Checked;
   // if not self.rbtAutoYMax.Checked then
-     self.chart.YAxisMax := strtofloat(self.editYMax.Text);
+   self.chart.YAxisMax := strtofloat(self.editYMax.Text);
   // else self.chart.YAxisMax := 10000;
   // if not self.rbtAutoYMin.Checked then
-     self.chart.YAxisMin := strtofloat(self.editYMin.Text);
+   self.chart.YAxisMin := strtofloat(self.editYMin.Text);
   // else self.chart.YAxisMin := -1000;
 
    self.chart.BackgroundColor := clGray; //clNavy;
    self.chart.PlotPanelBackgroundColor := clBlack; // currently does not show.
    self.chart.LegendBackgroundColor := clSilver;
+   self.chart.GridColor := clBlack;
    self.chart.AddSerie;
    self.chart.AddSerie;
    self.chart.AddSerie;

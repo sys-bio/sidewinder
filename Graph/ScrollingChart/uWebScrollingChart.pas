@@ -1,22 +1,28 @@
 unit uWebScrollingChart;
 interface
-uses SysUtils, Classes, WebLib.Controls, {VCL.Controls,} WebLib.ExtCtrls, {Vcl.ExtCtrls,}
-     WebLib.Dialogs,{ Vcl.Dialogs,} System.Types, {System.UIConsts,} System.UITypes,
+uses SysUtils, Classes, WebLib.Controls, WebLib.StdCtrls, WebLib.ExtCtrls,
+     WebLib.Dialogs, System.Types, {System.UIConsts,} System.UITypes,
      System.Contnrs, System.Generics.Defaults, System.Generics.Collections, JS, Web,
-     Graphics, WebLib.Graphics, uWebDataSource, WebLib.Forms, {VCL.Forms,} uWebStage,
-     uWebGlobalData, Vcl.Imaging.pngimage, Vcl.StdCtrls, uScrollingTypes;
+     Graphics, WebLib.Graphics, uWebDataSource, WebLib.Forms, uWebStage,
+     uWebGlobalData, Vcl.Imaging.pngimage, Vcl.StdCtrls, uScrollingTypes,
+     ufYAxisMinMaxEdit;
 type
- // TVCLScrollingChart = class (TGraphicControl)
+   TNotifyMouseClickEvent = procedure( Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Integer ) of object;
+
   TWebScrollingChart = class (TWebGraphicControl)
     private
-   //   FParent: TWinControl;
       FParent: TWebControl;
-     // timer: TTimer;
-      timer: TWebTimer;
+      timer: TWebTimer;   // Not needed?
       time: Double;
+      timeInterval: double; // seconds, replace timer.Interval
       obj: TObject;
       Sh: TShiftState;
+      lbEditGraph: TWebListBox;
       FMouseMoveEvent: TMouseMoveEvent;
+      FMouseClickEvent:  TNotifyMouseClickEvent; // Notify listener of mouse click over plot area
+      minMaxUpdate: TFYAxisMinMaxEdit;
+
       // methods to published properties
       function GetAxisColor: TColor;
       procedure SetAxisColor(Val: TColor);
@@ -36,12 +42,6 @@ type
       procedure SetXAxisTicks(val: Integer);
       function GetReferenceLegend: TPivot;
       procedure SetReferenceLegend(val: TPivot);
-      function GetChartTitle: String;
-      procedure SetChartTitle(val: String);
-      function GetXAxisCaption: String;
-      procedure SetXAxisCaption(val: String);
-      function GetYAxisCaption: String;
-      procedure SetYAxisCaption(val: String);
       function GetChartTitleColor: TColor;
       procedure SetChartTitleColor(val: TColor);
       procedure SetDeltaX(val: Single);
@@ -56,15 +56,12 @@ type
       procedure SetLegendPosX(val: Single);
       function GetLegendPosY: Single;
       procedure SetLegendPosY(val: Single);
-      function GetLegendVisible: Boolean;
-      procedure SetLegendVisible(val: Boolean);
+
       function GetYAxisMin: Double;
       procedure SetYAxisMin(val: Double);
-      function GetYAxisMax: Double;
-      procedure SetYAxisMax(val: Double);
+      procedure SetXAxisRange(xMin, xMax: double);
+      procedure SetYAxisRange(yMin, yMax: double);
 
-      function GetXAxisMax: Double;
-      procedure SetXAxisMax(val: Double);
       //General
       procedure SetFMouseMoveEvent(val: TMouseMoveEvent);
       procedure SetDefaultValues;
@@ -78,23 +75,24 @@ type
       procedure getForm(AOwner: TComponent);
       //Timer
       procedure SetDefaultTimer;
- //     procedure SetTimer(Value: TTimer);
- //     function GetTimer: TTimer;
       procedure SetTimer(Value: TWebTimer);
       function GetTimer: TWebTimer;
-      function GetInterval: Cardinal;
-      procedure SetInterval(Value: Cardinal);
+  //    function GetInterval: Cardinal; // msec
+  //    procedure SetInterval(Value: Cardinal); // msec
       procedure SetOnTimer(Value: TNotifyEvent);
       function GetOnTimer: TNotifyEvent;
       procedure SetEnabledTimer(Value: Boolean);
       function GetEnabledTimer: Boolean;
-     // procedure SetAParent(val: TWinControl);
+
       procedure SetAParent(val: TWebControl);
  //     procedure ConvertAndSaveToPNG(BmpSrc: TBitmap; sFilename: String); DO not use for now.
       procedure Rebuild;
+
    strict protected
       procedure ChartOnMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
       procedure ChartOnMouseLeave(Sender: TObject);
+      procedure graphEditMouseDown(Sender: TObject; Button: TMouseButton;
+                                 Shift: TShiftState; X, Y: Integer);
 
     protected
       procedure Paint; override;
@@ -127,17 +125,29 @@ type
       procedure Run(t: double);
       procedure SaveToFile(FileName: String);
       procedure SaveToPNG(FileName: String);
-      procedure SetXAxisRange(xMin, xMax: double);
-      procedure SetYAxisRange(yMin, yMax: double);
+      function GetYAxisMax: Double;
+      procedure SetYAxisMax(val: Double);
+      function GetXAxisMax: Double;
+      procedure SetXAxisMax(val: Double);
+      function GetXAxisCaption: String;
+      procedure SetXAxisCaption(val: String);
+      function GetYAxisCaption: String;
+      procedure SetYAxisCaption(val: String);
+      function GetLegendVisible: Boolean;
+      procedure SetLegendVisible(val: Boolean);
+      function GetChartTitle: String;
+      procedure SetChartTitle(val: String);
       procedure plot;
-
+      function GetInterval: Cardinal; // msec
+      procedure SetInterval(Value: Cardinal); // msec
+      procedure userUpdateMinMax();
 
       property OnTimer: TNotifyEvent read GetOnTimer write SetOnTimer;
       property Enabled: Boolean read GetEnabledTimer write SetEnabledTimer default false;
       property Interval: Cardinal read GetInterval write SetInterval default 100;
       property ReferenceLegend: TPivot read GetReferenceLegend write SetReferenceLegend;
- //     property Parent: TWinControl read FParent write SetAParent;
       property Parent: TWebControl read FParent write SetAParent;
+      property OnMouseClickEvent: TNotifyMouseClickEvent read FMouseClickEvent write FMouseClickEvent;
 
     published
       property AxisColor: TColor read GetAxisColor write SetAxisColor;
@@ -178,7 +188,6 @@ begin
   RegisterComponents('UofW', [TVCLScrollingChart]);
 end;
   }
-//procedure TVCLScrollingChart.SetAParent(val: TWinControl);
 procedure TWebScrollingChart.SetAParent(val: TWebControl);
 var
   Panel: TWebPanel; //TPanel;
@@ -189,7 +198,7 @@ begin
        if val is TWebPanel then
          begin
            Panel := val as TWebPanel;
-        //   Panel.ParentBackground := false;
+
          end
    //    else if val is TGroupBox then
        else if val is TWebGroupBox then
@@ -198,8 +207,8 @@ begin
         //   GB.ParentBackground := false;
          end;
        FParent := val;
-     //  FParent.DoubleBuffered := true;
-     //  FParent.ParentDoubleBuffered := true;
+       FParent.DoubleBuffered := true;
+       FParent.ParentDoubleBuffered := true;
        SetParent(val);    // ????
      end;
 end;
@@ -494,6 +503,15 @@ begin
      if Assigned(stage.rightBox.graph.FOnComplete) then
        stage.rightBox.graph.FOnComplete := nil;
 end;
+
+procedure TWebScrollingChart.graphEditMouseDown(sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Integer);
+begin
+  if Assigned(FMouseClickEvent) then
+    FMouseClickEvent(sender, Button, Shift, X, Y);
+end;
+
+
            // Do not use for now
 {procedure TWebScrollingChart.ConvertAndSaveToPNG(BmpSrc: TBitmap; sFilename: String);
 var
@@ -508,6 +526,7 @@ begin
     PNGDest.Free;
   end;
 end;}
+
 procedure TWebScrollingChart.saveToPNG(FileName: String);
 var
   currentCanvas: TCanvas;
@@ -532,8 +551,6 @@ end;
 procedure TWebScrollingChart.saveToFile(FileName: String);
 var
   i, j: Integer;
- // col: PDataCol;
- // row: PData;
   col: TDataCol;
   row: TData;
   L, aux: TstringList;
@@ -546,18 +563,13 @@ begin
       L[L.Count - 1] := L[L.Count - 1] + '"' + series[i].name + '"';
       if i <> length(series) - 1 then L[L.Count - 1] := L[L.Count - 1] + ',';
     end;
-  //for i :=0 to length(globaldata.dataSource.cols) - 1 do
   for i :=0 to globaldata.dataSource.cols.Count - 1 do
     begin
       col := globaldata.dataSource.cols[i];
       for j := 0 to length(series) - 1 do aux.Values[series[j].name] := '""';
-    //  L.Add(plane.niceNumX(col^.x) + ',');
-    //  for j := 0 to length(col^.rows) - 1 do
       L.Add(plane.niceNumX(col.x) + ',');
       for j := 0 to col.rows.Count - 1 do
         begin
-         // row := col^.rows[j];
-         // aux.Values[row^.serie.name] := plane.niceNumY(row^.y);
           row := col.rows[j];
           aux.Values[row.serie.name] := plane.niceNumY(row.y);
         end;
@@ -630,7 +642,7 @@ begin
       timer.Interval := 100;
     end;
 end;
-//procedure TWebScrollingChart.SetTimer(Value: TTimer);
+
 procedure TWebScrollingChart.SetTimer(Value: TWebTimer);
 begin
   timer := Value;
@@ -644,7 +656,7 @@ begin
   stage.rightBox.bottomBox.axisX.reset;
   stage.rightBox.graph.gridX.reset;
 end;
-//function TWebScrollingChart.GetTimer: TTimer;
+
 function TWebScrollingChart.GetTimer: TWebTimer;
 begin
   Result := timer;
@@ -667,14 +679,19 @@ function TWebScrollingChart.GetEnabledTimer: Boolean;
 begin
   Result := timer.Enabled;
 end;
-procedure TWebScrollingChart.SetInterval(Value: Cardinal);
+procedure TWebScrollingChart.SetInterval(Value: Cardinal); // value is in msec
 begin
 //  SetDefaultTimer;
-  timer.Interval := Value;
+  if timer <> nil then
+    timer.Interval := Value
+  else self.timeInterval := (Value/0.001);   //
+
 end;
-function TWebScrollingChart.GetInterval: Cardinal;
+function TWebScrollingChart.GetInterval: Cardinal;// returns msec
 begin
-  Result := timer.Interval;
+  if timer <> nil then
+    Result := timer.Interval
+  else Result := round(self.timeInterval *1000);
 end;
 procedure TWebScrollingChart.pause;
 begin
@@ -775,7 +792,7 @@ end;
 
 procedure TWebScrollingChart.updateSerie(index: Integer; t: double; y: double);
 begin
-console.log(' Y axisMin: ', self.GetYAxisMin);
+//console.log(' Y axisMin: ', self.GetYAxisMin);
   if not self.autoScaleUp then
     if self.GetYAxisMax < y then y := self.GetYAxisMax;
   if not self.autoScaleDown then
@@ -805,19 +822,20 @@ begin
       end;
   plot;
 end;
+
 procedure TWebScrollingChart.plot;
 begin
  // repaint;
   self.Invalidate;  // Needed
   stage.checkLimits;
-  time := time + timer.Interval/1000;
+  if self.timer <> nil then
+    time := time + timer.Interval/1000
+  else time := time + self.timeInterval;
 end;
 procedure TWebScrollingChart.setDefaultValues;
 begin
   setXAxisRange(TConst.DEFAULT_X_MIN, TConst.DEFAULT_X_MAX);
   setYAxisRange(TConst.DEFAULT_Y_MIN, TConst.DEFAULT_Y_MAX);
-  //self.autoScaleUp := false; Not needed?
-  //self.autoScaleDown := false;
   time := 0;
 end;
 procedure TWebScrollingChart.setXAxisRange(xMin, xMax: double);
@@ -832,6 +850,24 @@ begin
   plane.initialValueYMax := yMax;
   plane.setYAxisRange(yMin, yMax);
 end;
+
+procedure TWebScrollingChart.userUpdateMinMax();
+
+  procedure AfterCreate(AForm: TObject);
+  begin
+    (AForm as TFYAxisMinMaxEdit).Top := trunc(self.Height*0.1);
+    (AForm as TFYAxisMinMaxEdit).setDefaultYMinMax(self.GetYAxisMin, self.GetYAxisMax);
+  end;
+begin
+   self.minMaxUpdate := TFYAxisMinMaxEdit.createNew(@AfterCreate);
+   self.minMaxUpdate.OnUpdateYMaxMinValsEvent := self.SetYAxisRange;
+   self.minMaxUpdate.Popup := true;
+   self.minMaxUpdate.ShowClose := true;
+   self.minMaxUpdate.PopupOpacity := 0.3;
+   self.minMaxUpdate.Border := fbDialogSizeable;
+   self.minMaxUpdate.caption := 'Set Y axis min, max:';
+end;
+
 procedure TWebScrollingChart.Resize;
 begin
   inherited;
@@ -853,16 +889,13 @@ end;
      // Not needed ?
 procedure TWebScrollingChart.getForm(AOwner: TComponent);
 var
-  //F: TWincontrol;
   F: TWebControl;
 begin
- // if (AOwner is TWincontrol) then
   if (AOwner is TWebControl) then
     begin
- //     F := AOwner as TWincontrol;
-     // F := AOwner as TWebControl;
-     // F.DoubleBuffered := true;
-     // F.ParentDoubleBuffered := true;
+      F := AOwner as TWebControl;
+      F.DoubleBuffered := true;
+      F.ParentDoubleBuffered := true;
     end
 end;
 
@@ -871,6 +904,8 @@ var newPanel: TWebPanel;
 begin
   inherited;
  // getForm(AOwner);
+  self.timeInterval := 0.1; // default 100 msec
+  self.OnMouseDown := graphEditMouseDown;
   if AOwner.ClassType = TWebPanel then
     begin
     newPanel := AOwner as TWebPanel;
@@ -886,14 +921,12 @@ begin
 end;
 procedure TWebScrollingChart.Finalize;
 begin
-     //timer.Enabled := false;
   //OnPaint := nil;
   //OnResize := nil;
   if globalData <> nil then globalData.Destroy;
   if stage <> nil then stage.Destroy;
   FreeSeries;
   if legend <> nil then legend.Destroy;
-   //timer.destroy;
 end;
 procedure TWebScrollingChart.Init;
 begin
@@ -910,6 +943,7 @@ begin
        setDefaultValues;
        series:= [];
        legend := TLegend.Create;
+     //  console.log('legendPosX, Y: ', self.LegendPosX, Self.legendPosY);
        timer := nil;
    end;
 end;
@@ -917,7 +951,6 @@ procedure TWebScrollingChart.initStage;
 begin
   if stage = nil then
     begin
-     // SetDefaultTimer;
       stage := TStage.Create(Width - 2*TConst.MARGIN_X, Height - 2*TConst.MARGIN_Y, self);
       stage.x := TConst.MARGIN_X;
       stage.y := TConst.MARGIN_Y;
@@ -946,7 +979,6 @@ procedure TWebScrollingChart.Clear(FCanvas: TCanvas; cl: tcolor);
 begin
   FCanvas.Brush.Style := bsSolid;
   FCanvas.Brush.Color := cl;
-//  FCanvas.FillRect(TRect.Create(0, 0, width, height));
   FCanvas.FillRect(createCanvasRectF(0, 0, width, height));
 end;
 procedure TWebScrollingChart.FreeSeries;
