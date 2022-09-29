@@ -15,7 +15,7 @@ uses
   uPlotPanel, uParamSliderLayout, uSidewinderTypes, WEBLib.ComCtrls, WEBLib.Miletus,
   WEBLib.JQCtrls, ufAssignments, ufSelectExample, uGraphPanel;
 
-const SIDEWINDER_VERSION = 'Version 0.51 alpha';
+const SIDEWINDER_VERSION = 'Version 0.52 alpha';
       DEFAULT_RUNTIME = 10000;
       EDITBOX_HT = 25;
       ZOOM_SCALE = 20;
@@ -51,7 +51,7 @@ type
     loadNetworkButton: TWebButton;
     SBMLOpenDialog: TWebOpenDialog;
     SBMLloadButton: TWebButton;
-    pnlBase: TWebPanel;  // ??
+    pnlBase: TWebPanel;
     LeftWPanel: TWebPanel;
     btnUniUni: TWebSpeedButton;
     btnUniBi: TWebSpeedButton;
@@ -60,7 +60,6 @@ type
     btnIdle: TWebSpeedButton;
     btnAddNode: TWebSpeedButton;
     RSimWPanel: TWebPanel;
-    plotEditLB: TWebListBox;
     SliderEditLB: TWebListBox;
     pnlCenter: TWebPanel;
     networkPB1: TWebPaintBox;
@@ -194,7 +193,7 @@ type
     procedure mnuUndoClick(Sender: TObject);
     procedure ParamSliderOnChange(Sender: TObject);
     // User changes value of parameter
-    procedure plotEditLBClick(Sender: TObject);
+  //  procedure plotEditLBClick(Sender: TObject);    // not used, remove
     procedure SliderEditLBClick(Sender: TObject);
     procedure splitterMoved(Sender: TObject);
     procedure btnSimpleClick(Sender: TObject);
@@ -224,6 +223,7 @@ type
     procedure ButtonVarAssignmentsClick(Sender: TObject);
     procedure displayVarAssignments(rxnId: string);
     procedure splitterClick(Sender: TObject);
+    procedure btnToggleNetworkPBClick(Sender: TObject);
 
   private
     numbPlots: Integer; // Number of plots displayed
@@ -236,6 +236,8 @@ type
     rxnProdStoichLabels: TList<TWebLabel>;
     rxnProdStoichEdits: TList<TWebEdit>;
     saveSimResults: boolean;
+  //  hideNetworkPB: boolean;   Not in use, maybe remove
+  //  intSplitterLeft: integer;     "          "
     fSelectExample: TformExamples;
     procedure InitSimResultsTable(); // Init simResultsMemo.
     procedure addPlot(yMax: double); // Add a plot, yMax: largest initial val of plotted species
@@ -248,7 +250,7 @@ type
     function  getPlotPBIndex(plotTag: integer): Integer; // Return Plot index of tag.
     function  getSliderIndex(sliderTag: integer): Integer;
   //  procedure EditPlotList(plotn: Integer);
-    procedure updatePlots(); // Go through and remove species/plots no longer in model. needed ?
+  //  procedure updatePlots(); // Go through and remove species/plots no longer in model. needed ?
     procedure initializePlots();
     procedure initializePlot( n: integer);
     procedure processGraphEvent(plotPosition: integer; editType: integer);
@@ -557,6 +559,29 @@ begin
   self.saveSimResults := false;
   self.btnStopSimSave.Visible := false;
   self.lblSimDataFileName.visible := false;
+end;
+
+procedure TMainForm.btnToggleNetworkPBClick(Sender: TObject);
+begin
+// TODO: move splitter to hide most of NetworkPB, not working.
+{  if self.hideNetworkPB = false then
+    begin
+    console.log('Hiding Network...');
+    self.intSplitterLeft := self.networkPB1.width;
+    self.hideNetworkPB := true;
+    //self.pnlCenter.width := 100; // ???
+    self.networkPB1.width := 100;
+    //self.SplitterPlotSliderMoved(nil); // ????
+    self.networkPB1.Invalidate;
+    // call splitter moved;
+    end
+  else
+    begin
+    console.log('Viewing Network...');
+    self.hideNetworkPB := false;
+    self.networkPB1.width := self.intSplitterLeft;
+    self.SplitterPlotSliderMoved(nil);
+    end;      }
 end;
 
 procedure TMainForm.btnUniBiClick(Sender: TObject);
@@ -956,7 +981,7 @@ begin
   self.networkUpdated := true;
 end;
 
-procedure TMainForm.plotEditLBClick(Sender: TObject);
+{procedure TMainForm.plotEditLBClick(Sender: TObject);
 begin
   if self.plotEditLB.ItemIndex = 0 then // change species to plot
     begin
@@ -970,7 +995,8 @@ begin
   self.plotEditLB.tag := 0;
   self.plotEditLB.visible := false;
   self.plotEditLB.Top := 40; // default    // Need to specify correct plotPanelList
-end;
+
+end; }
 
 procedure TMainForm.RxnParamComboBoxChange(Sender: TObject);  // NOT needed. ??
 var i: integer;
@@ -1331,6 +1357,7 @@ begin
   self.networkController.networkCanvas := networkCanvas;
   self.networkCanvas.bitmap.Height := networkPB1.Height;
   self.networkCanvas.bitmap.width := networkPB1.width;
+  //self.hideNetworkPB := false;  // Not in use, matbe remove.
   self.LeftWPanel.color := clWhite;
   self.rightPanelType := SIMULATION_PANEL;
   self.RNodeEditWPanel.visible := false;
@@ -1990,11 +2017,11 @@ begin
 
 end;    }
 
-procedure TMainForm.updatePlots(); // Go through and remove species/plots no longer in model.
+{procedure TMainForm.updatePlots(); // Go through and remove species/plots no longer in model.
 begin
   // , just delete all plots and have user add them as necessary
   //  No need for this: EditPlotList(plotn: Integer);
-end;
+end;    }
 
 procedure TMainForm.editPlotAction(index: integer; editType: integer);
 begin
