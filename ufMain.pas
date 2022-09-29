@@ -1298,7 +1298,6 @@ begin
           isRunning := true;
         end;
       self.MainController.changeSimParameterVal( p, newPVal );
-      // recordValueEvent( self.MainController.getCurrTime, p, newPVal );
       if isRunning then self.MainController.startTimer;
       self.sliderPTBLabelAr[i].caption :=
            self.MainController.getModel.getP_Names[self.sliderParamAr[i]] + ': '
@@ -1874,11 +1873,7 @@ begin
   plotWidth := 0;
   plotPositionToAdd := -1;
   plotPositionToAdd := self.getEmptyPlotPosition(); // position 1 is index 0
- { if self.plotsPanelList = nil then
-    self.plotsPanelList := TList<TPlotPanel>.create;
-  self.plotsPanelList.Add(TPlotPanel.create(pnlPlotContainer, plotPositionToAdd, yMax,
-       self.mainController.getModel.getS_Names, self.mainController.getModel.getS_Vals));
-   }
+ 
   if self.graphPanelList = nil then
     self.graphPanelList := TList<TGraphPanel>.create;
   self.graphPanelList.Add( TGraphPanel.create(pnlPlotContainer, plotPositionToAdd, yMax) );
