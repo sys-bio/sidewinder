@@ -16,9 +16,9 @@ type
     dydt: TDoubleDynArray;
     s_Vals: array of Double; // species, Changes, one to one correlation: s_Vals[n] <=> s_Names[n]
     s_Names: array of String; // Use species ID as name
-    s_ValsInit: array of Double; // vals at t = 0;
+  //  s_ValsInit: array of Double; // vals at t = 0;
     s_InitAssignEqs: string; // Eqs to be eval at t = 0
-    p_ValsInit: array of Double; // vals at t = 0
+  //  p_ValsInit: array of Double; // vals at t = 0
     p_InitAssignEqs: string; // Eqs to be eval at t = 0
     p_NameValAr: TVarNameValList;  // user can change
     eqList: String;   // Euler, RK4 ODE eq list.
@@ -156,7 +156,7 @@ begin
         self.paramUpdated := false;
         end;
       //  console.log('updateSimulation: self.time, s[0]: ',self.time,', ',self.s_Vals);
-        self.nextEval(self.time, self.s_Vals, self.p);
+      self.nextEval(self.time, self.s_Vals, self.p);
     end
     // else error msg needed?
   else
@@ -443,8 +443,8 @@ end;
 procedure TSimulationJS.setInitValues();
 var i: integer;
 begin
-  setLength(self.s_ValsInit, length(self.s_Vals));
-  setLength(self.p_ValsInit, length(self.p));
+//  setLength(self.s_ValsInit, length(self.s_Vals));
+//  setLength(self.p_ValsInit, length(self.p));
   //self.p_ValsInit[0] := 2;
 
   if self.p_InitAssignEqs <> '' then
@@ -457,15 +457,17 @@ begin
     end
     end;
   // Now check if species init vals need to be calculated:
-   if self.s_InitAssignEqs <> '' then
+  if self.s_InitAssignEqs <> '' then
     begin
     asm
     //  console.log(this.s_InitAssignEqs);
       var initSpFunc = new Function( 's','p', this.s_InitAssignEqs);
-      this.s = initSpFunc(this.s_Vals, this.p);
+     // this.s = initSpFunc(this.s_Vals, this.p);
+      this.s_Vals = initSpFunc(this.s_Vals, this.p);
     //  console.log('new s init vals: ', this.s);
     end
     end;
+  self.UpdateVals( 0, self.s_Vals);  // Pass init values back to listeners
 end;
 
 function TSimulationJS.getLSODAeqs(): string;
