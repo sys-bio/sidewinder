@@ -1,11 +1,11 @@
 unit uWebComps;
 
 interface
-  uses                                               { maybe Generic.collections ?}
-    Math, Classes, Types, System.UITypes, {System.UIConsts,} System.Contnrs, JS, Web, WebLib.Graphics,
-    {Vcl.Graphics,} System.SysUtils, uWebContainer, uWebDataSource, uWebGlobalData,
+  uses
+    Math, Classes, Types, System.UITypes, System.Contnrs, JS, Web, WebLib.Graphics,
+    System.SysUtils, uWebContainer, uWebDataSource, uWebGlobalData,
     uScrollingTypes;
-
+  const LEGEND_SERIES_NAME_LENGTH =16; // Truncate labels over 16 char long
   type
 
   TBlockY = class (TContainer)
@@ -30,7 +30,6 @@ interface
   TGridAxisY = class (TContainer)
       hLine: TMyLine;
       zeroIndex: Integer;
-   //   cl: TAlphaColor;
       cl: TColor;
       constructor Create(w, h: double; P: TObject); override;
       destructor Destroy; override;
@@ -298,9 +297,7 @@ var
   block: TMyBlockLine;
   mcl: TColor;
 begin
- // mcl := MakeColor(FPlane.grid.color, 0.90);
   mcl := FPlane.grid.color;
-  //console.log(' +++ TGridXContainer.Draw ..');
   for i := 0 to childs.Count - 1 do
     begin
       block := childs[i] as TMyBlockLine;
@@ -373,7 +370,6 @@ begin
   for i := childs.Count - 1 downto 0 do removeChild(i);
 end;
 
-
 constructor TLeftBox.Create(w, h: double; P: TObject);
 var
   yAxis: TInfoAxis;
@@ -384,11 +380,9 @@ begin
   height := h;
 
   axisY := TAxisY.Create(w/2, h - TConst.HEIGHT_X_AXIS, self);
-  //axisY.backgroundColor := claWhite;
   axisY.backgroundColor := clWhite;
   axisY.x := w/2;
   axisY.y := 0;
-
 
   labelY := TMyText.Create(TConst.FONT_NAME, TConst.FONT_SIZE, left, middle, 0, self);
   labelY.width := w/2;
@@ -424,7 +418,6 @@ end;
 procedure TLeftBox.Draw;
 begin
    //clear;
-   console.log(' ++++ TLeftBox.Draw ..');
    axisY.Draw;
    labelY.color := FPlane.yAxis.color;
    labelY.FText := FPlane.yAxis.caption;
@@ -440,7 +433,6 @@ begin
    hLine := TMyLine.Create(vertical, last, self);
    hLine.width := TConst.LENGTH_BOX_TICK_Y;
    hLine.height := h;
-  // hLine.backgroundColor := claYellow;
    hLine.backgroundColor := clYellow;
    hLine.color := FPlane.yAxis.color;
 
@@ -483,7 +475,6 @@ var
 begin
  // hLine.Clear;
   plane := FPlane;
-  console.log(' ++ TAxisY.Draw ..');
   delta := plane.height/FPlane.yAxis.maxTicks;
   val := plane.y + plane.height;
   dy := -block.height/2;
@@ -492,7 +483,6 @@ begin
     begin
        block.x := 0;
        block.y := dy;
-     //  block.backgroundColor := claBlanchedalmond;
        block.backgroundColor := clCream;
        block.number.FText := plane.niceNumY(val);
 
@@ -531,7 +521,6 @@ begin
    tick.y := 0;
    tick.color := FPlane.yAxis.color;
    tick.lineWidth := FPlane.yAxis.lineWidth;
-  // tick.backgroundColor := claWhite;
    tick.backgroundColor := clWhite;
 
    number := TMyText.Create(TConst.FONT_NAME, TConst.FONT_SIZE, right, middle, TConst.MARGIN_FONT, self);
@@ -584,13 +573,12 @@ var
   fABounds: TSizeF;
 begin
   title := data.title;
-  console.log(' *++ TTitleBox.Draw ..');
   P := getGlobalPosition;
+ // console.log(' TTItleBox.Draw, P.x, y: ', P.x,', ',P.y);
   data.canvas.Font.Name := title.fontName;
   data.canvas.Font.Size := title.fontSize;
   data.canvas.Font.Color := title.fontcolor;
   data.canvas.Font.Orientation := 0;
- // data.canvas.Font.Quality := fqAntialiased;  // ??
   data.canvas.Brush.Style := bsClear;
   //ABounds := data.canvas.TextExtent(title.text);
   fABounds.cx := data.canvas.TextExtent(title.text).cx;
@@ -598,20 +586,17 @@ begin
   ABounds.cx := round(fABounds.cx);
   ABounds.cy := round(fABounds.cy);
 
- // height := title.pad + ABounds.Height + title.pad;
   self.height := title.pad + fABounds.Height + title.pad;
   ref.horizontal := title.align;
   ref.vertical := middle;
 
   offSet := data.getPivot(width, height, ref);
- // pivotF := data.getPivot(ABounds.Width, ABounds.Height, ref);
   pivotF := data.getPivot(fABounds.Width, fABounds.Height, ref);
 
   backgroundColor := title.backgroundColor;
   //clear;
- // t := P + offSet - pivotF;
   t.x:= P.x + offSet.x - pivotF.x;
-  t.y:= P.x + offSet.y - pivotF.y;
+  t.y:= P.y + offSet.y - pivotF.y;
   data.canvas.TextOut(Round(t.x), Round(t.y{ + ABounds.Height}), title.text);
 end;
 
@@ -641,7 +626,6 @@ procedure TLegendBox.draw;
    w, h, tx, ty, widthBox, heightBox: double;
    i, n: Integer;
    P, topLeft: TPointF;
-  // tempPt: TPoint;
    ABounds: TSize;
    fABounds: TSizeF;
    leg: TLegend;
@@ -655,7 +639,6 @@ procedure TLegendBox.draw;
 
    d.canvas.font.Name := leg.fontName;
    d.canvas.font.Size := leg.fontSize;
-  // d.canvas.font.Quality := fqAntialiased;
    d.canvas.Font.Color := leg.fontcolor;
    d.canvas.Font.Orientation := 0;
    d.canvas.Brush.Style := bsClear;
@@ -663,11 +646,8 @@ procedure TLegendBox.draw;
    for i := 0 to length(d.series) - 1 do
      if d.series[i].visible then
        begin
-         //ABounds := data.canvas.TextExtent(d.series[i].name);
-         //if ABounds.Width > w then w := ABounds.Width;
-         //h := h + ABounds.Height;
-         fABounds.cx := data.canvas.TextExtent(d.series[i].name).cx;
-         fABounds.cy := data.canvas.TextExtent(d.series[i].name).cy;
+         fABounds.cx := data.canvas.TextExtent(copy(d.series[i].name,0,LEGEND_SERIES_NAME_LENGTH)).cx;
+         fABounds.cy := data.canvas.TextExtent(copy(d.series[i].name,0,LEGEND_SERIES_NAME_LENGTH)).cy;
          if fABounds.Width > w then w := fABounds.Width;
          h := h + fABounds.Height;
          n := n + 1;
@@ -679,23 +659,14 @@ procedure TLegendBox.draw;
 
    offSet := data.getPivot(width, height, leg.reference);
    pivot := data.getPivot(widthBox, heightBox, leg.pivot);
-   console.log('LegendBox.draw, width, height: ', widthBox,', ', heightBox);
-
-//   topLeft := P + offSet - pivot + TPointF.Create(leg.x, leg.y);
    topLeft := P.Add( offSet.Subtract( pivot.Add(TPointF.Create(leg.x, leg.y))) );
 
    d.canvas.Brush.Style := bsSolid;
-   //d.canvas.Brush.Color := MakeColor(leg.backgroundColor, 0.80);
    d.canvas.Brush.Color := leg.backgroundColor;
    d.canvas.Pen.Width := 1;
    d.canvas.Pen.Color := d.canvas.Brush.Color;
-
-   // self.box := TRect.Create(TPoint.Create(Round(topLeft.X), Round(topLeft.Y)), Round(widthBox), Round(heightBox));
-   //d.canvas.Rectangle(self.box);
    d.canvas.Rectangle(topLeft.X, topLeft.Y, topLeft.X + widthBox, topLeft.Y + heightBox);
 
- //  tx := box.topLeft.X + leg.pad;
- //  ty := box.topLeft.Y + leg.pad;
    tx := topLeft.X + leg.pad;
    ty := topLeft.Y + leg.pad;
 
@@ -703,10 +674,9 @@ procedure TLegendBox.draw;
    for i := 0 to length(d.series) - 1 do
      if d.series[i].visible then
        begin
-  //       ABounds := data.canvas.TextExtent(d.series[i].name);
-         fABounds.cx := data.canvas.TextExtent(d.series[i].name).cx;
-         fABounds.cy := data.canvas.TextExtent(d.series[i].name).cy;
-         d.canvas.TextOut(Round(tx), Round(ty), d.series[i].name);
+         fABounds.cx := data.canvas.TextExtent(copy(d.series[i].name,0,LEGEND_SERIES_NAME_LENGTH)).cx;
+         fABounds.cy := data.canvas.TextExtent(copy(d.series[i].name,0,LEGEND_SERIES_NAME_LENGTH)).cy;
+         d.canvas.TextOut(Round(tx), Round(ty), copy(d.series[i].name,0,LEGEND_SERIES_NAME_LENGTH));
          d.canvas.Pen.Width := 2;
          d.canvas.Pen.Color := d.series[i].color;
          d.canvas.MoveTo(Round(tx + w + leg.space), Round(ty + fABounds.Height/2));
@@ -727,7 +697,6 @@ end;
 procedure TGridBox.initBlocks;
 var
   i: Integer;
-  //val: double;
   plane: TPlaneXY;
   mcl: TColor;
 begin
@@ -735,7 +704,6 @@ begin
   //maxTicks := plane.xAxis.maxTicks;
   offsetX := 0;
   widthBlock := width/plane.xAxis.maxTicks;
-  //val := plane.x;
   dtbyTick := plane.width/plane.xAxis.maxTicks;
   life := round(dtbyTick/plane.DeltaX);
 
@@ -748,7 +716,6 @@ begin
        block.height := height;
        if i = 0 then block.life := Round(0.5*life) else block.life := life;
        block.index := i;
-       //block.backgroundColor := data.plotPanelBackgroundColor;
        block.color := mcl;
        block.lineWidth := plane.grid.lineWidth;
        gridXContainer.addChild(block.width*i, 0, block);
@@ -760,7 +727,6 @@ end;
 
  procedure TGridBox.draw;
  begin
-   console.log(' **++ TGridBox.Draw ++**');
    widthBlock := width/fplane.xAxis.maxTicks;
    gridXContainer.x := -widthBlock/2 - offsetX;
    gridXContainer.Draw;
@@ -814,7 +780,6 @@ begin
       b.life := life;
       last := gridXContainer.childs[gridXContainer.childs.Count - 1] as TMyBlockLine;
       b.index := last.index + 1;
-     // b.backgroundColor := data.plotPanelBackgroundColor;
       b.color := mcl;
       b.lineWidth := plane.grid.lineWidth;
       gridXContainer.addChild(b.width*b.index, 0, b);
@@ -844,7 +809,7 @@ begin
   parent := P;
   width := w;
   height := h;
-  console.log('TGraph.create, width, height: ', width,', ', height);
+ // console.log('TGraph.create, width, height: ', width,', ', height);
   mask := TMask.Create(w, h, self, self);
   mask.x := 0;
   mask.y := 0;
@@ -868,7 +833,6 @@ begin
   mask.y := 0;
   mask.width := width;
   mask.height := height;
-  console.log('**TGraph.resize, mask width, height: ', mask.width,', ', mask.height);
   legendBox.x := 0;
   legendBox.y := 0;
   legendBox.width := width;
@@ -882,7 +846,7 @@ begin
   gridX.resize;
 
 
-  gridY.x := 0;
+  gridY.x := TConst.DEFAULT_X_AXIS_START; //0;
   gridY.y := 0;
   gridY.width := width;
   gridY.height := height;
@@ -890,7 +854,7 @@ begin
 
   scale := calculateScale;
   globalPos := getGlobalPosition;
-   console.log('TGraph.resize, width, height: ', width,', ', height);
+ //  console.log('TGraph.resize, width, height: ', width,', ', height);
 end;
 
 function TGraph.RealToScreen(x_w, y_w: double): TPointF; //Pixels
@@ -899,7 +863,6 @@ begin
   Result.y := height - (y + (y_w - FPlane.Y)/scale.y);
   Result.x := globalPos.x + Result.x;
   Result.y := globalPos.y + Result.y;
- // Result := globalPos + Result;
 end;
 
 function TGraph.ScreenToReal(locX, locY: double): TPointF; //Real
@@ -917,7 +880,6 @@ end;
 function TGraph.isInside(globalX, globalY: Single): Boolean;
 begin
    globalPos := getGlobalPosition;
-   console.log('TGraph.isInside: creating TRectF...');
    Result := TRectF.Create(globalPos, width, height).Contains(TPointF.Create(globalX, globalY));
 end;
 
@@ -935,20 +897,15 @@ end;
 
 procedure TGraph.BorderDraw;
 var
-//  R: TRect;
   R: TRectF;
 begin
   data.Canvas.Brush.Style := bsClear;
   data.canvas.pen.Width := Round(FPlane.yAxis.lineWidth);
   data.canvas.pen.color := FPlane.yAxis.color;
-  console.log('TGraph.BorderDraw, calling TrectF.create');
   R := TRectF.Create(TPointf.Create(globalPos.X, globalPos.Y), width, height);
   data.canvas.MoveTo(round(R.getLocation.X), round(R.getLocation.Y));
-//  data.canvas.LineTo(R.Location.X + R.Width, R.Location.Y);
-//  data.canvas.LineTo(R.Location.X + R.Width, R.Location.Y + R.Height);
   data.canvas.LineTo( round(R.getLocation.X + R.Width), round(R.getLocation.Y) );
   data.canvas.LineTo( round(R.getLocation.X + R.Width), round(R.getLocation.Y + R.Height) );
-  //data.canvas.Rectangle(R);
 end;
 
 procedure TGraph.draw;
@@ -967,26 +924,20 @@ begin
 
   gridX.draw;
   gridY.draw;  // X, Y grids are visible
-  console.log(' **** TGraph.Draw ****');
   //if temp.dataSource.cols.Count < 2 then Exit;
 
   scale := calculateScale;
   globalPos := getGlobalPosition;
 
-//  for i := 0 to length(temp.dataSource.cols) - 1 do
   for i := 0 to temp.dataSource.cols.Count - 1 do
     begin
       Q := temp.dataSource.cols[i];
-      //for j := 0 to length(Q^.rows) - 1 do
       for j := 0 to Q.rows.Count - 1 do
         begin
-         // D := Q^.rows[j];
-         // serie := D^.serie;
           D := Q.rows[j];
           serie := D.serie;
           if (serie.visible) and (serie.count >= 2) then
             begin
-              //pt := RealToScreen(Q^.x, D^.y);
               pt := RealToScreen(Q.x, D.y);
               if serie.fromPoint.X = -1 then
                 begin
@@ -1006,18 +957,17 @@ begin
         end;
     end;
 
-
   for j := 0 to length(temp.series) - 1 do
     begin
       serie := temp.series[j];
       if (serie.visible) and (serie.count >= 2) then serie.fromPoint.X := -1;
     end;
 
-   mask.Draw; // This causes background color to cover grid lines.....
-
+   mask.Draw;
+   BorderDraw;
    if legend.visible then legendBox.draw;
 
-   BorderDraw;
+   //BorderDraw;
 
    if Assigned(FOnComplete) then
      begin
@@ -1039,14 +989,13 @@ begin
   axisX := TAxisX.Create(w, h/2, self);
   axisX.backgroundColor := data.BackgroundColor;
 
-
-  axisX.x := 0;
+  axisX.x := TConst.DEFAULT_X_AXIS_START; //0; // Start at right most edge of y axis.
   axisX.y := 0;
 
   labelX := TMyText.Create(TConst.FONT_NAME, TConst.FONT_SIZE, center, bottom, TConst.MARGIN_FONT, self);
   labelX.width := w;
   labelX.height := h/2;
-  labelX.x := 0;
+  labelX.x := TConst.DEFAULT_X_AXIS_START; // 0;
   labelX.y := axisX.height;
   labelX.color := xAxis.color;
   labelX.FText := xAxis.caption;
@@ -1056,13 +1005,13 @@ procedure TBottomBox.resize;
 begin
   axisX.width := width;
   axisX.height := height/2;
-  axisX.x := 0;
+  axisX.x := TConst.DEFAULT_X_AXIS_START; //0;
   axisX.y := 0;
   axisX.resize;
 
   labelX.width := width;
   labelX.height := height/2;
-  labelX.x := 0;
+  labelX.x := TConst.DEFAULT_X_AXIS_START; //0;
   labelX.y := axisX.height;
 end;
 
@@ -1075,8 +1024,6 @@ end;
 procedure TBottomBox.Draw;
 begin
   // Clear; // clears plot area as well  ??
-   console.log(' ++** TBottomBox.Draw ..');
-   //axisX.backgroundColor := data.BackgroundColor;
    axisX.Draw;
    labelX.color := FPlane.xAxis.color;
    labelX.FText := FPlane.xAxis.caption;
@@ -1102,7 +1049,6 @@ begin
       b.life := life;
       last := blocksContainer.childs[v.Y] as TBlockX;
       b.index := last.index + u.X;
-    //  b.backgroundColor := claBlanchedalmond;
       b.backgroundColor := clCream;
       b.color := hLine.color;
       b.number.FText := fplane.NiceNumX(b.index*dtbyTick);
@@ -1119,7 +1065,6 @@ var
   widthBlock: double;
 begin
   //clear;
-  console.log(' $ TAxisX.Draw $');
   hLine.color := FPlane.xAxis.color;
   hLine.lineWidth := FPlane.xAxis.lineWidth;
   hLine.drawLine;
@@ -1158,7 +1103,6 @@ begin
 
        if i = 0 then block.life := Round(0.5*life) else block.life := life;
        block.index := i;
-//       block.backgroundColor := claBlanchedalmond;
        block.backgroundColor := clCream;
        block.color := hLine.color;
 
@@ -1185,7 +1129,6 @@ begin
    hLine.height := TConst.LENGTH_BOX_TICK_X;
    hLine.parent := self;
 
- //  hLine.backgroundColor := claYellow;
    hLine.backgroundColor := clYellow;
    hLine.color := FPlane.xAxis.color;
 
@@ -1198,12 +1141,10 @@ begin
 
    initBlocks;
 
-
    rBlack := TContainer.Create(TConst.MARGIN_X, h*2 + TConst.MARGIN_Y, self);
    rBlack.backgroundColor := data.BackgroundColor;
    rBlack.y := 0;
    rBlack.x := width + TConst.FONT_SIZE;
-
 
    LBlack := TContainer.Create(TConst.MARGIN_X + TConst.WIDTH_Y_AXIS, h*2 + TConst.MARGIN_Y, self);
    LBlack.backgroundColor := data.BackgroundColor;
@@ -1244,7 +1185,6 @@ begin
    rBlack.width := TConst.MARGIN_X;
    rBlack.height := height*2 + TConst.MARGIN_y;
 
-
    LBlack.width := TConst.MARGIN_X + TConst.WIDTH_Y_AXIS;
    LBlack.height := height*2 + TConst.MARGIN_Y;
 
@@ -1275,7 +1215,6 @@ begin
    tick.y := 0;
    tick.color := FPlane.xAxis.color;
    tick.lineWidth := FPlane.XAxis.lineWidth;
-   //tick.backgroundColor := claWhite;
    tick.backgroundColor := clWhite;
 
 
@@ -1284,7 +1223,6 @@ begin
    number.height := h - tick.height;
    number.x := 0;
    number.y := tick.height;
-  // number.backgroundColor := claGainsboro;
    number.backgroundColor := clLtGray;
    number.color := tick.color;
 end;
@@ -1362,8 +1300,7 @@ end;
 procedure TRightBox.Draw;
 begin
   clear;   // This draws correct rectangle on top of graph panel ??
-  console.log(' ^^++ TRightBox.Draw ++^^ ');
-  self.graph.backgroundColor := self.data.plotPanelBackgroundColor;  // ISSUE ???  data?
+  self.graph.backgroundColor := self.data.plotPanelBackgroundColor;
   self.graph.Draw;
   bottomBox.backgroundColor := self.data.BackgroundColor;
   bottomBox.Draw;

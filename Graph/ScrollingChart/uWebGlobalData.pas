@@ -43,55 +43,57 @@ interface
           (X : 0; Y: -1),
           (X : -1; Y: -1)
         ) ;
-        MARGIN_X = 40;
+        MARGIN_X = 20; //40;
         MARGIN_y = 20;
         ERROR_NAME_SERIE = 'Error!. The Identifier already exists. The series was not added';
         DEFAULT_NAME_SERIES = 'Serie %d';
         HEIGHT_X_AXIS = 60;
-        WIDTH_Y_AXIS = 80;
+        WIDTH_Y_AXIS = 30; // Orig: 80; Moved y axis label to bottom (a part of x axis label)
+        DEFAULT_X_AXIS_START = 0; // Start at right most edge of y axis.
         DEFAULT_X_MIN = 0;
         DEFAULT_X_MAX = 20;
         DEFAULT_Y_MIN = -2;
         DEFAULT_Y_MAX =  2;
+        DEFAULT_X_POINTS_DISPLAYED = 100; // if interval 100 msec then 10 sec displayed
         DEFAULT_LINEWIDTH_AXIS = 2;
-        DEFAULT_COLOR_AXIS = clWhite;
+        DEFAULT_COLOR_AXIS = clBlack;
         MAX_TICKS_X = 10;
         MAX_TICKS_Y = 10;
         DEFAULT_XAXIS_CAPTION = 'Time (sec)';
         DEFAULT_YAXIS_CAPTION = 'Y Axis';
         DEFAULT_FONTCOLOR_LEGEND = clBlack;
-        DEFAULT_FONTSIZE_LEGEND = 10;
+        DEFAULT_FONTSIZE_LEGEND = 8; //10;
         DEFAULT_FONTNAME_LEGEND = 'Arial';
         DEFAULT_BACKGROUNDCOLOR_LEGEND = clRed;
-        DEFAULT_PAD_LEGEND = 8;
-        DEFAULT_WIDTH_LINE_LEGEND = 40;
+        DEFAULT_PAD_LEGEND = 4;// 8;
+        DEFAULT_WIDTH_LINE_LEGEND = 20; //40;
         DEFAULT_PIVOT_HOR_LEGEND = right;
         DEFAULT_PIVOT_VERT_LEGEND = top;
         DEFAULT_POSITION_LEGEND = 2;
         DEFAULT_MARGIN_LEGEND = 10;
         DEFAULT_SPACE_TEXT_LINES_LEGEND = 10;
-        DEFAULT_GAP_LEGEND = 2;
+        DEFAULT_GAP_LEGEND = 2; // separation between legend lines
         DEFAULT_PAD_TITLE = 16;
         DEFAULT_TEXT_TITLE = 'Chart Title';
-        DEFAULT_FONTCOLOR_TITLE = clwhite;
-        DEFAULT_BACKGROUNDCOLOR_TITLE = clBlack;
+        DEFAULT_FONTCOLOR_TITLE = clBlack;
+        DEFAULT_BACKGROUNDCOLOR_TITLE = clWhite;
         DEFAULT_FONTNAME_TITLE = 'Arial';
-        DEFAULT_FONTSIZE_TITLE = 14;
+        DEFAULT_FONTSIZE_TITLE = 12;
         DEFAULT_ALIGN_TITLE = center;
-        DEFAULT_COLOR_GRID = clWhite;
+        DEFAULT_COLOR_GRID = clGray;
         DEFAULT_LINEWIDTH_GRID = 1;
         DEFAULT_VISIBLE_GRID = true;
-        DEFAULT_COLOR_SERIE = clYellow;
+        DEFAULT_COLOR_SERIE = clblue;
         DEFAULT_LINEWIDTH_SERIE = 2;
         DEFAULT_BACKGROUND_COLOR = clBlack;
-        DEFAULT_PLOT_AREA_BACKGROUND_COLOR = clBlack;//$FF100c08;
+        DEFAULT_PLOT_AREA_BACKGROUND_COLOR = clWhite;
         LENGTH_BOX_TICK_X = 24;
         LENGTH_BOX_TICK_Y = 24;
         tickPercentAxisX = 0.5;
         tickPercentAxisY = 0.5;
-        FONT_COLOR = clWhite;
+        FONT_COLOR = clBlack;
         FONT_NAME = 'ARIAL';
-        FONT_SIZE = 12;
+        FONT_SIZE = 10;
         MARGIN_FONT = 6;
         DEFAULT_DELTA_X = 0.1;
     end;
@@ -229,8 +231,6 @@ var
   Splitted: TArray<String>;
 begin
   s := FloatToStr(FDeltaX);
- // Splitted := s.Split(['.'], 2);
-
   Splitted := SplitString(s, '.'); // assume only 2 elements
   s := Splitted[1];
   n := countZeros(s);
@@ -310,11 +310,12 @@ begin
       end;
   Result := -1;
 end;
+
 function TLegend.getPos(val: TPivot): Integer;
 begin
   Result := getAlignIndex(val);
-  //Result := FPosition;
 end;
+
 procedure TLegend.setPos(val: TValuesLegend);
 begin
   FPosition := val;
@@ -322,18 +323,21 @@ begin
   pivot := TConst.AlignMat[val];
   reference := pivot;
 end;
+
 procedure TLegend.setMargin(val: Double);
 begin
   FMargin := val;
   x := FMargin * TConst.VUnits[FPosition].X;
   y := FMargin * TConst.VUnits[FPosition].Y;
 end;
+
 constructor TInfoAxis.Create;
 begin
   caption := '';
   color := TConst.DEFAULT_COLOR_AXIS;
   lineWidth := TConst.DEFAULT_LINEWIDTH_AXIS;
 end;
+
 constructor TPlaneXY.Create;
 begin
   xAxis := TInfoAxis.Create;
@@ -345,22 +349,26 @@ begin
   grid := TGridInfo.Create;
   DeltaX := TConst.DEFAULT_DELTA_X;
 end;
+
 destructor TPlaneXY.Destroy;
 begin
   xAxis.Destroy;
   yAxis.Destroy;
   grid.Destroy;
 end;
+
 procedure TPlaneXY.setXAxisRange(xMin, xMax: double);
 begin
   x := xMin;
   width := xMax - xMin;
 end;
+
 procedure TPlaneXY.setYAxisRange(yMin, yMax: double);
 begin
   y := yMin;
   height := yMax - yMin;
 end;
+
 function TGlobalData.getPivot(w, h: double; pivot: TPivot): TPointF;
 var
   pivotX, pivotY: Double;

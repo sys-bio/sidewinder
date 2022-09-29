@@ -1262,27 +1262,6 @@ object mainForm: TmainForm
       ChildOrder = 2
       ElementBodyClassName = 'card-body-shadow'
       ElementFont = efCSS
-      object plotEditLB: TWebListBox
-        Left = 88
-        Top = 463
-        Width = 140
-        Height = 75
-        Color = clWhite
-        ElementClassName = 'form-control bg-dark form-control-sm text-white'
-        ElementFont = efCSS
-        Font.Charset = DEFAULT_CHARSET
-        Font.Color = clWhite
-        Font.Height = -11
-        Font.Name = 'Tahoma'
-        Font.Style = []
-        HeightPercent = 100.000000000000000000
-        ItemHeight = 13
-        ParentFont = False
-        Visible = False
-        WidthPercent = 100.000000000000000000
-        OnClick = plotEditLBClick
-        ItemIndex = -1
-      end
       object SliderEditLB: TWebListBox
         Left = 263
         Top = 473
@@ -1428,7 +1407,7 @@ object mainForm: TmainForm
         end
         object WebConsoleLog1: TWebConsoleLog
           Left = 6
-          Top = 107
+          Top = 115
           Width = 261
           Height = 224
         end

@@ -48,7 +48,6 @@ type
       procedure removeAll;
       procedure reset;
       procedure getYMinAndYMax;
-  //    procedure updateYMinAndYMax(Q: Pointer);
       procedure updateYMinAndYMax(Q: TData);
   end;
   TDataSerie = class (TObject)
@@ -81,65 +80,39 @@ uses
 
 procedure TDataSource.addX(x: Double);
 var
- // Data: PDataCol;
  Data: TDataCol;
 begin
-//  if (length(cols) = 0) or (x > cols[length(cols) - 1]^.x) then
   if (self.cols.Count = 0) or (x > self.cols[self.cols.count - 1].x) then
     begin
-      //New(Data);
-      //Data^.x := x;
       Data.x := x;
-      //Data^.rows := [];
       Data.rows := TListY.create;
-      //cols := cols + [Data];
       self.cols.Add(Data);
     end;
 end;
 procedure TDataSource.addY(y: double; serie: TObject);
 var
- // D: PData;
   D: TData;
 begin
-{  New(D);
-  D^.y := y;
-  D^.serie := serie as TDataSerie;
-  D^.serie.count := D^.serie.count + 1;
-  updateYMinAndYMax(D);
-  cols[length(cols) - 1]^.rows := cols[length(cols) - 1]^.rows + [D]; }
- 
   D.y := y;
   D.serie := serie as TDataSerie;
   D.serie.count := D.serie.count + 1;
   self.updateYMinAndYMax(D);
   self.cols[self.cols.count -1].rows.Add(D);
 end;
+
 procedure TDataSource.add(x, y: double; serie: TObject);
 begin
   addX(x);
   addY(y, serie);
 end;
+
 procedure TDataSource.removeFirst;
-//var
-  //P: PDataCol;
 begin
- { P := cols[0];
-  DeleteCol(P);
-  Delete(cols, 0, 1); }
- // self.DeleteCol(self.cols[0]);
   self.cols.Delete(0);
 end;
-//procedure TDataSource.updateYMinAndYMax(Q: Pointer);
+
 procedure TDataSource.updateYMinAndYMax(Q: TData);
-//var
- // D: PData;
 begin
-//  D := Q;
- { if D^.serie.visible then
-    begin
-      if D^.y < minY then minY := D^.y;
-      if D^.y > maxY then maxY := D^.y;
-    end; }
   if Q.serie.visible then
     begin
       if Q.y < self.minY then self.minY := Q.y;
@@ -149,18 +122,11 @@ end;
 procedure TDataSource.getYMinAndYMax;
 var
   i, j: Integer;
- // col: PDataCol;
   col: TDataCol;
 begin
   minY := MAX_VALUE_AXIS_Y;   // ? Want first y value to set max and min
   maxY := MIN_VALUE_AXIS_Y;   // ?
 
- { for i := 0 to length(cols) - 1 do
-    begin
-      col := cols[i];
-      for j := 0 to length(col^.rows) - 1 do updateYMinAndYMax(col^.rows[j]);
-    end;
-  }
   for i := 0 to self.cols.Count - 1 do
     begin
       col := self.cols[i];
@@ -170,18 +136,8 @@ end;
 function TDataSource.isEmpty: Boolean;
 var
   i: Integer;
- // col: PDataCol;
   col: TDataCol;
 begin
- { for i := length(cols) - 1 downto 0 do
-    begin
-      col := cols[i];
-      if length(col^.rows) > 0 then
-        begin
-          Result := false;
-          Exit;
-        end;
-    end; }
   for i := self.cols.count - 1 downto 0 do
     begin
       col := self.cols[i];
@@ -196,23 +152,9 @@ end;
 procedure TDataSource.deleteAllSeries;
 var
   i, j: Integer;
-  //col: PDataCol;
- // row: PData;
- // col: TDataCol;
 begin
- { for i := length(cols) - 1 downto 0 do
-    begin
-      col := cols[i];
-      for j := length(col^.rows) - 1 downto 0 do
-        begin
-          row := col^.rows[j];
-          Dispose(row);
-          Delete(col^.rows, j, 1);
-        end;
-    end;}
   for i := self.cols.Count - 1 downto 0 do
     begin
-      //col := self.cols[i];
       for j := self.cols[i].rows.Count - 1 downto 0 do
         begin
         self.cols[i].rows.Delete(j);
@@ -223,30 +165,14 @@ end;
 procedure TDataSource.deleteSerie(serie: TObject);
 var
   i, j: Integer;
- // col: PDataCol;
- // row: PData;
   col: TDataCol;
  // row: TData;
 begin
- { for i := length(cols) - 1 downto 0 do
-    begin
-      col := cols[i];
-      for j := length(col^.rows) - 1 downto 0 do
-        begin
-          row := col^.rows[j];
-          if serie = row^.serie then
-            begin
-              Dispose(row);
-              Delete(col^.rows, j, 1);
-            end;
-        end;
-    end;}
     for i := self.cols.Count - 1 downto 0 do
     begin
       col := self.cols[i];
       for j := col.rows.Count - 1 downto 0 do
         begin
-          //row := col.rows[j];
           if serie = col.rows[j].serie then // is this equal?
             begin
             //  Dispose(row);
@@ -286,14 +212,7 @@ end;
 procedure TDataSource.removeAll;
 var
   i: Integer;
- // P: PDataCol;
 begin
-{  for i := length(cols) - 1 downto 0 do
-    begin
-      P := cols[i];
-      DeleteCol(P); // self.cols.Delete(i);
-      Delete(cols, i, 1);
-    end; }
   for i := cols.Count - 1 downto 0 do
     begin
     self.cols.Delete(i);
@@ -306,7 +225,6 @@ begin
 end;
 constructor TDataSource.Create;
 begin
-  //cols := [];
   self.cols := TListX.Create;
   Init;
 end;
@@ -316,39 +234,22 @@ begin
    maxY := MIN_VALUE_AXIS_Y;
 end;
 procedure TDataSource.getNewLimits(var minX, maxX: double);
-//var
-//  P: PDataCol;
 begin
- { P := cols[0];
-  minX := P^.x;
-  P := cols[length(cols) - 1];
-  maxX := P^.x;  }
   minX :=self.cols[0].x;
   maxX := self.cols[self.cols.count-1].x;
 end;
+
 function TDataSource.isOut(wPlane: double): Boolean;
-//var
-  // P, Q: PDataCol;
 begin
- {  if length(cols) >= 2 then
-       begin
-          P := cols[0];
-          Q := cols[length(cols) - 1];
-          if Q^.x - P^.x > wPlane then
-            begin
-              Result := true;
-              Exit;
-            end;
-       end;}
-   if self.cols.Count >= 2 then
-     begin
-      if self.cols[self.cols.count -1].x - self.cols[0].x > wPlane then
-        begin
-          Result := true;
-          Exit;
-        end;
-     end;
-   Result:= false;
+  if self.cols.Count >= 2 then
+    begin
+    if self.cols[self.cols.count -1].x - self.cols[0].x > wPlane then
+      begin
+        Result := true;
+        Exit;
+      end;
+    end;
+  Result:= false;
 end;
 destructor TDataSource.Destroy; // needed??
 begin
@@ -399,7 +300,6 @@ begin
    if val <> FColor then
     begin
       self.FColor := val;
-      //Redraw;
       Redraw;
     end;
 end;

@@ -1,6 +1,6 @@
 object Form1: TForm1
-  Width = 891
-  Height = 626
+  Width = 984
+  Height = 760
   OnCreate = WebFormCreate
   object WebLabel1: TWebLabel
     Left = 24
@@ -21,17 +21,9 @@ object Form1: TForm1
     WidthPercent = 100.000000000000000000
     OnClick = btnStartPlotClick
   end
-  object pnlPlot: TWebPanel
-    Left = 128
-    Top = 40
-    Width = 721
-    Height = 578
-    BorderColor = clNone
-    ChildOrder = 2
-  end
   object btnPause: TWebButton
     Left = 8
-    Top = 312
+    Top = 231
     Width = 96
     Height = 25
     Caption = 'Pause'
@@ -116,6 +108,42 @@ object Form1: TForm1
       HeightPercent = 100.000000000000000000
       WidthPercent = 100.000000000000000000
       OnClick = rbtAutoYMinClick
+    end
+  end
+  object pnlBase: TWebPanel
+    Left = 130
+    Top = 0
+    Width = 920
+    Height = 700
+    Caption = 'pnlBase'
+    ChildOrder = 6
+    object pnlPlot: TWebPanel
+      Left = 0
+      Top = 0
+      Width = 740
+      Height = 700
+      Align = alClient
+      BorderColor = clNone
+      ChildOrder = 2
+    end
+    object pnlRight: TWebPanel
+      Left = 740
+      Top = 0
+      Width = 175
+      Height = 700
+      Align = alRight
+      Caption = 'pnlRight'
+      ChildOrder = 1
+    end
+    object WebSplitter1: TWebSplitter
+      Left = 915
+      Top = 0
+      Width = 5
+      Height = 700
+      Align = alRight
+      ChildOrder = 2
+      Color = clBtnFace
+      OnMove = WebSplitter1Move
     end
   end
   object WebTimer1: TWebTimer

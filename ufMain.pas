@@ -6,17 +6,16 @@ uses
   System.SysUtils, System.Classes, JS, Web, Types, WEBLib.Graphics,
   WEBLib.Controls, StrUtils,
   WEBLib.Forms, WEBLib.Dialogs, Vcl.Controls, Dialogs, WEBLib.ExtCtrls,
-  WEBLib.WebCtrls,
-  Vcl.StdCtrls, WEBLib.StdCtrls, WEBLib.Buttons, Vcl.Imaging.pngimage,
+  WEBLib.WebCtrls, Vcl.StdCtrls, WEBLib.StdCtrls, WEBLib.Buttons, Vcl.Imaging.pngimage,
   Vcl.Graphics,System.Generics.Collections,
   uControllerNetwork, uNetworkCanvas, uNetwork, Vcl.TMSFNCTypes, Vcl.TMSFNCUtils,
   Vcl.TMSFNCGraphics, Vcl.TMSFNCGraphicsTypes, Vcl.TMSFNCCustomControl, Vcl.TMSFNCScrollBar,
   uNetworkTypes, WEBLib.Lists, Vcl.Forms, uModel, uSBMLClasses, uSBMLClasses.rule, uSimulation,
   uControllerMain, uODE_FormatUtility, uGraphP, Vcl.Menus, WEBLib.Menus, ufVarSelect,
   uPlotPanel, uParamSliderLayout, uSidewinderTypes, WEBLib.ComCtrls, WEBLib.Miletus,
-  WEBLib.JQCtrls, ufAssignments, ufSelectExample;
+  WEBLib.JQCtrls, ufAssignments, ufSelectExample, uGraphPanel;
 
-const SIDEWINDER_VERSION = 'Version 0.51 alpha';
+const SIDEWINDER_VERSION = 'Version 0.52 alpha';
       DEFAULT_RUNTIME = 10000;
       EDITBOX_HT = 25;
       ZOOM_SCALE = 20;
@@ -52,7 +51,7 @@ type
     loadNetworkButton: TWebButton;
     SBMLOpenDialog: TWebOpenDialog;
     SBMLloadButton: TWebButton;
-    pnlBase: TWebPanel;  // ??
+    pnlBase: TWebPanel;
     LeftWPanel: TWebPanel;
     btnUniUni: TWebSpeedButton;
     btnUniBi: TWebSpeedButton;
@@ -61,7 +60,6 @@ type
     btnIdle: TWebSpeedButton;
     btnAddNode: TWebSpeedButton;
     RSimWPanel: TWebPanel;
-    plotEditLB: TWebListBox;
     SliderEditLB: TWebListBox;
     pnlCenter: TWebPanel;
     networkPB1: TWebPaintBox;
@@ -195,7 +193,7 @@ type
     procedure mnuUndoClick(Sender: TObject);
     procedure ParamSliderOnChange(Sender: TObject);
     // User changes value of parameter
-    procedure plotEditLBClick(Sender: TObject);
+  //  procedure plotEditLBClick(Sender: TObject);    // not used, remove
     procedure SliderEditLBClick(Sender: TObject);
     procedure splitterMoved(Sender: TObject);
     procedure btnSimpleClick(Sender: TObject);
@@ -225,6 +223,7 @@ type
     procedure ButtonVarAssignmentsClick(Sender: TObject);
     procedure displayVarAssignments(rxnId: string);
     procedure splitterClick(Sender: TObject);
+    procedure btnToggleNetworkPBClick(Sender: TObject);
 
   private
     numbPlots: Integer; // Number of plots displayed
@@ -237,6 +236,8 @@ type
     rxnProdStoichLabels: TList<TWebLabel>;
     rxnProdStoichEdits: TList<TWebEdit>;
     saveSimResults: boolean;
+  //  hideNetworkPB: boolean;   Not in use, maybe remove
+  //  intSplitterLeft: integer;     "          "
     fSelectExample: TformExamples;
     procedure InitSimResultsTable(); // Init simResultsMemo.
     procedure addPlot(yMax: double); // Add a plot, yMax: largest initial val of plotted species
@@ -248,10 +249,11 @@ type
     function  getEmptyPlotPosition(): Integer;
     function  getPlotPBIndex(plotTag: integer): Integer; // Return Plot index of tag.
     function  getSliderIndex(sliderTag: integer): Integer;
-    procedure EditPlotList(plotn: Integer);
-    procedure updatePlots(); // Go through and remove species/plots no longer in model. needed ?
+  //  procedure EditPlotList(plotn: Integer);
+  //  procedure updatePlots(); // Go through and remove species/plots no longer in model. needed ?
     procedure initializePlots();
     procedure initializePlot( n: integer);
+    procedure processGraphEvent(plotPosition: integer; editType: integer);
     procedure deletePlotSpecies(plotn: Integer); // Delete a species curve in a plot.
              // delete, change plot species, other added as needed using TWebListBox.
     procedure addParamSlider();
@@ -297,7 +299,8 @@ type
     currentGeneration: Integer; // Used by plots as current x axis point
     fPlotSpecies: TVarSelectForm;
     plotSpecies: TList<TSpeciesList>; // species to graph for each plot
-    plotsPanelList: TList<TPlotPanel>; // Panels in which each plot resides
+    graphPanelList: TList<TGraphPanel>; // Panels in which each plot resides
+
     fSliderParameter: TVarSelectForm;// Pop up form to choose parameter for slider.
     sliderParamAr: array of Integer;// holds parameter array index (p_vals) of parameter to use for each slider
     pnlSliderAr: array of TWebPanel; // Holds parameter sliders
@@ -317,12 +320,12 @@ type
     procedure networkHasChanged(sender: TObject); // Notify when network has changed, may need to update model, plots, etc
     procedure getVals( newTime: Double; newVals: TVarNameValList);// Get new values (species amt) from simulation run
     procedure generateAutoLayout(sender: TObject); // network needs a new layout generated ( fruchterman_reingold)
+    procedure editPlotAction(index: integer; editType: integer);
 
   end;
 
 var
   mainForm: TMainForm;
- // spSelectform: TVarSelectForm; // display speciecs select to plot radio group
 
 implementation
 
@@ -367,13 +370,14 @@ end;
 
 procedure TMainForm.btnAddPlotClick(Sender: TObject);
 begin
-  // Make runtime, stepsize, simulation buttons visible
-  self.numbPlots := self.numbPlots + 1;
+ // self.numbPlots := self.numbPlots + 1;  move to self.addPlot()
+ // Make runtime, stepsize, simulation buttons visible
  // rtLabel1.visible := true;  // Run time: Do not let user modify for now
  // rtLengthEdit1.visible := true; // Do not let user modify for now
   stepSizeLabel1.visible := true;
   stepSizeEdit1.visible := true;
-  self.selectPlotSpecies(self.numbPlots);
+  //self.selectPlotSpecies(self.numbPlots);
+  self.selectPlotSpecies(self.numbPlots +1);
 end;
 
 procedure TMainForm.btnAboutClick(Sender: TObject);
@@ -557,6 +561,29 @@ begin
   self.lblSimDataFileName.visible := false;
 end;
 
+procedure TMainForm.btnToggleNetworkPBClick(Sender: TObject);
+begin
+// TODO: move splitter to hide most of NetworkPB, not working.
+{  if self.hideNetworkPB = false then
+    begin
+    console.log('Hiding Network...');
+    self.intSplitterLeft := self.networkPB1.width;
+    self.hideNetworkPB := true;
+    //self.pnlCenter.width := 100; // ???
+    self.networkPB1.width := 100;
+    //self.SplitterPlotSliderMoved(nil); // ????
+    self.networkPB1.Invalidate;
+    // call splitter moved;
+    end
+  else
+    begin
+    console.log('Viewing Network...');
+    self.hideNetworkPB := false;
+    self.networkPB1.width := self.intSplitterLeft;
+    self.SplitterPlotSliderMoved(nil);
+    end;      }
+end;
+
 procedure TMainForm.btnUniBiClick(Sender: TObject);
 begin
   networkController.setAddUniBiReaction;
@@ -599,7 +626,6 @@ procedure TMainForm.displayVarAssignments(rxnId: string);
       foundVar: string;
   begin
     rxnIndex := 0;
-   // strTitle := '';
     strListOfAssign := TStringList.create;
     if self.networkController.findReaction(rxnId, rxnIndex) then
       begin
@@ -652,7 +678,6 @@ procedure TMainForm.displayVarAssignments(rxnId: string);
       end
     else strListOfAssign.Add('No reaction with that id found');
 
-    //(AForm as TFormAssignments).Top := trunc(self.Height*0.2); // put popup %20 from top
     (AForm as TFormAssignments).listOfAssignments := strListOfAssign;
     (AForm as TFormAssignments).fillAssignmentList();
   end; // afterCreate
@@ -764,7 +789,10 @@ begin
  if MainController.isOnline = false then
    self.runSim
  else  // stop simulation
+   begin
    self.stopSim;
+   self.btnAddPlot.Enabled := true;
+   end;
 end;
 
 procedure TMainForm.runSim();
@@ -808,12 +836,12 @@ begin
       self.btnOnLineSim.caption := 'Simulation: Pause';
       if DEBUG then
         simResultsMemo.visible := true;
+      self.btnAddPlot.Enabled := false; // Do not add plot while sim running
       self.mainController.SetRunTime(DEFAULT_RUNTIME);
        // default timer interval is 100 msec:
       // multiplier default is 10, range 1 - 50
       self.mainController.SetTimerInterval(round(1000/self.trackBarSimSpeed.position));
       self.mainController.SetStepSize(self.stepSize);
-       //  self.rtLengthEdit1.Text := FloatToStr(MainController.getRunTime);
       if self.mainController.getCurrTime = 0  then
         self.InitSimResultsTable();  // Set table of Sim results.
       self.rightPanelType := SIMULATION_PANEL;
@@ -868,21 +896,24 @@ end;
 procedure TMainForm.initializePlots();
   var i: Integer;
 begin
-  if plotsPanelList <> nil then
+  if graphPanelList <> nil then
     begin
-    for i := 0 to plotsPanelList.Count - 1 do
+    for i := 0 to graphPanelList.Count - 1 do
       begin
+
       self.initializePlot(i);
       end;
     end;
 end;
 
-procedure TMainForm.initializePlot( n: integer);
+procedure TMainForm.initializePlot( n: integer); // n is index
 // var yScaleWidth, newYMax : integer;
 begin
   try
-    self.plotsPanelList[n].initializePlot( MainController.getRunTime,
-                             MainController.getStepSize, self.plotSpecies[n]);
+    self.graphPanelList[n].initializePlot( self.plotSpecies[n], 0 {newYMax},
+          0 {newYMin}, false {autoUp}, false {autoDown}, self.stepSize,
+          clWhite {newBkgrndColor});
+    //self.mainController.addSimListener(@self.graphPanelList[n].getVals);// slow?? just use TMainForm.getVals instead
   except
     on E: Exception do
       notifyUser(E.message);
@@ -891,8 +922,15 @@ begin
 end;
 
 procedure TMainForm.resetPlots();  // Reset plots for new simulation.
-begin
-  self.initializePlots;
+ var i: integer;
+begin // Easier to just delete/create than reset time, xaxis labels, etc.
+  for i := 0 to self.graphPanelList.Count -1 do
+    begin
+    self.graphPanelList[i].deleteChart;
+    self.graphPanelList[i].createChart;
+    self.graphPanelList[i].setupChart;
+    end;
+  self.refreshPlotPanels;
 end;
 
 procedure TMainForm.PingSBMLLoaded(newModel:TModel);
@@ -928,7 +966,6 @@ begin
     begin
     if newModel.getSBMLLayout <> nil then
       begin
-    //console.log(' layout Width: ', trunc(newModel.getSBMLLayout.getDims.getWidth));
       self.networkPB1.Width := trunc(newModel.getSBMLLayout.getDims.getWidth);
       self.networkPB1.Height := trunc(newModel.getSBMLLayout.getDims.getHeight);
       end;
@@ -944,7 +981,7 @@ begin
   self.networkUpdated := true;
 end;
 
-procedure TMainForm.plotEditLBClick(Sender: TObject);
+{procedure TMainForm.plotEditLBClick(Sender: TObject);
 begin
   if self.plotEditLB.ItemIndex = 0 then // change species to plot
     begin
@@ -958,14 +995,14 @@ begin
   self.plotEditLB.tag := 0;
   self.plotEditLB.visible := false;
   self.plotEditLB.Top := 40; // default    // Need to specify correct plotPanelList
-end;
+
+end; }
 
 procedure TMainForm.RxnParamComboBoxChange(Sender: TObject);  // NOT needed. ??
 var i: integer;
     paramInitAssign: string;
     curAssignRule: TSBMLRule;
 begin
- //console.log('TMainForm.RxnParamComboBoxChange');
  paramInitAssign := '';
  curAssignRule := nil;
  self.rxnParamEdit.Enabled := true;
@@ -1320,6 +1357,7 @@ begin
   self.networkController.networkCanvas := networkCanvas;
   self.networkCanvas.bitmap.Height := networkPB1.Height;
   self.networkCanvas.bitmap.width := networkPB1.width;
+  //self.hideNetworkPB := false;  // Not in use, matbe remove.
   self.LeftWPanel.color := clWhite;
   self.rightPanelType := SIMULATION_PANEL;
   self.RNodeEditWPanel.visible := false;
@@ -1390,17 +1428,16 @@ end;
 procedure TMainForm.refreshPlotPanels;
 var i: integer;
 begin
- if assigned(self.plotsPanelList) then
+ if assigned(self.graphPanelList) then
    begin
-     if self.plotsPanelList.count >0 then
+     if self.graphPanelList.count >0 then
      begin
      //console.log(' PlotWPanel width: ', plotsPanelList[0].plotWPanel.width, 'plot PB width: ', plotsPanelList[0].plotPB.width);
-     for i := 0 to self.plotsPanelList.count -1 do
+     for i := 0 to self.graphPanelList.count -1 do
        begin
-          plotsPanelList[i].setPlotPBWidth();
-          plotsPanelList[i].initializePlot( MainController.getRunTime,
-                             MainController.getStepSize, self.plotSpecies[i]);
-          self.plotsPanelList[i].setPlotLegend(self.plotSpecies[i]);
+       self.graphPanelList[i].Width := self.graphPanelList[i].Parent.Width;
+       self.graphPanelList[i].setChartWidth( self.graphPanelList[i].Width );
+       self.graphPanelList[i].Invalidate;    // needed ??
        end;
      end;
    end;
@@ -1510,8 +1547,9 @@ end;
 
 procedure TMainForm.splitterClick(Sender: TObject);
 begin
- // TODO   Popup with trackbar/slider to adjust self.splitter.left ??
- // self.splitterMoved(nil);
+ // TODO: For Tablets: Popup with trackbar/slider to adjust self.splitter.left ??  NO
+ // Want a toggle button that hides network panel when running simulations.
+ // Hide means move splitter over to left to cover up all or most of network panel?
 end;
 
 procedure TMainForm.splitterMoved(Sender: TObject);
@@ -1547,7 +1585,8 @@ begin
   begin
     self.mainController.createSimulation();
     if self.numbPlots >0 then
-      self.initializePlots;
+      //self.initializePlots;
+      self.resetPlots;
     self.currentGeneration := 0;
   end;
 end;
@@ -1584,16 +1623,14 @@ begin
     end;
   simResultsMemo.Lines.Add(dataStr);
   // Update plots:
-  inc(self.currentGeneration);
 
-  if plotsPanelList.count > 0 then
-  begin
-    for i := 0 to plotsPanelList.count -1 do
+  if self.graphPanelList.count > 0 then
+    begin
+    for i := 0  to self.graphPanelList.count -1 do
       begin
-      plotsPanelList[i].processOneScan(newTime, newValsAr,self.plotSpecies[i],
-             self.currentGeneration );
+      self.graphPanelList[i].getVals(newTime, newVals); // Faster than own listener ??
       end;
-  end;
+    end;
 end;
 
 procedure TMainForm.loadNetworkButtonClick(Sender: TObject);
@@ -1726,10 +1763,8 @@ procedure TMainForm.selectPlotSpecies(plotnumb: Integer);
     if addingPlot then
       self.addPlot(maxYVal) // <-- Add dynamically created plot at this point
     else
-      begin
-        self.plotsPanelList[getPlotPBIndex(plotNumb)].plotGraph.setY_ValsMax( maxYVal);
-        // Update plot legend:
-         self.plotsPanelList[getPlotPBIndex(plotNumb)].setPlotLegend(self.plotSpecies.Items[getPlotPBIndex(plotNumb)]);
+      begin   // ???????
+      self.graphPanelList[getPlotPBIndex(plotNumb)].setYMax(maxYVal);
       end;
 
     self.refreshPlotAndSliderPanels;
@@ -1775,7 +1810,6 @@ begin
   fPlotSpecies.Popup := true;
   fPlotSpecies.ShowClose := false;
   fPlotSpecies.PopupOpacity := 0.3;
-  //fPlotSpecies.Top := trunc(self.Height*0.2); // put popup %20 from top
   fPlotSpecies.Border := fbDialogSizeable;
   fPlotSpecies.caption := 'Species to plot:';
   fPlotSpecies.ShowModal(@AfterShowModal);
@@ -1789,7 +1823,7 @@ begin
   if self.plotSpecies = nil then
     self.plotSpecies := TList<TSpeciesList>.create;
   self.plotSpecies.Add(TSpeciesList.create);
-  self.numbPlots := self.numbPlots + 1;
+  //self.numbPlots := self.numbPlots + 1;
   numSpeciesToPlot := length(self.mainController.getModel.getS_Names);
   if numSpeciesToPlot > 8 then numSpeciesToPlot := 8;
 
@@ -1809,14 +1843,16 @@ begin
           if self.mainController.getModel.getSBMLspecies(plotSp).getInitialConcentration > maxYVal then
             maxYVal := self.mainController.getModel.getSBMLspecies(plotSp).getInitialConcentration;
       end;
-      self.plotSpecies[self.numbPlots - 1].Add(plotSp)
+     // self.plotSpecies[self.numbPlots - 1].Add(plotSp)
+     self.plotSpecies[self.numbPlots].Add(plotSp);
 
     end;
   for i := 0 to Length(self.mainController.getModel.getSBMLspeciesAr) -1 do
     begin
       if numSpeciesToPlot < (i +1) then
         begin
-        self.plotSpecies[self.numbPlots - 1].Add('');
+        //self.plotSpecies[self.numbPlots - 1].Add('');
+        self.plotSpecies[self.numbPlots].Add('');
         end;
     end;
 
@@ -1832,29 +1868,57 @@ var plotPositionToAdd: integer; // Add plot to next empty position.
     plotWidth: integer;
     newHeight: integer; i: Integer;
 begin
+
+  if self.graphPanelList <> nil then self.btnResetRunClick(nil); // need event notification
+  inc(self.numbPlots);    // ?? added , change plotall
   plotWidth := 0;
   plotPositionToAdd := -1;
-  plotPositionToAdd := self.getEmptyPlotPosition();
-  if self.plotsPanelList = nil then
+  plotPositionToAdd := self.getEmptyPlotPosition(); // position 1 is index 0
+ { if self.plotsPanelList = nil then
     self.plotsPanelList := TList<TPlotPanel>.create;
   self.plotsPanelList.Add(TPlotPanel.create(pnlPlotContainer, plotPositionToAdd, yMax,
        self.mainController.getModel.getS_Names, self.mainController.getModel.getS_Vals));
-
+   }
+  if self.graphPanelList = nil then
+    self.graphPanelList := TList<TGraphPanel>.create;
+  self.graphPanelList.Add( TGraphPanel.create(pnlPlotContainer, plotPositionToAdd, yMax) );
+  self.graphPanelList[plotPositionToAdd -1].setChartTimeInterval(self.stepSize);
+  self.graphPanelList[plotPositionToAdd -1].OnEditGraphEvent := processGraphEvent;
   newHeight := 200;  // default
   if self.numbPlots > DEFAULT_NUMB_PLOTS then
   begin
     newHeight := round(self.pnlPlotContainer.Height/self.numbPlots);
   end;
 
-  self.plotsPanelList[self.numbPlots - 1].OnPlotUpdate := self.editPlotList;
+ // Not used for now: self.graphPanelList[self.numbPlots - 1].OnPlotUpdate := self.editPlotList;
   self.initializePlot (self.numbPlots - 1);
   if self.numbPlots > DEFAULT_NUMB_PLOTS then
   begin  // Adjust plots to new height:
     for i := 0 to self.numbPlots - 1 do
-      self.plotsPanelList[i].adjustPlotHeight(self.numbPlots, newHeight);
+      self.graphPanelList[i].adjustPlotHeight(self.numbPlots, newHeight);
 
   end;
  end;
+
+procedure TMainForm.processGraphEvent(plotPosition: integer; editType: integer);
+var yMax: double;
+begin
+  if editType = EDIT_TYPE_DELETEPLOT then
+    begin
+    self.deletePlot(plotPosition -1);
+    end
+  else if editType = EDIT_TYPE_SPECIES then
+    begin
+    yMax := self.graphPanelList[plotPosition -1].getYMax;
+
+    // delete plot and then select species and add plot.
+    self.deletePlot(plotPosition -1);
+    self.selectPlotSpecies(plotPosition);
+
+    end;
+
+
+end;
 
 function  TMainForm.getPlotPBIndex(plotTag: integer): Integer;
 var i: integer;
@@ -1862,7 +1926,7 @@ begin
   Result := -1;
   for i := 0 to self.numbPlots -1 do
   begin
-    if self.plotsPanelList[i].plotWPanel.Tag = plotTag then
+    if self.graphPanelList[i].Tag = plotTag then
       Result := i;
   end;
 end;
@@ -1888,7 +1952,7 @@ begin
   begin
     for i := 0 to totalPlots -2 do
     begin
-      if self.plotsPanelList[i].plotWPanel.Tag = plotPosition then
+      if self.graphPanelList[i].Tag = plotPosition then
         inc(plotPosition);
     end;
   end;
@@ -1904,10 +1968,10 @@ begin
     begin
       try
         begin
-          self.plotsPanelList[plotIndex].Destroy;
-          tempObj := self.plotsPanelList[plotIndex];
+          self.graphPanelList[plotIndex].deleteChart;
+          tempObj := self.graphPanelList[plotIndex];
           tempObj.Free;
-          self.plotsPanelList.Delete(plotIndex);
+          self.graphPanelList.Delete(plotIndex);
           self.plotSpecies.Delete(plotIndex);
           self.numbPlots := self.numbPlots - 1;
         end;
@@ -1929,7 +1993,7 @@ begin
   self.pnlPlotContainer.Invalidate;
 end;
 
-procedure TMainForm.EditPlotList(plotn: Integer);
+{procedure TMainForm.EditPlotList(plotn: Integer);
 var
   plotXposition, plotYposition: Integer;
   plotIndex: Integer;
@@ -1938,7 +2002,8 @@ begin
   plotIndex := -1;
   plotIndex := getPlotPBIndex(plotn);
   plotXposition := 40;
-  plotYposition := self.plotsPanelList[plotIndex].plotWPanel.Top + 20;
+  //plotYposition := self.plotsPanelList[plotIndex].plotWPanel.Top + 20;
+  plotYposition := self.graphPanelList[plotIndex].Top + 20;
   editList := TStringList.create();
   editList.Add('Change plot species.');
   editList.Add('Delete plot.');
@@ -1950,12 +2015,26 @@ begin
   self.plotEditLB.bringToFront;
   self.plotEditLB.visible := true;
 
-end;
+end;    }
 
-procedure TMainForm.updatePlots(); // Go through and remove species/plots no longer in model.
+{procedure TMainForm.updatePlots(); // Go through and remove species/plots no longer in model.
 begin
   // , just delete all plots and have user add them as necessary
   //  No need for this: EditPlotList(plotn: Integer);
+end;    }
+
+procedure TMainForm.editPlotAction(index: integer; editType: integer);
+begin
+  if editType = EDIT_TYPE_SPECIES then
+    begin
+    self.deletePlot(index);
+    self.btnAddPlotClick(nil);
+    end;
+  if editType = EDIT_TYPE_DELETEPLOT then
+    begin
+    self.deletePlot(index);
+    end;
+
 end;
 
 procedure TMainForm.deletePlotSpecies(plotn: Integer); // Delete a species curve in a plot.
@@ -2161,7 +2240,6 @@ begin
     self.pnlSliderAr);
 
   self.pnlSliderAr[i].tag := i; // keep track of slider index number.
-  //self.pnlSliderAr[i].tag := i + 1 ; // keep track of slider position number.
   self.sliderPTBarAr[i] := TWebTrackBar.create(self.pnlSliderAr[i]);
   self.sliderPTBarAr[i].parent := self.pnlSliderAr[i];
   self.sliderPTBarAr[i].OnChange := self.ParamSliderOnChange;
@@ -2284,7 +2362,6 @@ end;
 
 procedure TMainForm.updateRxnParamPanel();
 var paramTStr: string;
-   // paramAssignStr: string;
     i: integer;
 begin
   paramTStr:= '';
@@ -2495,9 +2572,9 @@ begin
       // delete existing plots
     if self.numbPlots >0 then
     begin
-      if (self.plotsPanelList.Count) > 0 then
+      if (self.graphPanelList.Count) > 0 then
       begin
-        for i := self.plotsPanelList.Count-1 downto 0 do
+        for i := self.graphPanelList.Count-1 downto 0 do
         begin
           self.DeletePlot(i);
         end;
@@ -2582,10 +2659,12 @@ begin
   self.resetSliderPositions();
   self.enableStepSizeEdit;
   self.mainController.createSimulation();
-  self.initializePlots;
+ // self.initializePlots;
+  self.resetPlots;
   self.currentGeneration := 0;
 
 end;
+
 
 procedure TMainForm.edtReactionIdExit(Sender: TObject);
 var newId, cutNewId: string;
