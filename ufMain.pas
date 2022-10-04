@@ -22,6 +22,7 @@ const SIDEWINDER_VERSION = 'Version 0.52 alpha';
       MAX_SLIDERS = 10;
       MAX_STR_LENGTH = 50;  // Max User inputed string length for Rxn/spec/param id
       DEBUG = false; // true then show debug console output and any other debug related info
+      DEFAULT_NUMB_PLOTS = 2;
 
 type
   TPanelType = ( SIMULATION_PANEL, REACTION_PANEL, NODE_PANEL );
@@ -1874,29 +1875,24 @@ begin
   plotWidth := 0;
   plotPositionToAdd := -1;
   plotPositionToAdd := self.getEmptyPlotPosition(); // position 1 is index 0
- { if self.plotsPanelList = nil then
-    self.plotsPanelList := TList<TPlotPanel>.create;
-  self.plotsPanelList.Add(TPlotPanel.create(pnlPlotContainer, plotPositionToAdd, yMax,
-       self.mainController.getModel.getS_Names, self.mainController.getModel.getS_Vals));
-   }
+
   if self.graphPanelList = nil then
     self.graphPanelList := TList<TGraphPanel>.create;
   self.graphPanelList.Add( TGraphPanel.create(pnlPlotContainer, plotPositionToAdd, yMax) );
   self.graphPanelList[plotPositionToAdd -1].setChartTimeInterval(self.stepSize);
   self.graphPanelList[plotPositionToAdd -1].OnEditGraphEvent := processGraphEvent;
-  newHeight := 200;  // default
-  if self.numbPlots > DEFAULT_NUMB_PLOTS then
+
+  if self.numbPlots > ufMain.DEFAULT_NUMB_PLOTS then
   begin
     newHeight := round(self.pnlPlotContainer.Height/self.numbPlots);
   end;
 
  // Not used for now: self.graphPanelList[self.numbPlots - 1].OnPlotUpdate := self.editPlotList;
   self.initializePlot (self.numbPlots - 1);
-  if self.numbPlots > DEFAULT_NUMB_PLOTS then
+  if self.numbPlots > ufMain.DEFAULT_NUMB_PLOTS then
   begin  // Adjust plots to new height:
     for i := 0 to self.numbPlots - 1 do
-      self.graphPanelList[i].adjustPlotHeight(self.numbPlots, newHeight);
-
+      self.graphPanelList[i].adjustPanelHeight(newHeight);
   end;
  end;
 
