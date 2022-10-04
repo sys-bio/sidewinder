@@ -1880,6 +1880,8 @@ begin
     self.graphPanelList := TList<TGraphPanel>.create;
   self.graphPanelList.Add( TGraphPanel.create(pnlPlotContainer, plotPositionToAdd, yMax) );
   self.graphPanelList[plotPositionToAdd -1].setChartTimeInterval(self.stepSize);
+  self.graphPanelList[plotPositionToAdd -1].userDeleteGraph := true;
+  self.graphPanelList[plotPositionToAdd -1].userChangeVarSeries := true;
   self.graphPanelList[plotPositionToAdd -1].OnEditGraphEvent := processGraphEvent;
 
   if self.numbPlots > ufMain.DEFAULT_NUMB_PLOTS then

@@ -34,6 +34,9 @@ private
   procedure editGraphListBoxClick(Sender: TObject);
 
 public
+  userDeleteGraph: boolean; // true, user can delete graph (OnEditGraphEvent method required)
+  userChangeVarSeries: boolean; // true, user can change var of series (OnEditGraphEvent method required)
+
   constructor create(newParent: TWebPanel; graphPosition: integer; yMax: double);
   procedure initializePlot(newVarStrList: TList<string>; newYMax: double; newYMin: double;
   newAutoUp: boolean; newAutoDown: boolean; newDelta: double; newBkgrndColor: TColor);
@@ -80,6 +83,8 @@ begin
   self.Top := 4 + self.Height*(graphPosition -1);
   self.Color := clwhite; // default
   self.chartBackGroundColor := -1;
+  self.userDeleteGraph := false;
+  self.userChangeVarSeries := false;
   self.yMinimum := 0;
   if yMax > 0 then self.yMaximum := yMax
   else self.yMaximum := DEFAULT_Y_MAX;
@@ -316,8 +321,10 @@ begin
   editList.Add('Toggle legend.');
   editList.Add('Toggle autoscale.');
   editList.Add('Set Y max/min.');
-  editList.Add('Change plot species.');
-  editList.Add('Delete plot.');
+  if self.userChangeVarSeries then
+    editList.Add('Change plot species.');
+  if self.userDeleteGraph then
+    editList.Add('Delete plot.');
   editList.Add('Cancel');
   self.lbEditGraph.Items := editList;
   self.lbEditGraph.Top := 10;
@@ -330,44 +337,40 @@ end;
 
 procedure TGraphPanel.editGraphListBoxClick(Sender: TObject);
 begin
-  if self.lbEditGraph.ItemIndex < 3 then  // Handle these actions locally
-    begin
-    if self.lbEditGraph.ItemIndex = 0 then // toggle legend
-      begin
-      if self.chart.getLegendVisible then
-        self.chart.SetLegendVisible(false)
-      else self.chart.SetLegendVisible(true);
-      end;
-    if self.lbEditGraph.ItemIndex = 1 then //Toggle autoscale
-      begin
-      if self.chart.autoScaleUp then
+  case self.lbEditGraph.ItemIndex of
+    0: begin                                 // toggle legend
+       if self.chart.getLegendVisible then
+         self.chart.SetLegendVisible(false)
+       else self.chart.SetLegendVisible(true);
+       self.lbEditGraph.Destroy;
+       end;
+    1: if self.chart.autoScaleUp then        // toggle autoscale
         begin
         self.chart.autoScaleUp := false;
         self.chart.autoScaleDown := false;
+        self.lbEditGraph.Destroy;
         end
       else
         begin
         self.chart.autoScaleUp := true;
         self.chart.autoScaleDown := true;
-        end;
-      end;
-    if self.lbEditGraph.ItemIndex = 2 then  // Set Y max/min
-      begin
-      self.chart.userUpdateMinMax;
-      end;
-    self.lbEditGraph.Destroy;
-    end
-  else    // Handle these actions with external main form:
-    begin
-    if self.lbEditGraph.ItemIndex = 3 then // Change plot species. Done external to TGraphPanel
-      self.notifyGraphEvent(self.tag, EDIT_TYPE_SPECIES)
-
-    else if self.lbEditGraph.ItemIndex = 4 then // Delete plot
-      self.notifyGraphEvent(self.tag, EDIT_TYPE_DELETEPLOT)
-      else if self.lbEditGraph.ItemIndex = 5 then // Cancel
         self.lbEditGraph.Destroy;
-    end;
-
+        end;
+    2: begin                            // Set Y max/min
+       self.chart.userUpdateMinMax;
+       self.lbEditGraph.Destroy;
+       end;
+    3: begin                         // Done external to TGraphPanel
+       if self.userChangeVarSeries then
+         self.notifyGraphEvent(self.tag, EDIT_TYPE_SPECIES)
+       else if self.userDeleteGraph then
+         self.notifyGraphEvent(self.tag, EDIT_TYPE_DELETEPLOT);
+       end;
+    4: if self.userDeleteGraph then  // Done external to TGraphPanel
+         self.notifyGraphEvent(self.tag, EDIT_TYPE_DELETEPLOT);
+    else self.lbEditGraph.Destroy;
+  end;
+ 
 end;
 
 
