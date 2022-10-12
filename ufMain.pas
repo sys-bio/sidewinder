@@ -927,6 +927,7 @@ procedure TMainForm.resetPlots();  // Reset plots for new simulation.
 begin // Easier to just delete/create than reset time, xaxis labels, etc.
   for i := 0 to self.graphPanelList.Count -1 do
     begin
+    self.graphPanelList[i].setChartDelta(self.stepSize);
     self.graphPanelList[i].deleteChart;
     self.graphPanelList[i].createChart;
     self.graphPanelList[i].setupChart;

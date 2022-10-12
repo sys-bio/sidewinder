@@ -134,7 +134,7 @@ begin
   self.chart.setYAxisCaption(''); // Add to bottom, xaxis label. Cannot rotate label in HTML ?
   self.chart.SetXAxisCaption( self.yLabel + ' vs. '+ self.xLabel );
   self.setChartDelta(self.timeDelta);
-  self.setChartTimeInterval(self.timeDelta);
+  self.setChartTimeInterval(self.timeDelta); // ?? is this necessary?
   self.chart.SetXAxisMax(TConst.DEFAULT_X_POINTS_DISPLAYED *self.timeDelta); // deltaX same as interval
   if self.chartBackGroundColor < 1 then self.chart.BackgroundColor := clNavy
   else self.chart.BackgroundColor := self.chartBackGroundColor;
@@ -259,7 +259,12 @@ end;
 
 procedure TGraphPanel.setChartDelta(newDelta: double); // default is 0.1 (tenth of sec )
 begin
-if newDelta >0 then self.chart.DeltaX := newDelta  // integrator stepsize
+if newDelta >0 then
+  begin
+  self.timeDelta := newDelta;
+  if self.chart <> nil then
+    self.chart.DeltaX := newDelta;  // integrator stepsize
+  end
 else console.log('TGraphPanel.setChartDelta value is not greater than zero');
 end;
 
@@ -364,10 +369,12 @@ begin
        if self.userChangeVarSeries then
          self.notifyGraphEvent(self.tag, EDIT_TYPE_SPECIES)
        else if self.userDeleteGraph then
-         self.notifyGraphEvent(self.tag, EDIT_TYPE_DELETEPLOT);
+         self.notifyGraphEvent(self.tag, EDIT_TYPE_DELETEPLOT)
+         else self.lbEditGraph.Destroy;
        end;
     4: if self.userDeleteGraph then  // Done external to TGraphPanel
-         self.notifyGraphEvent(self.tag, EDIT_TYPE_DELETEPLOT);
+         self.notifyGraphEvent(self.tag, EDIT_TYPE_DELETEPLOT)
+         else self.lbEditGraph.Destroy;
     else self.lbEditGraph.Destroy;
   end;
  
