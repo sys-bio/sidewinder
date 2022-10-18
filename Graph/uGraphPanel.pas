@@ -10,6 +10,9 @@ const SERIESCOLORS: array[0..10] of integer = ( clRed, clBlue, clGreen,clBlack,
       EDIT_TYPE_DELETEPLOT = 0;
       EDIT_TYPE_SPECIES = 1;
       DEFAULT_Y_MAX = 10;
+      DEFAULT_MAX_XPTS = 1000;
+      DEFAULT_MIN_PTS = 50;
+      DEFAULT_X_MAX = 10;  // typically 10 sec
 
 type
 TEditGraphEvent = procedure(position: integer; editType: integer) of object;
@@ -26,9 +29,11 @@ private
   autoUp: boolean;  // Auto scale y axis up
   autoDown: boolean;
   timeDelta: double;
+  xMax: double;  // default is 10, time window of graph
   chartBackGroundColor: TColor;
   fEditGraphEvent: TEditGraphEvent;
 
+  function updateXMax(): boolean; // true if changed. Adjust xMax if total points > DEFAULT_MAX_XPTS or < DEFAULT_MIN_XPTS
   procedure graphEditMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
   procedure editGraphListBoxClick(Sender: TObject);
@@ -85,6 +90,7 @@ begin
   self.chartBackGroundColor := -1;
   self.userDeleteGraph := false;
   self.userChangeVarSeries := false;
+  self.xMax := DEFAULT_X_MAX;
   self.yMinimum := 0;
   if yMax > 0 then self.yMaximum := yMax
   else self.yMaximum := DEFAULT_Y_MAX;
@@ -116,6 +122,7 @@ begin
   self.autoUp := newAutoUp;
   self.autoDown := newAutoDown;
   self.timeDelta := newDelta;
+
   self.chartBackGroundColor := newBkgrndColor;
   //self.Color := clBlack;
   self.setupChart();
@@ -134,8 +141,10 @@ begin
   self.chart.setYAxisCaption(''); // Add to bottom, xaxis label. Cannot rotate label in HTML ?
   self.chart.SetXAxisCaption( self.yLabel + ' vs. '+ self.xLabel );
   self.setChartDelta(self.timeDelta);
+  self.updateXMax();
   self.setChartTimeInterval(self.timeDelta); // ?? is this necessary?
-  self.chart.SetXAxisMax(TConst.DEFAULT_X_POINTS_DISPLAYED *self.timeDelta); // deltaX same as interval
+  //self.chart.SetXAxisMax(TConst.DEFAULT_X_POINTS_DISPLAYED *self.timeDelta); // deltaX same as interval
+  self.chart.SetXAxisMax(self.xMax); // deltaX same as interval
   if self.chartBackGroundColor < 1 then self.chart.BackgroundColor := clNavy
   else self.chart.BackgroundColor := self.chartBackGroundColor;
   self.chart.LegendBackgroundColor := clSilver;
@@ -148,6 +157,30 @@ begin
       self.chart.AddSerie(self.seriesStrList[i]);
     end;
   self.setSeriesColors;
+
+end;
+
+function TGraphPanel.updateXMax(): boolean;
+begin
+  Result := false; // return false if self.xMax does not change.
+  if DEFAULT_X_MAX / self.timeDelta > DEFAULT_MAX_XPTS then
+    begin
+    self.xMax := DEFAULT_MAX_XPTS * self.timeDelta;
+    Result := true;
+    end
+  else
+    begin
+    if DEFAULT_X_MAX / self.timeDelta < DEFAULT_MIN_PTS then
+         begin
+         self.xMax := DEFAULT_MIN_PTS * self.timeDelta;
+         Result := true;
+         end
+    else if self.xMax <> DEFAULT_X_MAX then
+           begin
+           self.xMax := DEFAULT_X_MAX;
+           Result := true;
+           end;
+    end;
 
 end;
 
@@ -233,7 +266,7 @@ begin
 end;
 
 
-procedure TGraphPanel.setChartTimeInterval(newInterval: double); // seconds
+procedure TGraphPanel.setChartTimeInterval(newInterval: double); // seconds, necessary ??
 begin
   self.chart.SetInterval(round(newInterval*1000)); // convert to msec (integer)
 end;
@@ -251,7 +284,6 @@ begin
     begin
     if j < newVals.getNumPairs then
       self.chart.updateSerie(j, newTime, newVals.getNameValById(self.chart.series[j].name).Val );
-
     end;
   self.chart.plot;
   //self.chart.Invalidate;   // ??
@@ -263,7 +295,14 @@ if newDelta >0 then
   begin
   self.timeDelta := newDelta;
   if self.chart <> nil then
+    begin
     self.chart.DeltaX := newDelta;  // integrator stepsize
+    if self.updateXMax then
+      begin
+      self.setChartTimeInterval(self.chart.DeltaX); // needed ??
+      self.chart.SetXAxisMax(self.xMax); // deltaX same as interval
+      end;
+    end;
   end
 else console.log('TGraphPanel.setChartDelta value is not greater than zero');
 end;
@@ -299,7 +338,9 @@ procedure TGraphPanel.restartChart(newInterval: double); // Needed ? Issue reset
 begin
   self.setChartDelta(newInterval); // ? chat delta versus chart time interval?
   self.setChartTimeInterval(newInterval);
-  self.chart.SetXAxisMax(TConst.DEFAULT_X_POINTS_DISPLAYED * newInterval);
+  if self.updateXMax then
+    self.chart.SetXAxisMax(self.xMax)
+  else self.chart.SetXAxisMax(TConst.DEFAULT_X_POINTS_DISPLAYED * newInterval);
   self.chart.Restart;
 end;
 

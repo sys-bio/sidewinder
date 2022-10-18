@@ -231,8 +231,10 @@ var
   Splitted: TArray<String>;
 begin
   s := FloatToStr(FDeltaX);
-  Splitted := SplitString(s, '.'); // assume only 2 elements
-  s := Splitted[1];
+  Splitted := SplitString(s, '.'); // assume only 2 elements, not always true?
+  if length(Splitted) >1 then
+    s := Splitted[1]
+  else s := Splitted[0]; // what if integer ?
   n := countZeros(s);
   if n < 0 then n := 0;
   fm := '%.' + IntToStr(n) + 'f';
