@@ -55,6 +55,12 @@ class ProcessSBML {
    else {
      if( this.model.isSetName()) { tModela.setModelId(this.model.getName()); }
      }
+
+ //  if( this.model.isSetTimeUnitsAtribbute() ) { NOT working ??
+ //  if( this.model.isSetTimeUnits() ) {
+ //    console.log('getting timeUnits...');
+ //    tModela.setModelTimeUnits(this.model.getTimeUnits());
+ //  }
    tModela.numSpecies = this.model.getNumSpecies();
    tModela.numParams = this.model.getNumParameters();
    tModela.numCompartments = this.model.getNumCompartments();

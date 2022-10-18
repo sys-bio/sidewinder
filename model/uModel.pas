@@ -26,6 +26,8 @@ type
     modelRules: array of TSBMLRule;  // optional
     modelFuncDefList: TList<TSBMLFuncDefinition>; // optional list of functions
     modelId: String; // optional model name
+    modelTimeUnits: String;// optional,level 3 models, 4.2.3: The timeUnits attribute is
+    // used to specify the unit in which time is measured in the model.
     modelLayout: TSBMLLayout;
     modelRendering: TSBMLRenderInformation;
     strSBMLErrors: TList<string>; // SBML document errors
@@ -56,6 +58,8 @@ type
    procedure addSBMLReaction(newReaction: SBMLReaction); overload;
    function  getModelId(): string;
    procedure setModelId(newId: string);
+   function  getModelTimeUnits(): string;
+   procedure setModelTimeUnits( newVal: string );
    function  getParamNumb(): integer;  // Number of parameters in model.
    function  getSBMLparameter(i:integer): TSBMLparameter;
    function  getSBMLparameterAr(): array of TSBMLparameter;
@@ -127,9 +131,10 @@ begin
     self.modelFuncDefList := TList<TSBMLFuncDefinition>.create;
     numReactions:= 0;
     numSpecies:= 0; numCompartments:= 0;
-    numEvents:= 0; numRules:= 0;
-    modelRules:= nil;
-    modelId := '';
+    self.numEvents:= 0; self.numRules:= 0;
+    self.modelRules:= nil;
+    self.modelTimeUnits := 'seconds'; // Default
+    self.modelId := '';
     self.modelLayout := nil;
     self.modelRendering := nil;
 end;
@@ -294,6 +299,15 @@ procedure TModel.SBML_UpdateEvent();
  procedure TModel.setModelId(newId: string);
  begin
    self.modelId := newId;
+ end;
+
+ function TModel.getModelTimeUnits(): string;
+ begin
+   Result := self.ModelTimeUnits;
+ end;
+ procedure TModel.setModelTimeUnits( newVal: string );
+ begin
+   self.ModelTimeUnits := newVal;
  end;
 
  function TModel.getNumFuncDefs: Integer;
