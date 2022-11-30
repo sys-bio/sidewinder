@@ -32,15 +32,16 @@ private
   xMax: double;  // default is 10, time window of graph
   chartBackGroundColor: TColor;
   fEditGraphEvent: TEditGraphEvent;
-
+  staticGraph: boolean; // true = static run
   function updateXMax(): boolean; // true if changed. Adjust xMax if total points > DEFAULT_MAX_XPTS or < DEFAULT_MIN_XPTS
-  procedure graphEditMouseDown(Sender: TObject; Button: TMouseButton;
+  {procedure graphEditMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
-  procedure editGraphListBoxClick(Sender: TObject);
+  procedure editGraphListBoxClick(Sender: TObject); }
 
 public
   userDeleteGraph: boolean; // true, user can delete graph (OnEditGraphEvent method required)
   userChangeVarSeries: boolean; // true, user can change var of series (OnEditGraphEvent method required)
+  plotEditInProgress: boolean;
 
   constructor create(newParent: TWebPanel; graphPosition: integer; yMax: double);
   procedure initializePlot(newVarStrList: TList<string>; newYMax: double; newYMin: double;
@@ -66,8 +67,15 @@ public
   function  getChartTimeInterval(): double;
   procedure setYMax(newYMax: double);
   function  getYMax(): double;
+  procedure setXMax(newXMax: double);
+  function  getXMax(): double;
+  procedure updateYMinMax();
+  procedure toggleLegendVisibility();
+  procedure toggleAutoScaleYaxis();
+  procedure setStaticGraph(val: boolean);
   procedure adjustPanelHeight(newHeight: integer); // adjust height and top, uses self.tag as well
   procedure getVals( newTime: Double; newVals: TVarNameValList);// Get new values (species amt) from simulation run
+  procedure setStaticSimResults( newResults: TList<TTimeVarNameValList> ); // get sim results to plot
   procedure notifyGraphEvent(plot_id: integer; eventType: integer);
   property OnEditGraphEvent: TEditGraphEvent read fEditGraphEvent write fEditGraphEvent;
 end;
@@ -77,8 +85,10 @@ implementation
 constructor TGraphPanel.create(newParent: TWebPanel; graphPosition: integer; yMax: double);
 begin
   inherited create(newParent);
+  self.plotEditInProgress := false;
+  self.staticGraph := false;
   self.SetParent(newParent);
-  self.OnMouseDown := graphEditMouseDown;
+ // self.OnMouseDown := graphEditMouseDown;
   if graphPosition > -1 then self.tag := graphPosition
   else self.tag := 0;
   self.Width := newParent.Width;
@@ -102,7 +112,7 @@ end;
    try
      self.chart := TWebScrollingChart.Create(self);
      self.chart.Height := self.Height;
-     self.chart.OnMouseClickEvent := self.graphEditMouseDown;
+  //   self.chart.OnMouseClickEvent := self.graphEditMouseDown;
      self.chart.Parent := self;
      self.chart.YAxisMax := self.yMaximum;
    except
@@ -141,7 +151,7 @@ begin
   self.chart.setYAxisCaption(''); // Add to bottom, xaxis label. Cannot rotate label in HTML ?
   self.chart.SetXAxisCaption( self.yLabel + ' vs. '+ self.xLabel );
   self.setChartDelta(self.timeDelta);
-  self.updateXMax();
+  if not self.staticGraph then self.updateXMax(); // Not needed for 'static' sim run.
   self.setChartTimeInterval(self.timeDelta); // ?? is this necessary?
   //self.chart.SetXAxisMax(TConst.DEFAULT_X_POINTS_DISPLAYED *self.timeDelta); // deltaX same as interval
   self.chart.SetXAxisMax(self.xMax); // deltaX same as interval
@@ -161,6 +171,7 @@ begin
 end;
 
 function TGraphPanel.updateXMax(): boolean;
+// Let plot point density guide value of xMax
 begin
   Result := false; // return false if self.xMax does not change.
   if DEFAULT_X_MAX / self.timeDelta > DEFAULT_MAX_XPTS then
@@ -181,6 +192,7 @@ begin
            Result := true;
            end;
     end;
+   if assigned(self.chart) then self.chart.SetXAxisMax(self.xMax);    // ok ????
 
 end;
 
@@ -193,6 +205,22 @@ end;
 function  TGraphPanel.getYMax(): double;
 begin
   Result := self.yMaximum;
+end;
+
+procedure TGraphPanel.setXMax(newXMax: double);
+// Different then updateXMax, not concerned about plot point density, just set xMax
+begin
+  if (newXMax >0) and (self.xMax <> newXMax) then
+    begin
+      self.xMax := newXMax;
+      if assigned(self.chart) then
+        self.chart.SetXAxisMax(newXMax);
+    end;
+end;
+
+function TGraphPanel.getXMax(): double;
+begin
+  Result := self.xMax;
 end;
 
 procedure TGraphPanel.setPanelHeight( newHeight: integer ); // Set height for panel that contains chart
@@ -276,9 +304,18 @@ begin
   Result := self.chart.GetInterval / 1000;
 end;
 
+procedure TGraphPanel.setStaticGraph(val: boolean);
+begin
+  self.staticGraph := val;
+  if val then
+    begin
+    self.chart.SetXAxisMax(self.xMax);
+    end;
+end;
+
 
 procedure TGraphPanel.getVals(newTime: Double; newVals: TVarNameValList); // callback
-var i, j: integer;
+var {i,} j: integer;
 begin
   for j := 0 to length(self.chart.series) -1 do
     begin
@@ -289,6 +326,22 @@ begin
   //self.chart.Invalidate;   // ??
 end;
 
+procedure TGraphPanel.setStaticSimResults( newResults: TList<TTimeVarNameValList> );
+var i, j: integer;
+begin
+  for i := 0 to newResults.count -1 do
+    begin
+    for j := 0 to length(self.chart.series) -1 do
+      begin
+      if j < newResults[i].varNV_List.getNumPairs then
+        self.chart.updateSerie(j, newResults[i].time,
+                   newResults[i].varNV_List.getNameValById(self.chart.series[j].name).Val );
+      end;
+
+    end;
+   self.chart.plot;
+end;
+
 procedure TGraphPanel.setChartDelta(newDelta: double); // default is 0.1 (tenth of sec )
 begin
 if newDelta >0 then
@@ -297,11 +350,12 @@ if newDelta >0 then
   if self.chart <> nil then
     begin
     self.chart.DeltaX := newDelta;  // integrator stepsize
-    if self.updateXMax then
-      begin
-      self.setChartTimeInterval(self.chart.DeltaX); // needed ??
-      self.chart.SetXAxisMax(self.xMax); // deltaX same as interval
-      end;
+    if not self.staticGraph then
+      if self.updateXMax then
+        begin
+        self.setChartTimeInterval(self.chart.DeltaX); // needed ??
+        self.chart.SetXAxisMax(self.xMax); // deltaX same as interval
+        end;
     end;
   end
 else console.log('TGraphPanel.setChartDelta value is not greater than zero');
@@ -338,9 +392,12 @@ procedure TGraphPanel.restartChart(newInterval: double); // Needed ? Issue reset
 begin
   self.setChartDelta(newInterval); // ? chat delta versus chart time interval?
   self.setChartTimeInterval(newInterval);
-  if self.updateXMax then
-    self.chart.SetXAxisMax(self.xMax)
-  else self.chart.SetXAxisMax(TConst.DEFAULT_X_POINTS_DISPLAYED * newInterval);
+  if not self.staticGraph then
+    begin
+    if self.updateXMax then
+      self.chart.SetXAxisMax(self.xMax)
+    else self.chart.SetXAxisMax(TConst.DEFAULT_X_POINTS_DISPLAYED * newInterval);
+    end;
   self.chart.Restart;
 end;
 
@@ -354,73 +411,40 @@ begin
   self.chart.autoScaleDown := autoScale;
 end;
 
-procedure TGraphPanel.graphEditMouseDown(Sender: TObject; Button: TMouseButton;
-      Shift: TShiftState; X, Y: Integer);
-var editList: TStringList;
+procedure TGraphPanel.toggleLegendVisibility;
 begin
-  self.lbEditGraph := TWebListBox.Create(self);
-  self.lbEditGraph.parent := self;
-  self.lbEditGraph.tag := self.tag;
-  self.lbEditGraph.ElementClassName := 'list-group form-control-sm bg-dark text-white';
-  self.lbEditGraph.OnClick := editGraphListBoxClick;
-  editList := TStringList.create();
-  editList.Add('Toggle legend.');
-  editList.Add('Toggle autoscale.');
-  editList.Add('Set Y max/min.');
-  if self.userChangeVarSeries then
-    editList.Add('Change plot species.');
-  if self.userDeleteGraph then
-    editList.Add('Delete plot.');
-  editList.Add('Cancel');
-  self.lbEditGraph.Items := editList;
-  self.lbEditGraph.Top := 10;
-  self.lbEditGraph.left := 10;
-  self.lbEditGraph.Height := 120;
-  self.lbEditGraph.Width := 140;
-  self.lbEditGraph.bringToFront;
-  self.lbEditGraph.visible := true;
+  if self.chart.getLegendVisible then
+     self.chart.SetLegendVisible(false)
+  else self.chart.SetLegendVisible(true);
 end;
 
-procedure TGraphPanel.editGraphListBoxClick(Sender: TObject);
+procedure TGraphPanel.toggleAutoScaleYaxis;
 begin
-  case self.lbEditGraph.ItemIndex of
-    0: begin                                 // toggle legend
-       if self.chart.getLegendVisible then
-         self.chart.SetLegendVisible(false)
-       else self.chart.SetLegendVisible(true);
-       self.lbEditGraph.Destroy;
-       end;
-    1: if self.chart.autoScaleUp then        // toggle autoscale
-        begin
-        self.chart.autoScaleUp := false;
-        self.chart.autoScaleDown := false;
-        self.lbEditGraph.Destroy;
-        end
-      else
-        begin
-        self.chart.autoScaleUp := true;
-        self.chart.autoScaleDown := true;
-        self.lbEditGraph.Destroy;
-        end;
-    2: begin                            // Set Y max/min
-       self.chart.userUpdateMinMax;
-       self.lbEditGraph.Destroy;
-       end;
-    3: begin                         // Done external to TGraphPanel
-       if self.userChangeVarSeries then
-         self.notifyGraphEvent(self.tag, EDIT_TYPE_SPECIES)
-       else if self.userDeleteGraph then
-         self.notifyGraphEvent(self.tag, EDIT_TYPE_DELETEPLOT)
-         else self.lbEditGraph.Destroy;
-       end;
-    4: if self.userDeleteGraph then  // Done external to TGraphPanel
-         self.notifyGraphEvent(self.tag, EDIT_TYPE_DELETEPLOT)
-         else self.lbEditGraph.Destroy;
-    else self.lbEditGraph.Destroy;
-  end;
- 
+  if self.chart.autoScaleUp then
+    begin
+    self.autoUp := false;
+    self.chart.autoScaleUp := false;
+    self.autoDown := false;
+    self.chart.autoScaleDown := false;
+    end
+  else
+    begin
+    self.autoUp := true;
+    self.chart.autoScaleUp := true;
+    self.autoDown := true;
+    self.chart.autoScaleDown := true;
+    end;
 end;
 
+procedure TGraphPanel.updateYMinMax();
+begin
+  self.chart.userUpdateMinMax;
+  if self.chart.autoScaleUp then  // Turn off autoscale.
+    begin
+    self.chart.autoScaleUp := false;
+    self.chart.autoScaleDown := false;
+    end;
+end;
 
 procedure TGraphPanel.notifyGraphEvent(plot_id: integer; eventType: integer);
 begin

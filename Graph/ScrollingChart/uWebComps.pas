@@ -93,7 +93,8 @@ interface
       destructor Destroy; override;
       procedure Draw;
       procedure resize;
-      procedure update;
+    //  procedure update;
+      procedure update(currentXMin: double);
       procedure initBlocks;
   end;
 
@@ -1030,34 +1031,42 @@ begin
    labelX.writeText;
 end;
 
-procedure TAxisX.update;
+//procedure TAxisX.update;
+procedure TAxisX.update(currentXMin: double);
 var
   b, last: TBlockX;
   v: TPoint;
+  deletedBlock: boolean;
 begin
+  deletedBlock := false;
   v := data.switch([0, blocksContainer.childs.Count - 1], dir);
   u := data.switch([1, -1], dir);
-
   offsetX := u.Y*(FPlane.X*width)/FPlane.width;
+  //console.log('TAXISX.update currentXMIN,v.X, u.X: ', currentXMin, ', ',v.X,', ', u.X);
 
   b := blocksContainer.childs[v.X] as TBlockX;
   b.life := b.life - 1;
-
   if b.life = 1 then
     begin
-      b := TBlockX.Create(width/FPlane.xAxis.maxTicks, height, blocksContainer);
-      b.life := life;
-      last := blocksContainer.childs[v.Y] as TBlockX;
-      b.index := last.index + u.X;
-      b.backgroundColor := clCream;
-      b.color := hLine.color;
-      b.number.FText := fplane.NiceNumX(b.index*dtbyTick);
-      blocksContainer.addChild(b.width*b.index, 0, v.Y, b);
+    b := TBlockX.Create(width/FPlane.xAxis.maxTicks, height, blocksContainer);
+    b.life := life;
+    last := blocksContainer.childs[v.Y] as TBlockX;
+    b.index := last.index + u.X;
+    b.backgroundColor := clCream;
+    b.color := hLine.color;
+    b.number.FText := fplane.NiceNumX(b.index*dtbyTick);
+    blocksContainer.addChild(b.width*b.index, 0, v.Y, b);
     end
   else if b.life = 0 then
-    begin
+      begin
       blocksContainer.removeChild(v.X);
-    end;
+      end
+    else
+      begin
+      if strToFloat(b.number.FText) <= currentXMin then
+        blocksContainer.removeChild(v.X)  // do not draw tick mark, number
+      end;
+
 end;
 
 procedure TAxisX.Draw;
@@ -1069,7 +1078,9 @@ begin
   hLine.lineWidth := FPlane.xAxis.lineWidth;
   hLine.drawLine;
   widthBlock := width/FPlane.xAxis.maxTicks;
+
   blocksContainer.x := -widthBlock/2 + offsetX;
+ // console.log('TAXISX.draw, blocksContainer.x: ', blocksContainer.x);
   blocksContainer.Draw;
 
   rBlack.backgroundColor := data.BackgroundColor;
@@ -1242,7 +1253,6 @@ procedure TBlockX.Draw;
 begin
   //tick.Clear;
   tick.drawLine;
-
   //number.Clear;
   number.writeText;
 end;

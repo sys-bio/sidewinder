@@ -4,8 +4,8 @@ interface
 
 uses
   System.SysUtils, System.Classes, JS, Web, WEBLib.Graphics, WEBLib.Controls,
-  WEBLib.Forms, WEBLib.Dialogs, Vcl.Controls, Vcl.StdCtrls, WEBLib.StdCtrls,
-  uSidewinderTypes;
+  WEBLib.Forms, WEBLib.Dialogs, Vcl.Controls, Vcl.StdCtrls, WEBLib.StdCtrls{,
+  uSidewinderTypes};
 
 type
   TUpdateYMaxMinValsEvent = procedure( newYMin, newYMax: double) of object;
@@ -14,7 +14,6 @@ type
     editYMin: TWebEdit;
     lblYMax: TWebLabel;
     lblYMin: TWebLabel;
-    lblYMaxMin: TWebLabel;
     procedure editYMaxChange(Sender: TObject);
     procedure editYMinChange(Sender: TObject);
     procedure editYMinExit(Sender: TObject);
@@ -30,7 +29,7 @@ type
 
 var
   FYAxisMinMaxEdit: TFYAxisMinMaxEdit;
-
+     //  bg-dark border border-dark
 implementation
 
 {$R *.dfm}
@@ -72,7 +71,7 @@ begin
     except
       on Exception : EConvertError do
       begin
-      notifyUser(Exception.Message);
+      showMessage(Exception.Message);
       yMax := 10; // default
       yMin := 0;
       self.editYMin.Text := sOrigMin; //'0';
@@ -95,7 +94,7 @@ end;
 
 procedure TFYAxisMinMaxEdit.WebFormCreate(Sender: TObject);
 begin
-  self.lblYMaxMin.font.Size := 18;
+//  self.lblYMaxMin.font.Size := 18;
 end;
 
 end.

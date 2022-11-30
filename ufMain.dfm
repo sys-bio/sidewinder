@@ -603,6 +603,7 @@ object mainForm: TmainForm
         HeightPercent = 100.000000000000000000
         MaterialGlyphSize = 16
         ShowHint = True
+        TabOrder = 0
         WidthPercent = 100.000000000000000000
         OnClick = btnUniUniClick
       end
@@ -661,6 +662,7 @@ object mainForm: TmainForm
           66A01800000013630175511C1C0000000049454E44AE426082}
         HeightPercent = 100.000000000000000000
         ShowHint = True
+        TabOrder = 1
         WidthPercent = 100.000000000000000000
         OnClick = btnUniBiClick
       end
@@ -721,6 +723,7 @@ object mainForm: TmainForm
           454E44AE426082}
         HeightPercent = 100.000000000000000000
         ShowHint = True
+        TabOrder = 2
         WidthPercent = 100.000000000000000000
         OnClick = btnBiUniClick
       end
@@ -783,6 +786,7 @@ object mainForm: TmainForm
         HeightPercent = 100.000000000000000000
         MaterialGlyphColor = clBackground
         ShowHint = True
+        TabOrder = 3
         WidthPercent = 100.000000000000000000
         OnClick = btnBiBiClick
       end
@@ -838,6 +842,7 @@ object mainForm: TmainForm
           44AE426082}
         HeightPercent = 100.000000000000000000
         ShowHint = True
+        TabOrder = 4
         WidthPercent = 100.000000000000000000
         OnClick = btnIdleClick
       end
@@ -893,6 +898,7 @@ object mainForm: TmainForm
           E85101916E39E80000000049454E44AE426082}
         HeightPercent = 100.000000000000000000
         ShowHint = True
+        TabOrder = 5
         WidthPercent = 100.000000000000000000
         OnClick = btnAddNodeClick
       end

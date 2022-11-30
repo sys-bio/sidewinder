@@ -4,11 +4,12 @@ unit uSimulation;
 
 interface
 
- Uses Classes, Types, JS, Web, SysUtils, LSODA.test, adamsbdf, uVector, uModel,
-     uODE_FormatUtility, WEBLib.ExtCtrls, uSidewinderTypes;
+ Uses Classes, Types, JS, Web, SysUtils, System.Generics.Collections, adamsbdf,
+     uVector, uModel, uODE_FormatUtility, WEBLib.ExtCtrls, uSidewinderTypes;
 
 type
   TUpdateValEvent = procedure(time:double; updatedVals: TVarNameValList) of object;
+  TSimResults = procedure(simResults: TList<TTimeVarNameValList>) of object;
   ODESolver = (EULER, RK4, LSODAS);
  TSimulationJS = class (TObject)
    private
@@ -19,6 +20,7 @@ type
   //  s_ValsInit: array of Double; // vals at t = 0;
     s_InitAssignEqs: string; // Eqs to be eval at t = 0
   //  p_ValsInit: array of Double; // vals at t = 0
+    simResultsList: TList<TTimeVarNameValList>;
     p_InitAssignEqs: string; // Eqs to be eval at t = 0
     p_NameValAr: TVarNameValList;  // user can change
     eqList: String;   // Euler, RK4 ODE eq list.
@@ -33,12 +35,14 @@ type
     online: Boolean; // Simulation running
     ODEready: Boolean; // TRUE: ODE solver is setup. NEEDED ??
     FUpdate: TUpdateValEvent;// Used to send Updated values (species amts) to listeners.
+    FStaticSimResults: TSimResults;
     procedure WebTimer1Timer(Sender: TObject);
 
 
    public
     p : TDoubleDynArray;   // System/Model Parameters
     paramUpdated: Boolean; // true if a parameter val has been updated.
+    staticSimRun: boolean; // true if run sim to the end, then report results.
 
     constructor Create ( runTime, nStepSize: double; newModel: TModel; solver: ODESolver ); Overload ;
     procedure setODEsolver(solverToUse: ODESolver);
@@ -47,6 +51,7 @@ type
     procedure eval2 ( time:double; s: array of double); // LSODA integrator
     property OnUpdate: TUpdateValEvent read FUpdate write FUpdate;
     { Notify listener of updated values }
+    property OnSimResultsNotify: TSimResults read FStaticSimResults write FStaticSimResults;
     procedure updateVals(time:double; updatedVals: array of double);
     function  getStepSize(): double;
     procedure setStepSize(newStep: double);
@@ -55,6 +60,8 @@ type
     function  getParamInitAssignEqs(): string;
     function  getSpeciesInitAssignEqs(): string;
     function  IsOnline(): Boolean;
+    function  IsStaticSimRun(): Boolean;
+    procedure setStaticSimRun( staticRun: boolean );
     procedure SetOnline(bOnline: Boolean);
     procedure SetTimerEnabled(bTimer: Boolean);
     procedure SetTimerInterval(nInterval: Integer);
@@ -65,6 +72,7 @@ type
     procedure setRuntime( newRunTime: double );
     procedure setTime( newTime: double );
     procedure startSimulation();
+    procedure startStaticSimulation();
     procedure updateSimulation();
     procedure updateP_Val( index: integer; newVal: double );
     function  getP_Vals(): TVarNameValList;
@@ -78,6 +86,7 @@ constructor TSimulationJS.Create ( runTime, nStepSize: double; newModel: TModel;
 var
   i: integer;
 begin
+  self.staticSimRun := false;  // default
   self.WebTimer1 := TWebTimer.Create(nil);
   self.WebTimer1.OnTimer := WebTimer1Timer;
   self.WebTimer1.Enabled := false;
@@ -141,13 +150,39 @@ begin
   self.updateSimulation;
 end;
 
+procedure TSimulationJS.startStaticSimulation();
+var i, totalNumberOfEvals: integer;
+begin
+  if self.online then
+  begin
+    // TODO: stop current run and reset everything? Maybe just have maincontroller reset sim
+    self.stopTimer;
+  end;
+  totalNumberOfEvals := round(self.runTime / self.step);
+  self.ODEready := true; // ?? need to check instead ?
+  self.StaticSimRun := true;
+  if self.simResultsList <> nil then self.simResultsList.free
+  else self.simResultsList := TList<TTimeVarNameValList>.create;
+  self.online := false;
+  for i := 0 to totalNumberOfEvals -1 do
+    begin
+    self.p := self.p_NameValAr.getValAr;
+    self.updateSimulation;
+    end;
+  console.log('Simulation done: iter: ', i); // Now notify listener....
+  if Assigned(FStaticSimResults) then
+       begin
+       FStaticSimResults( self.simResultsList );
+       end;
+end;
+
+
 procedure TSimulationJS.updateSimulation();
 begin
-//console.log( 'In  TSimulationJS.updateSimulation');
   if self.ODEready = true then
     begin
     //  self.setStepSize(self.WebTimer1.Interval * 0.001); // 1 sec = 1000 msec;
-      if self.time = 0.0 then
+      if self.time = 0.0 then // assume run starts at 0.0
         begin
         self.setInitValues;
         end;
@@ -343,16 +378,32 @@ begin
 procedure TSimulationJS.UpdateVals( time: double; updatedVals: array of double);
 var i: integer;
     updatedList: TVarNameValList;
+    updatedTimeVarList: TTimeVarNameValList;
  begin
-   if Assigned(FUpdate) then
-     begin
-     updatedList := TVarNameValList.create;
+
+   updatedList := TVarNameValList.create;
      for i := 0 to Length(updatedVals) -1 do
        begin
        updatedList.add( TVarNameVal.create( self.s_Names[i], updatedVals[i] ) );
        end;
-     FUpdate( time, updatedList );
-     end;
+
+   if self.staticSimRun then
+     begin
+     //if self.simResultsList <> nil then
+     //  self.simResultsList := TList<TTimeVarNameValList>.create;
+     updatedTimeVarList := TTimeVarNameValList.create(time, updatedList);
+     self.simResultsList.add(updatedTimeVarList);
+     end
+   else
+     if Assigned(FUpdate) then
+       begin
+     //  updatedList := TVarNameValList.create;
+     //  for i := 0 to Length(updatedVals) -1 do
+     //    begin
+     //    updatedList.add( TVarNameVal.create( self.s_Names[i], updatedVals[i] ) );
+     //    end;
+       FUpdate( time, updatedList );
+       end;
  end;
 
 procedure TSimulationJS.updateP_Val( index: integer; newVal: double );
@@ -410,6 +461,16 @@ end;
 procedure TSimulationJS.SetOnline(bOnline: Boolean);
 begin
   self.online := bOnline;
+end;
+
+function  TSimulationJS.IsStaticSimRun(): Boolean;
+begin
+  Result := self.staticSimRun;
+end;
+
+procedure TSimulationJS.setStaticSimRun( staticRun: boolean );
+begin
+  self.staticSimRun := staticRun;
 end;
 
 procedure TSimulationJS.SetTimerEnabled(bTimer: Boolean);

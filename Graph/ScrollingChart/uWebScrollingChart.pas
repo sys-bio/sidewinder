@@ -864,6 +864,7 @@ begin
    self.minMaxUpdate.Popup := true;
    self.minMaxUpdate.ShowClose := true;
    self.minMaxUpdate.PopupOpacity := 0.3;
+  // self.minMaxUpdate.ElementClassName := 'bg-dark border border-dark' ;
    self.minMaxUpdate.Border := fbDialogSizeable;
    self.minMaxUpdate.caption := 'Set Y axis min, max:';
 end;
